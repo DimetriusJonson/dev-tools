@@ -1,0 +1,48 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+resolver = "2"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+leptos.workspace = true
+leptos_meta.workspace = true
+leptos_router.workspace = true
+web-sys.workspace = true
+tw_merge.workspace = true
+anyhow.workspace = true
+gloo-net.workspace = true
+
+tracing = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+console_error_panic_hook = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+leptos_axum = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+tower = { workspace = true, optional = true }
+tower-http = { workspace = true, optional = true }
+quick-xml = { workspace = true, optional = true }
+
+[features]
+default = ["csr"]
+csr = ["leptos/csr"]
+hydrate = ["leptos/hydrate", "dep:console_error_panic_hook", "dep:wasm-bindgen"]
+ssr = [
+    "dep:axum",
+    "dep:leptos_axum",
+    "dep:tokio",
+    "dep:tower",
+    "dep:tower-http",
+    "dep:log",
+    "dep:tracing",
+    "dep:quick-xml",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+]

@@ -1,0 +1,27 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+resolver = "2"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+axum-macros.workspace = true
+axum.workspace = true
+leptos_axum.workspace = true
+log.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+tower.workspace = true
+tracing.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+futures-util.workspace=true
+tokio-util.workspace=true
+bytes.workspace=true
+quick-xml.workspace=true
+tokio-stream.workspace=true
+
+app = { path = "../app", default-features = false, features = ["ssr"] }
+leptos = { workspace = true, features = [ "ssr" ]}
