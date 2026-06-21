@@ -25,6 +25,7 @@ RUN apk add --no-cache upx
 COPY --from=builder /work/target/release/server /server
 RUN upx --best --lzma /server
 
+#FROM alpine:3.22.4 AS runner
 FROM scratch AS runner
 
 WORKDIR /app

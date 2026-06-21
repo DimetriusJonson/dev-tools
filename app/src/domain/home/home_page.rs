@@ -64,9 +64,9 @@ pub fn HomePage() -> impl IntoView {
                 <Button class_name="".to_owned()
                     label=">>".to_owned()
                     button_width=ButtonWidth::Md
-                    loading=in_progress
+                    loading=move || in_progress.get()
                     on_click=on_format_click
-                    disabled=in_progress
+                    disabled=move || in_progress.get()
                 />
             </div>
 
@@ -83,9 +83,9 @@ pub fn HomePage() -> impl IntoView {
                 <Button class_name="".to_owned()
                     label="Скопировать в буфер обмена".to_owned()
                     button_width=ButtonWidth::Auto
-                    loading=in_progress
+                    loading=move || in_progress.get()
                     on_click=on_copy_click
-                    disabled=in_progress
+                    disabled=move || in_progress.get()
                 />
 
             </div>
