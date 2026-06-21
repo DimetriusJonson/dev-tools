@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: hsl(39deg 90% 52%);
+  --color-danger: hsl(357deg 77% 70%);
+  --color-danger-bg: rgb(41, 5, 7);
+  --color-dark-bg: hsl(221deg, 14%, 9%);
+  --color-link-dark: hsla(233deg, 100%, 73%, 1);
+  --color-link: hsl(233deg, 100%, 58%);
+  --color-weak: hsl(221deg, 14%, 53%);
+  --color-disabled-bg: hsl(221deg, 14%, 14%);
+  --font-monospace: font-family: "Inconsolata", "Hack", "SF Mono", "Roboto Mono", "Source Code Pro", "Ubuntu Mono", monospace !important;
+}
