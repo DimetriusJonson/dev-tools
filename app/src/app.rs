@@ -1,6 +1,6 @@
 
 use leptos::prelude::*;
-use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
+use leptos_meta::{Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::components::{Outlet, ParentRoute, Route, Router, Routes};
 use leptos_router::path;
 
@@ -38,6 +38,8 @@ pub fn App() -> impl IntoView {
 
         // sets the document title
         <Title text="Dev tools"/>
+        <Meta name="keywords" content="dev, tools, xml, formatting, development" />
+        <Meta name="description" content="Утилиты для разработчика. Форматирование XML." />
 
         // content for this welcome page
         <Router>
