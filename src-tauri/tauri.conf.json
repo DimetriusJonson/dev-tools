@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Rust UI Starters — iOS Fullstack",
+  "productName": "Dev Tools",
   "version": "0.1.0",
   "identifier": "com.rustui.starters.ios-fullstack",
   "build": {
@@ -17,7 +17,7 @@
       {
         "label": "main",
         "url": "http://localhost:3000",
-        "title": "Rust UI Starters — iOS Fullstack",
+        "title": "Dev Tools",
         "width": 1200,
         "height": 800,
         "titleBarStyle": "Overlay",
