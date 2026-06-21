@@ -3,12 +3,14 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
 #[component]
 pub fn HomePage() -> impl IntoView {
-    let (xml, set_xml) = signal("".to_string());
-    let (dst_xml, set_dst_xml) = signal("".to_string());
+    let (xml, set_xml) = signal("".to_owned());
+    let (dst_xml, set_dst_xml) = signal("".to_owned());
+    let (ident, set_ident) = signal("4".to_owned());
     let (in_progress, set_in_progress) = signal(false);
 
     let on_click = move |_| {
@@ -16,7 +18,7 @@ pub fn HomePage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            match Request::post("/format_xml").body(xml) {
+            match Request::post("/format_xml").query([("ident", ident.get())]).body(xml) {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_xml.set(response_text),
@@ -42,10 +44,19 @@ pub fn HomePage() -> impl IntoView {
                 on_change=|_| {}
             />
 
-            <div class="flex items-center justify-center">
-                <Button
+            <div class="flex-1 flex flex-col gap-4 items-center justify-center">
+                <SelectInput 
+                    name="ident".to_owned()
+                    label="Отступ".to_owned()
+                    options=move || {vec![(Some("2".to_owned()), "2 отступа".to_owned()), (Some("3".to_owned()), "3 отступа".to_owned()), (Some("4".to_owned()), "4 отступа".to_owned())]}
+                    on_change=move |_| {}
+                    value=ident
+                    set_value=set_ident
+                />
+
+                <Button class_name="".to_owned()
                     label=">>".to_owned()
-                    button_width=ButtonWidth::Auto
+                    button_width=ButtonWidth::Md
                     loading=in_progress
                     on_click=on_click
                     disabled=in_progress
