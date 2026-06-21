@@ -1,14 +1,13 @@
+use std::io::Cursor;
+
 use axum::body::Body;
 use axum::http::{StatusCode, header};
 use axum::response::Response;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use log::error;
-use quick_xml::{
-    Reader, Writer,
-    events::{BytesText, Event},
-};
-use std::io::Cursor;
+use quick_xml::events::{BytesText, Event};
+use quick_xml::{Reader, Writer};
 use tokio::io::BufReader;
 use tokio::sync::mpsc::{self, Sender};
 use tokio_stream::wrappers::ReceiverStream;
@@ -17,10 +16,10 @@ use tokio_util::io::StreamReader;
 pub async fn format_xml_handler(body: Body) -> Response {
     let (tx, rx) = mpsc::channel::<Result<Bytes, axum::Error>>(16);
     tokio::spawn(async move {
-        if let Err(err) = format_xml(body, tx.clone()).await {
-            if let Err(err) = tx.send(Ok(format!("Error: {}", err).into())).await {
-                error!("Error: {}", err);
-            }
+        if let Err(err) = format_xml(body, tx.clone()).await
+            && let Err(err) = tx.send(Ok(format!("Error: {}", err).into())).await
+        {
+            error!("Error: {}", err);
         }
     });
 
@@ -35,9 +34,8 @@ pub async fn format_xml_handler(body: Body) -> Response {
 }
 
 async fn format_xml(body: Body, tx: Sender<Result<Bytes, axum::Error>>) -> anyhow::Result<()> {
-    let request_body_stream = body
-        .into_data_stream()
-        .map(|result| result.map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err)));
+    let request_body_stream =
+        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
 
     let mut input_xml_reader =
         Reader::from_reader(BufReader::new(StreamReader::new(request_body_stream)));
@@ -49,7 +47,7 @@ async fn format_xml(body: Body, tx: Sender<Result<Bytes, axum::Error>>) -> anyho
     loop {
         match input_xml_reader.read_event_into_async(&mut read_buffer).await? {
             Event::Text(ref e) => {
-                let text_content = input_xml_reader.decoder().decode(&e)?;
+                let text_content = input_xml_reader.decoder().decode(e)?;
                 let filtered_lines: Vec<&str> =
                     text_content.lines().filter(|line| !line.trim().is_empty()).collect();
 

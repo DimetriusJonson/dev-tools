@@ -8,10 +8,10 @@ anyhow = "1"
 axum = { version = "0.8", features = ["macros"] }
 axum-macros = "0.4"
 console_error_panic_hook = "0.1"
-leptos = { version = "0.8" }
+leptos = { version = "0.8", features = ["nightly"] }
 leptos_axum = "0.8"
 leptos_meta = "0.8"
-leptos_router = { version = "0.8" }
+leptos_router = { version = "0.8", features = ["nightly"] }
 log = "0.4"
 tokio = { version = "1", features = ["rt-multi-thread"] }
 tower = "0.5"
@@ -70,3 +70,7 @@ strip = true         # Strip symbols
 
 [profile.release.package."*"]
 opt-level = "z"      # Also optimize dependencies for size
+
+[profile.dev]
+opt-level = 0
+debug = "line-tables-only"
