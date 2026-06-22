@@ -62,10 +62,10 @@ pub fn HomePage() -> impl IntoView {
     };
 
     view! {
-        <div class="flex-1 flex flex-row gap-4 px-2 py-4 text-xs md:text-base">
+        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <TextArea
                 name="xml".to_owned()
-                class_name="resize-none".to_owned()
+                class_name="flex-1 resize-none".to_owned()
                 placeholder="Вставьте xml".to_owned()
                 value=xml
                 set_value=set_xml
@@ -74,7 +74,7 @@ pub fn HomePage() -> impl IntoView {
                 }
             />
 
-            <div class="flex-1 flex flex-col gap-4 items-center justify-center">
+            <div class="flex flex-row md:flex-col gap-4 items-center justify-center">
                 <SelectInput
                     name="ident".to_owned()
                     label="Отступ".to_owned()
@@ -86,7 +86,7 @@ pub fn HomePage() -> impl IntoView {
                     set_value=set_ident
                 />
 
-                <Button class_name="".to_owned()
+                <Button 
                     label=">>".to_owned()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
@@ -95,7 +95,7 @@ pub fn HomePage() -> impl IntoView {
                 />
             </div>
 
-            <div class="flex flex-col gap-4 w-full">
+            <div class="flex-1 flex flex-col gap-4 w-full">
                 <TextArea
                     name="dst_xml".to_owned()
                     class_name="flex-1 resize-none".to_owned()
@@ -105,7 +105,7 @@ pub fn HomePage() -> impl IntoView {
                     on_change=|_| {}
                 />
 
-                <Button class_name="".to_owned()
+                <Button 
                     label="Скопировать в буфер обмена".to_owned()
                     button_width=ButtonWidth::Auto
                     loading=move || in_progress.get()

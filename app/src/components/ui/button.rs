@@ -28,7 +28,6 @@ pub fn Button(
     label: String,
     #[prop(optional)] class_name: String,
     #[prop(optional)] color: ButtonColor,
-    #[prop(optional)] text_size: ButtonTextSize,
     #[prop(optional)] button_width: ButtonWidth,
     loading: impl Fn() -> bool + Send + Sync + 'static,
     disabled: impl Fn() -> bool + Send + Sync + 'static,
@@ -40,7 +39,7 @@ pub fn Button(
     let button_element: NodeRef<html::Button> = NodeRef::new();
     let aria_label = label.to_owned();
 
-    let base_classes = "rounded-3xl cursor-pointer font-medium px-6 py-2 h-10 transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl cursor-pointer font-medium px-6 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -48,11 +47,6 @@ pub fn Button(
             "bg-gray-200 dark:hover:bg-gray-50 hover:bg-gray-300 text-black".to_owned()
         }
         ButtonColor::Danger => "bg-danger hover:bg-danger/80 text-black".to_owned(),
-    };
-
-    let text_size_classes = match text_size {
-        ButtonTextSize::Sm => "text-sm".to_owned(),
-        ButtonTextSize::Md => "text-base".to_owned(),
     };
 
     let button_width_classes = match button_width {
@@ -65,9 +59,9 @@ pub fn Button(
             node_ref=button_element
             id={id}
             aria-label={aria_label}
-            class=move || format!("{} {} {} {} {} {} {}", base_classes, variant_classes, text_size_classes, button_width_classes, 
+            class=move || format!("{} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, 
                 match loading_memo.get() {
-                    true => "inline-flex justify-center items-center leading-6 transition ease-in-out duration-150".to_owned(),
+                    true => "inline-flex leading-6 transition ease-in-out duration-150".to_owned(),
                     false => "".to_owned(),
                 }, 
                 match loading_memo.get() || disabled_memo.get() {
