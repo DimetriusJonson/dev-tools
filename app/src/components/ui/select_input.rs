@@ -66,7 +66,7 @@ pub fn SelectInput(
                 {
                     final_options.into_iter()
                     .map(|option| view! { 
-                        <option class="dark:bg-dark-bg" value={option.0.to_owned()} selected={option.0 == Some(value.get())}>{option.1}</option>
+                        <option class="dark:bg-dark-bg" value={option.0.to_owned()} selected={move || option.0 == Some(value.get())}>{option.1}</option>
                     }).collect::<Vec<_>>()
                 }
 

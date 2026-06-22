@@ -14,11 +14,10 @@ pub fn HomePage() -> impl IntoView {
     let (in_progress, set_in_progress) = signal(false);
 
     let on_format_click = move |_| {
-        let xml = xml.get();
         spawn_local(async move {
             set_in_progress.set(true);
 
-            match Request::post("/format_xml").query([("ident", ident.get())]).body(xml) {
+            match Request::post("/format_xml").query([("ident", ident.get_untracked())]).body(xml.get_untracked()) {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_xml.set(response_text),
