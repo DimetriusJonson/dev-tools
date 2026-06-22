@@ -21,7 +21,7 @@ futures-util.workspace=true
 tokio-util.workspace=true
 bytes.workspace=true
 quick-xml.workspace=true
-tokio-stream.workspace=true
+async-stream.workspace=true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}
