@@ -16,6 +16,7 @@ leptos_router.workspace = true
 web-sys.workspace = true
 tw_merge.workspace = true
 gloo-net.workspace = true
+gloo-storage.workspace = true
 
 tracing = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
