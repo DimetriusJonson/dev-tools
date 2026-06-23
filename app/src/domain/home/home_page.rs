@@ -3,6 +3,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
@@ -54,6 +55,7 @@ pub fn HomePage() -> impl IntoView {
     };
 
     let on_copy_click = move |_| {
+        #[cfg(not(feature = "ssr"))]
         if let Some(window) = web_sys::window() {
             let navigator = window.navigator();
             let clipboard = navigator.clipboard();
@@ -86,7 +88,7 @@ pub fn HomePage() -> impl IntoView {
                     set_value=set_ident
                 />
 
-                <Button 
+                <Button
                     label=">>".to_owned()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
@@ -95,17 +97,15 @@ pub fn HomePage() -> impl IntoView {
                 />
             </div>
 
-            <div class="flex-1 flex flex-col gap-4 w-full">
-                <TextArea
-                    name="dst_xml".to_owned()
-                    class_name="flex-1 resize-none".to_owned()
-                    placeholder="Здесь будет отформатированный xml".to_owned()
-                    value=dst_xml
-                    set_value=set_dst_xml
-                    on_change=|_| {}
-                />
+            <div class="flex-1 flex flex-col gap-4 w-full h-[90dvh]">
+                { move || view! {
+                    <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
+                        <CodeInner code={dst_xml.get()} lang="xml".to_string()/>
+                    </div>
+                    }
+                }
 
-                <Button 
+                <Button
                     label="Скопировать в буфер обмена".to_owned()
                     button_width=ButtonWidth::Auto
                     loading=move || in_progress.get()

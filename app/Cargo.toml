@@ -13,10 +13,11 @@ crate-type = ["cdylib", "rlib"]
 leptos.workspace = true
 leptos_meta.workspace = true
 leptos_router.workspace = true
-web-sys.workspace = true
 tw_merge.workspace = true
 gloo-net.workspace = true
 gloo-storage.workspace = true
+gloo-utils.workspace = true
+html-escape.workspace = true
 
 tracing = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
@@ -29,11 +30,13 @@ tower = { workspace = true, optional = true }
 tower-http = { workspace = true, optional = true }
 quick-xml = { workspace = true, optional = true }
 anyhow = { workspace = true, optional = true }
+js-sys = { workspace = true, optional = true }
+web-sys = { workspace = true, optional = true }
 
 [features]
 default = ["csr"]
 csr = ["leptos/csr"]
-hydrate = ["leptos/hydrate", "dep:console_error_panic_hook", "dep:wasm-bindgen"]
+hydrate = ["leptos/hydrate", "dep:console_error_panic_hook", "dep:wasm-bindgen", "dep:web-sys", "dep:js-sys"]
 ssr = [
     "dep:axum",
     "dep:leptos_axum",
