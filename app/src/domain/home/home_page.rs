@@ -67,7 +67,7 @@ pub fn HomePage() -> impl IntoView {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <TextArea
                 name="xml".to_owned()
-                class_name="flex-1 resize-none".to_owned()
+                class_name="md:flex-1 h-[40dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
                 placeholder="Вставьте xml".to_owned()
                 value=xml
                 set_value=set_xml
@@ -97,7 +97,7 @@ pub fn HomePage() -> impl IntoView {
                 />
             </div>
 
-            <div class="flex-1 flex flex-col gap-4 w-full h-[90dvh]">
+            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[40dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                         <CodeInner code={dst_xml.get()} lang="xml".to_string()/>
