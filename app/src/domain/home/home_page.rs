@@ -67,7 +67,7 @@ pub fn HomePage() -> impl IntoView {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <TextArea
                 name="xml".to_owned()
-                class_name="md:flex-1 h-[40dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
+                class_name="md:flex-1 h-[38dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
                 placeholder="Вставьте xml".to_owned()
                 value=xml
                 set_value=set_xml
