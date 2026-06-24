@@ -17,7 +17,7 @@ pub fn CodeInner(code: String, lang: String) -> impl IntoView {
             inner
         };
         view! {
-            <pre><code inner_html=inner></code></pre>
+            <pre class="whitespace-pre-wrap wrap-break-word break-all"><code inner_html=inner></code></pre>
         }
         .into_any()
     } else {
@@ -36,7 +36,7 @@ pub fn CodeInner(code: String, lang: String) -> impl IntoView {
             });
         };
         view! {
-            <pre><code inner_html=inner></code></pre>
+            <pre class="whitespace-pre-wrap wrap-break-word break-all"><code inner_html=inner></code></pre>
         }
         .into_any()
     }
