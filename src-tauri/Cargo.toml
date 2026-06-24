@@ -1,0 +1,26 @@
+[package]
+name = "dev_tools"
+version = "0.1.0"
+description = "Developer tools"
+edition = "2024"
+
+[workspace]
+
+[features]
+default = []
+tauri = []
+
+[lib]
+name = "dev_tools_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-opener = "2"
+server = { path = "../server" }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"

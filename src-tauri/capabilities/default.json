@@ -1,0 +1,8 @@
+{
+  "identifier": "autostart", 
+  "permissions": [
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
+  ]
+}
