@@ -1,10 +1,56 @@
-pub async fn unescape_xml_handler(body: String) -> String {
-    match quick_xml::escape::unescape(&body) {
-        Ok(res) => res.to_string(),
-        Err(err) => err.to_string(),
-    }
+use std::io::Cursor;
+
+use async_stream::try_stream;
+use axum::body::Body;
+use axum::response::IntoResponse;
+use bytes::Bytes;
+use futures_util::{Stream, StreamExt};
+use quick_xml::escape::{escape, unescape};
+use quick_xml::events::Event;
+use quick_xml::{Reader, Writer};
+use tokio::io::BufReader;
+use tokio_util::io::StreamReader;
+
+pub async fn unescape_xml_handler(body: Body) -> impl IntoResponse {
+    Body::from_stream(create_stream(body, false))
 }
 
-pub async fn escape_xml_handler(body: String) -> String {
-    quick_xml::escape::escape(&body).to_string()
+pub async fn escape_xml_handler(body: Body) -> impl IntoResponse {
+    Body::from_stream(create_stream(body, true))
+}
+
+fn create_stream(body: Body, escape_xml: bool) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+    let request_body_stream =
+        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
+
+    let mut input_xml_reader =
+        Reader::from_reader(BufReader::new(StreamReader::new(request_body_stream)));
+    input_xml_reader.config_mut().trim_text(false);
+
+    try_stream! {
+        let mut writer = Writer::new(Cursor::new(Vec::<u8>::new()));
+        let mut read_buffer = Vec::<u8>::new();
+        loop {
+            match input_xml_reader.read_event_into_async(&mut read_buffer).await {
+                Ok(Event::Eof) => break,
+                Ok(event) => writer.write_event(event)?,
+                Err(err) => {
+                    eprintln!("Error at position {}: {:?}", input_xml_reader.error_position(), err);
+                }
+            };
+
+            let str = String::from_utf8_lossy(writer.get_ref().get_ref());
+            let converted_str = match escape_xml {
+                true => escape(str),
+                false => unescape(&str)?,
+            };
+
+            let chunk = Bytes::copy_from_slice(converted_str.as_bytes());
+            writer.get_mut().get_mut().clear();
+            writer.get_mut().set_position(0);
+            read_buffer.clear();
+
+            yield chunk;
+        }
+    }
 }
