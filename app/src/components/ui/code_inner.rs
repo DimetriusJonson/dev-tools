@@ -14,9 +14,6 @@ pub fn CodeInner(code: String, lang: String) -> impl IntoView {
         #[cfg(not(feature = "ssr"))]
         let inner = {
             let inner = crate::hljs::highlight(code, lang);
-            leptos::logging::log!(
-                "about to populate inner_html with: {inner:?}"
-            );
             inner
         };
         view! {
@@ -31,12 +28,8 @@ pub fn CodeInner(code: String, lang: String) -> impl IntoView {
         };
         #[cfg(not(feature = "ssr"))]
         {
-            leptos::logging::log!("calling out to hljs::highlight");
             let result = crate::hljs::highlight(code, lang);
             Effect::new(move |_| {
-                leptos::logging::log!(
-                    "setting the result of hljs::highlight inside an effect"
-                );
                 if let Some(r) = result.clone() {
                     set_inner.set(r)
                 }

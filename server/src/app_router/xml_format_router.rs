@@ -33,8 +33,8 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::<u8>::new()), b' ', ident);
         let mut read_buffer = Vec::<u8>::new();
         loop {
-            match input_xml_reader.read_event_into_async(&mut read_buffer).await? {
-                Event::Text(ref e) => {
+            match input_xml_reader.read_event_into_async(&mut read_buffer).await {
+                Ok(Event::Text(ref e)) => {
                     let text_content = input_xml_reader.decoder().decode(e)?;
                     let filtered_lines: Vec<&str> =
                         text_content.lines().filter(|line| !line.trim().is_empty()).collect();
@@ -44,11 +44,14 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
                         writer.write_event(Event::Text(BytesText::new(&filtered_text)))?;
                     }
                 }
-                Event::Comment(e) => {
+                Ok(Event::Comment(e)) => {
                     writer.write_event(Event::Comment(e))?;
                 }
-                Event::Eof => break,
-                event => writer.write_event(event)?,
+                Ok(Event::Eof) => break,
+                Ok(event) => writer.write_event(event)?,
+                Err(err) => {
+                    eprintln!("Error at position {}: {:?}", input_xml_reader.error_position(), err);
+                }
             };
 
             let chunk = Bytes::copy_from_slice(writer.get_ref().get_ref());

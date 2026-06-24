@@ -54,6 +54,46 @@ pub fn HomePage() -> impl IntoView {
         });
     };
 
+    let on_unescape_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(true);
+
+            match Request::post("/unescape_xml")
+                .body(xml.get_untracked())
+            {
+                Ok(request) => match request.send().await {
+                    Ok(response) => match response.text().await {
+                        Ok(response_text) => set_dst_xml.set(response_text),
+                        Err(_) => (),
+                    },
+                    Err(_) => (),
+                },
+                Err(_) => (),
+            }
+            set_in_progress.set(false);
+        });
+    };
+
+    let on_escape_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(true);
+
+            match Request::post("/escape_xml")
+                .body(xml.get_untracked())
+            {
+                Ok(request) => match request.send().await {
+                    Ok(response) => match response.text().await {
+                        Ok(response_text) => set_dst_xml.set(response_text),
+                        Err(_) => (),
+                    },
+                    Err(_) => (),
+                },
+                Err(_) => (),
+            }
+            set_in_progress.set(false);
+        });
+    };
+
     let on_copy_click = move |_| {
         #[cfg(not(feature = "ssr"))]
         if let Some(window) = web_sys::window() {
@@ -89,10 +129,26 @@ pub fn HomePage() -> impl IntoView {
                 />
 
                 <Button
-                    label=">>".to_owned()
+                    label="Format".to_owned()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
                     on_click=on_format_click
+                    disabled=move || in_progress.get()
+                />
+
+                <Button
+                    label="Unescape".to_owned()
+                    button_width=ButtonWidth::Md
+                    loading=move || in_progress.get()
+                    on_click=on_unescape_click
+                    disabled=move || in_progress.get()
+                />
+
+                <Button
+                    label="Escape".to_owned()
+                    button_width=ButtonWidth::Md
+                    loading=move || in_progress.get()
+                    on_click=on_escape_click
                     disabled=move || in_progress.get()
                 />
             </div>

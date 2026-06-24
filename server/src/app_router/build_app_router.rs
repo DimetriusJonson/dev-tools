@@ -7,7 +7,8 @@ use leptos_axum::{LeptosRoutes, generate_route_list};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::app_router::xml_router::format_xml_handler;
+use crate::app_router::xml_format_router::format_xml_handler;
+use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
 
 /* ========================================================== */
 /*                         🦀 MAIN 🦀                         */
@@ -20,6 +21,8 @@ pub async fn build_app_router(conf_file: ConfFile) -> anyhow::Result<Router> {
 
     let app = Router::new()
         .route("/format_xml", post(format_xml_handler))
+        .route("/unescape_xml", post(unescape_xml_handler))
+        .route("/escape_xml", post(escape_xml_handler))
         .layer(DefaultBodyLimit::disable())
         .leptos_routes(&leptos_options, routes, {
             let leptos_options = leptos_options.clone();
