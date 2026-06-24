@@ -107,7 +107,7 @@ pub fn HomePage() -> impl IntoView {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <TextArea
                 name="xml".to_owned()
-                class_name="md:flex-1 h-[38dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
+                class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
                 placeholder="Вставьте xml".to_owned()
                 value=xml
                 set_value=set_xml
@@ -116,44 +116,48 @@ pub fn HomePage() -> impl IntoView {
                 }
             />
 
-            <div class="flex flex-row md:flex-col gap-4 items-center justify-center">
-                <SelectInput
-                    name="ident".to_owned()
-                    label="Отступ".to_owned()
-                    options=move || {vec![(Some("2".to_owned()), "2 отступа".to_owned()), (Some("3".to_owned()), "3 отступа".to_owned()), (Some("4".to_owned()), "4 отступа".to_owned())]}
-                    on_change=move |value| {
-                        set_local_storage_value("xml_ident", value);
-                    }
-                    value=ident
-                    set_value=set_ident
-                />
+            <div class="flex flex-col gap-4 items-center justify-center">
+                <div class="flex flex-row md:flex-col gap-4">
+                    <SelectInput
+                        name="ident".to_owned()
+                        label="Отступ".to_owned()
+                        options=move || {vec![(Some("2".to_owned()), "2 отступа".to_owned()), (Some("3".to_owned()), "3 отступа".to_owned()), (Some("4".to_owned()), "4 отступа".to_owned())]}
+                        on_change=move |value| {
+                            set_local_storage_value("xml_ident", value);
+                        }
+                        value=ident
+                        set_value=set_ident
+                    />
 
-                <Button
-                    label="Format".to_owned()
-                    button_width=ButtonWidth::Md
-                    loading=move || in_progress.get()
-                    on_click=on_format_click
-                    disabled=move || in_progress.get()
-                />
+                    <Button
+                        label="Format".to_owned()
+                        button_width=ButtonWidth::Md
+                        loading=move || in_progress.get()
+                        on_click=on_format_click
+                        disabled=move || in_progress.get()
+                    />
+                </div>
 
-                <Button
-                    label="Unescape".to_owned()
-                    button_width=ButtonWidth::Md
-                    loading=move || in_progress.get()
-                    on_click=on_unescape_click
-                    disabled=move || in_progress.get()
-                />
+                <div class="flex flex-row md:flex-col gap-4 md:py-8">
+                    <Button
+                        label="Unescape".to_owned()
+                        button_width=ButtonWidth::Md
+                        loading=move || in_progress.get()
+                        on_click=on_unescape_click
+                        disabled=move || in_progress.get()
+                    />
 
-                <Button
-                    label="Escape".to_owned()
-                    button_width=ButtonWidth::Md
-                    loading=move || in_progress.get()
-                    on_click=on_escape_click
-                    disabled=move || in_progress.get()
-                />
+                    <Button
+                        label="Escape".to_owned()
+                        button_width=ButtonWidth::Md
+                        loading=move || in_progress.get()
+                        on_click=on_escape_click
+                        disabled=move || in_progress.get()
+                    />
+                </div>
             </div>
 
-            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[40dvh] md:h-[90dvh]">
+            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[38dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                         <CodeInner code={dst_xml.get()} lang="xml".to_string()/>
