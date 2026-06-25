@@ -13,17 +13,7 @@
     "security": {
       "csp": null
     },
-    "windows": [
-      {
-        "label": "main",
-        "url": "http://localhost:3005",
-        "title": "Developers tools",
-        "width": 1500,
-        "height": 1000,
-        "titleBarStyle": "Overlay",
-        "hiddenTitle": true
-      }
-    ]
+    "windows": []
   },
   "bundle": {
     "active": true,
