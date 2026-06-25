@@ -1,5 +1,7 @@
 use leptos::prelude::*;
 
+use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
+
 #[component]
 pub fn Navbar() -> impl IntoView {
     view! {
@@ -10,7 +12,7 @@ pub fn Navbar() -> impl IntoView {
                     // Brand / Logo Area
                     <div class="shrink-0 flex items-center">
                         <a href="/" class="text-3xl md:text-4xl font-extrabold text-gray-800 pr-2 font-mono">TOOLS</a>
-                        //<ButtonLink label="Пользователи".to_owned() href="/users".to_owned() color=Black button_width=Auto/>
+                        <ButtonLink label="Url encoder".to_owned() href="/urlEncoder".to_owned() color=ButtonLinkColor::Black button_width=ButtonLinkWidth::Auto/>
                     </div>
 
                 </div>

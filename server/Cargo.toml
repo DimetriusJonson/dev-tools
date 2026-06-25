@@ -22,6 +22,7 @@ tokio-util.workspace=true
 bytes.workspace=true
 quick-xml.workspace=true
 async-stream.workspace=true
+urlencoding.workspace=true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}

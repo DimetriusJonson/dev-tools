@@ -2,35 +2,18 @@ use gloo_net::http::Request;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
+use crate::common::local_store::{get_local_store_value, set_local_store_value};
+use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
-#[cfg(not(feature = "ssr"))]
-fn get_local_storage_value(key: &str, default: String) -> String {
-    use gloo_storage::{LocalStorage, Storage};
-    match LocalStorage::get(key) {
-        Ok(value) => value,
-        Err(_err) => default,
-    }
-}
-
-#[cfg(feature = "ssr")]
-fn get_local_storage_value(_key: &str, default: String) -> String {
-    default
-}
-
-fn set_local_storage_value(key: &str, value: String) {
-    use gloo_storage::{LocalStorage, Storage};
-    LocalStorage::set(key, value).unwrap_or(());
-}
-
 #[component]
 pub fn HomePage() -> impl IntoView {
-    let (xml, set_xml) = signal(get_local_storage_value("src_xml", "".to_owned()));
+    let (xml, set_xml) = signal(get_local_store_value("src_xml", "".to_owned()));
     let (dst_xml, set_dst_xml) = signal("".to_owned());
-    let (ident, set_ident) = signal(get_local_storage_value("xml_ident", "4".to_owned()));
+    let (ident, set_ident) = signal(get_local_store_value("xml_ident", "4".to_owned()));
     let (in_progress, set_in_progress) = signal(false);
 
     let on_format_click = move |_| {
@@ -95,12 +78,7 @@ pub fn HomePage() -> impl IntoView {
     };
 
     let on_copy_click = move |_| {
-        #[cfg(not(feature = "ssr"))]
-        if let Some(window) = web_sys::window() {
-            let navigator = window.navigator();
-            let clipboard = navigator.clipboard();
-            let _ = clipboard.write_text(&dst_xml.get());
-        }
+        copy_to_clipboard(&dst_xml.get());
     };
 
     view! {
@@ -112,7 +90,7 @@ pub fn HomePage() -> impl IntoView {
                 value=xml
                 set_value=set_xml
                 on_change=move |_| {
-                    set_local_storage_value("src_xml", xml.get_untracked());
+                    set_local_store_value("src_xml", xml.get_untracked());
                 }
             />
 
@@ -123,7 +101,7 @@ pub fn HomePage() -> impl IntoView {
                         label="Отступ".to_owned()
                         options=move || {vec![(Some("2".to_owned()), "2 отступа".to_owned()), (Some("3".to_owned()), "3 отступа".to_owned()), (Some("4".to_owned()), "4 отступа".to_owned())]}
                         on_change=move |value| {
-                            set_local_storage_value("xml_ident", value);
+                            set_local_store_value("xml_ident", value);
                         }
                         value=ident
                         set_value=set_ident
