@@ -35,7 +35,7 @@ pub fn ButtonLink(
     #[prop(optional)] class_name: String,
 ) -> impl IntoView {
 
-    let base_classes = "rounded-3xl font-medium px-6 py-2 text-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl cursor-pointer font-medium px-6 py-1 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonLinkColor::Ghost => "text-link dark:text-link-dark".to_owned(),
