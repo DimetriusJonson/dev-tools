@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io::Cursor;
 
 use async_stream::try_stream;
@@ -11,6 +10,8 @@ use quick_xml::events::{BytesText, Event};
 use quick_xml::{Reader, Writer};
 use tokio::io::BufReader;
 use tokio_util::io::StreamReader;
+
+use crate::common::dev_utils::parse_query_params;
 
 pub async fn format_xml_handler(RawQuery(query): RawQuery, body: Body) -> impl IntoResponse {
     let query_str = query.unwrap_or_default();
@@ -62,17 +63,4 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
             yield chunk;
         }
     }
-}
-
-fn parse_query_params<'a>(query_str: &'a str) -> HashMap<&'a str, &'a str> {
-    query_str
-        .split('&')
-        .filter(|pair| !pair.is_empty())
-        .filter_map(|pair| {
-            let mut parts = pair.splitn(2, '=');
-            let key = parts.next()?;
-            let value = parts.next().unwrap_or("");
-            Some((key, value))
-        })
-        .collect()
 }

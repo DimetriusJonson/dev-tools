@@ -10,9 +10,10 @@ pub fn Navbar() -> impl IntoView {
             <div class="px-1 py-1 sm:px-2 lg:px-4">
                 <div class="flex justify-between h-9 md:h-14">
                     // Brand / Logo Area
-                    <div class="shrink-0 flex items-center">
+                    <div class="shrink-0 flex items-center gap-4">
                         <a href="/" class="text-3xl md:text-4xl font-extrabold text-gray-800 pr-2 font-mono">TOOLS</a>
                         <ButtonLink label="Url encoder".to_owned() href="/urlEncoder".to_owned() color=ButtonLinkColor::Black button_width=ButtonLinkWidth::Auto/>
+                        <ButtonLink label="Json".to_owned() href="/json".to_owned() color=ButtonLinkColor::Black button_width=ButtonLinkWidth::Auto/>
                     </div>
 
                 </div>
