@@ -10,7 +10,7 @@ use tower_http::trace::TraceLayer;
 use crate::app_router::json_escape_router::unescape_json_handler;
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::url_encode_router::{decode_url_handler, encode_url_handler};
-use crate::app_router::xml_format_router::format_xml_handler;
+use crate::app_router::xml_format_router::{format_xml_file_handler, format_xml_handler};
 use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
 
 /* ========================================================== */
@@ -24,6 +24,7 @@ pub async fn build_app_router(conf_file: ConfFile) -> anyhow::Result<Router> {
 
     let app = Router::new()
         .route("/format_xml", post(format_xml_handler))
+        .route("/format_xml_file", post(format_xml_file_handler))
         .route("/unescape_xml", post(unescape_xml_handler))
         .route("/escape_xml", post(escape_xml_handler))
         .route("/format_json", post(format_json_handler))

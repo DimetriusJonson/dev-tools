@@ -4252,6 +4252,7 @@ dependencies = [
  "tracing",
  "tracing-log",
  "tracing-subscriber",
+ "unescaper",
  "urlencoding",
 ]
 
@@ -5474,6 +5475,15 @@ dependencies = [
  "memoffset",
  "tempfile",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "unescaper"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4064ed685c487dbc25bd3f0e9548f2e34bab9d18cefc700f9ec2dba74ba1138e"
+dependencies = [
+ "thiserror 2.0.18",
 ]
 
 [[package]]

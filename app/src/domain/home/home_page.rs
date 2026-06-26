@@ -1,6 +1,7 @@
 use gloo_net::http::Request;
-use leptos::prelude::*;
 use leptos::task::spawn_local;
+use leptos::{html, prelude::*};
+use web_sys::FormData;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
@@ -15,6 +16,8 @@ pub fn HomePage() -> impl IntoView {
     let (dst_xml, set_dst_xml) = signal("".to_owned());
     let (ident, set_ident) = signal(get_local_store_value("xml_ident", "4".to_owned()));
     let (in_progress, set_in_progress) = signal(false);
+
+    let file_input_ref: NodeRef<html::Input> = NodeRef::new();
 
     let on_format_click = move |_| {
         spawn_local(async move {
@@ -33,6 +36,35 @@ pub fn HomePage() -> impl IntoView {
                 },
                 Err(_) => (),
             }
+
+            set_in_progress.set(false);
+        });
+    };
+
+    let on_format_file_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(true);
+
+            let file_input = file_input_ref.get().expect("input to exist");
+            if let Some(files) = file_input.files()
+                && let Some(file) = files.get(0)
+            {
+                let form_data = FormData::new().unwrap();
+                form_data.append_with_str("ident", &ident.get_untracked()).unwrap();
+                form_data.append_with_blob("file_data", &file).unwrap();
+
+                match Request::post("/format_xml_file").body(form_data) {
+                    Ok(request) => match request.send().await {
+                        Ok(response) => match response.text().await {
+                            Ok(response_text) => set_dst_xml.set(response_text),
+                            Err(_) => (),
+                        },
+                        Err(_) => (),
+                    },
+                    Err(_) => (),
+                }
+            }
+
             set_in_progress.set(false);
         });
     };
@@ -41,9 +73,7 @@ pub fn HomePage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            match Request::post("/unescape_xml")
-                .body(xml.get_untracked())
-            {
+            match Request::post("/unescape_xml").body(xml.get_untracked()) {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_xml.set(response_text),
@@ -61,9 +91,7 @@ pub fn HomePage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            match Request::post("/escape_xml")
-                .body(xml.get_untracked())
-            {
+            match Request::post("/escape_xml").body(xml.get_untracked()) {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_xml.set(response_text),
@@ -83,16 +111,33 @@ pub fn HomePage() -> impl IntoView {
 
     view! {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-            <TextArea
-                name="xml".to_owned()
-                class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                placeholder="Вставьте xml".to_owned()
-                value=xml
-                set_value=set_xml
-                on_change=move |_| {
-                    set_local_store_value("src_xml", xml.get_untracked());
-                }
-            />
+            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[38dvh] md:h-[90dvh]">
+                <TextArea
+                    name="xml".to_owned()
+                    class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
+                    placeholder="Вставьте xml".to_owned()
+                    value=xml
+                    set_value=set_xml
+                    on_change=move |_| {
+                        set_local_store_value("src_xml", xml.get_untracked());
+                    }
+                />
+                <div class="flex flex-row">
+                    <input node_ref=file_input_ref type="file" class="text-white block w-full text-sm 
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-gray-200 file:text-black
+                        hover:file:bg-gray-300 dark:hover:file:bg-gray-50" />
+                    <Button
+                        label="Format".to_owned()
+                        button_width=ButtonWidth::Md
+                        loading=move || in_progress.get()
+                        on_click=on_format_file_click
+                        disabled=move || in_progress.get()
+                    />
+                </div>
+            </div>
 
             <div class="flex flex-col gap-4 items-center justify-center">
                 <div class="flex flex-row md:flex-col gap-4">
