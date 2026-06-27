@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::io::{Cursor, Write};
 
 use async_stream::try_stream;
 use axum::body::Body;
@@ -32,7 +32,9 @@ fn create_stream(
                 Ok(Event::Eof) => break,
                 Ok(event) => writer.write_event(event)?,
                 Err(err) => {
-                    eprintln!("Error at position {}: {:?}", input_xml_reader.error_position(), err);
+                    let err_str = format!("Error at position {}: {:?}", input_xml_reader.error_position(), err);
+                    writer.get_mut().write_all(err_str.as_bytes())?;
+                    break;
                 }
             };
 

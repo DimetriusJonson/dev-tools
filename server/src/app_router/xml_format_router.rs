@@ -18,9 +18,17 @@ pub async fn format_xml_file_handler(mut multipart: Multipart) -> Result<Body, A
         let name = field.name().unwrap_or("unknown").to_string();
 
         if name == "ident" {
-            ident = field.text().await.map_err(AppError::system_error)?.parse::<usize>().map_err(AppError::system_error)?;
+            ident = field
+                .text()
+                .await
+                .map_err(AppError::system_error)?
+                .parse::<usize>()
+                .map_err(AppError::system_error)?;
         } else if name == "file_data" {
-            return Ok(Body::from_stream(create_stream(field.bytes().await.map_err(AppError::system_error)?, ident)));
+            return Ok(Body::from_stream(create_stream(
+                field.bytes().await.map_err(AppError::system_error)?,
+                ident,
+            )));
         }
     }
 
@@ -30,22 +38,27 @@ pub async fn format_xml_file_handler(mut multipart: Multipart) -> Result<Body, A
 pub async fn format_xml_handler(RawQuery(query): RawQuery, bytes: Bytes) -> Result<Body, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
-    let ident: usize = params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
+    let ident: usize =
+        params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
     Ok(Body::from_stream(create_stream(bytes, ident)))
 }
 
-fn create_stream(
-    data: Bytes,
-    ident: usize,
-) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
     let mut input_xml_reader = Reader::from_reader(Cursor::new(data));
     input_xml_reader.config_mut().trim_text(false);
     try_stream! {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::<u8>::new()), b' ', ident);
         let mut read_buffer = Vec::<u8>::new();
-        while let Some(chunk) = format_chunk(&mut input_xml_reader, &mut read_buffer, &mut writer).await? {
-            yield chunk;
+        loop {
+            match format_chunk(&mut input_xml_reader, &mut read_buffer, &mut writer).await {
+                Ok(Some(chunk)) => yield chunk,
+                Ok(None) => break,
+                Err(err) => {
+                    yield Bytes::from_owner(err.to_string());
+                    break;
+                },
+            }
         }
     }
 }
@@ -58,8 +71,8 @@ async fn format_chunk<R>(
 where
     R: AsyncBufRead + Unpin,
 {
-    match input_xml_reader.read_event_into_async(read_buffer).await {
-        Ok(Event::Text(ref e)) => {
+    match input_xml_reader.read_event_into_async(read_buffer).await? {
+        Event::Text(ref e) => {
             let text_content = input_xml_reader.decoder().decode(e)?;
             let filtered_lines: Vec<&str> =
                 text_content.lines().filter(|line| !line.trim().is_empty()).collect();
@@ -69,14 +82,9 @@ where
                 writer.write_event(Event::Text(BytesText::new(&filtered_text)))?;
             }
         }
-        Ok(Event::Comment(e)) => {
-            writer.write_event(Event::Comment(e))?;
-        }
-        Ok(Event::Eof) => return Ok(None),
-        Ok(event) => writer.write_event(event)?,
-        Err(err) => {
-            eprintln!("Error at position {}: {:?}", input_xml_reader.error_position(), err);
-        }
+        Event::Comment(e) => writer.write_event(Event::Comment(e))?,
+        Event::Eof => return Ok(None),
+        event => writer.write_event(event)?,
     };
 
     let chunk = Bytes::copy_from_slice(writer.get_ref().get_ref());
