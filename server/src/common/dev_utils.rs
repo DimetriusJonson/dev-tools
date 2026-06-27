@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-pub fn parse_query_params<'a>(query_str: &'a str) -> HashMap<&'a str, &'a str> {
+pub fn parse_query_params(query_str: &str) -> HashMap<&str, &str> {
     query_str
         .split('&')
         .filter(|pair| !pair.is_empty())

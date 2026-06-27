@@ -4,6 +4,7 @@ use leptos_meta::{Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::components::{Outlet, ParentRoute, Route, Router, Routes};
 use leptos_router::path;
 
+use crate::components::layout::message_banner::MessageBanner;
 use crate::components::layout::navbar::Navbar;
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor};
 use crate::domain::json::json_page::JsonPage;
@@ -46,6 +47,8 @@ pub fn App() -> impl IntoView {
         // content for this welcome page
         <Router>
             <div class="flex flex-col h-dvh">
+                <MessageBanner />
+
                 <Navbar />
                 <main class="flex flex-col flex-1 overflow-auto bg-white dark:bg-dark-bg">
                     //<MessageBanner />

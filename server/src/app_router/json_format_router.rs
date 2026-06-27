@@ -1,7 +1,10 @@
 use std::io::{self, Cursor, Write};
 
 use async_stream::try_stream;
-use axum::{body::Body, extract::{Multipart, RawQuery}};
+use axum::{
+    body::Body,
+    extract::{Multipart, RawQuery},
+};
 use bytes::Bytes;
 use futures_util::Stream;
 use tokio::io::AsyncReadExt;
@@ -14,19 +17,31 @@ pub async fn format_json_file_handler(mut multipart: Multipart) -> Result<Body, 
         let name = field.name().unwrap_or("unknown").to_string();
 
         if name == "ident" {
-            ident = field.text().await.map_err(AppError::system_error)?.parse::<usize>().map_err(AppError::system_error)?;
+            ident = field
+                .text()
+                .await
+                .map_err(AppError::system_error)?
+                .parse::<usize>()
+                .map_err(AppError::system_error)?;
         } else if name == "file_data" {
-            return Ok(Body::from_stream(create_stream(field.bytes().await.map_err(AppError::system_error)?, ident)));
+            return Ok(Body::from_stream(create_stream(
+                field.bytes().await.map_err(AppError::system_error)?,
+                ident,
+            )));
         }
     }
 
     Ok(Body::from("No multipart data!"))
 }
 
-pub async fn format_json_handler(RawQuery(query): RawQuery, bytes: Bytes) -> Result<Body, AppError> {
+pub async fn format_json_handler(
+    RawQuery(query): RawQuery,
+    bytes: Bytes,
+) -> Result<Body, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
-    let ident: usize = params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
+    let ident: usize =
+        params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
     Ok(Body::from_stream(create_stream(bytes, ident)))
 }
@@ -61,15 +76,11 @@ fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, 
             if in_string {
                 let mut escape_here = false;
                 match char {
-                    b'"' => {
-                        if !escaped {
+                    b'"' if !escaped => {
                             in_string = false;
-                        }
                     }
-                    b'\\' => {
-                        if !escaped {
+                    b'\\' if !escaped => {
                             escape_here = true;
-                        }
                     }
                     _ => {}
                 }
@@ -102,7 +113,7 @@ fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, 
                     b':' => {
                         auto_push = false;
                         writer.write_all(&[char])?;
-                        writer.write_all(&[b' '])?;
+                        writer.write_all(b" ")?;
                     }
                     b',' => {
                         request_newline = true;
@@ -150,7 +161,7 @@ where
 {
     for _ in 0..level {
         for _ in 0..ident {
-            writer.write(b" ")?;
+            writer.write_all(b" ")?;
         }
     }
 

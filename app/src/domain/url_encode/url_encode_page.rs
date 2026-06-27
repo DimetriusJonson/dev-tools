@@ -4,12 +4,15 @@ use leptos::task::spawn_local;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
+use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::text_area::TextArea;
 
 #[component]
 pub fn UrlEncoderPage() -> impl IntoView {
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
+
     let (url, set_url) = signal(get_local_store_value("src_url", "".to_owned()));
     let (dst_url, set_dst_url) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
@@ -24,11 +27,11 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_url.set(response_text),
-                        Err(_) => (),
+                        Err(err) => show_error(err.to_string(), messages),
                     },
-                    Err(_) => (),
+                    Err(err) => show_error(err.to_string(), messages),
                 },
-                Err(_) => (),
+                Err(err) => show_error(err.to_string(), messages),
             }
             set_in_progress.set(false);
         });
@@ -44,11 +47,11 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_url.set(response_text),
-                        Err(_) => (),
+                        Err(err) => show_error(err.to_string(), messages),
                     },
-                    Err(_) => (),
+                    Err(err) => show_error(err.to_string(), messages),
                 },
-                Err(_) => (),
+                Err(err) => show_error(err.to_string(), messages),
             }
             set_in_progress.set(false);
         });

@@ -44,12 +44,8 @@ fn create_stream(
     try_stream! {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::<u8>::new()), b' ', ident);
         let mut read_buffer = Vec::<u8>::new();
-        loop {
-            if let Some(chunk) = format_chunk(&mut input_xml_reader, &mut read_buffer, &mut writer).await? {
-                yield chunk;
-            } else {
-                break;
-            }
+        while let Some(chunk) = format_chunk(&mut input_xml_reader, &mut read_buffer, &mut writer).await? {
+            yield chunk;
         }
     }
 }
@@ -88,5 +84,5 @@ where
     writer.get_mut().set_position(0);
     read_buffer.clear();
 
-    return Ok(Some(chunk));
+    Ok(Some(chunk))
 }
