@@ -8,6 +8,7 @@ use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
+use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
@@ -114,7 +115,7 @@ pub fn XmlPage() -> impl IntoView {
 
     view! {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[38dvh] md:h-[90dvh]">
+            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 <TextArea
                     name="xml".to_owned()
                     class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
@@ -126,12 +127,7 @@ pub fn XmlPage() -> impl IntoView {
                     }
                 />
                 <div class="flex flex-row">
-                    <input node_ref=file_input_ref type="file" class="text-white block w-full text-sm 
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-gray-200 file:text-black
-                        hover:file:bg-gray-300 dark:hover:file:bg-gray-50" />
+                    <FileInput node_ref=file_input_ref />
                     <Button
                         label="Format".to_owned()
                         button_width=ButtonWidth::Md
@@ -183,7 +179,7 @@ pub fn XmlPage() -> impl IntoView {
                 </div>
             </div>
 
-            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[38dvh] md:h-[90dvh]">
+            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                         <CodeInner code={dst_xml.get()} lang="xml".to_string()/>
