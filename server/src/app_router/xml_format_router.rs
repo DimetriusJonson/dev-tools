@@ -20,7 +20,7 @@ pub async fn format_xml_file_handler(mut multipart: Multipart) -> impl IntoRespo
         if name == "ident" {
             ident = field.text().await.unwrap().parse::<usize>().unwrap();
         } else if name == "file_data" {
-            return Body::from_stream(create_stream(field.bytes().await.unwrap(), ident).await);
+            return Body::from_stream(create_stream(field.bytes().await.unwrap(), ident));
         }
     }
 
@@ -32,10 +32,10 @@ pub async fn format_xml_handler(RawQuery(query): RawQuery, bytes: Bytes) -> impl
     let params = parse_query_params(&query_str);
     let ident: usize = params.get("ident").unwrap_or(&"4").parse().unwrap();
 
-    Body::from_stream(create_stream(bytes, ident).await)
+    Body::from_stream(create_stream(bytes, ident))
 }
 
-async fn create_stream(
+fn create_stream(
     data: Bytes,
     ident: usize,
 ) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {

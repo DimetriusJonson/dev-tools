@@ -1,12 +1,27 @@
 use std::io::{self, Cursor, Write};
 
 use async_stream::try_stream;
-use axum::{body::Body, extract::RawQuery, response::IntoResponse};
+use axum::{body::Body, extract::{Multipart, RawQuery}, response::IntoResponse};
 use bytes::Bytes;
 use futures_util::Stream;
 use tokio::io::AsyncReadExt;
 
 use crate::common::dev_utils::parse_query_params;
+
+pub async fn format_json_file_handler(mut multipart: Multipart) -> impl IntoResponse {
+    let mut ident = 0;
+    while let Some(field) = multipart.next_field().await.expect("Failed read multipart!") {
+        let name = field.name().unwrap_or("unknown").to_string();
+
+        if name == "ident" {
+            ident = field.text().await.unwrap().parse::<usize>().unwrap();
+        } else if name == "file_data" {
+            return Body::from_stream(create_stream(field.bytes().await.unwrap(), ident));
+        }
+    }
+
+    Body::from("No multipart data!")
+}
 
 pub async fn format_json_handler(RawQuery(query): RawQuery, bytes: Bytes) -> impl IntoResponse {
     let query_str = query.unwrap_or_default();

@@ -11,7 +11,7 @@ use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
 #[component]
-pub fn HomePage() -> impl IntoView {
+pub fn XmlPage() -> impl IntoView {
     let (xml, set_xml) = signal(get_local_store_value("src_xml", "".to_owned()));
     let (dst_xml, set_dst_xml) = signal("".to_owned());
     let (ident, set_ident) = signal(get_local_store_value("xml_ident", "4".to_owned()));

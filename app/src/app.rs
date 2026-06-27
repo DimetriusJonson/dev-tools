@@ -6,9 +6,9 @@ use leptos_router::path;
 
 use crate::components::layout::navbar::Navbar;
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor};
-use crate::domain::home::home_page::HomePage;
 use crate::domain::json::json_page::JsonPage;
 use crate::domain::url_encode::url_encode_page::UrlEncoderPage;
+use crate::domain::xml::xml_page::XmlPage;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -82,7 +82,7 @@ pub fn App() -> impl IntoView {
 
                         <Routes transition=true fallback=NotFound>
                             <ParentRoute path=path!("/") view=Outlet>
-                                <Route path=path!("") view=HomePage />
+                                <Route path=path!("") view=XmlPage />
                             </ParentRoute>
                             <Route path=path!("/urlEncoder") view=UrlEncoderPage />
                             <Route path=path!("/json") view=JsonPage />
