@@ -29,7 +29,6 @@ pub async fn build_app_router(conf_file: ConfFile) -> anyhow::Result<Router> {
         .route("/escape_xml", post(escape_xml_handler))
         .route("/format_json", post(format_json_handler))
         .route("/format_json_file", post(format_json_file_handler))
-        .layer(DefaultBodyLimit::disable())
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024))
         .route("/encode_url", post(encode_url_handler))
         .route("/decode_url", post(decode_url_handler))
