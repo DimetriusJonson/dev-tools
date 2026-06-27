@@ -1957,6 +1957,7 @@ dependencies = [
  "leptos_axum",
  "log",
  "quick-xml",
+ "thiserror 2.0.18",
  "tokio",
  "tower",
  "tower-http",

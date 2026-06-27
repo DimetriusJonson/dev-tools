@@ -3,36 +3,36 @@ use std::io::Cursor;
 use async_stream::try_stream;
 use axum::body::Body;
 use axum::extract::{Multipart, RawQuery};
-use axum::response::IntoResponse;
 use bytes::Bytes;
 use futures_util::Stream;
 use quick_xml::events::{BytesText, Event};
 use quick_xml::{Reader, Writer};
 use tokio::io::AsyncBufRead;
 
+use crate::common::app_error::AppError;
 use crate::common::dev_utils::parse_query_params;
 
-pub async fn format_xml_file_handler(mut multipart: Multipart) -> impl IntoResponse {
+pub async fn format_xml_file_handler(mut multipart: Multipart) -> Result<Body, AppError> {
     let mut ident = 0;
-    while let Some(field) = multipart.next_field().await.expect("Failed read multipart!") {
+    while let Some(field) = multipart.next_field().await.map_err(AppError::system_error)? {
         let name = field.name().unwrap_or("unknown").to_string();
 
         if name == "ident" {
-            ident = field.text().await.unwrap().parse::<usize>().unwrap();
+            ident = field.text().await.map_err(AppError::system_error)?.parse::<usize>().map_err(AppError::system_error)?;
         } else if name == "file_data" {
-            return Body::from_stream(create_stream(field.bytes().await.unwrap(), ident));
+            return Ok(Body::from_stream(create_stream(field.bytes().await.map_err(AppError::system_error)?, ident)));
         }
     }
 
-    Body::from("No multipart data!")
+    Ok(Body::from("No multipart data!"))
 }
 
-pub async fn format_xml_handler(RawQuery(query): RawQuery, bytes: Bytes) -> impl IntoResponse {
+pub async fn format_xml_handler(RawQuery(query): RawQuery, bytes: Bytes) -> Result<Body, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
-    let ident: usize = params.get("ident").unwrap_or(&"4").parse().unwrap();
+    let ident: usize = params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    Body::from_stream(create_stream(bytes, ident))
+    Ok(Body::from_stream(create_stream(bytes, ident)))
 }
 
 fn create_stream(
