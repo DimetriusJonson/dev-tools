@@ -37,7 +37,7 @@ pub fn MessageBanner() -> impl IntoView {
             style:bottom="1.5rem"
             style:width="100%"
             style:z-index="1000"
-            style:display={match messages.0.read().is_empty() { true => "none", false => "block",}}
+            style:display={move || match messages.0.read().is_empty() { true => "none", false => "block",}}
         >
             {
                 move || messages.0.get().into_iter()

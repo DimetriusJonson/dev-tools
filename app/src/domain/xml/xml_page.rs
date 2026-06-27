@@ -49,7 +49,7 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            let file_input = file_input_ref.get().expect("input to exist");
+            let file_input = file_input_ref.get_untracked().expect("input to exist");
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
