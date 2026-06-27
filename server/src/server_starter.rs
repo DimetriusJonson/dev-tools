@@ -1,6 +1,7 @@
-use std::net::SocketAddr;
+use std::{env, net::SocketAddr};
 use std::thread;
 
+use dotenvy::dotenv;
 use leptos::prelude::*;
 use log::{error, info};
 use tracing_log::LogTracer;
@@ -9,6 +10,13 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use crate::app_router::build_app_router::build_app_router;
 
 pub async fn start_axum_server(custom_addr: Option<SocketAddr>) -> anyhow::Result<()> {
+    let environment = env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string());
+    let env_file_name = format!(".env.{}", environment);
+    println!("environment={}, env_file_name={}", environment, env_file_name);
+
+    dotenv().ok();
+    dotenvy::from_filename_override(env_file_name).ok();
+
     LogTracer::init().expect("Failed to set logger");
 
     let subscriber = FmtSubscriber::builder()
