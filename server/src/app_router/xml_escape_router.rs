@@ -4,27 +4,24 @@ use async_stream::try_stream;
 use axum::body::Body;
 use axum::response::IntoResponse;
 use bytes::Bytes;
-use futures_util::{Stream, StreamExt};
+use futures_util::Stream;
 use quick_xml::escape::{escape, unescape};
 use quick_xml::events::Event;
 use quick_xml::{Reader, Writer};
-use tokio::io::BufReader;
-use tokio_util::io::StreamReader;
 
-pub async fn unescape_xml_handler(body: Body) -> impl IntoResponse {
-    Body::from_stream(create_stream(body, false))
+pub async fn unescape_xml_handler(bytes: Bytes) -> impl IntoResponse {
+    Body::from_stream(create_stream(bytes, false))
 }
 
-pub async fn escape_xml_handler(body: Body) -> impl IntoResponse {
-    Body::from_stream(create_stream(body, true))
+pub async fn escape_xml_handler(bytes: Bytes) -> impl IntoResponse {
+    Body::from_stream(create_stream(bytes, true))
 }
 
-fn create_stream(body: Body, escape_xml: bool) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
-    let request_body_stream =
-        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
-
-    let mut input_xml_reader =
-        Reader::from_reader(BufReader::new(StreamReader::new(request_body_stream)));
+fn create_stream(
+    data: Bytes,
+    escape_xml: bool,
+) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+    let mut input_xml_reader = Reader::from_reader(Cursor::new(data));
     input_xml_reader.config_mut().trim_text(false);
 
     try_stream! {

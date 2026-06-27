@@ -3,26 +3,21 @@ use std::io::{self, Cursor, Write};
 use async_stream::try_stream;
 use axum::{body::Body, extract::RawQuery, response::IntoResponse};
 use bytes::Bytes;
-use futures_util::{Stream, StreamExt};
-use tokio::io::{AsyncReadExt, BufReader};
-use tokio_util::io::StreamReader;
+use futures_util::Stream;
+use tokio::io::AsyncReadExt;
 
 use crate::common::dev_utils::parse_query_params;
 
-pub async fn format_json_handler(RawQuery(query): RawQuery, body: Body) -> impl IntoResponse {
+pub async fn format_json_handler(RawQuery(query): RawQuery, bytes: Bytes) -> impl IntoResponse {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
     let ident: usize = params.get("ident").unwrap_or(&"4").parse().unwrap();
 
-    let stream = create_stream(body, ident);
-    Body::from_stream(stream)
+    Body::from_stream(create_stream(bytes, ident))
 }
 
-fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
-    let request_body_stream =
-        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
-
-    let mut reader = BufReader::new(StreamReader::new(request_body_stream));
+fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+    let mut reader = Cursor::new(data);
 
     try_stream! {
         let mut escaped = false;

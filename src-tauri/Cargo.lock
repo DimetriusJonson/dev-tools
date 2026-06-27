@@ -80,6 +80,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tw_merge",
+ "web-sys",
 ]
 
 [[package]]
@@ -4246,7 +4247,6 @@ dependencies = [
  "log",
  "quick-xml 0.40.1",
  "tokio",
- "tokio-util",
  "tower",
  "tower-http",
  "tracing",

@@ -1958,7 +1958,6 @@ dependencies = [
  "log",
  "quick-xml",
  "tokio",
- "tokio-util",
  "tower",
  "tower-http",
  "tracing",
