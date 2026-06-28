@@ -4,7 +4,7 @@ use leptos::{html, prelude::*};
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
-use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::file_input::FileInput;
@@ -56,7 +56,11 @@ pub fn XmlPage() -> impl IntoView {
                     Ok(request) => match request.send().await {
                         Ok(response) => match response.binary().await {
                             Ok(bytes) => { 
-                                let _ = save_file_to_disk(bytes.to_vec(), &format!("formatted_{}", file.name()), "application/xml");
+                                let file_name = format!("formatted_{}", file.name());
+                                match save_file_to_disk(bytes.to_vec(), &file_name, "application/xml") {
+                                    Ok(_) => show_info(format!("Файл {} сохранен", file_name), messages),
+                                    Err(err) => show_error(err.as_string().unwrap(), messages),
+                                }
                             },
                             Err(err) => show_error(err.to_string(), messages),
                         },
