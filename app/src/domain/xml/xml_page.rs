@@ -3,7 +3,7 @@ use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::common::ui_utils::copy_to_clipboard;
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
@@ -52,14 +52,12 @@ pub fn XmlPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                //let form_data = FormData::new().unwrap();
-                //form_data.append_with_str("ident", &ident.get_untracked()).unwrap();
-                //form_data.append_with_blob("file_data", &file).unwrap();
-
                 match Request::post("/format_xml").body(&file) {
                     Ok(request) => match request.send().await {
-                        Ok(response) => match response.text().await {
-                            Ok(response_text) => set_dst_xml.set(response_text),
+                        Ok(response) => match response.binary().await {
+                            Ok(bytes) => { 
+                                let _ = save_file_to_disk(bytes.to_vec(), &format!("formatted_{}", file.name()), "application/xml");
+                            },
                             Err(err) => show_error(err.to_string(), messages),
                         },
                         Err(err) => show_error(err.to_string(), messages),

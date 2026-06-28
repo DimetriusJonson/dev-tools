@@ -3,7 +3,7 @@ use leptos::{html, prelude::*};
 use leptos::task::spawn_local;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::common::ui_utils::copy_to_clipboard;
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
@@ -53,8 +53,10 @@ pub fn JsonPage() -> impl IntoView {
             {
                 match Request::post("/format_json").body(&file) {
                     Ok(request) => match request.send().await {
-                        Ok(response) => match response.text().await {
-                            Ok(response_text) => set_dst_json.set(response_text),
+                        Ok(response) => match response.binary().await {
+                            Ok(bytes) => { 
+                                let _ = save_file_to_disk(bytes.to_vec(), &format!("formatted_{}", file.name()), "application/json");
+                            },
                             Err(err) => show_error(err.to_string(), messages),
                         },
                         Err(err) => show_error(err.to_string(), messages),
