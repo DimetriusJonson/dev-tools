@@ -56,7 +56,7 @@ pub fn JsonPage() -> impl IntoView {
                 form_data.append_with_str("ident", &ident.get_untracked()).unwrap();
                 form_data.append_with_blob("file_data", &file).unwrap();
 
-                match Request::post("/format_json_file").body(form_data) {
+                match Request::post("/format_json").body(form_data) {
                     Ok(request) => match request.send().await {
                         Ok(response) => match response.text().await {
                             Ok(response_text) => set_dst_json.set(response_text),

@@ -1,53 +1,28 @@
 use std::io::{self, Cursor, Write};
 
 use async_stream::try_stream;
-use axum::{
-    body::Body,
-    extract::{Multipart, RawQuery},
-};
+use axum::{body::Body, extract::RawQuery};
 use bytes::Bytes;
-use futures_util::Stream;
-use tokio::io::AsyncReadExt;
+use futures_util::{Stream, StreamExt};
+use tokio::io::{AsyncReadExt, BufReader};
+use tokio_util::io::StreamReader;
 
 use crate::common::{app_error::AppError, dev_utils::parse_query_params};
 
-pub async fn format_json_file_handler(mut multipart: Multipart) -> Result<Body, AppError> {
-    let mut ident = 0;
-    while let Some(field) = multipart.next_field().await.map_err(AppError::system_error)? {
-        let name = field.name().unwrap_or("unknown").to_string();
-
-        if name == "ident" {
-            ident = field
-                .text()
-                .await
-                .map_err(AppError::system_error)?
-                .parse::<usize>()
-                .map_err(AppError::system_error)?;
-        } else if name == "file_data" {
-            return Ok(Body::from_stream(create_stream(
-                field.bytes().await.map_err(AppError::system_error)?,
-                ident,
-            )));
-        }
-    }
-
-    Ok(Body::from("No multipart data!"))
-}
-
-pub async fn format_json_handler(
-    RawQuery(query): RawQuery,
-    bytes: Bytes,
-) -> Result<Body, AppError> {
+pub async fn format_json_handler(RawQuery(query): RawQuery, body: Body) -> Result<Body, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    Ok(Body::from_stream(create_stream(bytes, ident)))
+    Ok(Body::from_stream(create_stream(body, ident)))
 }
 
-fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
-    let mut reader = Cursor::new(data);
+fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+    let request_body_stream =
+        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
+
+    let mut reader = BufReader::new(StreamReader::new(request_body_stream));
 
     try_stream! {
         let mut escaped = false;
@@ -56,6 +31,9 @@ fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, 
         let mut newline_requested = false; // invalidated if next character is ] or }
 
         let mut writer = Cursor::new(Vec::<u8>::new());
+
+        let mut found_first_brace = false;
+        let mut need_open_brace = false;
 
         loop {
             let mut char: u8 = 0;
@@ -71,6 +49,18 @@ fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, 
 
             if char == 0 {
                 break;
+            }
+
+            if !found_first_brace && char == b'{' {
+                found_first_brace = true;
+            }
+
+            if !found_first_brace {
+                continue;
+            }
+
+            if need_open_brace && char != b'{' && char != b'[' && char != b'}' && char != b']' {
+                continue;
             }
 
             if in_string {
@@ -95,14 +85,17 @@ fn create_stream(data: Bytes, ident: usize) -> impl Stream<Item = Result<Bytes, 
                     b'"' => in_string = true,
                     b' ' | b'\n' | b'\r' | b'\t' => continue,
                     b'[' => {
+                        need_open_brace = false;
                         indent_level += 1;
                         request_newline = true;
                     }
                     b'{' => {
+                        need_open_brace = false;
                         indent_level += 1;
                         request_newline = true;
                     }
                     b'}' | b']' => {
+                        need_open_brace = true;
                         indent_level = indent_level.saturating_sub(1);
                         if !newline_requested {
                             // see comment below about newline_requested

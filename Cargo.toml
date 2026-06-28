@@ -38,6 +38,7 @@ unescaper = "0.1.8"
 thiserror = "2.0.18"
 uuid = { version = "1.23", features = ["v4", "fast-rng", "js"] }
 dotenvy = { version = "0.15" }
+tokio-util = "0.7.18"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

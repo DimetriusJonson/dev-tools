@@ -25,6 +25,7 @@ urlencoding.workspace=true
 unescaper.workspace=true
 thiserror.workspace=true
 dotenvy.workspace=true
+tokio-util.workspace=true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}
