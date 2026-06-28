@@ -32,9 +32,6 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
 
         let mut writer = Cursor::new(Vec::<u8>::new());
 
-        let mut found_first_brace = false;
-        let mut need_open_brace = false;
-
         loop {
             let mut char: u8 = 0;
             match reader.read_u8().await {
@@ -49,18 +46,6 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
 
             if char == 0 {
                 break;
-            }
-
-            if !found_first_brace && char == b'{' {
-                found_first_brace = true;
-            }
-
-            if !found_first_brace {
-                continue;
-            }
-
-            if need_open_brace && char != b'{' && char != b'[' && char != b'}' && char != b']' {
-                continue;
             }
 
             if in_string {
@@ -85,17 +70,14 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
                     b'"' => in_string = true,
                     b' ' | b'\n' | b'\r' | b'\t' => continue,
                     b'[' => {
-                        need_open_brace = false;
                         indent_level += 1;
                         request_newline = true;
                     }
                     b'{' => {
-                        need_open_brace = false;
                         indent_level += 1;
                         request_newline = true;
                     }
                     b'}' | b']' => {
-                        need_open_brace = true;
                         indent_level = indent_level.saturating_sub(1);
                         if !newline_requested {
                             // see comment below about newline_requested

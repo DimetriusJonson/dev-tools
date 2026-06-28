@@ -1,7 +1,6 @@
 use gloo_net::http::Request;
 use leptos::{html, prelude::*};
 use leptos::task::spawn_local;
-use web_sys::FormData;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
@@ -52,11 +51,7 @@ pub fn JsonPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                let form_data = FormData::new().unwrap();
-                form_data.append_with_str("ident", &ident.get_untracked()).unwrap();
-                form_data.append_with_blob("file_data", &file).unwrap();
-
-                match Request::post("/format_json").body(form_data) {
+                match Request::post("/format_json").body(&file) {
                     Ok(request) => match request.send().await {
                         Ok(response) => match response.text().await {
                             Ok(response_text) => set_dst_json.set(response_text),
