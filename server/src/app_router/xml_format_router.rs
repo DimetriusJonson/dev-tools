@@ -6,11 +6,10 @@ use axum::extract::RawQuery;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use bytes::Bytes;
-use futures_util::{Stream, StreamExt};
+use futures_util::Stream;
 use quick_xml::events::{BytesText, Event};
 use quick_xml::{Reader, Writer};
 use tokio::io::{AsyncBufRead, BufReader};
-use tokio_util::io::StreamReader;
 
 use crate::common::app_error::AppError;
 use crate::common::dev_utils::parse_query_params;
@@ -24,7 +23,7 @@ pub async fn format_xml_handler(
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    let body = Body::from_stream(create_stream(body, ident));
+    let body = Body::from_stream(create_stream(body, ident).await);
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
@@ -35,13 +34,9 @@ pub async fn format_xml_handler(
     Ok(response)
 }
 
-fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
-    let request_body_stream =
-        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
+async fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+    let mut input_xml_reader = build_reader(body).await;
 
-    let mut input_xml_reader =
-        Reader::from_reader(BufReader::new(StreamReader::new(request_body_stream)));
-    input_xml_reader.config_mut().trim_text(false);
     try_stream! {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::<u8>::new()), b' ', ident);
         let mut read_buffer = Vec::<u8>::new();
@@ -56,6 +51,25 @@ fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, a
             }
         }
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+async fn build_reader(body: Body) -> Reader<impl AsyncBufRead + Unpin> {
+    let request_body_stream =
+        body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
+    let mut input_xml_reader =
+        Reader::from_reader(BufReader::new(StreamReader::new(request_body_stream)));
+    input_xml_reader.config_mut().trim_text(false);
+    input_xml_reader
+}
+
+#[cfg(target_os = "windows")]
+async fn build_reader(body: Body) -> Reader<impl AsyncBufRead + Unpin> {
+    let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+
+    let mut input_xml_reader = Reader::from_reader(BufReader::new(Cursor::new(bytes)));
+    input_xml_reader.config_mut().trim_text(false);
+    input_xml_reader
 }
 
 async fn format_chunk<R>(

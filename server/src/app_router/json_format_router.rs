@@ -8,9 +8,10 @@ use axum::{
     response::IntoResponse,
 };
 use bytes::Bytes;
-use futures_util::{Stream, StreamExt};
+use futures_util::Stream;
+#[cfg(target_os = "windows")]
+use tokio::io::AsyncBufRead;
 use tokio::io::{AsyncReadExt, BufReader};
-use tokio_util::io::StreamReader;
 
 use crate::common::{app_error::AppError, dev_utils::parse_query_params};
 
@@ -23,7 +24,7 @@ pub async fn format_json_handler(
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    let body = Body::from_stream(create_stream(body, ident));
+    let body = Body::from_stream(create_stream(body, ident).await);
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
@@ -34,11 +35,24 @@ pub async fn format_json_handler(
     Ok(response)
 }
 
-fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+#[cfg(not(target_os = "windows"))]
+async fn build_reader(body: Body) -> impl AsyncBufRead + Unpin {
     let request_body_stream =
         body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
+    BufReader::new(StreamReader::new(request_body_stream))
+}
 
-    let mut reader = BufReader::new(StreamReader::new(request_body_stream));
+#[cfg(target_os = "windows")]
+async fn build_reader(body: Body) -> impl AsyncBufRead + Unpin {
+    let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+    BufReader::new(Cursor::new(bytes))
+}
+
+async fn create_stream(
+    body: Body,
+    ident: usize,
+) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
+    let mut reader = build_reader(body).await;
 
     try_stream! {
         let mut escaped = false;
