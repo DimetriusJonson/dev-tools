@@ -37,24 +37,26 @@ pub async fn escape_json_handler(body: Body) -> Result<impl IntoResponse, AppErr
 pub async fn unescape_json_handler(body: Body) -> Result<impl IntoResponse, AppError> {
     let mut unescaper = UnescapeStream::new();
     let request_body_stream = body.into_data_stream().map(move |result| match result {
-        Ok(bytes) => {
-            let (boundary_char, rest_of_part) = unescaper.try_unescape_next(&bytes).unwrap();
-
-            let mut unescaped_str = String::new();
-            if let Some(c) = boundary_char {
-                unescaped_str.push(c);
-            }
-
-            for token in rest_of_part {
-                match token.unwrap() {
-                    UnescapedToken::Literal(literal) => {
-                        unescaped_str.push_str(&String::from_utf8_lossy(&literal).to_string())
-                    }
-                    UnescapedToken::Unescaped(ch) => unescaped_str.push(ch),
+        Ok(bytes) => match unescaper.try_unescape_next(&bytes) {
+            Ok((boundary_char, rest_of_part)) => {
+                let mut unescaped_str = String::new();
+                if let Some(c) = boundary_char {
+                    unescaped_str.push(c);
                 }
+
+                for token in rest_of_part {
+                    match token {
+                        Ok(UnescapedToken::Literal(literal)) => {
+                            unescaped_str.push_str(&String::from_utf8_lossy(&literal).to_string())
+                        }
+                        Ok(UnescapedToken::Unescaped(ch)) => unescaped_str.push(ch),
+                        Err(err) => return Err(std::io::Error::other(err.to_string())),
+                    }
+                }
+                Ok(Bytes::from(unescaped_str))
             }
-            Ok(Bytes::from(unescaped_str))
-        }
+            Err(err) => return Err(std::io::Error::other(err.to_string())),
+        },
         Err(err) => Err(std::io::Error::other(err)),
     });
     let body = Body::from_stream(request_body_stream);
