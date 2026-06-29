@@ -2435,6 +2435,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "json-escape"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef6fd1644b881a0cb8030578c318e14840e543876e98f7bc9215270fd55ca5db"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "json-patch"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4288,6 +4297,7 @@ dependencies = [
  "bytes",
  "dotenvy",
  "futures-util",
+ "json-escape",
  "leptos",
  "leptos_axum",
  "log",
@@ -4300,7 +4310,6 @@ dependencies = [
  "tracing",
  "tracing-log",
  "tracing-subscriber",
- "unescaper",
  "urlencoding",
 ]
 
@@ -5523,15 +5532,6 @@ dependencies = [
  "memoffset",
  "tempfile",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "unescaper"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4064ed685c487dbc25bd3f0e9548f2e34bab9d18cefc700f9ec2dba74ba1138e"
-dependencies = [
- "thiserror 2.0.18",
 ]
 
 [[package]]

@@ -173,6 +173,14 @@ pub fn JsonPage() -> impl IntoView {
 
                 <div class="flex flex-row md:flex-col gap-4 md:py-8">
                     <Button
+                        label="Unescape".to_owned()
+                        button_width=ButtonWidth::Md
+                        loading=move || in_progress.get()
+                        on_click=on_unescape_click
+                        disabled=move || in_progress.get()
+                    />
+
+                    <Button
                         label="Escape".to_owned()
                         button_width=ButtonWidth::Md
                         loading=move || in_progress.get()
@@ -180,13 +188,6 @@ pub fn JsonPage() -> impl IntoView {
                         disabled=move || in_progress.get()
                     />
 
-                    <Button
-                        label="Unescape".to_owned()
-                        button_width=ButtonWidth::Md
-                        loading=move || in_progress.get()
-                        on_click=on_unescape_click
-                        disabled=move || in_progress.get()
-                    />
                 </div>
 
 
