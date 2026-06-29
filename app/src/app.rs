@@ -72,7 +72,7 @@ pub fn App() -> impl IntoView {
                                     </ul>
                                     <div class="m-5">
                                         <ButtonLink
-                                            color=ButtonLinkColor::Primary
+                                            color=move || ButtonLinkColor::Primary
                                             href="/".to_owned()
                                             label="Вернутся Домой".to_owned()
                                             on:click=on_click

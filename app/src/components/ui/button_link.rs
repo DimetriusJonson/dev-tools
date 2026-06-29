@@ -29,7 +29,8 @@ pub fn ButtonLink(
     #[prop(optional)] id: i32,
     label: String,
     href: String,
-    #[prop(optional)] color: ButtonLinkColor,
+    color: impl Fn() -> ButtonLinkColor + Send + Sync + 'static,
+
     #[prop(optional)] text_size: ButtonLinkTextSize,
     #[prop(optional)] button_width: ButtonLinkWidth,
     #[prop(optional)] class_name: String,
@@ -37,7 +38,7 @@ pub fn ButtonLink(
 
     let base_classes = "rounded-3xl cursor-pointer font-medium px-6 py-1 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
-    let variant_classes = match color {
+    let variant_classes = move || match color() {
         ButtonLinkColor::Ghost => "text-link dark:text-link-dark".to_owned(),
         ButtonLinkColor::Light => "bg-gray-200 dark:hover:bg-gray-50 hover:bg-gray-300 text-black".to_owned(),
         ButtonLinkColor::Black => "bg-black hover:bg-gray-900 text-white".to_owned(),
@@ -58,7 +59,7 @@ pub fn ButtonLink(
     let aria_label = label.to_owned();
     view! {
         <a id=id aria-label=aria_label href=href
-            class=format!("{} {} {} {} {}", base_classes, variant_classes, text_size_classes, button_width_classes, class_name)>
+            class=move || format!("{} {} {} {} {}", base_classes, variant_classes(), text_size_classes, button_width_classes, class_name)>
             {label}
         </a>
     }
