@@ -83,6 +83,24 @@ pub fn JsonPage() -> impl IntoView {
         });
     };
 
+    let on_escape_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(true);
+
+            match Request::post("/escape_json").body(json.get_untracked()) {
+                Ok(request) => match request.send().await {
+                    Ok(response) => match response.text().await {
+                        Ok(response_text) => set_dst_json.set(response_text),
+                        Err(err) => show_error(err.to_string(), messages),
+                    },
+                    Err(err) => show_error(err.to_string(), messages),
+                },
+                Err(err) => show_error(err.to_string(), messages),
+            }
+            set_in_progress.set(false);
+        });
+    };
+
     let on_unescape_click = move |_| {
         spawn_local(async move {
             set_in_progress.set(true);
@@ -154,6 +172,14 @@ pub fn JsonPage() -> impl IntoView {
                 </div>
 
                 <div class="flex flex-row md:flex-col gap-4 md:py-8">
+                    <Button
+                        label="Escape".to_owned()
+                        button_width=ButtonWidth::Md
+                        loading=move || in_progress.get()
+                        on_click=on_escape_click
+                        disabled=move || in_progress.get()
+                    />
+
                     <Button
                         label="Unescape".to_owned()
                         button_width=ButtonWidth::Md
