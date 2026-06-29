@@ -1109,6 +1109,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "json-escape"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef6fd1644b881a0cb8030578c318e14840e543876e98f7bc9215270fd55ca5db"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "konst"
 version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1999,6 +2008,7 @@ dependencies = [
  "bytes",
  "dotenvy",
  "futures-util",
+ "json-escape",
  "leptos",
  "leptos_axum",
  "log",
@@ -2011,7 +2021,6 @@ dependencies = [
  "tracing",
  "tracing-log",
  "tracing-subscriber",
- "unescaper",
  "urlencoding",
 ]
 
@@ -2568,15 +2577,6 @@ name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
-
-[[package]]
-name = "unescaper"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4064ed685c487dbc25bd3f0e9548f2e34bab9d18cefc700f9ec2dba74ba1138e"
-dependencies = [
- "thiserror 2.0.18",
-]
 
 [[package]]
 name = "unicase"
