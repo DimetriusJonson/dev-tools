@@ -9,7 +9,6 @@ use axum::{
 };
 use bytes::Bytes;
 use futures_util::Stream;
-#[cfg(target_os = "windows")]
 use tokio::io::AsyncBufRead;
 use tokio::io::{AsyncReadExt, BufReader};
 
@@ -37,9 +36,11 @@ pub async fn format_json_handler(
 
 #[cfg(not(target_os = "windows"))]
 async fn build_reader(body: Body) -> impl AsyncBufRead + Unpin {
+    use futures_util::StreamExt;
+
     let request_body_stream =
         body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
-    BufReader::new(StreamReader::new(request_body_stream))
+    BufReader::new(tokio_util::io::StreamReader::new(request_body_stream))
 }
 
 #[cfg(target_os = "windows")]

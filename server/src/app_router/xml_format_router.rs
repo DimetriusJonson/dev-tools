@@ -55,10 +55,12 @@ async fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<By
 
 #[cfg(not(target_os = "windows"))]
 async fn build_reader(body: Body) -> Reader<impl AsyncBufRead + Unpin> {
+    use futures_util::StreamExt;
+
     let request_body_stream =
         body.into_data_stream().map(|result| result.map_err(std::io::Error::other));
     let mut input_xml_reader =
-        Reader::from_reader(BufReader::new(StreamReader::new(request_body_stream)));
+        Reader::from_reader(BufReader::new(tokio_util::io::StreamReader::new(request_body_stream)));
     input_xml_reader.config_mut().trim_text(false);
     input_xml_reader
 }
