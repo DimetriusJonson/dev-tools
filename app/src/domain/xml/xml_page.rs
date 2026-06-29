@@ -28,6 +28,7 @@ pub fn XmlPage() -> impl IntoView {
 
             match Request::post("/format_xml")
                 .query([("ident", ident.get_untracked())])
+                .header("content-type", "application/xml")
                 .body(xml.get_untracked())
             {
                 Ok(request) => match request.send().await {
@@ -52,16 +53,25 @@ pub fn XmlPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                match Request::post("/format_xml").body(&file) {
+                match Request::post("/format_xml")
+                    .header("content-type", "application/xml")
+                    .body(&file)
+                {
                     Ok(request) => match request.send().await {
                         Ok(response) => match response.binary().await {
-                            Ok(bytes) => { 
+                            Ok(bytes) => {
                                 let file_name = format!("formatted_{}", file.name());
-                                match save_file_to_disk(bytes.to_vec(), &file_name, "application/xml") {
-                                    Ok(_) => show_info(format!("Файл {} сохранен", file_name), messages),
+                                match save_file_to_disk(
+                                    bytes.to_vec(),
+                                    &file_name,
+                                    "application/xml",
+                                ) {
+                                    Ok(_) => {
+                                        show_info(format!("Файл {} сохранен", file_name), messages)
+                                    }
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
-                            },
+                            }
                             Err(err) => show_error(err.to_string(), messages),
                         },
                         Err(err) => show_error(err.to_string(), messages),
@@ -78,7 +88,10 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            match Request::post("/unescape_xml").body(xml.get_untracked()) {
+            match Request::post("/unescape_xml")
+                .header("content-type", "application/xml")
+                .body(xml.get_untracked())
+            {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_xml.set(response_text),
@@ -96,7 +109,10 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            match Request::post("/escape_xml").body(xml.get_untracked()) {
+            match Request::post("/escape_xml")
+                .header("content-type", "application/xml")
+                .body(xml.get_untracked())
+            {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => set_dst_xml.set(response_text),

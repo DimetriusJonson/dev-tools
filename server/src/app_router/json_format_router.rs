@@ -1,7 +1,12 @@
 use std::io::{self, Cursor, Write};
 
 use async_stream::try_stream;
-use axum::{body::Body, extract::RawQuery};
+use axum::{
+    body::Body,
+    extract::RawQuery,
+    http::{StatusCode, header},
+    response::IntoResponse,
+};
 use bytes::Bytes;
 use futures_util::{Stream, StreamExt};
 use tokio::io::{AsyncReadExt, BufReader};
@@ -9,13 +14,24 @@ use tokio_util::io::StreamReader;
 
 use crate::common::{app_error::AppError, dev_utils::parse_query_params};
 
-pub async fn format_json_handler(RawQuery(query): RawQuery, body: Body) -> Result<Body, AppError> {
+pub async fn format_json_handler(
+    RawQuery(query): RawQuery,
+    body: Body,
+) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    Ok(Body::from_stream(create_stream(body, ident)))
+    let body = Body::from_stream(create_stream(body, ident));
+
+    let response = axum::http::Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(body)
+        .map_err(AppError::system_error)?;
+
+    Ok(response)
 }
 
 fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {

@@ -1,6 +1,6 @@
 use gloo_net::http::Request;
-use leptos::{html, prelude::*};
 use leptos::task::spawn_local;
+use leptos::{html, prelude::*};
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
@@ -28,6 +28,7 @@ pub fn JsonPage() -> impl IntoView {
 
             match Request::post("/format_json")
                 .query([("ident", ident.get_untracked())])
+                .header("content-type", "application/json")
                 .body(json.get_untracked())
             {
                 Ok(request) => match request.send().await {
@@ -51,16 +52,25 @@ pub fn JsonPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                match Request::post("/format_json").body(&file) {
+                match Request::post("/format_json")
+                    .header("content-type", "application/json")
+                    .body(&file)
+                {
                     Ok(request) => match request.send().await {
                         Ok(response) => match response.binary().await {
-                            Ok(bytes) => { 
+                            Ok(bytes) => {
                                 let file_name = format!("formatted_{}", file.name());
-                                match save_file_to_disk(bytes.to_vec(), &file_name, "application/json") {
-                                    Ok(_) => show_info(format!("Файл {} сохранен", file_name), messages),
+                                match save_file_to_disk(
+                                    bytes.to_vec(),
+                                    &file_name,
+                                    "application/json",
+                                ) {
+                                    Ok(_) => {
+                                        show_info(format!("Файл {} сохранен", file_name), messages)
+                                    }
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
-                            },
+                            }
                             Err(err) => show_error(err.to_string(), messages),
                         },
                         Err(err) => show_error(err.to_string(), messages),

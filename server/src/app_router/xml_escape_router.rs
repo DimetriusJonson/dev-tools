@@ -2,6 +2,7 @@ use std::io::{Cursor, Write};
 
 use async_stream::try_stream;
 use axum::body::Body;
+use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use bytes::Bytes;
 use futures_util::{Stream, StreamExt};
@@ -11,12 +12,30 @@ use quick_xml::{Reader, Writer};
 use tokio::io::BufReader;
 use tokio_util::io::StreamReader;
 
-pub async fn unescape_xml_handler(body: Body) -> impl IntoResponse {
-    Body::from_stream(create_stream(body, false))
+use crate::common::app_error::AppError;
+
+pub async fn unescape_xml_handler(body: Body) -> Result<impl IntoResponse, AppError> {
+    let body = Body::from_stream(create_stream(body, false));
+
+    let response = axum::http::Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/xml")
+        .body(body)
+        .map_err(AppError::system_error)?;
+
+    Ok(response)
 }
 
-pub async fn escape_xml_handler(body: Body) -> impl IntoResponse {
-    Body::from_stream(create_stream(body, true))
+pub async fn escape_xml_handler(body: Body) -> Result<impl IntoResponse, AppError> {
+    let body = Body::from_stream(create_stream(body, true));
+
+    let response = axum::http::Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/xml")
+        .body(body)
+        .map_err(AppError::system_error)?;
+
+    Ok(response)
 }
 
 fn create_stream(body: Body, escape_xml: bool) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
