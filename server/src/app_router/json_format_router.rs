@@ -4,6 +4,7 @@ use axum::{
     http::{StatusCode, header},
     response::IntoResponse,
 };
+use tokio_util::io::ReaderStream;
 
 use crate::common::json_formatter::JsonFormatter;
 use crate::common::{app_error::AppError, dev_utils::parse_query_params};
@@ -43,8 +44,16 @@ async fn process_json_data(body: Body, ident: usize) -> Body {
 
 #[cfg(target_os = "windows")]
 async fn process_json_data(body: Body, ident: usize) -> Body {
+    use futures_util::StreamExt;
+    use std::io::Cursor;
+
     let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
     let mut formatter = JsonFormatter::new(ident);
 
-    Body::from(formatter.format_bytes(bytes))
+    let stream = ReaderStream::new(Cursor::new(bytes)).map(move |result| match result {
+        Ok(data) => Ok(formatter.format_bytes(data)),
+        Err(err) => Err(std::io::Error::other(err)),
+    });
+
+    Body::from_stream(stream)
 }
