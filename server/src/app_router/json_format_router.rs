@@ -9,10 +9,12 @@ use axum::{
 };
 use bytes::Bytes;
 use futures_util::Stream;
-use tokio::io::AsyncBufRead;
-use tokio::io::{AsyncReadExt, BufReader};
+use tokio::io::{AsyncBufRead, AsyncReadExt};
+use tokio::io::BufReader;
 
 use crate::common::{app_error::AppError, dev_utils::parse_query_params};
+
+const BUFF_SIZE: usize = 1024;
 
 pub async fn format_json_handler(
     RawQuery(query): RawQuery,
@@ -61,7 +63,7 @@ async fn create_stream(
         let mut indent_level = 0usize;
         let mut newline_requested = false; // invalidated if next character is ] or }
 
-        let mut formatted_bytes = Vec::<u8>::new();
+        let mut formatted_bytes = Vec::<u8>::with_capacity(BUFF_SIZE);
         loop {
             let mut char: u8 = 0;
             match reader.read_u8().await {
@@ -139,7 +141,7 @@ async fn create_stream(
 
                 newline_requested = request_newline;
 
-                if formatted_bytes.len() > 1024 {
+                if formatted_bytes.len() > BUFF_SIZE {
                     let chunk = Bytes::copy_from_slice(&formatted_bytes);
                     formatted_bytes.clear();
 

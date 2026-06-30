@@ -27,7 +27,7 @@ pub async fn escape_json_handler(body: Body) -> Result<impl IntoResponse, AppErr
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "application/xml")
+        .header(header::CONTENT_TYPE, "application/json")
         .body(body)
         .map_err(AppError::system_error)?;
 
@@ -63,7 +63,7 @@ pub async fn unescape_json_handler(body: Body) -> Result<impl IntoResponse, AppE
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "application/xml")
+        .header(header::CONTENT_TYPE, "application/json")
         .body(body)
         .map_err(AppError::system_error)?;
 
