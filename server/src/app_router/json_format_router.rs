@@ -61,8 +61,7 @@ async fn create_stream(
         let mut indent_level = 0usize;
         let mut newline_requested = false; // invalidated if next character is ] or }
 
-        let mut writer = Cursor::new(Vec::<u8>::new());
-
+        let mut formatted_bytes = Vec::<u8>::new();
         loop {
             let mut char: u8 = 0;
             match reader.read_u8().await {
@@ -90,7 +89,7 @@ async fn create_stream(
                     }
                     _ => {}
                 }
-                writer.write_all(&[char])?;
+                formatted_bytes.write_all(&[char])?;
                 escaped = escape_here;
             } else {
                 let mut auto_push = true;
@@ -112,14 +111,14 @@ async fn create_stream(
                         indent_level = indent_level.saturating_sub(1);
                         if !newline_requested {
                             // see comment below about newline_requested
-                            writer.write_all(b"\n")?;
-                            write_ident(&mut writer, indent_level, ident)?;
+                            formatted_bytes.push(b'\n');
+                            write_ident(&mut formatted_bytes, indent_level, ident)?;
                         }
                     }
                     b':' => {
                         auto_push = false;
-                        writer.write_all(&[char])?;
-                        writer.write_all(b" ")?;
+                        formatted_bytes.push(char);
+                        formatted_bytes.push(b' ');
                     }
                     b',' => {
                         request_newline = true;
@@ -130,20 +129,19 @@ async fn create_stream(
                     // newline only happens after { [ and ,
                     // this means we can safely assume that it being followed up by } or ]
                     // means an empty object/array
-                    writer.write_all(b"\n")?;
-                    write_ident(&mut writer, old_level, ident)?;
+                    formatted_bytes.push(b'\n');
+                    write_ident(&mut formatted_bytes, old_level, ident)?;
                 }
 
                 if auto_push {
-                    writer.write_all(&[char])?;
+                    formatted_bytes.push(char);
                 }
 
                 newline_requested = request_newline;
 
-                if writer.position() > 1024 {
-                    let chunk = Bytes::copy_from_slice(writer.get_ref());
-                    writer.get_mut().clear();
-                    writer.set_position(0);
+                if formatted_bytes.len() > 1024 {
+                    let chunk = Bytes::copy_from_slice(&formatted_bytes);
+                    formatted_bytes.clear();
 
                     yield chunk;
                 }
@@ -151,11 +149,10 @@ async fn create_stream(
         }
 
         // trailing newline
-        writer.write_all(b"\n")?;
+        formatted_bytes.push(b'\n');
 
-        let chunk = Bytes::copy_from_slice(writer.get_ref());
-        writer.get_mut().clear();
-        writer.set_position(0);
+        let chunk = Bytes::copy_from_slice(&formatted_bytes);
+        formatted_bytes.clear();
 
         yield chunk;
     }
