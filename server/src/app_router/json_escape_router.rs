@@ -47,7 +47,7 @@ pub async fn unescape_json_handler(body: Body) -> Result<impl IntoResponse, AppE
                 for token in rest_of_part {
                     match token {
                         Ok(UnescapedToken::Literal(literal)) => {
-                            unescaped_str.push_str(&String::from_utf8_lossy(&literal).to_string())
+                            unescaped_str.push_str(&String::from_utf8_lossy(literal))
                         }
                         Ok(UnescapedToken::Unescaped(ch)) => unescaped_str.push(ch),
                         Err(err) => return Err(std::io::Error::other(err.to_string())),
@@ -55,7 +55,7 @@ pub async fn unescape_json_handler(body: Body) -> Result<impl IntoResponse, AppE
                 }
                 Ok(Bytes::from(unescaped_str))
             }
-            Err(err) => return Err(std::io::Error::other(err.to_string())),
+            Err(err) => Err(std::io::Error::other(err.to_string())),
         },
         Err(err) => Err(std::io::Error::other(err)),
     });

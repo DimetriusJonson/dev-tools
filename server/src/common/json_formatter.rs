@@ -88,7 +88,7 @@ impl JsonFormatter {
         chunk
     }
 
-    fn write_ident(write_buffer: &mut Vec<u8>, level: usize, ident: usize) -> () {
+    fn write_ident(write_buffer: &mut Vec<u8>, level: usize, ident: usize) {
         for _ in 0..level * ident {
             write_buffer.push(b' ');
         }
