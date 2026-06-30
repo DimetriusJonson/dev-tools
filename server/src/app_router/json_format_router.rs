@@ -1,6 +1,6 @@
-use std::io::{self, Cursor, Write};
+use std::io::{self, Cursor};
 
-use async_stream::try_stream;
+use async_stream::stream;
 use axum::{
     body::Body,
     extract::RawQuery,
@@ -57,7 +57,7 @@ async fn create_stream(
 ) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
     let mut reader = build_reader(body).await;
 
-    try_stream! {
+    stream! {
         let mut escaped = false;
         let mut in_string = false;
         let mut indent_level = 0usize;
@@ -91,7 +91,7 @@ async fn create_stream(
                     }
                     _ => {}
                 }
-                formatted_bytes.write_all(&[char])?;
+                formatted_bytes.push(char);
                 escaped = escape_here;
             } else {
                 let mut auto_push = true;
@@ -145,7 +145,7 @@ async fn create_stream(
                     let chunk = Bytes::copy_from_slice(&formatted_bytes);
                     formatted_bytes.clear();
 
-                    yield chunk;
+                    yield Ok(chunk);
                 }
             }
         }
@@ -156,7 +156,7 @@ async fn create_stream(
         let chunk = Bytes::copy_from_slice(&formatted_bytes);
         formatted_bytes.clear();
 
-        yield chunk;
+        yield Ok(chunk);
     }
 }
 
