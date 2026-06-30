@@ -9,8 +9,8 @@ use axum::{
 };
 use bytes::Bytes;
 use futures_util::Stream;
-use tokio::io::{AsyncBufRead, AsyncReadExt};
 use tokio::io::BufReader;
+use tokio::io::{AsyncBufRead, AsyncReadExt};
 
 use crate::common::{app_error::AppError, dev_utils::parse_query_params};
 
@@ -114,7 +114,7 @@ async fn create_stream(
                         if !newline_requested {
                             // see comment below about newline_requested
                             formatted_bytes.push(b'\n');
-                            write_ident(&mut formatted_bytes, indent_level, ident)?;
+                            write_ident(&mut formatted_bytes, indent_level, ident);
                         }
                     }
                     b':' => {
@@ -132,7 +132,7 @@ async fn create_stream(
                     // this means we can safely assume that it being followed up by } or ]
                     // means an empty object/array
                     formatted_bytes.push(b'\n');
-                    write_ident(&mut formatted_bytes, old_level, ident)?;
+                    write_ident(&mut formatted_bytes, old_level, ident);
                 }
 
                 if auto_push {
@@ -160,15 +160,8 @@ async fn create_stream(
     }
 }
 
-fn write_ident<W>(writer: &mut W, level: usize, ident: usize) -> io::Result<()>
-where
-    W: Write,
-{
-    for _ in 0..level {
-        for _ in 0..ident {
-            writer.write_all(b" ")?;
-        }
+fn write_ident(write_buffer: &mut Vec<u8>, level: usize, ident: usize) -> () {
+    for _ in 0..level * ident {
+        write_buffer.push(b' ');
     }
-
-    Ok(())
 }
