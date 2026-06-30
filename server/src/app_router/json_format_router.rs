@@ -4,6 +4,7 @@ use axum::{
     http::{StatusCode, header},
     response::IntoResponse,
 };
+use futures_util::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::common::json_formatter::JsonFormatter;
@@ -31,29 +32,25 @@ pub async fn format_json_handler(
 
 #[cfg(not(target_os = "windows"))]
 async fn process_json_data(body: Body, ident: usize) -> Body {
-    use futures_util::StreamExt;
-
     let mut formatter = JsonFormatter::new(ident);
-    let request_body_stream = body.into_data_stream().map(move |result| match result {
+    let output_stream = body.into_data_stream().map(move |result| match result {
         Ok(data) => Ok(formatter.format_bytes(data)),
         Err(err) => Err(std::io::Error::other(err)),
     });
 
-    Body::from_stream(request_body_stream)
+    Body::from_stream(output_stream)
 }
 
 #[cfg(target_os = "windows")]
 async fn process_json_data(body: Body, ident: usize) -> Body {
-    use futures_util::StreamExt;
-    use std::io::Cursor;
+    let request_body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
-    let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
     let mut formatter = JsonFormatter::new(ident);
+    let output_stream =
+        ReaderStream::new(std::io::Cursor::new(request_body_bytes)).map(move |result| match result {
+            Ok(data) => Ok(formatter.format_bytes(data)),
+            Err(err) => Err(std::io::Error::other(err)),
+        });
 
-    let stream = ReaderStream::new(Cursor::new(bytes)).map(move |result| match result {
-        Ok(data) => Ok(formatter.format_bytes(data)),
-        Err(err) => Err(std::io::Error::other(err)),
-    });
-
-    Body::from_stream(stream)
+    Body::from_stream(output_stream)
 }
