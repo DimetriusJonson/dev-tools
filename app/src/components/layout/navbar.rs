@@ -14,10 +14,11 @@ pub fn Navbar() -> impl IntoView {
                 <div class="flex justify-between h-9 md:h-14">
                     // Brand / Logo Area
                     <div class="shrink-0 flex items-center gap-4">
-                        <a href="/" class="text-3xl md:text-4xl font-extrabold text-gray-800 pr-2 font-mono">TOOLS</a>
-                        <ButtonLink label="Url encoder".to_owned() href="/urlEncoder".to_owned() button_width=ButtonLinkWidth::Auto
+                        <ButtonLink label="XML".to_owned() href="/".to_owned() button_width=ButtonLinkWidth::Auto
+                            color=move || nav_button_color(location.pathname.get(), "/") />
+                        <ButtonLink label="URL".to_owned() href="/urlEncoder".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/urlEncoder") />
-                        <ButtonLink label="Json".to_owned() href="/json".to_owned() button_width=ButtonLinkWidth::Auto 
+                        <ButtonLink label="JSON".to_owned() href="/json".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/json") />
                     </div>
 
