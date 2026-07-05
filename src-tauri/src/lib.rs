@@ -2,24 +2,25 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
 
 use server::server_starter::start_axum_server;
-use tauri::Manager;
+use tauri::{AppHandle, Manager};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 
-async fn start_backend_server(port: u16) {
+#[tauri::command]
+fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
+    app_handle
+        .path()
+        .resource_dir().unwrap()
+}
+
+async fn start_backend_server(port: u16, resource_dir: PathBuf) {
     let addr = format!("127.0.0.1:{}", port);
 
     println!("Backend server starting up on {}...", addr);
 
     unsafe {
-        let exe_dir = std::env::current_exe()
-            .expect("Failed to get exe path")
-            .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap();
-        let mut path = PathBuf::from(exe_dir);
-        path.push("_up_");
-        path.push("site");
-        let site_dir = path.to_str().unwrap();
+        let mut site_dir = resource_dir;
+        site_dir.push("_up_");
+        site_dir.push("site");
 
         std::env::set_var("LEPTOS_OUTPUT_NAME", "dev_tools");
         std::env::set_var("LEPTOS_SITE_ROOT", site_dir);
@@ -47,9 +48,11 @@ pub fn run() {
             });
 
             let port = arg_port.unwrap_or(3005);
+            let resource_dir = get_resource_dir(app.app_handle());
+            println!("resource_dir={}", resource_dir.to_str().unwrap());
 
             tauri::async_runtime::spawn(async move {
-                start_backend_server(port).await;
+                start_backend_server(port, resource_dir).await;
             });
 
             if args.contains(&"--autostart".to_string()) {
