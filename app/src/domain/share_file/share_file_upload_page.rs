@@ -92,11 +92,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             </div>
 
             <div class="py-4">
-                <ul class="list-decimal [&_li]:py-2 text-gray-400">
+                <ul class="list-decimal [&_li]:py-1 text-gray-400">
                     <li>Выберите файл, которым хотите поделится.</li>
                     <li>{"Нажмите "}<b class="text-gray-300 p-1">Загрузить</b>{" для загрузки файла и формирования на него ссылки."}</li>
                     <li>{"Нажмите "}<b class="text-gray-300 p-1">Скопировать в буфер обмена</b>{"."}</li>
                     <li>Вставьте ссылку на файл из буфера обмена.</li>
+                    <li>Срок жизни ссылки <b class="text-gray-300 p-1">три дня</b>.</li>
                 </ul>
             </div>
 
