@@ -10,7 +10,7 @@ use crate::components::ui::file_input::FileInput;
 #[component]
 pub fn ShareFileUploadPage() -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
-    let (shared_url, set_shared_url) = signal("".to_owned());
+    let (shared_url, set_shared_url) = signal("http://localhost:3000/share_file/view?id=SwRfBh65pkHMkIe5nTlZe".to_owned());
     let (in_progress, set_in_progress) = signal(false);
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
 
@@ -71,7 +71,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 />
             </div>
 
-            <div class="flex flex-col items-center justify-center">
+            <div class="flex flex-col gap-4 items-center justify-center">
                 <Show when=move || { !shared_url.get().is_empty() }
                     fallback=|| view! {  }>
 
@@ -92,12 +92,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             </div>
 
             <div class="py-4">
-                <ul class="list-decimal [&_li]:py-1 text-gray-400">
+                <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
                     <li>Выберите файл, которым хотите поделится.</li>
-                    <li>{"Нажмите "}<b class="text-gray-300 p-1">Загрузить</b>{" для загрузки файла и формирования на него ссылки."}</li>
-                    <li>{"Нажмите "}<b class="text-gray-300 p-1">Скопировать в буфер обмена</b>{"."}</li>
+                    <li>{"Нажмите "}<b>Загрузить</b>{" для загрузки файла и формирования на него ссылки."}</li>
+                    <li>{"Нажмите "}<b>Скопировать в буфер обмена</b>{"."}</li>
                     <li>Вставьте ссылку на файл из буфера обмена.</li>
-                    <li>Срок жизни ссылки <b class="text-gray-300 p-1">три дня</b>.</li>
+                    <li>Срок жизни ссылки <b>три дня</b>.</li>
                 </ul>
             </div>
 
