@@ -8,7 +8,7 @@ use bytes::Bytes;
 use http::{HeaderMap, HeaderValue, header};
 use image::ImageFormat;
 use nanoid::nanoid;
-use sqlx::Row;
+use sqlx::{Pool, Postgres, Row};
 
 use crate::common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params};
 
@@ -30,6 +30,8 @@ pub async fn share_file_upload(
 
     match app_state.pool {
         Some(pool) => {
+            delete_old_files(&pool).await?;
+
             let external_id = nanoid!();
 
             let file_data = bytes.to_vec();
@@ -170,4 +172,12 @@ fn build_image_thumbnail(
     scaled.write_to(&mut cursor, ImageFormat::Jpeg)?;
 
     Ok(dst)
+}
+
+async fn delete_old_files(pool: &Pool<Postgres>) -> Result<(), AppError> {
+    sqlx::query("delete from share_files where created_at < now() - INTERVAL '3 day'")
+        .execute(pool)
+        .await
+        .map_err(AppError::system_error)?;
+    Ok(())
 }
