@@ -128,6 +128,7 @@ pub fn XmlPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_xml.get());
+        show_info("XML скопирован в буфер обмена.".to_owned(), messages);
     };
 
     view! {

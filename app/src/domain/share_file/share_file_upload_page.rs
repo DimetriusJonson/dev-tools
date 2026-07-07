@@ -55,38 +55,51 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&shared_url.get());
+        show_info("Ссылка скопирована в буфер обмена.".to_owned(), messages);
     };
 
     view! {
-      <div class="flex gap-4 py-12 px-[30vw] text-xs md:text-base">
-          <FileInput node_ref=file_input_ref />
-          <Button
-              label="Загрузить".to_owned()
-              button_width=ButtonWidth::Md
-              loading=move || in_progress.get()
-              on_click=on_upload_file_click
-              disabled=move || in_progress.get()
-          />
-      </div>
+        <div class="flex flex-col px-[30vw] py-12 gap-4 dark:text-white text-xs md:text-base">
+            <div class="flex">
+                <FileInput node_ref=file_input_ref />
+                <Button
+                    label="Загрузить".to_owned()
+                    button_width=ButtonWidth::Md
+                    loading=move || in_progress.get()
+                    on_click=on_upload_file_click
+                    disabled=move || in_progress.get()
+                />
+            </div>
 
-      <div class="flex flex-col gap-4 items-center justify-center text-xs md:text-base">
-          <Show when=move || { !shared_url.get().is_empty() }
-              fallback=|| view! {  }>
+            <div class="flex flex-col items-center justify-center">
+                <Show when=move || { !shared_url.get().is_empty() }
+                    fallback=|| view! {  }>
 
-              <div>
-                  <span class="text-white">Url:</span>
-                  <span class="text-sky-500 px-2">{shared_url.get()}</span>
-              </div>
+                    <div>
+                        <span class="text-white">Ссылка:</span>
+                        <span class="text-sky-500 px-2">{shared_url.get()}</span>
+                    </div>
 
-              <Button
-                  label="Скопировать в буфер обмена".to_owned()
-                  button_width=ButtonWidth::Auto
-                  loading=move || in_progress.get()
-                  on_click=on_copy_click
-                  disabled=move || in_progress.get()
-              />
+                    <Button
+                        label="Скопировать в буфер обмена".to_owned()
+                        button_width=ButtonWidth::Auto
+                        loading=move || in_progress.get()
+                        on_click=on_copy_click
+                        disabled=move || in_progress.get()
+                    />
 
-          </Show>
-      </div>
+                </Show>
+            </div>
+
+            <div class="py-4">
+                <ul class="list-decimal [&_li]:py-2 text-gray-400">
+                    <li>Выберите файл, которым хотите поделится.</li>
+                    <li>{"Нажмите "}<b class="text-gray-300 p-1">Загрузить</b>{" для загрузки файла и формирования на него ссылки."}</li>
+                    <li>{"Нажмите "}<b class="text-gray-300 p-1">Скопировать в буфер обмена</b>{"."}</li>
+                    <li>Вставьте ссылку на файл из буфера обмена.</li>
+                </ul>
+            </div>
+
+        </div>
     }
 }

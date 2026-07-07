@@ -4,7 +4,7 @@ use leptos::task::spawn_local;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
-use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::text_area::TextArea;
@@ -59,6 +59,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_url.get());
+        show_info("Ссылка скопирована в буфер обмена.".to_owned(), messages);
     };
 
     view! {

@@ -121,6 +121,7 @@ pub fn JsonPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_json.get());
+        show_info("JSON скопирован в буфер обмена.".to_owned(), messages);
     };
 
     view! {
