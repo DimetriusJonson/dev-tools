@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS share_files (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  external_id VARCHAR(255) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(255),
+  file_data BYTEA NOT NULL,
+  image_thumbnail BYTEA,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);

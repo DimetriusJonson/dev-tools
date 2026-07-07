@@ -8,6 +8,7 @@ use tracing_log::LogTracer;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::app_router::build_app_router::build_app_router;
+use crate::db::create_pool;
 
 pub async fn start_axum_server(custom_addr: Option<SocketAddr>) -> anyhow::Result<()> {
     let environment = env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string());
@@ -40,7 +41,9 @@ pub async fn start_axum_server(custom_addr: Option<SocketAddr>) -> anyhow::Resul
         None => conf.leptos_options.site_addr,
     };
 
-    let app = build_app_router(conf).await?;
+    let pool = create_pool().await;
+
+    let app = build_app_router(conf, pool).await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await.unwrap();

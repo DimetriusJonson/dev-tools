@@ -8,6 +8,8 @@ use crate::components::layout::message_banner::MessageBanner;
 use crate::components::layout::navbar::Navbar;
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor};
 use crate::domain::json::json_page::JsonPage;
+use crate::domain::share_file::share_file_upload_page::ShareFileUploadPage;
+use crate::domain::share_file::share_file_view_page::ShareFileViewPage;
 use crate::domain::url_encode::url_encode_page::UrlEncoderPage;
 use crate::domain::xml::xml_page::XmlPage;
 
@@ -89,6 +91,8 @@ pub fn App() -> impl IntoView {
                             </ParentRoute>
                             <Route path=path!("/urlEncoder") view=UrlEncoderPage />
                             <Route path=path!("/json") view=JsonPage />
+                            <Route path=path!("/share_file") view=ShareFileUploadPage />
+                            <Route path=path!("/share_file/view") view=ShareFileViewPage />
                         </Routes>
                     </ErrorBoundary>
 

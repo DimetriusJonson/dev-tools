@@ -58,7 +58,7 @@ pub fn ButtonLink(
 
     let aria_label = label.to_owned();
     view! {
-        <a id=id aria-label=aria_label href=href
+        <a id=id aria-label=aria_label href=href 
             class=move || format!("{} {} {} {} {}", base_classes, variant_classes(), text_size_classes, button_width_classes, class_name)>
             {label}
         </a>

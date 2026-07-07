@@ -1,26 +1,37 @@
 use app::app::{App, shell};
 use axum::Router;
-use axum::extract::DefaultBodyLimit;
-use axum::routing::post;
+use axum::body::Body as AxumBody;
+use axum::extract::{DefaultBodyLimit, State};
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, post};
+use http::Request;
 use leptos::prelude::*;
-use leptos_axum::{LeptosRoutes, generate_route_list};
+use leptos_axum::{LeptosRoutes, generate_route_list, render_app_to_stream_with_context};
+use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_escape_router::{escape_json_handler, unescape_json_handler};
-use crate::app_router::json_format_router::{format_json_handler};
+use crate::app_router::json_format_router::format_json_handler;
+use crate::app_router::share_file_router::{share_file_download, share_file_info, share_file_upload};
 use crate::app_router::url_encode_router::{decode_url_handler, encode_url_handler};
-use crate::app_router::xml_format_router::format_xml_handler;
 use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
+use crate::app_router::xml_format_router::format_xml_handler;
+use crate::common::app_state::AppState;
 
 /* ========================================================== */
 /*                         🦀 MAIN 🦀                         */
 /* ========================================================== */
 
-pub async fn build_app_router(conf_file: ConfFile) -> anyhow::Result<Router> {
+pub async fn build_app_router(
+    conf_file: ConfFile,
+    pool: Option<Pool<Postgres>>,
+) -> anyhow::Result<Router> {
     let leptos_options = conf_file.leptos_options;
 
     let routes = generate_route_list(App);
+
+    let app_state = AppState { leptos_options: leptos_options.clone(), pool: pool.clone() };
 
     let app = Router::new()
         .route("/format_xml", post(format_xml_handler))
@@ -32,14 +43,30 @@ pub async fn build_app_router(conf_file: ConfFile) -> anyhow::Result<Router> {
         .layer(DefaultBodyLimit::disable())
         .route("/encode_url", post(encode_url_handler))
         .route("/decode_url", post(decode_url_handler))
-        .leptos_routes(&leptos_options, routes, {
-            let leptos_options = leptos_options.clone();
-            move || shell(leptos_options.clone())
-        })
-        .fallback(leptos_axum::file_and_error_handler(shell))
+        .route("/share_file_upload", post(share_file_upload))
+        .route("/share_file_download", get(share_file_download))
+        .route("/share_file_info", get(share_file_info))
+        .leptos_routes_with_handler(routes, get(leptos_routes_handler))
+        .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
-        .with_state(leptos_options);
+        .with_state(app_state);
 
     Ok(app)
+}
+
+#[axum_macros::debug_handler]
+pub async fn leptos_routes_handler(
+    State(app_state): State<AppState>,
+    req: Request<AxumBody>,
+) -> Response {
+    let leptos_options = app_state.leptos_options.clone();
+
+    let handler = render_app_to_stream_with_context(
+        move || {
+            provide_context(app_state.clone());
+        },
+        move || shell(leptos_options.clone()),
+    );
+    handler(req).await.into_response()
 }

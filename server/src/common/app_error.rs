@@ -2,6 +2,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use log::error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -19,7 +20,8 @@ impl AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            AppError::SystemError(_) => {
+            AppError::SystemError(msg) => {
+                error!("System error: {}", msg.to_string());
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
             }
         };

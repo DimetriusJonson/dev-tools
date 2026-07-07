@@ -4,3 +4,4 @@ pub mod xml_escape_router;
 pub mod url_encode_router;
 pub mod json_format_router;
 pub mod json_escape_router;
+pub mod share_file_router;
