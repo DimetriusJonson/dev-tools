@@ -6,7 +6,7 @@ use axum::{
     response::IntoResponse,
 };
 use http::{HeaderMap, HeaderValue, header};
-use image::ImageFormat;
+use image::{ImageFormat, codecs::jpeg::JpegEncoder};
 use nanoid::nanoid;
 use sqlx::{Pool, Postgres, Row};
 
@@ -30,7 +30,7 @@ pub async fn share_file_upload(
     let file_name = params.get("file_name").unwrap_or(&"unknown_file");
 
     let default_content_type = HeaderValue::from_static(DEFAULT_CONTENT_TYPE);
-    let content_type =
+    let mut content_type =
         headers.get("content-type").unwrap_or(&default_content_type).to_str().unwrap();
 
     match app_state.pool {
@@ -40,12 +40,16 @@ pub async fn share_file_upload(
             let bytes = to_bytes(request.into_body(), MAX_FILE_SIZE)
                 .await
                 .map_err(AppError::system_error)?;
-            let file_data = bytes.to_vec();
+            let mut file_data = bytes.to_vec();
             let image_thumbnail;
             if is_image(&content_type) {
                 image_thumbnail = Some(
                     build_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
                 );
+                if content_type != "image/jpeg" {
+                    file_data = convert_image_to_jpg(&file_data).map_err(AppError::system_error)?;
+                    content_type = "image/jpeg";
+                }
             } else {
                 image_thumbnail = None;
             }
@@ -181,6 +185,18 @@ fn build_image_thumbnail(
     let mut dst = Vec::new();
     let mut cursor = Cursor::new(&mut dst);
     scaled.write_to(&mut cursor, ImageFormat::Jpeg)?;
+
+    Ok(dst)
+}
+
+fn convert_image_to_jpg(src: &Vec<u8>) -> Result<Vec<u8>, image::ImageError> {
+    let img = image::load_from_memory(src)?;
+
+    let mut dst = Vec::new();
+    let mut cursor = Cursor::new(&mut dst);
+
+    let mut encoder = JpegEncoder::new_with_quality(&mut cursor, 80);
+    encoder.encode_image(&img)?;
 
     Ok(dst)
 }
