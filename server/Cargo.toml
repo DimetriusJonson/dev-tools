@@ -31,6 +31,7 @@ http.workspace=true
 nanoid.workspace=true
 image.workspace=true
 reqwest.workspace=true
+flate2.workspace=true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}

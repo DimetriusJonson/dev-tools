@@ -49,6 +49,7 @@ http = "1"
 nanoid = "0.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "webp"] }
 reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls"] }
+flate2 = "1.0"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

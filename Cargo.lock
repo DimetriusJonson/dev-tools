@@ -2768,6 +2768,7 @@ dependencies = [
  "axum-macros 0.4.2",
  "bytes",
  "dotenvy",
+ "flate2",
  "futures-util",
  "http",
  "image",

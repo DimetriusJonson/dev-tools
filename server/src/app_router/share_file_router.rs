@@ -1,10 +1,11 @@
-use std::io::Cursor;
+use std::io::{Cursor, Write};
 
 use axum::{
     body::to_bytes,
     extract::{RawQuery, Request, State},
     response::IntoResponse,
 };
+use flate2::{Compression, write::{GzDecoder, GzEncoder}};
 use http::{HeaderMap, HeaderValue, header};
 use image::{ImageFormat, codecs::jpeg::JpegEncoder};
 use nanoid::nanoid;
@@ -52,6 +53,7 @@ pub async fn share_file_upload(
                 }
             } else {
                 image_thumbnail = None;
+                file_data = compress_bytes(&file_data).map_err(AppError::system_error)?;
             }
 
             let external_id = nanoid!();
@@ -113,11 +115,15 @@ pub async fn share_file_download(
                 .map_err(AppError::system_error)?;
 
                 let file_name: String = row.get("file_name");
-                let file_data: Vec<u8> = row.get("file_data");
+                let mut file_data: Vec<u8> = row.get("file_data");
 
                 let mut mime_type: String = row.get("mime_type");
                 if mime_type.is_empty() {
                     mime_type = DEFAULT_CONTENT_TYPE.to_owned();
+                }
+
+                if !is_image(&mime_type) {
+                    file_data = decompress_bytes(file_data).map_err(AppError::system_error)?;
                 }
 
                 let mut headers = HeaderMap::new();
@@ -199,6 +205,22 @@ fn convert_image_to_jpg(src: &Vec<u8>) -> Result<Vec<u8>, image::ImageError> {
     encoder.encode_image(&img)?;
 
     Ok(dst)
+}
+
+fn compress_bytes(data: &Vec<u8>) -> std::io::Result<Vec<u8>> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(data)?;
+    let compressed_bytes = encoder.finish()?;
+    Ok(compressed_bytes)
+}
+
+fn decompress_bytes(data: Vec<u8>) -> std::io::Result<Vec<u8>> {
+    let mut writer = Vec::new();
+    let mut decoder = GzDecoder::new(writer);
+    decoder.write_all(&data)?;
+    writer = decoder.finish()?;
+    
+    Ok(writer)
 }
 
 async fn delete_old_files(pool: &Pool<Postgres>) -> Result<(), AppError> {
