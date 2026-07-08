@@ -30,12 +30,19 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     Ok(request) => match request.send().await {
                         Ok(response) => {
                             if response.status() == 200 {
-                                let window = web_sys::window().expect("No global window exists");
-                                let location = window.location();
+                                let server_url = response
+                                    .headers()
+                                    .get("remote-server-url")
+                                    .unwrap_or_else(|| {
+                                        let window =
+                                            web_sys::window().expect("No global window exists");
+                                        let location = window.location();
+                                        location.origin().to_owned().unwrap_or_default()
+                                    });
 
                                 set_shared_url.set(format!(
                                     "{}/share_file/view?id={}",
-                                    location.origin().to_owned().unwrap_or_default(),
+                                    server_url,
                                     response.text().await.unwrap()
                                 ));
                                 show_info("Файл загружен!".to_owned(), messages);

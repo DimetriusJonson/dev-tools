@@ -10,7 +10,7 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use crate::app_router::build_app_router::build_app_router;
 use crate::db::create_pool;
 
-pub async fn start_axum_server(custom_addr: Option<SocketAddr>) -> anyhow::Result<()> {
+pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_url: Option<String>) -> anyhow::Result<()> {
     let environment = env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string());
     let env_file_name = format!(".env.{}", environment);
     println!("environment={}, env_file_name={}", environment, env_file_name);
@@ -43,7 +43,7 @@ pub async fn start_axum_server(custom_addr: Option<SocketAddr>) -> anyhow::Resul
 
     let pool = create_pool().await;
 
-    let app = build_app_router(conf, pool).await?;
+    let app = build_app_router(conf, pool, remote_server_url).await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await.unwrap();

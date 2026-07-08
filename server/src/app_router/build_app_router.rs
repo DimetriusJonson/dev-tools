@@ -7,13 +7,16 @@ use axum::routing::{get, post};
 use http::Request;
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list, render_app_to_stream_with_context};
+use reqwest::Client;
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_escape_router::{escape_json_handler, unescape_json_handler};
 use crate::app_router::json_format_router::format_json_handler;
-use crate::app_router::share_file_router::{share_file_download, share_file_info, share_file_upload};
+use crate::app_router::share_file_router::{
+    share_file_download, share_file_info, share_file_upload,
+};
 use crate::app_router::url_encode_router::{decode_url_handler, encode_url_handler};
 use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
 use crate::app_router::xml_format_router::format_xml_handler;
@@ -26,12 +29,23 @@ use crate::common::app_state::AppState;
 pub async fn build_app_router(
     conf_file: ConfFile,
     pool: Option<Pool<Postgres>>,
+    remote_server_url: Option<String>,
 ) -> anyhow::Result<Router> {
     let leptos_options = conf_file.leptos_options;
 
     let routes = generate_route_list(App);
 
-    let app_state = AppState { leptos_options: leptos_options.clone(), pool: pool.clone() };
+    let reqwest_client = match remote_server_url {
+        Some(_) => Some(Client::new()),
+        None => None,
+    };
+
+    let app_state = AppState {
+        leptos_options: leptos_options.clone(),
+        pool: pool.clone(),
+        client: reqwest_client,
+        remote_server_url: remote_server_url,
+    };
 
     let app = Router::new()
         .route("/format_xml", post(format_xml_handler))

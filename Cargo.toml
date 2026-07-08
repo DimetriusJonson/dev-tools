@@ -48,6 +48,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "time", "macr
 http = "1"
 nanoid = "0.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "webp"] }
+reqwest = { version = "0.12", features = ["stream"] }
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

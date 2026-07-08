@@ -1,9 +1,11 @@
+use log::info;
 use sqlx::{Pool, Postgres};
 
 pub async fn create_pool() -> Option<Pool<Postgres>> {
     let database_url = std::env::var("DATABASE_URL");
     match database_url {
         Ok(database_url) => {
+            info!("Connect to database...");
             let pool = sqlx::postgres::PgPoolOptions::new()
                 .min_connections(1)
                 .max_connections(3)
@@ -15,6 +17,9 @@ pub async fn create_pool() -> Option<Pool<Postgres>> {
 
             Some(pool)
         }
-        Err(_) => None,
+        Err(_) => {
+            info!("Database not found!");
+            None 
+        },
     }
 }

@@ -1,25 +1,24 @@
 use std::io::Cursor;
 
 use axum::{
-    extract::{RawQuery, State},
-    response::IntoResponse,
+    body::to_bytes, extract::{RawQuery, Request, State}, response::IntoResponse,
 };
-use bytes::Bytes;
 use http::{HeaderMap, HeaderValue, header};
 use image::ImageFormat;
 use nanoid::nanoid;
 use sqlx::{Pool, Postgres, Row};
 
-use crate::common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params};
+use crate::{app_router::proxy_request_to_remote, common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params}};
 
 const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
 
+#[axum::debug_handler]
 pub async fn share_file_upload(
     State(app_state): State<AppState>,
     RawQuery(query): RawQuery,
     headers: HeaderMap,
-    bytes: Bytes,
-) -> Result<String, AppError> {
+    request: Request,
+) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
     let file_name = params.get("file_name").unwrap_or(&"unknown_file");
@@ -32,10 +31,9 @@ pub async fn share_file_upload(
         Some(pool) => {
             delete_old_files(&pool).await?;
 
-            let external_id = nanoid!();
+            let bytes = to_bytes(request.into_body(), usize::MAX).await.map_err(AppError::system_error)?;
 
             let file_data = bytes.to_vec();
-
             let image_thumbnail;
             if is_image(&content_type) {
                 image_thumbnail = Some(
@@ -45,6 +43,7 @@ pub async fn share_file_upload(
                 image_thumbnail = None;
             }
 
+            let external_id = nanoid!();
             sqlx::query("INSERT INTO share_files (external_id, file_name, mime_type, file_data, image_thumbnail) VALUES ($1, $2, $3, $4, $5)")
                 .bind(external_id.to_owned())
                 .bind(file_name)
@@ -55,15 +54,17 @@ pub async fn share_file_upload(
                 .await
                 .map_err(AppError::system_error)?;
 
-            return Ok(external_id);
+            return Ok((external_id).into_response());
         }
-        None => Err(AppError::system_error("Database unavailable!")),
+        None => proxy_request_to_remote(app_state, request).await,
     }
 }
 
+#[axum::debug_handler]
 pub async fn share_file_download(
     State(app_state): State<AppState>,
     RawQuery(query): RawQuery,
+    request: Request,
 ) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
@@ -86,10 +87,10 @@ pub async fn share_file_download(
                 let image_thumbnail: Option<Vec<u8>> = row.get("image_thumbnail");
                 if let Some(image_thumbnail) = image_thumbnail {
                     headers.insert(header::CONTENT_TYPE, "image/jpeg".parse().unwrap());
-                    Ok((headers, image_thumbnail))
+                    Ok((headers, image_thumbnail).into_response())
                 } else {
                     headers.insert(header::CONTENT_TYPE, DEFAULT_CONTENT_TYPE.parse().unwrap());
-                    Ok((headers, vec![]))
+                    Ok((headers, vec![]).into_response())
                 }
             } else {
                 let row = sqlx::query(
@@ -101,6 +102,7 @@ pub async fn share_file_download(
                 .map_err(AppError::system_error)?;
 
                 let file_name: String = row.get("file_name");
+                let file_data: Vec<u8> = row.get("file_data");
 
                 let mut mime_type: String = row.get("mime_type");
                 if mime_type.is_empty() {
@@ -115,17 +117,19 @@ pub async fn share_file_download(
                     format!("attachment; filename=\"{}\"", file_name).parse().unwrap(),
                 );
 
-                Ok((headers, row.get("file_data")))
+                Ok((headers, file_data).into_response())
             }
         }
-        None => Err(AppError::system_error("Database unavailable!")),
+        None => proxy_request_to_remote(app_state, request).await,
     }
 }
 
+#[axum::debug_handler]
 pub async fn share_file_info(
     State(app_state): State<AppState>,
     RawQuery(query): RawQuery,
-) -> Result<String, AppError> {
+    request: Request,
+) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
     let external_id = params.get("id").unwrap_or(&"");
@@ -143,9 +147,9 @@ pub async fn share_file_info(
             let mime_type: String = row.get("mime_type");
             let is_image = is_image(&mime_type);
 
-            Ok(format!("{}\n{}\n{}", file_name, mime_type, is_image))
+            Ok(format!("{}\n{}\n{}", file_name, mime_type, is_image).into_response())
         }
-        None => Err(AppError::system_error("Database unavailable!")),
+        None => proxy_request_to_remote(app_state, request).await,
     }
 }
 
