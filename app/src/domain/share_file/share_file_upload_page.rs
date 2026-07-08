@@ -7,6 +7,8 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::file_input::FileInput;
 
+const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
+
 #[component]
 pub fn ShareFileUploadPage() -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -22,37 +24,41 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                match Request::post("/share_file_upload")
-                    .header("content-type", &file.type_())
-                    .query([("file_name", file.name())])
-                    .body(&file)
-                {
-                    Ok(request) => match request.send().await {
-                        Ok(response) => {
-                            if response.status() == 200 {
-                                let server_url = response
-                                    .headers()
-                                    .get("remote-server-url")
-                                    .unwrap_or_else(|| {
-                                        let window =
-                                            web_sys::window().expect("No global window exists");
-                                        let location = window.location();
-                                        location.origin().to_owned().unwrap_or_default()
-                                    });
+                if file.size() <= MAX_FILE_SIZE as f64 {
+                    match Request::post("/share_file_upload")
+                        .header("content-type", &file.type_())
+                        .query([("file_name", file.name())])
+                        .body(&file)
+                    {
+                        Ok(request) => match request.send().await {
+                            Ok(response) => {
+                                if response.status() == 200 {
+                                    let server_url = response
+                                        .headers()
+                                        .get("remote-server-url")
+                                        .unwrap_or_else(|| {
+                                            let window =
+                                                web_sys::window().expect("No global window exists");
+                                            let location = window.location();
+                                            location.origin().to_owned().unwrap_or_default()
+                                        });
 
-                                set_shared_url.set(format!(
-                                    "{}/share_file/view?id={}",
-                                    server_url,
-                                    response.text().await.unwrap()
-                                ));
-                                show_info("Файл загружен!".to_owned(), messages);
-                            } else {
-                                show_error(response.status_text(), messages)
+                                    set_shared_url.set(format!(
+                                        "{}/share_file/view?id={}",
+                                        server_url,
+                                        response.text().await.unwrap()
+                                    ));
+                                    show_info("Файл загружен!".to_owned(), messages);
+                                } else {
+                                    show_error(response.status_text(), messages)
+                                }
                             }
-                        }
+                            Err(err) => show_error(err.to_string(), messages),
+                        },
                         Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
+                    }
+                } else {
+                   show_error("Файл слишком большой!".to_owned(), messages) 
                 }
             }
 
@@ -100,7 +106,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
             <div class="py-4">
                 <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
-                    <li>Выберите файл, которым хотите поделится. Максимальный размер файла два мегабайта.</li>
+                    <li>Выберите файл, которым хотите поделится. Максимальный размер файла <b>5 мегабайт</b>.</li>
                     <li>{"Нажмите "}<b>Загрузить</b>{" для загрузки файла и формирования на него ссылки."}</li>
                     <li>{"Нажмите "}<b>Скопировать в буфер обмена</b>{"."}</li>
                     <li>Вставьте ссылку на файл из буфера обмена.</li>

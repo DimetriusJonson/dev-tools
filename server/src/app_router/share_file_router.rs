@@ -1,16 +1,22 @@
 use std::io::Cursor;
 
 use axum::{
-    body::to_bytes, extract::{RawQuery, Request, State}, response::IntoResponse,
+    body::to_bytes,
+    extract::{RawQuery, Request, State},
+    response::IntoResponse,
 };
 use http::{HeaderMap, HeaderValue, header};
 use image::ImageFormat;
 use nanoid::nanoid;
 use sqlx::{Pool, Postgres, Row};
 
-use crate::{app_router::proxy_request_to_remote, common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params}};
+use crate::{
+    app_router::proxy_request_to_remote,
+    common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params},
+};
 
 const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
+const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
 
 #[axum::debug_handler]
 pub async fn share_file_upload(
@@ -31,8 +37,9 @@ pub async fn share_file_upload(
         Some(pool) => {
             delete_old_files(&pool).await?;
 
-            let bytes = to_bytes(request.into_body(), usize::MAX).await.map_err(AppError::system_error)?;
-
+            let bytes = to_bytes(request.into_body(), MAX_FILE_SIZE)
+                .await
+                .map_err(AppError::system_error)?;
             let file_data = bytes.to_vec();
             let image_thumbnail;
             if is_image(&content_type) {
