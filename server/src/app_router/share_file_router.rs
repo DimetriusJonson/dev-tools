@@ -1,19 +1,24 @@
-use std::io::{Cursor, Write};
-
 use axum::{
     body::to_bytes,
     extract::{RawQuery, Request, State},
     response::IntoResponse,
 };
-use flate2::{Compression, write::{GzDecoder, GzEncoder}};
 use http::{HeaderMap, HeaderValue, header};
-use image::{ImageFormat, codecs::jpeg::JpegEncoder};
 use nanoid::nanoid;
-use sqlx::{Pool, Postgres, Row};
 
 use crate::{
     app_router::proxy_request_to_remote,
-    common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params},
+    common::{
+        app_error::AppError,
+        app_state::AppState,
+        compress_utils::{compress_bytes, decompress_bytes},
+        dev_utils::{is_mime_image, parse_query_params},
+        image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
+    },
+    db::share_files_db::{
+        create_share_file_in_db, delete_old_share_files_in_db, get_share_file_from_db,
+        get_share_file_info_from_db, get_share_file_thumbnail_from_db,
+    },
 };
 
 const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
@@ -36,19 +41,20 @@ pub async fn share_file_upload(
 
     match app_state.pool {
         Some(pool) => {
-            delete_old_files(&pool).await?;
+            delete_old_share_files_in_db(&pool).await?;
 
             let bytes = to_bytes(request.into_body(), MAX_FILE_SIZE)
                 .await
                 .map_err(AppError::system_error)?;
             let mut file_data = bytes.to_vec();
             let image_thumbnail;
-            if is_image(&content_type) {
+            if is_mime_image(&content_type) {
                 image_thumbnail = Some(
-                    build_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
+                    create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
                 );
                 if content_type != "image/jpeg" {
-                    file_data = convert_image_to_jpg(&file_data).map_err(AppError::system_error)?;
+                    file_data =
+                        convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
                     content_type = "image/jpeg";
                 }
             } else {
@@ -57,15 +63,15 @@ pub async fn share_file_upload(
             }
 
             let external_id = nanoid!();
-            sqlx::query("INSERT INTO share_files (external_id, file_name, mime_type, file_data, image_thumbnail) VALUES ($1, $2, $3, $4, $5)")
-                .bind(external_id.to_owned())
-                .bind(file_name)
-                .bind(content_type)
-                .bind(file_data)
-                .bind(image_thumbnail)
-                .execute(&pool)
-                .await
-                .map_err(AppError::system_error)?;
+            create_share_file_in_db(
+                &external_id,
+                file_name,
+                content_type,
+                file_data,
+                image_thumbnail,
+                &pool,
+            )
+            .await?;
 
             return Ok((external_id).into_response());
         }
@@ -87,17 +93,10 @@ pub async fn share_file_download(
     match app_state.pool {
         Some(pool) => {
             if thumbnail {
-                let row =
-                    sqlx::query("SELECT image_thumbnail FROM share_files WHERE external_id=$1")
-                        .bind(external_id)
-                        .fetch_one(&pool)
-                        .await
-                        .map_err(AppError::system_error)?;
-
                 let mut headers = HeaderMap::new();
                 headers.insert(header::CACHE_CONTROL, "public, max-age=3600".parse().unwrap());
 
-                let image_thumbnail: Option<Vec<u8>> = row.get("image_thumbnail");
+                let image_thumbnail = get_share_file_thumbnail_from_db(external_id, &pool).await?;
                 if let Some(image_thumbnail) = image_thumbnail {
                     headers.insert(header::CONTENT_TYPE, "image/jpeg".parse().unwrap());
                     Ok((headers, image_thumbnail).into_response())
@@ -106,23 +105,15 @@ pub async fn share_file_download(
                     Ok((headers, vec![]).into_response())
                 }
             } else {
-                let row = sqlx::query(
-                    "SELECT file_name, mime_type, file_data FROM share_files WHERE external_id=$1",
-                )
-                .bind(external_id)
-                .fetch_one(&pool)
-                .await
-                .map_err(AppError::system_error)?;
+                let share_file = get_share_file_from_db(external_id, &pool).await?;
 
-                let file_name: String = row.get("file_name");
-                let mut file_data: Vec<u8> = row.get("file_data");
-
-                let mut mime_type: String = row.get("mime_type");
+                let mut mime_type = share_file.mime_type;
                 if mime_type.is_empty() {
                     mime_type = DEFAULT_CONTENT_TYPE.to_owned();
                 }
 
-                if !is_image(&mime_type) {
+                let mut file_data = share_file.file_data;
+                if !is_mime_image(&mime_type) {
                     file_data = decompress_bytes(file_data).map_err(AppError::system_error)?;
                 }
 
@@ -131,7 +122,7 @@ pub async fn share_file_download(
                 headers.insert(header::CONTENT_TYPE, mime_type.parse().unwrap());
                 headers.insert(
                     header::CONTENT_DISPOSITION,
-                    format!("attachment; filename=\"{}\"", file_name).parse().unwrap(),
+                    format!("attachment; filename=\"{}\"", share_file.file_name).parse().unwrap(),
                 );
 
                 Ok((headers, file_data).into_response())
@@ -153,80 +144,14 @@ pub async fn share_file_info(
 
     match app_state.pool {
         Some(pool) => {
-            let row =
-                sqlx::query("SELECT file_name, mime_type FROM share_files WHERE external_id=$1")
-                    .bind(external_id)
-                    .fetch_one(&pool)
-                    .await
-                    .map_err(AppError::system_error)?;
-
-            let file_name: String = row.get("file_name");
-            let mime_type: String = row.get("mime_type");
-            let is_image = is_image(&mime_type);
-
-            Ok(format!("{}\n{}\n{}", file_name, mime_type, is_image).into_response())
+            let share_file_info = get_share_file_info_from_db(external_id, &pool).await?;
+            let is_image = is_mime_image(&share_file_info.mime_type);
+            Ok(format!(
+                "{}\n{}\n{}",
+                share_file_info.file_name, share_file_info.mime_type, is_image
+            )
+            .into_response())
         }
         None => proxy_request_to_remote(app_state, request).await,
     }
-}
-
-fn is_image(mime_type: &str) -> bool {
-    match mime_type {
-        "image/bmp" | "image/png" | "image/jpeg" | "image/webp" | "image/gif" | "image/apng" => {
-            true
-        }
-        _ => false,
-    }
-}
-
-fn build_image_thumbnail(
-    src: &Vec<u8>,
-    max_width: u32,
-    max_height: u32,
-) -> Result<Vec<u8>, image::ImageError> {
-    let img = image::load_from_memory(src)?;
-
-    let scaled = img.thumbnail(max_width, max_height);
-
-    let mut dst = Vec::new();
-    let mut cursor = Cursor::new(&mut dst);
-    scaled.write_to(&mut cursor, ImageFormat::Jpeg)?;
-
-    Ok(dst)
-}
-
-fn convert_image_to_jpg(src: &Vec<u8>) -> Result<Vec<u8>, image::ImageError> {
-    let img = image::load_from_memory(src)?;
-
-    let mut dst = Vec::new();
-    let mut cursor = Cursor::new(&mut dst);
-
-    let mut encoder = JpegEncoder::new_with_quality(&mut cursor, 80);
-    encoder.encode_image(&img)?;
-
-    Ok(dst)
-}
-
-fn compress_bytes(data: &Vec<u8>) -> std::io::Result<Vec<u8>> {
-    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-    encoder.write_all(data)?;
-    let compressed_bytes = encoder.finish()?;
-    Ok(compressed_bytes)
-}
-
-fn decompress_bytes(data: Vec<u8>) -> std::io::Result<Vec<u8>> {
-    let mut writer = Vec::new();
-    let mut decoder = GzDecoder::new(writer);
-    decoder.write_all(&data)?;
-    writer = decoder.finish()?;
-    
-    Ok(writer)
-}
-
-async fn delete_old_files(pool: &Pool<Postgres>) -> Result<(), AppError> {
-    sqlx::query("delete from share_files where created_at < now() - INTERVAL '3 day'")
-        .execute(pool)
-        .await
-        .map_err(AppError::system_error)?;
-    Ok(())
 }

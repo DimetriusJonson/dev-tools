@@ -1,3 +1,5 @@
+pub mod share_files_db;
+
 use log::info;
 use sqlx::{Pool, Postgres};
 
