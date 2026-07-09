@@ -5,11 +5,9 @@ pub type SelectOption = (Option<String>, String);
 
 #[component]
 pub fn DragFile(#[prop(into)] on_drop_file: Callback<File>) -> impl IntoView {
-    let drop_zone_ref = NodeRef::new();
-
     view! {
         <div class="w-full max-w-md ">
-            <div node_ref=drop_zone_ref class="w-full h-52 border-2 border-dashed border-green-500 rounded-xl flex flex-col justify-center items-center
+            <div class="w-full h-52 border-2 border-dashed border-green-500 rounded-xl flex flex-col justify-center items-center
                 transition-all duration-300 ease-in-out cursor-pointer 
                 bg-white dark:bg-dark-bg 
                 hover:bg-green-50/30
@@ -53,8 +51,8 @@ fn active_drop_zone_handler(event: DragEvent) {
     event.stop_propagation();
 
     let drop_zone = event_target::<HtmlDivElement>(&event);
-    drop_zone.class_list().remove_2("bg-green-500", "text-green-500").unwrap();
-    drop_zone.class_list().add_4("bg-green-50", "border-sky-500", "text-sky-500", "scale-102").unwrap();
+
+    drop_zone.class_list().add_1("scale-102").unwrap();
 }
 
 fn deactive_drop_zone_handler(event: DragEvent) {
@@ -62,6 +60,5 @@ fn deactive_drop_zone_handler(event: DragEvent) {
     event.stop_propagation();
 
     let drop_zone = event_target::<HtmlDivElement>(&event);
-    drop_zone.class_list().remove_4("bg-green-50", "border-sky-500", "text-sky-500", "scale-102").unwrap();
-    drop_zone.class_list().add_2("bg-green-500", "text-green-500").unwrap();
+    drop_zone.class_list().remove_1("scale-102").unwrap();
 }
