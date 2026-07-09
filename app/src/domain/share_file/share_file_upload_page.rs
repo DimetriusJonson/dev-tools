@@ -1,10 +1,12 @@
 use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
+use web_sys::File;
 
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
@@ -17,53 +19,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
 
     let on_upload_file_click = move |_| {
-        spawn_local(async move {
-            set_in_progress.set(true);
-
-            let file_input = file_input_ref.get_untracked().expect("input to exist");
-            if let Some(files) = file_input.files()
-                && let Some(file) = files.get(0)
-            {
-                if file.size() <= MAX_FILE_SIZE as f64 {
-                    match Request::post("/share_file_upload")
-                        .header("content-type", &file.type_())
-                        .query([("file_name", file.name())])
-                        .body(&file)
-                    {
-                        Ok(request) => match request.send().await {
-                            Ok(response) => {
-                                if response.status() == 200 {
-                                    let server_url = response
-                                        .headers()
-                                        .get("remote-server-url")
-                                        .unwrap_or_else(|| {
-                                            let window =
-                                                web_sys::window().expect("No global window exists");
-                                            let location = window.location();
-                                            location.origin().to_owned().unwrap_or_default()
-                                        });
-
-                                    set_shared_url.set(format!(
-                                        "{}/share_file/view?id={}",
-                                        server_url,
-                                        response.text().await.unwrap()
-                                    ));
-                                    show_info("Файл загружен!".to_owned(), messages);
-                                } else {
-                                    show_error(response.status_text(), messages)
-                                }
-                            }
-                            Err(err) => show_error(err.to_string(), messages),
-                        },
-                        Err(err) => show_error(err.to_string(), messages),
-                    }
-                } else {
-                   show_error("Файл слишком большой!".to_owned(), messages) 
-                }
-            }
-
-            set_in_progress.set(false);
-        });
+        let file_input = file_input_ref.get_untracked().expect("input to exist");
+        if let Some(files) = file_input.files()
+            && let Some(file) = files.get(0)
+        {
+            upload_file(file, set_in_progress, set_shared_url, messages);
+        }
     };
 
     let on_copy_click = move |_| {
@@ -72,8 +33,16 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     };
 
     view! {
+
+        <div class="flex justify-center items-center w-full p-4"
+            class:hidden=move || !shared_url.get().is_empty()>
+            <DragFile on_drop_file=move |file| {
+                upload_file(file, set_in_progress, set_shared_url, messages);
+            }/>
+        </div>
+
         <div class="flex flex-col px-[30vw] py-12 gap-4 dark:text-white text-xs md:text-base">
-            <div class="flex">
+            <div class="flex" class:hidden=move || !shared_url.get().is_empty()>
                 <FileInput node_ref=file_input_ref />
                 <Button
                     label="Загрузить".to_owned()
@@ -116,4 +85,52 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
         </div>
     }
+}
+
+fn upload_file(
+    file: File,
+    set_in_progress: WriteSignal<bool>,
+    set_shared_url: WriteSignal<String>,
+    messages: Messages,
+) {
+    spawn_local(async move {
+        set_in_progress.set(true);
+
+        if file.size() <= MAX_FILE_SIZE as f64 {
+            match Request::post("/share_file_upload")
+                .header("content-type", &file.type_())
+                .query([("file_name", file.name())])
+                .body(&file)
+            {
+                Ok(request) => match request.send().await {
+                    Ok(response) => {
+                        if response.status() == 200 {
+                            let server_url =
+                                response.headers().get("remote-server-url").unwrap_or_else(|| {
+                                    let window =
+                                        web_sys::window().expect("No global window exists");
+                                    let location = window.location();
+                                    location.origin().to_owned().unwrap_or_default()
+                                });
+
+                            set_shared_url.set(format!(
+                                "{}/share_file/view?id={}",
+                                server_url,
+                                response.text().await.unwrap()
+                            ));
+                            show_info("Файл загружен!".to_owned(), messages);
+                        } else {
+                            show_error(response.status_text(), messages)
+                        }
+                    }
+                    Err(err) => show_error(err.to_string(), messages),
+                },
+                Err(err) => show_error(err.to_string(), messages),
+            }
+        } else {
+            show_error("Файл слишком большой!".to_owned(), messages)
+        }
+
+        set_in_progress.set(false);
+    });
 }
