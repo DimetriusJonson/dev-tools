@@ -23,6 +23,7 @@ use crate::{
 
 const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
+const MIME_IMAGE_JPG: &str = "image/jpeg";
 
 #[axum::debug_handler]
 pub async fn share_file_upload(
@@ -52,10 +53,10 @@ pub async fn share_file_upload(
                 image_thumbnail = Some(
                     create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
                 );
-                if content_type != "image/jpeg" {
+                if content_type != MIME_IMAGE_JPG {
                     file_data =
                         convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
-                    content_type = "image/jpeg";
+                    content_type = MIME_IMAGE_JPG;
                 }
             } else {
                 image_thumbnail = None;
@@ -98,7 +99,7 @@ pub async fn share_file_download(
 
                 let image_thumbnail = get_share_file_thumbnail_from_db(external_id, &pool).await?;
                 if let Some(image_thumbnail) = image_thumbnail {
-                    headers.insert(header::CONTENT_TYPE, "image/jpeg".parse().unwrap());
+                    headers.insert(header::CONTENT_TYPE, MIME_IMAGE_JPG.parse().unwrap());
                     Ok((headers, image_thumbnail).into_response())
                 } else {
                     headers.insert(header::CONTENT_TYPE, DEFAULT_CONTENT_TYPE.parse().unwrap());
