@@ -39,7 +39,7 @@ pub fn Button(
     let button_element: NodeRef<html::Button> = NodeRef::new();
     let aria_label = label.to_owned();
 
-    let base_classes = "rounded-3xl cursor-pointer font-medium px-6 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl font-medium px-6 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -65,8 +65,8 @@ pub fn Button(
                     false => "".to_owned(),
                 }, 
                 match loading_memo.get() || disabled_memo.get() {
-                    true => "cursor-not-allowed brightness-110".to_owned(),
-                    false => "".to_owned(),
+                    true => "cursor-not-allowed brightness-40".to_owned(),
+                    false => "cursor-pointer".to_owned(),
                 }, class_name)
             on:click=on_click
             on:mouseup=move |_| if let Some(button) = button_element.get() { button.blur().unwrap(); }

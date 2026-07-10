@@ -1,7 +1,7 @@
 use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
-use web_sys::File;
+use web_sys::{File, HtmlInputElement};
 
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
@@ -17,13 +17,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let (shared_url, set_shared_url) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
+    let selected_file: RwSignal<Option<File>> = RwSignal::new(None);
 
     let on_upload_file_click = move |_| {
-        let file_input = file_input_ref.get_untracked().expect("input to exist");
-        if let Some(files) = file_input.files()
-            && let Some(file) = files.get(0)
-        {
+        if let Some(file) = selected_file.get_untracked() {
             upload_file(file, set_in_progress, set_shared_url, messages);
+            selected_file.set(None);
         }
     };
 
@@ -36,20 +35,30 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
         <div class="flex justify-center items-center w-full p-4"
             class:hidden=move || !shared_url.get().is_empty()>
-            <DragFile on_drop_file=move |file| {
-                upload_file(file, set_in_progress, set_shared_url, messages);
-            }/>
+            <DragFile
+                on_drop_file=move |file| {
+                    upload_file(file, set_in_progress, set_shared_url, messages);
+                }
+                on_paste_file=move |file| {selected_file.set(Some(file));}
+                />
         </div>
 
         <div class="flex flex-col px-[30vw] py-12 gap-4 dark:text-white text-xs md:text-base">
             <div class="flex" class:hidden=move || !shared_url.get().is_empty()>
-                <FileInput node_ref=file_input_ref />
+                <FileInput node_ref=file_input_ref on:change=move |event| {
+                    let input_file = event_target::<HtmlInputElement>(&event);
+                    if let Some(files) = input_file.files() {
+                        if files.length() > 0 {
+                            selected_file.set(files.get(0));
+                        }
+                    }
+                }/>
                 <Button
                     label="Загрузить".to_owned()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
                     on_click=on_upload_file_click
-                    disabled=move || in_progress.get()
+                    disabled=move || in_progress.get() || selected_file.read().is_none()
                 />
             </div>
 
@@ -75,7 +84,13 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
             <div class="py-4">
                 <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
+                    
                     <li>{"Выберите файл, которым хотите поделится. Максимальный размер файла "}<b>{"5 мегабайт"}</b>.</li>
+                    <ul class="list-disc pl-4">
+                        <li>{"Или перетащите файл в верхнюю область."}</li>
+                        <li>{"Или вставьте изображение из буфера обмена, нажав Ctrl+V в верхней области."}</li>
+                    </ul>
+
                     <li>{"Нажмите "}<b>{"Загрузить"}</b>{" для загрузки файла и формирования на него ссылки."}</li>
                     <li>{"Нажмите "}<b>{"Скопировать в буфер обмена"}</b>{"."}</li>
                     <li>{"Вставьте ссылку на файл из буфера обмена."}</li>
