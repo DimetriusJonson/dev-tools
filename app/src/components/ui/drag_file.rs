@@ -69,7 +69,7 @@ pub fn DragFile(#[prop(into)] on_drop_file: Callback<File>,
                     </svg>
                     <div id="dragText" class="mt-3 text-gray-600 text-base font-medium text-center">
                         <p>Перетащите файл сюда</p>
-                        <p>или клините по области и нажмите Ctrl+V</p>
+                        <p>или кликните по области и нажмите Ctrl+V</p>
                     </div>
                 </Show>
 
