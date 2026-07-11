@@ -28,7 +28,7 @@ async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_ur
 
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port);
 
-    start_axum_server(Some(addr), Some(remote_server_url))
+    start_axum_server(Some(addr), Some(remote_server_url), false)
         .await
         .expect("Failed start backend server");
 }

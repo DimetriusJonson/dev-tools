@@ -10,7 +10,7 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use crate::app_router::build_app_router::build_app_router;
 use crate::db::create_pool;
 
-pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_url: Option<String>) -> anyhow::Result<()> {
+pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_url: Option<String>, init_log: bool) -> anyhow::Result<()> {
     let environment = env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string());
     let env_file_name = format!(".env.{}", environment);
     println!("environment={}, env_file_name={}", environment, env_file_name);
@@ -18,7 +18,9 @@ pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_ur
     dotenv().ok();
     dotenvy::from_filename_override(env_file_name).ok();
 
-    LogTracer::init().expect("Failed to set logger");
+    if init_log {
+        LogTracer::init().expect("Failed to set logger");
+    }
 
     let subscriber = FmtSubscriber::builder()
         .with_ansi(true)
