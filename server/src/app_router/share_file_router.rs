@@ -1,3 +1,4 @@
+use app::common::app_state::ssr::AppState;
 use axum::{
     body::to_bytes,
     extract::{RawQuery, Request, State},
@@ -10,7 +11,6 @@ use crate::{
     app_router::proxy_request_to_remote,
     common::{
         app_error::AppError,
-        app_state::AppState,
         compress_utils::{compress_bytes, decompress_bytes},
         dev_utils::{is_mime_image, parse_query_params},
         image_utils::{convert_image_data_to_jpg, create_image_thumbnail},

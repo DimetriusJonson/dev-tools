@@ -59,6 +59,8 @@ dependencies = [
  "leptos_router",
  "log",
  "quick-xml",
+ "reqwest",
+ "sqlx",
  "tokio",
  "tower",
  "tower-http",

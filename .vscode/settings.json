@@ -1,4 +1,5 @@
 {
     "editor.fontSize": 12,
-    "window.zoomLevel": 1
+    "window.zoomLevel": 1,
+    "terminal.integrated.scrollback": 10000
 }

@@ -20,6 +20,7 @@ gloo-utils.workspace = true
 html-escape.workspace = true
 web-sys.workspace = true
 uuid.workspace = true
+reqwest.workspace = true
 
 tracing = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
@@ -33,6 +34,7 @@ tower-http = { workspace = true, optional = true }
 quick-xml = { workspace = true, optional = true }
 anyhow = { workspace = true, optional = true }
 js-sys = { workspace = true, optional = true }
+sqlx = { workspace = true, optional = true }
 
 [features]
 default = ["csr"]
@@ -48,6 +50,7 @@ ssr = [
     "dep:tracing",
     "dep:quick-xml",
     "dep:anyhow",
+    "dep:sqlx",
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",

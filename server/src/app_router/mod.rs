@@ -1,7 +1,8 @@
+use app::common::app_state::ssr::AppState;
 use axum::{body::Body, extract::Request, response::IntoResponse};
 use http::{HeaderValue, Response};
 
-use crate::common::{app_error::AppError, app_state::AppState};
+use crate::common::{app_error::AppError};
 
 pub mod build_app_router;
 pub mod json_escape_router;

@@ -24,11 +24,12 @@ pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_ur
         Err(e) => error!("Error getting parallelism: {}", e),
     }
 
-    let conf = get_configuration(None)?;
+    let mut conf = get_configuration(None)?;
     let addr = match custom_addr {
         Some(custom_addr) => custom_addr,
         None => conf.leptos_options.site_addr,
     };
+    conf.leptos_options.site_addr = addr;
 
     let pool = create_pool().await;
 
