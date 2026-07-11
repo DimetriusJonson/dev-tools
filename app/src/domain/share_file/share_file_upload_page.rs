@@ -25,7 +25,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             upload_file(file, set_in_progress, set_shared_url, messages, move |success| {
                 if success {
                     selected_file.set(None);
-                    file_input_ref.get_untracked().unwrap().set_files(None);
+                    file_input_ref.write().as_mut().unwrap().set_files(None);
                 }
             });
         }
@@ -46,7 +46,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     upload_file(file, set_in_progress, set_shared_url, messages, move |success| {
                         if success {
                             selected_file.set(None);
-                            file_input_ref.get_untracked().unwrap().set_files(None);
+                            file_input_ref.write().as_mut().unwrap().set_files(None);
                         }
                     });
                 }
