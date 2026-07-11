@@ -21,8 +21,13 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     let on_upload_file_click = move |_| {
         if let Some(file) = selected_file.get_untracked() {
-            upload_file(file, set_in_progress, set_shared_url, messages);
-            selected_file.set(None);
+            let selected_file = selected_file.clone();
+            upload_file(file, set_in_progress, set_shared_url, messages, move |success| {
+                if success {
+                    selected_file.set(None);
+                    file_input_ref.get_untracked().unwrap().set_files(None);
+                }
+            });
         }
     };
 
@@ -37,7 +42,13 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             class:hidden=move || !shared_url.get().is_empty()>
             <DragFile
                 on_drop_file=move |file| {
-                    upload_file(file, set_in_progress, set_shared_url, messages);
+                    let selected_file = selected_file.clone();
+                    upload_file(file, set_in_progress, set_shared_url, messages, move |success| {
+                        if success {
+                            selected_file.set(None);
+                            file_input_ref.get_untracked().unwrap().set_files(None);
+                        }
+                    });
                 }
                 on_paste_file=move |file| {selected_file.set(Some(file));}
                 />
@@ -84,7 +95,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
             <div class="py-4">
                 <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
-                    
+
                     <li>{"Выберите файл, которым хотите поделится. Максимальный размер файла "}<b>{"5 мегабайт"}</b>.</li>
                     <ul class="list-disc pl-4">
                         <li>{"Или перетащите файл в верхнюю область."}</li>
@@ -107,9 +118,12 @@ fn upload_file(
     set_in_progress: WriteSignal<bool>,
     set_shared_url: WriteSignal<String>,
     messages: Messages,
+    callback: impl Fn(bool) -> () + Send + Sync + 'static,
 ) {
     spawn_local(async move {
         set_in_progress.set(true);
+
+        let mut result = false;
 
         if file.size() <= MAX_FILE_SIZE as f64 {
             match Request::post("/share_file_upload")
@@ -133,9 +147,11 @@ fn upload_file(
                                 server_url,
                                 response.text().await.unwrap()
                             ));
+                            result = true;
+
                             show_info("Файл загружен!".to_owned(), messages);
                         } else {
-                            show_error(response.status_text(), messages)
+                            show_error(response.status_text(), messages);
                         }
                     }
                     Err(err) => show_error(err.to_string(), messages),
@@ -147,5 +163,6 @@ fn upload_file(
         }
 
         set_in_progress.set(false);
+        callback(result);
     });
 }

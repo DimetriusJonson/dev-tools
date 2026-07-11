@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use server::server_starter::start_axum_server;
 use tauri::{AppHandle, Manager};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_log::{Target, TargetKind};
 
 #[tauri::command]
 fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
@@ -36,6 +37,15 @@ async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_ur
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    Target::new(TargetKind::Stdout),    
+                    Target::new(TargetKind::LogDir { file_name: Some("dev_tools.log".to_owned()) }), 
+                    Target::new(TargetKind::Webview),
+                ])
+                .build(),
+        )
         .setup(|app| {
             let args: Vec<String> = std::env::args().collect();
 
