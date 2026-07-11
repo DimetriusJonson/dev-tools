@@ -1,6 +1,9 @@
+use std::env;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
 
+use dotenvy::dotenv;
+use log::info;
 use server::server_starter::start_axum_server;
 use tauri::{AppHandle, Manager};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
@@ -14,7 +17,7 @@ fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
 async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_url: String) {
     let addr = format!("127.0.0.1:{}", port);
 
-    println!("Backend server starting up on {}...", addr);
+    info!("Backend server starting up on {}...", addr);
 
     unsafe {
         let mut site_dir = resource_dir;
@@ -28,13 +31,20 @@ async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_ur
 
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port);
 
-    start_axum_server(Some(addr), Some(remote_server_url), false)
+    start_axum_server(Some(addr), Some(remote_server_url))
         .await
         .expect("Failed start backend server");
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let environment = env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string());
+    let env_file_name = format!(".env.{}", environment);
+    println!("environment={}, env_file_name={}", environment, env_file_name);
+
+    dotenv().ok();
+    dotenvy::from_filename_override(env_file_name).ok();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
         .plugin(

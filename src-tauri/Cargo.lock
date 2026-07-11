@@ -1263,6 +1263,7 @@ name = "dev_tools"
 version = "0.2.0"
 dependencies = [
  "app",
+ "dotenvy",
  "log",
  "server",
  "tauri",
