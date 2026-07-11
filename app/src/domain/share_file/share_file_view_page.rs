@@ -16,26 +16,26 @@ pub fn ShareFileViewPage() -> impl IntoView {
     let (in_progress, set_in_progress) = signal(true);
 
     Effect::new(move |_| {
-        let id = params.read().get("id").unwrap();
-        spawn_local(async move {
-            set_in_progress.set(true);
-            match Request::get("/share_file_info").query([("id", id)]).build() {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => {
-                            let parts: Vec<&str> = response_text.split('\n').collect();
-                            set_file_name.set(parts[0].to_owned());
-                            set_is_image.set(parts[2].parse::<bool>().unwrap());
-                        }
+        if let Some(id) = params.read().get("id") {
+            spawn_local(async move {
+                set_in_progress.set(true);
+                match Request::get("/share_file_info").query([("id", id)]).build() {
+                    Ok(request) => match request.send().await {
+                        Ok(response) => match response.text().await {
+                            Ok(response_text) => {
+                                let parts: Vec<&str> = response_text.split('\n').collect();
+                                set_file_name.set(parts[0].to_owned());
+                                set_is_image.set(parts[2].parse::<bool>().unwrap());
+                            }
+                            Err(err) => show_error(err.to_string(), messages),
+                        },
                         Err(err) => show_error(err.to_string(), messages),
                     },
                     Err(err) => show_error(err.to_string(), messages),
-                },
-                Err(err) => show_error(err.to_string(), messages),
-            }
-            set_in_progress.set(false);
-
-        });
+                }
+                set_in_progress.set(false);
+            });
+        }
     });
 
     view! {
