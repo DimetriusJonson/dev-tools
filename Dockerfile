@@ -34,7 +34,7 @@ COPY --from=builder /work/site /app/site
 COPY --from=compressor /server /app/
 COPY --from=builder /work/Cargo.toml /app/
 
-EXPOSE 8080
+EXPOSE 80
 ENV LEPTOS_SITE_ROOT=./site
 
 CMD ["/app/server"]
