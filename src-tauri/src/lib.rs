@@ -15,7 +15,7 @@ fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
 }
 
 async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_url: String) {
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
 
     info!("Backend server starting up on {}...", addr);
 
@@ -29,7 +29,7 @@ async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_ur
         std::env::set_var("LEPTOS_SITE_ADDR", addr);
     }
 
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port);
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
     start_axum_server(Some(addr), Some(remote_server_url))
         .await
