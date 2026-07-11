@@ -67,6 +67,7 @@ pub fn run() {
                 .title("Developer Tools")
                 .inner_size(1500.0, 1000.0)
                 .enable_clipboard_access()
+                .disable_drag_drop_handler()
                 .build()
                 .expect("Failed to build dynamic window");
 
