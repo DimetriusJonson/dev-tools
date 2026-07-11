@@ -44,11 +44,11 @@ pub fn ShareFileViewPage() -> impl IntoView {
                 <Show when=move || { !in_progress.get() } fallback=|| view! { <div>Загрузка...</div> }>
                     <Show when=move || { is_image.get() } fallback=|| view! {  }>
                         <div class="items-center justify-center">
-                            <img src={format!("/share_file_download?id={}&thumbnail=true", params.read().get("id").unwrap())} alt={file_name.get()}/>
+                            <img src={format!("/share_file_download?id={}&thumbnail=true", params.read().get("id").unwrap_or_default())} alt={file_name.get()}/>
                         </div>
                     </Show>
 
-                    <ButtonLink label=format!("Скачать {}", file_name.get()) href={format!("/share_file_download?id={}", params.read().get("id").unwrap())} button_width=ButtonLinkWidth::Auto
+                    <ButtonLink label=format!("Скачать {}", file_name.get()) href={format!("/share_file_download?id={}", params.read().get("id").unwrap_or_default())} button_width=ButtonLinkWidth::Auto
                         color=move || ButtonLinkColor::Primary prop:download=file_name.get() />
                 </Show>
                 }
