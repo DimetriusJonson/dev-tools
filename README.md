@@ -6,7 +6,7 @@
 2) Escape/Unescape XML, JSON, URL
 3) Supporting large files
 
-Web version: https://leptos-devtools.up.railway.app/
+Web version: https://dev-tools-rust.vercel.app
 
 There are also standalone applications for Windows, Linux, and Mac OS.
 
@@ -16,7 +16,7 @@ The standalone app listens on port 3005 by default. This can be changed using co
 For example,
     dev_tools.exe --port=3067
 
-The standalone app also uses the default remote server "https://leptos-devtools.up.railway.app" for the "Share File" feature.
+The standalone app also uses the default remote server "https://dev-tools-rust.vercel.app" for the "Share File" feature.
 The server address can be changed using a command-line argument.
 For example,
     dev_tools.exe --remote-server-url=https://custom-server

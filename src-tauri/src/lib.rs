@@ -45,7 +45,7 @@ pub fn run() {
             };
 
             let arg_remote_server_url = get_arg_value(&args, "remote-server-url")
-                .unwrap_or("https://leptos-devtools.up.railway.app".to_owned());
+                .unwrap_or("https://dev-tools-rust.vercel.app".to_owned());
 
             let resource_dir = get_resource_dir(app.app_handle());
 
