@@ -2,7 +2,6 @@ use std::env;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
 
-use dotenvy::dotenv;
 use log::info;
 use server::server_starter::start_axum_server;
 use tauri::menu::{Menu, MenuItem};
@@ -40,20 +39,13 @@ async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_ur
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let environment = env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string());
-    let env_file_name = format!(".env.{}", environment);
-    println!("environment={}, env_file_name={}", environment, env_file_name);
-
-    dotenv().ok();
-    dotenvy::from_filename_override(env_file_name).ok();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
                     Target::new(TargetKind::Stdout),
-                    Target::new(TargetKind::LogDir { file_name: Some("dev_tools.log".to_owned()) }),
+                    Target::new(TargetKind::LogDir { file_name: Some("webdev_useful_tools.log".to_owned()) }),
                     Target::new(TargetKind::Webview),
                 ])
                 .build(),
