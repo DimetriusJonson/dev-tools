@@ -5,7 +5,9 @@ use std::path::PathBuf;
 use dotenvy::dotenv;
 use log::info;
 use server::server_starter::start_axum_server;
-use tauri::{AppHandle, Manager};
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::TrayIconBuilder;
+use tauri::{AppHandle, Manager, WindowEvent};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -50,8 +52,8 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
-                    Target::new(TargetKind::Stdout),    
-                    Target::new(TargetKind::LogDir { file_name: Some("dev_tools.log".to_owned()) }), 
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::LogDir { file_name: Some("dev_tools.log".to_owned()) }),
                     Target::new(TargetKind::Webview),
                 ])
                 .build(),
@@ -91,7 +93,39 @@ pub fn run() {
                 .build()
                 .expect("Failed to build dynamic window");
 
+            let quit_i = MenuItem::with_id(app, "quit", "Выход", true, None::<&str>)?;
+            let open_i = MenuItem::with_id(app, "open", "Открыть", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .show_menu_on_left_click(false)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    "open" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    _ => {
+                        //                        println!("menu item {:?} not handled", event.id);
+                    }
+                })
+                .build(app)?;
+
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                //let _ = window.minimize();
+                let _ = window.hide();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
