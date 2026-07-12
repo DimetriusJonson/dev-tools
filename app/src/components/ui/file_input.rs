@@ -1,7 +1,5 @@
 use leptos::{html, prelude::*};
 
-pub type SelectOption = (Option<String>, String);
-
 #[component]
 pub fn FileInput(
     node_ref: NodeRef<html::Input>

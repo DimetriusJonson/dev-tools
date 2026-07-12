@@ -1,6 +1,7 @@
+use app::common::app_error::AppError;
 use sqlx::{Pool, Postgres, Row};
 
-use crate::{common::app_error::AppError, model::share_file::ShareFile};
+use crate::{model::share_file::ShareFile};
 
 pub async fn create_share_file_in_db(
     external_id: &str,

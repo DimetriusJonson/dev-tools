@@ -40,7 +40,6 @@ gloo-utils = "0.3.0"
 js-sys = "0.3.102"
 html-escape = "0.2.13"
 urlencoding = "2.1"
-thiserror = "2.0.18"
 uuid = { version = "1.23", features = ["v4", "fast-rng", "js"] }
 dotenvy = { version = "0.15" }
 tokio-util = "0.7.18"
@@ -51,6 +50,7 @@ nanoid = "0.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "webp"] }
 reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls"] }
 flate2 = "1.0"
+getifs = "0.6"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

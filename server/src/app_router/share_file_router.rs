@@ -1,4 +1,4 @@
-use app::common::app_state::ssr::AppState;
+use app::common::{app_error::AppError, app_state::ssr::AppState};
 use axum::{
     body::to_bytes,
     extract::{RawQuery, Request, State},
@@ -8,8 +8,8 @@ use http::{HeaderMap, HeaderValue, header};
 use nanoid::nanoid;
 
 use crate::{
-    common::{
-        app_error::AppError, compress_utils::{compress_bytes, decompress_bytes}, dev_utils::{is_mime_image, parse_query_params}, image_utils::{convert_image_data_to_jpg, create_image_thumbnail}, net_utils::proxy_request_to_remote,
+    app_router::proxy_request_to_remote, common::{
+        compress_utils::{compress_bytes, decompress_bytes}, dev_utils::{is_mime_image, parse_query_params}, image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
     }, db::share_files_db::{
         create_share_file_in_db, delete_old_share_files_in_db, get_share_file_from_db,
         get_share_file_info_from_db, get_share_file_thumbnail_from_db,

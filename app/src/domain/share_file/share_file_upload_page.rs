@@ -8,6 +8,7 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
+use crate::components::ui::select_input::{SelectInput, SelectOption};
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
 
@@ -18,16 +19,24 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let (in_progress, set_in_progress) = signal(false);
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
     let selected_file: RwSignal<Option<File>> = RwSignal::new(None);
+    let (custom_server, set_custom_server) = signal("".to_owned());
 
     let on_upload_file_click = move |_| {
         if let Some(file) = selected_file.get_untracked() {
             let selected_file = selected_file.clone();
-            upload_file(file, set_in_progress, set_shared_url, messages, move |success| {
-                if success {
-                    selected_file.set(None);
-                    file_input_ref.write().as_mut().unwrap().set_files(None);
-                }
-            });
+            upload_file(
+                file,
+                set_in_progress,
+                set_shared_url,
+                messages,
+                custom_server.get(),
+                move |success| {
+                    if success {
+                        selected_file.set(None);
+                        file_input_ref.write().as_mut().unwrap().set_files(None);
+                    }
+                },
+            );
         }
     };
 
@@ -36,6 +45,8 @@ pub fn ShareFileUploadPage() -> impl IntoView {
         show_info("Ссылка скопирована в буфер обмена.".to_owned(), messages);
     };
 
+    let custom_servers_resource = OnceResource::new(get_custom_servers());
+
     view! {
 
         <div class="flex justify-center items-center w-full p-4"
@@ -43,7 +54,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             <DragFile
                 on_drop_file=move |file| {
                     let selected_file = selected_file.clone();
-                    upload_file(file, set_in_progress, set_shared_url, messages, move |success| {
+                    upload_file(file, set_in_progress, set_shared_url, messages, custom_server.get(), move |success| {
                         if success {
                             selected_file.set(None);
                             file_input_ref.write().as_mut().unwrap().set_files(None);
@@ -71,6 +82,30 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     on_click=on_upload_file_click
                     disabled=move || in_progress.get() || selected_file.read().is_none()
                 />
+            </div>
+
+            <div>
+                <Transition
+                    fallback=move || view! { <div>Загрузка...</div> }
+                    >
+                    {move || custom_servers_resource.get().map(|data|
+                        data.map(|custom_servers| {
+                                view! {
+                                    <div>
+                                        <SelectInput
+                                            name={"server_addr".to_owned()}
+                                            value={custom_server}
+                                            set_value={set_custom_server}
+                                            label={"Server addr".to_owned()}
+                                            options=move || custom_servers.clone()
+                                            not_selected_text={"Сервер по умолчанию".to_owned()}
+                                            on_change=move |_| {}
+                                        />
+                                    </div>
+                                }
+                        })
+                    )}
+                </Transition>
             </div>
 
             <div class="flex flex-col gap-4 items-center justify-center">
@@ -118,6 +153,7 @@ fn upload_file(
     set_in_progress: WriteSignal<bool>,
     set_shared_url: WriteSignal<String>,
     messages: Messages,
+    custom_server_url: String,
     callback: impl Fn(bool) -> () + Send + Sync + 'static,
 ) {
     spawn_local(async move {
@@ -144,7 +180,11 @@ fn upload_file(
 
                             set_shared_url.set(format!(
                                 "{}/share_file/view?id={}",
-                                server_url,
+                                if !custom_server_url.is_empty() {
+                                    custom_server_url
+                                } else {
+                                    server_url
+                                },
                                 response.text().await.unwrap()
                             ));
                             result = true;
@@ -165,4 +205,28 @@ fn upload_file(
         set_in_progress.set(false);
         callback(result);
     });
+}
+
+#[server]
+pub async fn get_custom_servers() -> Result<Vec<SelectOption>, ServerFnError> {
+    use crate::common::app_state::ssr::AppState;
+    use crate::common::net_utils::ssr::get_local_addrs;
+
+    let app_state =
+        use_context::<AppState>().ok_or_else(|| ServerFnError::new("App state missing."))?;
+
+    let site_addr = app_state.leptos_options.site_addr;
+
+    let addrs =
+        get_local_addrs().map_err(|e| ServerFnError::new(format!("Request failed: {e}")))?;
+
+    Ok(addrs
+        .iter()
+        .map(|a| {
+            (
+                Some(format!("http://{}:{}", a.0.to_owned(), site_addr.port())),
+                format!("{} ({})", a.1, a.0),
+            )
+        })
+        .collect())
 }

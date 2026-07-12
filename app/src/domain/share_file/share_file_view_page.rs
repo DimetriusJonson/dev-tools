@@ -52,7 +52,7 @@ pub async fn get_share_info(id: String) -> Result<(String, bool), ServerFnError>
 
     let site_addr = app_state.leptos_options.site_addr;
 
-    let response = reqwest::get(&format!("http://{}:{}/share_file_info?id={}", site_addr.ip(), site_addr.port(), id))
+    let response = reqwest::get(&format!("http://127.0.0.1:{}/share_file_info?id={}", site_addr.port(), id))
         .await
         .map_err(|e| ServerFnError::new(format!("Request failed: {e}")))?;
 

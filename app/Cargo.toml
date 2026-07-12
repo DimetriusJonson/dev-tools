@@ -35,6 +35,7 @@ quick-xml = { workspace = true, optional = true }
 anyhow = { workspace = true, optional = true }
 js-sys = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
+getifs = { workspace = true, optional = true }
 
 [features]
 default = ["csr"]
@@ -51,6 +52,7 @@ ssr = [
     "dep:quick-xml",
     "dep:anyhow",
     "dep:sqlx",
+    "dep:getifs",
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",

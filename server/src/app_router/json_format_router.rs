@@ -1,3 +1,4 @@
+use app::common::app_error::AppError;
 use axum::{
     body::Body,
     extract::RawQuery,
@@ -7,8 +8,8 @@ use axum::{
 use futures_util::StreamExt;
 use tokio_util::io::ReaderStream;
 
+use crate::common::dev_utils::parse_query_params;
 use crate::common::json_formatter::JsonFormatter;
-use crate::common::{app_error::AppError, dev_utils::parse_query_params};
 
 pub async fn format_json_handler(
     RawQuery(query): RawQuery,
@@ -46,11 +47,12 @@ async fn process_json_data(body: Body, ident: usize) -> Body {
     let request_body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
     let mut formatter = JsonFormatter::new(ident);
-    let output_stream =
-        ReaderStream::new(std::io::Cursor::new(request_body_bytes)).map(move |result| match result {
+    let output_stream = ReaderStream::new(std::io::Cursor::new(request_body_bytes)).map(
+        move |result| match result {
             Ok(data) => Ok(formatter.format_bytes(data)),
             Err(err) => Err(std::io::Error::other(err)),
-        });
+        },
+    );
 
     Body::from_stream(output_stream)
 }

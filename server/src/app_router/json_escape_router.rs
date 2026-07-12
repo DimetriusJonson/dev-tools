@@ -1,3 +1,4 @@
+use app::common::app_error::AppError;
 use axum::{
     body::Body,
     http::{StatusCode, header},
@@ -6,8 +7,6 @@ use axum::{
 use bytes::Bytes;
 use futures_util::StreamExt;
 use json_escape::{escape_str, stream::UnescapeStream, token::UnescapedToken};
-
-use crate::common::app_error::AppError;
 
 pub async fn escape_json_handler(body: Body) -> Result<impl IntoResponse, AppError> {
     let request_body_stream = body.into_data_stream().map(|result| match result {

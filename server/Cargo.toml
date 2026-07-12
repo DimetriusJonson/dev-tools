@@ -23,7 +23,6 @@ quick-xml.workspace=true
 async-stream.workspace=true
 urlencoding.workspace=true
 json-escape.workspace=true
-thiserror.workspace=true
 dotenvy.workspace=true
 tokio-util.workspace=true
 sqlx.workspace=true

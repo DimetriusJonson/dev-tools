@@ -1,7 +1,5 @@
 use leptos::prelude::*;
 
-pub type SelectOption = (Option<String>, String);
-
 #[component]
 pub fn TextArea(
     name: String,

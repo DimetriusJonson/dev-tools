@@ -1,6 +1,5 @@
+use app::common::app_error::AppError;
 use urlencoding::{decode, encode};
-
-use crate::common::app_error::AppError;
 
 pub async fn encode_url_handler(url: String) -> String {
     encode(&url).to_string()

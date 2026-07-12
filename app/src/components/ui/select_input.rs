@@ -15,7 +15,7 @@ pub fn SelectInput(
 ) -> impl IntoView {
     let mut final_options = Vec::new();
     if !not_selected_text.is_empty() {
-        final_options.push((None, not_selected_text));
+        final_options.push((Some("".to_owned()), not_selected_text));
     }
     final_options.extend(options());
 

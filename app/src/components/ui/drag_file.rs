@@ -1,8 +1,6 @@
 use leptos::prelude::*;
 use web_sys::{ClipboardEvent, DragEvent, File, HtmlDivElement, Url};
 
-pub type SelectOption = (Option<String>, String);
-
 #[component]
 pub fn DragFile(#[prop(into)] on_drop_file: Callback<File>,
 #[prop(into)] on_paste_file: Callback<File>) -> impl IntoView {

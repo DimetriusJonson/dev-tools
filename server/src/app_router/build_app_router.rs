@@ -7,7 +7,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use http::Request;
 use leptos::prelude::*;
-use leptos_axum::{LeptosRoutes, generate_route_list, render_app_to_stream_with_context};
+use leptos_axum::{LeptosRoutes, generate_route_list, handle_server_fns_with_context, render_app_to_stream_with_context};
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
@@ -49,6 +49,7 @@ pub async fn build_app_router(
         .route("/share_file_upload", post(share_file_upload))
         .route("/share_file_download", get(share_file_download))
         .route("/share_file_info", get(share_file_info))
+        .route("/api/{*fn_name}", get(server_fn_handler).post(server_fn_handler))
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .layer(CompressionLayer::new().gzip(true))
@@ -70,4 +71,18 @@ pub async fn leptos_routes_handler(
         move || shell(leptos_options.clone()),
     );
     handler(req).await.into_response()
+}
+
+#[axum_macros::debug_handler]
+pub async fn server_fn_handler(
+    State(state): State<AppState>,
+    request: Request<AxumBody>,
+) -> impl IntoResponse {
+    handle_server_fns_with_context(
+        move || {
+            provide_context(state.clone());
+        },
+        request,
+    )
+    .await
 }
