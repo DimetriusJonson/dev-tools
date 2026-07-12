@@ -84,29 +84,31 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 />
             </div>
 
-            <div>
-                <Transition
-                    fallback=move || view! { <div>Загрузка...</div> }
-                    >
-                    {move || custom_servers_resource.get().map(|data|
-                        data.map(|custom_servers| {
-                                view! {
-                                    <div>
-                                        <SelectInput
-                                            name={"server_addr".to_owned()}
-                                            value={custom_server}
-                                            set_value={set_custom_server}
-                                            label={"Server addr".to_owned()}
-                                            options=move || custom_servers.clone()
-                                            not_selected_text={"Сервер по умолчанию".to_owned()}
-                                            on_change=move |_| {}
-                                        />
-                                    </div>
-                                }
-                        })
-                    )}
-                </Transition>
-            </div>
+            <Transition
+                fallback=move || view! { <div>Загрузка...</div> }
+                >
+                {move || custom_servers_resource.get().map(|data|
+                    data.map(|custom_servers| {
+                        if !custom_servers.is_empty() {
+                            view! {
+                                <div>
+                                    <SelectInput
+                                        name={"server_addr".to_owned()}
+                                        value={custom_server}
+                                        set_value={set_custom_server}
+                                        label={"Server addr".to_owned()}
+                                        options=move || custom_servers.clone()
+                                        not_selected_text={"Сервер по умолчанию".to_owned()}
+                                        on_change=move |_| {}
+                                    />
+                                </div>
+                            }.into_any()
+                        } else {
+                            view! {}.into_any()
+                        }
+                    })
+                )}
+            </Transition>
 
             <div class="flex flex-col gap-4 items-center justify-center">
                 <Show when=move || { !shared_url.get().is_empty() }
@@ -224,6 +226,10 @@ pub async fn get_custom_servers() -> Result<Vec<SelectOption>, ServerFnError> {
 
     let app_state =
         use_context::<AppState>().ok_or_else(|| ServerFnError::new("App state missing."))?;
+
+    if app_state.pool.is_some() {
+        return Ok(Vec::new());
+    }
 
     let site_addr = app_state.leptos_options.site_addr;
 
