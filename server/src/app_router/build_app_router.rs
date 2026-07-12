@@ -8,7 +8,6 @@ use axum::routing::{get, post};
 use http::Request;
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list, render_app_to_stream_with_context};
-use reqwest::Client;
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
@@ -35,15 +34,9 @@ pub async fn build_app_router(
 
     let routes = generate_route_list(App);
 
-    let reqwest_client = match remote_server_url {
-        Some(_) => Some(Client::new()),
-        None => None,
-    };
-
     let app_state = AppState {
         leptos_options: leptos_options.clone(),
         pool: pool.clone(),
-        client: reqwest_client,
         remote_server_url: remote_server_url,
     };
 

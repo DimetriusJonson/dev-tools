@@ -8,14 +8,9 @@ use http::{HeaderMap, HeaderValue, header};
 use nanoid::nanoid;
 
 use crate::{
-    app_router::proxy_request_to_remote,
     common::{
-        app_error::AppError,
-        compress_utils::{compress_bytes, decompress_bytes},
-        dev_utils::{is_mime_image, parse_query_params},
-        image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
-    },
-    db::share_files_db::{
+        app_error::AppError, compress_utils::{compress_bytes, decompress_bytes}, dev_utils::{is_mime_image, parse_query_params}, image_utils::{convert_image_data_to_jpg, create_image_thumbnail}, net_utils::proxy_request_to_remote,
+    }, db::share_files_db::{
         create_share_file_in_db, delete_old_share_files_in_db, get_share_file_from_db,
         get_share_file_info_from_db, get_share_file_thumbnail_from_db,
     },
@@ -76,7 +71,7 @@ pub async fn share_file_upload(
 
             return Ok((external_id).into_response());
         }
-        None => proxy_request_to_remote(app_state, request).await,
+        None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
     }
 }
 
@@ -129,7 +124,7 @@ pub async fn share_file_download(
                 Ok((headers, file_data).into_response())
             }
         }
-        None => proxy_request_to_remote(app_state, request).await,
+        None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
     }
 }
 
@@ -153,6 +148,6 @@ pub async fn share_file_info(
             )
             .into_response())
         }
-        None => proxy_request_to_remote(app_state, request).await,
+        None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
     }
 }
