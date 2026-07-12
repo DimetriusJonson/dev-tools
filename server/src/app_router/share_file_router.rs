@@ -16,9 +16,17 @@ use crate::{
     },
 };
 
-const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
+pub const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
-const MIME_IMAGE_JPG: &str = "image/jpeg";
+pub const MIME_IMAGE_JPG: &str = "image/jpeg";
+
+pub struct ShareFileUploadData {
+    pub file_data: Vec<u8>,
+    pub image_thumbnail: Option<Vec<u8>>,
+    pub mime_type: String,
+    pub external_id: String,
+    pub file_name: String,
+}
 
 #[axum::debug_handler]
 pub async fn share_file_upload(
@@ -31,48 +39,55 @@ pub async fn share_file_upload(
     let params = parse_query_params(&query_str);
     let file_name = params.get("file_name").unwrap_or(&"unknown_file");
 
-    let default_content_type = HeaderValue::from_static(DEFAULT_CONTENT_TYPE);
-    let mut content_type =
-        headers.get("content-type").unwrap_or(&default_content_type).to_str().unwrap();
-
     match app_state.pool {
         Some(pool) => {
             delete_old_share_files_in_db(&pool).await?;
 
-            let bytes = to_bytes(request.into_body(), MAX_FILE_SIZE)
-                .await
-                .map_err(AppError::system_error)?;
-            let mut file_data = bytes.to_vec();
-            let image_thumbnail;
-            if is_mime_image(&content_type) {
-                image_thumbnail = Some(
-                    create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
-                );
-                if content_type != MIME_IMAGE_JPG {
-                    file_data =
-                        convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
-                    content_type = MIME_IMAGE_JPG;
-                }
-            } else {
-                image_thumbnail = None;
-                file_data = compress_bytes(&file_data).map_err(AppError::system_error)?;
-            }
-
-            let external_id = nanoid!();
+            let prepared_data = share_file_prepare_for_upload(request, headers, file_name).await?;
             create_share_file_in_db(
-                &external_id,
+                &prepared_data.external_id,
                 file_name,
-                content_type,
-                file_data,
-                image_thumbnail,
+                &prepared_data.mime_type,
+                prepared_data.file_data,
+                prepared_data.image_thumbnail,
                 &pool,
             )
             .await?;
 
-            return Ok((external_id).into_response());
+            return Ok((prepared_data.external_id).into_response());
         }
         None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
     }
+}
+
+pub async fn share_file_prepare_for_upload(request: Request, headers: HeaderMap, file_name: &str) -> Result<ShareFileUploadData, AppError>  {
+    let bytes = to_bytes(request.into_body(), MAX_FILE_SIZE)
+        .await
+        .map_err(AppError::system_error)?;
+    let mut file_data = bytes.to_vec();
+    let image_thumbnail;
+
+    let default_content_type = HeaderValue::from_static(DEFAULT_CONTENT_TYPE);
+    let mut content_type = headers.get("content-type").unwrap_or(&default_content_type).to_str().unwrap().to_owned();
+
+    if is_mime_image(&content_type) {
+        image_thumbnail = Some(
+            create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
+        );
+        if content_type != MIME_IMAGE_JPG {
+            file_data =
+                convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
+            content_type = MIME_IMAGE_JPG.to_owned();
+        }
+    } else {
+        image_thumbnail = None;
+        file_data = compress_bytes(&file_data).map_err(AppError::system_error)?;
+    }
+
+    let external_id = nanoid!();
+
+    Ok(ShareFileUploadData{ file_data, image_thumbnail, mime_type: content_type, external_id, file_name: file_name.to_owned() })
+
 }
 
 #[axum::debug_handler]

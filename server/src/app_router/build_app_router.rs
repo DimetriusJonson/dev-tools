@@ -17,6 +17,7 @@ use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::share_file_router::{
     share_file_download, share_file_info, share_file_upload,
 };
+use crate::app_router::share_local_file_router::{share_local_file_download, share_local_file_info, share_local_file_upload};
 use crate::app_router::url_encode_router::{decode_url_handler, encode_url_handler};
 use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
 use crate::app_router::xml_format_router::format_xml_handler;
@@ -49,6 +50,9 @@ pub async fn build_app_router(
         .route("/share_file_upload", post(share_file_upload))
         .route("/share_file_download", get(share_file_download))
         .route("/share_file_info", get(share_file_info))
+        .route("/share_local_file_upload", post(share_local_file_upload))
+        .route("/share_local_file_info", get(share_local_file_info))
+        .route("/share_local_file_download", get(share_local_file_download))
         .route("/api/{*fn_name}", get(server_fn_handler).post(server_fn_handler))
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))

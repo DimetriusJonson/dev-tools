@@ -161,8 +161,14 @@ fn upload_file(
 
         let mut result = false;
 
+        let service_name = if !custom_server_url.is_empty() {
+            "/share_local_file_upload"
+        } else {
+            "/share_file_upload"
+        };
+
         if file.size() <= MAX_FILE_SIZE as f64 {
-            match Request::post("/share_file_upload")
+            match Request::post(service_name)
                 .header("content-type", &file.type_())
                 .query([("file_name", file.name())])
                 .body(&file)
@@ -178,15 +184,19 @@ fn upload_file(
                                     location.origin().to_owned().unwrap_or_default()
                                 });
 
-                            set_shared_url.set(format!(
-                                "{}/share_file/view?id={}",
-                                if !custom_server_url.is_empty() {
-                                    custom_server_url
-                                } else {
-                                    server_url
-                                },
-                                response.text().await.unwrap()
-                            ));
+                            if !custom_server_url.is_empty() {
+                                set_shared_url.set(format!(
+                                    "{}/share_file/view?id={}&local=true",
+                                    custom_server_url,
+                                    response.text().await.unwrap()
+                                ));
+                            } else {
+                                set_shared_url.set(format!(
+                                    "{}/share_file/view?id={}",
+                                    server_url,
+                                    response.text().await.unwrap()
+                                ));
+                            }
                             result = true;
 
                             show_info("Файл загружен!".to_owned(), messages);
