@@ -21,10 +21,6 @@ use crate::app_router::url_encode_router::{decode_url_handler, encode_url_handle
 use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
 use crate::app_router::xml_format_router::format_xml_handler;
 
-/* ========================================================== */
-/*                         🦀 MAIN 🦀                         */
-/* ========================================================== */
-
 pub async fn build_app_router(
     conf_file: ConfFile,
     pool: Option<Pool<Postgres>>,
@@ -70,9 +66,7 @@ pub async fn leptos_routes_handler(
     let leptos_options = app_state.leptos_options.clone();
 
     let handler = render_app_to_stream_with_context(
-        move || {
-            provide_context(app_state.clone());
-        },
+        move || provide_context(app_state.clone()),
         move || shell(leptos_options.clone()),
     );
     handler(req).await.into_response()
