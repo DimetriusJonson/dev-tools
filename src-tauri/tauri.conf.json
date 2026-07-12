@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Developers tools",
-  "version": "0.2.0",
-  "identifier": "com.shz.app.dev-tools",
+  "productName": "WebDev Useful Tools",
+  "version": "0.3.0",
+  "identifier": "com.shz.app.WebDevUsefulTools",
   "build": {
     "beforeDevCommand": "cargo leptos watch",
     "devUrl": "http://localhost:3000",

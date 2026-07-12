@@ -95,7 +95,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "app"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1282,21 +1282,6 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 2.0.117",
-]
-
-[[package]]
-name = "dev_tools"
-version = "0.2.0"
-dependencies = [
- "app",
- "dotenvy",
- "log",
- "server",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-log",
- "tauri-plugin-opener",
 ]
 
 [[package]]
@@ -5251,7 +5236,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "app",
@@ -7251,6 +7236,21 @@ dependencies = [
  "phf_codegen",
  "string_cache",
  "string_cache_codegen",
+]
+
+[[package]]
+name = "webdev_useful_tools"
+version = "0.3.0"
+dependencies = [
+ "app",
+ "dotenvy",
+ "log",
+ "server",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-log",
+ "tauri-plugin-opener",
 ]
 
 [[package]]

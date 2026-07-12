@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    dev_tools_lib::run()
+    webdev_useful_tools_lib::run()
 }

@@ -1,7 +1,7 @@
 [package]
-name = "dev_tools"
-version = "0.2.0"
-description = "Developer tools"
+name = "webdev_useful_tools"
+version = "0.3.0"
+description = "Useful tools for web developers"
 edition = "2024"
 
 [workspace]
@@ -11,7 +11,7 @@ default = []
 tauri = []
 
 [lib]
-name = "dev_tools_lib"
+name = "webdev_useful_tools_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
