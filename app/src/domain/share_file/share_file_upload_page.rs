@@ -91,17 +91,22 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     data.map(|custom_servers| {
                         if !custom_servers.is_empty() {
                             view! {
-                                <div>
+                                <div class="flex items-center">
+                                    <label for="server_addr" title="IP локального сервера или по умолчанию облако.">Сервер: </label>
                                     <SelectInput
+                                        class_name="px-2".to_owned()
                                         name={"server_addr".to_owned()}
                                         value={custom_server}
                                         set_value={set_custom_server}
                                         label={"Server addr".to_owned()}
                                         options=move || custom_servers.clone()
-                                        not_selected_text={"Сервер по умолчанию".to_owned()}
+                                        not_selected_text={"Облако".to_owned()}
                                         on_change=move |_| {}
                                     />
                                 </div>
+                                <p class="text-xs text-gray-600">
+                                    {"Если выбран локальный сервер, то ссылка будет содержать IP вашего компьютера, а не облака."}<br/>{"Т.к. файл сохраняется в оперативной памяти Вашего компьютера, то не закрывайте приложение пока получатель ссылки ей не воспользуется."}
+                                </p>
                             }.into_any()
                         } else {
                             view! {}.into_any()

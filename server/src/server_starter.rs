@@ -8,7 +8,11 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use crate::app_router::build_app_router::build_app_router;
 use crate::db::create_pool;
 
-pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_url: Option<String>) -> anyhow::Result<()> {
+pub async fn start_axum_server(
+    custom_addr: Option<SocketAddr>,
+    remote_server_url: Option<String>,
+    database_url: Option<String>,
+) -> anyhow::Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_ansi(true)
         //.with_file(true)
@@ -31,7 +35,10 @@ pub async fn start_axum_server(custom_addr: Option<SocketAddr>, remote_server_ur
     };
     conf.leptos_options.site_addr = addr;
 
-    let pool = create_pool().await;
+    let pool = match database_url {
+        Some(database_url) => Some(create_pool(database_url).await),
+        None => None,
+    };
 
     let app = build_app_router(conf, pool, remote_server_url).await?;
     info!("listening on http://{}", addr);

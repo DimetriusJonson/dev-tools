@@ -20,7 +20,7 @@ pub fn SelectInput(
     final_options.extend(options());
 
     view! {
-        <div class={class_name}>
+        <span class={class_name}>
             <select aria-label={label}
                 id = {name.to_owned()}
                 class={"border rounded-lg block w-full p-2
@@ -71,6 +71,6 @@ pub fn SelectInput(
                 }
 
             </select>
-        </div>
+        </span>
     }
 }

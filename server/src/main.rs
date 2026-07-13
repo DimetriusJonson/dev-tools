@@ -15,5 +15,7 @@ async fn main() -> anyhow::Result<()> {
 
     LogTracer::init().expect("Failed to set logger");
 
-    start_axum_server(None, Some("https://dev-tools-rust.vercel.app".to_owned())).await
+    let database_url = std::env::var("DATABASE_URL").ok();
+
+    start_axum_server(None, Some("https://dev-tools-rust.vercel.app".to_owned()), database_url).await
 }
