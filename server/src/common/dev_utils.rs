@@ -14,11 +14,6 @@ pub fn parse_query_params(query_str: &str) -> HashMap<&str, &str> {
 }
 
 pub fn is_mime_image(mime_type: &str) -> bool {
-    match mime_type {
-        "image/bmp" | "image/png" | "image/jpeg" | "image/webp" | "image/gif" | "image/apng" => {
-            true
-        }
-        _ => false,
-    }
+    matches!(mime_type, "image/bmp" | "image/png" | "image/jpeg" | "image/webp" | "image/gif" | "image/apng")
 }
 

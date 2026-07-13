@@ -54,7 +54,7 @@ pub async fn share_file_upload(
             )
             .await?;
 
-            return Ok((prepared_data.external_id).into_response());
+            Ok((prepared_data.external_id).into_response())
         }
         None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
     }

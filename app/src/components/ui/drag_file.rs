@@ -2,9 +2,10 @@ use leptos::prelude::*;
 use web_sys::{ClipboardEvent, DragEvent, File, HtmlDivElement, Url};
 
 #[component]
-pub fn DragFile(#[prop(into)] on_drop_file: Callback<File>,
-#[prop(into)] on_paste_file: Callback<File>) -> impl IntoView {
-
+pub fn DragFile(
+    #[prop(into)] on_drop_file: Callback<File>,
+    #[prop(into)] on_paste_file: Callback<File>,
+) -> impl IntoView {
     let (img_url, set_img_url) = signal("".to_owned());
 
     view! {
@@ -28,27 +29,17 @@ pub fn DragFile(#[prop(into)] on_drop_file: Callback<File>,
                 on:drop=move |event: DragEvent| {
                     deactive_drop_zone_handler(event.clone());
 
-                    if let Some(dt) = event.data_transfer() {
-                        if let Some(files) = dt.files() {
-                            if files.length() > 0 {
-                                on_drop_file.run(files.get(0).unwrap());
-                            }
-                        }
+                    if let Some(dt) = event.data_transfer() && let Some(files) = dt.files() && files.length() > 0 {
+                        on_drop_file.run(files.get(0).unwrap());
                     }
                 }
 
                 on:paste=move |event: ClipboardEvent| {
-                    if let Some(data) = event.clipboard_data() {
-                        if let Some(files) = data.files() {
-                            if files.length() > 0 {
-                                if let Some(file) = files.get(0) {
-                                    let mime_type = file.type_().to_string();
-                                    if mime_type.starts_with("image/") {
-                                        set_img_url.set(Url::create_object_url_with_blob(&file).unwrap());
-                                        on_paste_file.run(file);
-                                    }
-                                }
-                            }
+                    if let Some(data) = event.clipboard_data() && let Some(files) = data.files() && files.length() > 0 && let Some(file) = files.get(0){
+                        let mime_type = file.type_().to_string();
+                        if mime_type.starts_with("image/") {
+                            set_img_url.set(Url::create_object_url_with_blob(&file).unwrap());
+                            on_paste_file.run(file);
                         }
                     }
                 }
@@ -56,7 +47,7 @@ pub fn DragFile(#[prop(into)] on_drop_file: Callback<File>,
 
                 <Show
                     when=move || { img_url.get().is_empty() }
-                    fallback=move || view! { 
+                    fallback=move || view! {
                         <img class="w-full h-full object-contain" src=img_url></img>
                     }
                 >

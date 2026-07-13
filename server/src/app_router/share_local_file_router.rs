@@ -32,7 +32,7 @@ pub async fn share_local_file_upload(
     let external_id = prepared_data.external_id.to_owned();
     local_db.insert(external_id.to_owned(), prepared_data);
 
-    return Ok((external_id.to_owned()).into_response());
+    Ok((external_id.to_owned()).into_response())
 }
 
 #[axum::debug_handler]

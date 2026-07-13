@@ -34,7 +34,7 @@ pub async fn build_app_router(
     let app_state = AppState {
         leptos_options: leptos_options.clone(),
         pool: pool.clone(),
-        remote_server_url: remote_server_url,
+        remote_server_url,
     };
 
     let app = Router::new()

@@ -31,7 +31,7 @@ pub mod srr {
         fn into_response(self) -> Response {
             let (status, error_message) = match self {
                 AppError::SystemError(msg) => {
-                    log::error!("System error: {}", msg.to_string());
+                    log::error!("System error: {}", msg);
                     (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
                 }
             };

@@ -23,7 +23,6 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     let on_upload_file_click = move |_| {
         if let Some(file) = selected_file.get_untracked() {
-            let selected_file = selected_file.clone();
             upload_file(
                 file,
                 set_in_progress,
@@ -53,7 +52,6 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             class:hidden=move || !shared_url.get().is_empty()>
             <DragFile
                 on_drop_file=move |file| {
-                    let selected_file = selected_file.clone();
                     upload_file(file, set_in_progress, set_shared_url, messages, custom_server.get(), move |success| {
                         if success {
                             selected_file.set(None);
@@ -69,10 +67,8 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             <div class="flex" class:hidden=move || !shared_url.get().is_empty()>
                 <FileInput node_ref=file_input_ref on:change=move |event| {
                     let input_file = event_target::<HtmlInputElement>(&event);
-                    if let Some(files) = input_file.files() {
-                        if files.length() > 0 {
-                            selected_file.set(files.get(0));
-                        }
+                    if let Some(files) = input_file.files() && files.length() > 0 {
+                        selected_file.set(files.get(0));
                     }
                 }/>
                 <Button
@@ -109,15 +105,14 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                                 </p>
                             }.into_any()
                         } else {
-                            view! {}.into_any()
+                            view! {<span></span>}.into_any()
                         }
                     })
                 )}
             </Transition>
 
             <div class="flex flex-col gap-4 items-center justify-center">
-                <Show when=move || { !shared_url.get().is_empty() }
-                    fallback=|| view! {  }>
+                <Show when=move || { !shared_url.get().is_empty() }>
 
                     <div>
                         <span class="text-white">Ссылка:</span>
@@ -161,7 +156,7 @@ fn upload_file(
     set_shared_url: WriteSignal<String>,
     messages: Messages,
     custom_server_url: String,
-    callback: impl Fn(bool) -> () + Send + Sync + 'static,
+    callback: impl Fn(bool) + Send + Sync + 'static,
 ) {
     spawn_local(async move {
         set_in_progress.set(true);

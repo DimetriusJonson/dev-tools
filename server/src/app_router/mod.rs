@@ -17,8 +17,6 @@ pub async fn proxy_request_to_remote(
     remote_server_url: String,
     request: Request,
 ) -> Result<Response<Body>, AppError> {
-    let remote_server_url = remote_server_url;
-
     let target_url = format!(
         "{}{}",
         remote_server_url,
@@ -34,10 +32,8 @@ pub async fn proxy_request_to_remote(
     let mut upstream_req = Client::new().request(method, &target_url).body(reqwest_body);
 
     for hv in headers {
-        if let Some(name) = hv.0 {
-            if name != "host" {
-                upstream_req = upstream_req.header(name, hv.1);
-            }
+        if let Some(name) = hv.0 && name != "host" {
+            upstream_req = upstream_req.header(name, hv.1);
         }
     }
 
