@@ -23,6 +23,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <AutoReload options=options.clone() />
                 <HydrationScripts options/>
                 <MetaTags/>
+                <link rel="manifest" href="/manifest.json"/>
             </head>
             <body>
                 <App/>
