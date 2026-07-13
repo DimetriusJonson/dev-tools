@@ -43,7 +43,7 @@ pub fn App() -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/dev_tools.css"/>
 
         // sets the document title
-        <Title text="Web dev tools"/>
+        <Title text="Useful tools for web developers"/>
         <Meta name="keywords" content="web, dev, tools, useful, xml, json, formatting, escape, share file" />
         <Meta name="description" content="Useful tools for web developers" />
 
