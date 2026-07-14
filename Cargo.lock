@@ -2984,6 +2984,7 @@ dependencies = [
  "dotenvy",
  "flate2",
  "futures-util",
+ "html-escape",
  "http",
  "image",
  "json-escape",

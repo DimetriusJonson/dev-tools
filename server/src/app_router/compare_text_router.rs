@@ -22,58 +22,45 @@ pub async fn compare_text_handler(mut multipart: Multipart) -> Result<impl IntoR
     let Changeset { diffs, .. } = Changeset::new(&text1, &text2, "\n");
     let mut result_rows = Vec::new();
     for i in 0..diffs.len() {
+        println!("diff {}", i);
         match diffs[i] {
             difference::Difference::Same(ref x) => {
-                result_rows.push(format!("<div>{}</div>", x));
+                result_rows.push(format!("<div><pre>{}</pre></div>", html_escape::encode_text(x)));
             }
             difference::Difference::Add(ref x) => {
                 let mut text_row = "".to_owned();
                 match diffs[i - 1] {
                     Difference::Rem(ref y) => {
-                        //t.fg(term::color::GREEN).unwrap();
-                        //write!(t, "+");
                         text_row.push_str("<span class=\"text-green-500\">+</span>");
                         let Changeset { diffs, .. } = Changeset::new(y, x, " ");
                         for c in diffs {
                             match c {
                                 Difference::Same(ref z) => {
-                                    //t.fg(term::color::GREEN).unwrap();
-                                    //write!(t, "{}", z);
-                                    //write!(t, " ");
                                     text_row.push_str(&format!(
                                         "<span class=\"text-green-500\">{}&nbsp;</span>",
-                                        z
+                                        html_escape::encode_text(z)
                                     ));
                                 }
                                 Difference::Add(ref z) => {
-                                    //t.fg(term::color::WHITE).unwrap();
-                                    //t.bg(term::color::GREEN).unwrap();
-                                    //write!(t, "{}", z);
-                                    //t.reset().unwrap();
-                                    //write!(t, " ");
-
                                     text_row.push_str(&format!(
                                         "<span class=\"text-white bg-green-500\">{}</span>",
-                                        z
+                                        html_escape::encode_text(z)
                                     ));
                                     text_row.push_str("<span>&nbsp;</span>");
                                 }
                                 _ => (),
                             }
                         }
-                        result_rows.push(format!("<div>{}</div>", text_row));
+                        println!("text={}", text_row);
+                        result_rows.push(format!("<div><pre>{}</pre></div>", text_row));
                     }
                     _ => {
-                        //t.fg(term::color::BRIGHT_GREEN).unwrap();
-                        //writeln!(t, "+{}", x);
-                        result_rows.push(format!("<div class=\"text-green-300\">+{}</div>", x));
+                        result_rows.push(format!("<div class=\"text-green-300\">+{}</div>", html_escape::encode_text(x)));
                     }
                 };
             }
             difference::Difference::Rem(ref x) => {
-                //t.fg(term::color::RED).unwrap();
-                //writeln!(t, "-{}", x);
-                result_rows.push(format!("<div class=\"text-red-500\">-{}</div>", x));
+                result_rows.push(format!("<div class=\"text-red-500\">-<pre>{}</pre></div>", html_escape::encode_text(x)));
             }
         }
     }
