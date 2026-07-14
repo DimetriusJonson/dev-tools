@@ -22,15 +22,16 @@ pub async fn compare_text_handler(multipart: Multipart) -> Result<impl IntoRespo
 
 fn compare_text(text1: &str, text2: &str) -> String {
     let Changeset { diffs, .. } = Changeset::new(&text2, &text1, "\n");
+
     let mut result_rows = Vec::new();
     for i in 0..diffs.len() {
         match diffs[i] {
             difference::Difference::Same(ref x) => {
                 for text in x.split('\n') {
                     result_rows.push(format!(
-                        "<pre>{}. {}</pre>",
-                        result_rows.len(),
-                        html_escape::encode_text(text)
+                        "<tr><td>{}</td><td><pre>{}</pre></td></tr>",
+                        result_rows.len() + 1,
+                        normalize_str(text)
                     ));
                 }
             }
@@ -38,54 +39,68 @@ fn compare_text(text1: &str, text2: &str) -> String {
                 match diffs[i - 1] {
                     Difference::Rem(ref y) => {
                         let mut text_row = "".to_owned();
-                        text_row.push_str("<span class=\"text-green-500\">+</span>");
+                        //text_row.push_str("<span class=\"text-green-500\">+</span>");
                         let Changeset { diffs, .. } = Changeset::new(y, x, " ");
                         for c in diffs {
                             match c {
                                 Difference::Same(ref z) => {
                                     text_row.push_str(&format!(
-                                        "<span class=\"text-green-500\">{} </span>",
-                                        html_escape::encode_text(z)
+                                        "<span class=\"text-green-500\">{}&nbsp;</span>",
+                                        normalize_str(z)
                                     ));
                                 }
                                 Difference::Add(ref z) => {
                                     text_row.push_str(&format!(
                                         "<span class=\"text-white bg-green-500\">{}</span>",
-                                        html_escape::encode_text(z)
+                                        normalize_str(z)
                                     ));
-                                    text_row.push_str("<span> </span>");
+                                    text_row.push_str("<span>&nbsp;</span>");
                                 }
                                 _ => (),
                             }
                         }
-                        result_rows.push(format!("<pre>{}. {}</pre>", result_rows.len(), text_row));
+                        result_rows.push(format!(
+                            "<tr><td>{}</td><td><pre>{}</pre></td></tr>",
+                            result_rows.len() + 1,
+                            text_row.trim_end()
+                        ));
                     }
                     _ => {
-                        result_rows.push(format!(
-                            "<pre class=\"text-green-300\">{}+{}</pre>",
-                            result_rows.len(),
-                            html_escape::encode_text(x)
-                        ));
+                        for text in x.split('\n') {
+                            result_rows.push(format!(
+                                "<tr><td>{}</td><td><pre class=\"text-green-300\">{}</pre></td></tr>",
+                                result_rows.len() + 1,
+                                normalize_str(text)
+                            ));
+                        }
                     }
                 };
             }
-            difference::Difference::Rem(ref _x) => {
-                /* for text in x.split('\n') {
+            difference::Difference::Rem(ref x) => {
+                for _text in x.split('\n') {
                     result_rows.push(format!(
-                        "<pre class=\"text-red-500\">{}-{}</pre>",
-                        result_rows.len(),
-                        html_escape::encode_text(text)
+                        "<tr><td>{}</td><td></td></tr>",
+                        result_rows.len() + 1
                     ));
                 }
-                 */
             }
         }
     }
+
+    result_rows.insert(0, "<table class=\"table-auto\">".to_owned());
+    result_rows.push("</table>".to_owned());
+
     result_rows.join("\n")
 }
 
+fn normalize_str(src: &str) -> String {
+    let r = html_escape::encode_text(src);
+    let s = r.trim_end_matches(&['\r', '\n']);
+    s.to_string()
+}
+
 async fn extract_params(mut multipart: Multipart) -> (String, String) {
-     let mut text1 = "".to_owned();
+    let mut text1 = "".to_owned();
     let mut text2 = "".to_owned();
 
     while let Some(field) = multipart.next_field().await.unwrap() {

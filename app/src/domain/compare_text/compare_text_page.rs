@@ -70,7 +70,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 1
                     class:text-black=move || tab_selected.get() == 1
-                    class:dark:text-black=move || tab_selected.get() == 1
+                    class:dark:text-white=move || tab_selected.get() == 1
                     class:text-gray-500=move || tab_selected.get() != 1
                     on:click=move |_event| {
                         set_tab_selected.set(1)
@@ -123,7 +123,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     class:block=move || tab_selected.get() == 1
                     class:hidden=move || tab_selected.get() != 1
                 >
-                    <div class="flex-1 dark:text-white" inner_html=move || dst_left />
+                    <div class="flex-1 dark:text-white px-4" inner_html=move || dst_left />
                     <div class="flex-1 dark:text-white" inner_html=move || dst_right />
                 </div>
             </div>

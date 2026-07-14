@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --color-mygray: rgb(48, 49, 54);
   --color-primary: hsl(39deg 90% 52%);
   --color-danger: hsl(357deg 77% 70%);
   --color-danger-bg: rgb(41, 5, 7);
