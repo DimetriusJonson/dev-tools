@@ -12,6 +12,7 @@ use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
+use crate::app_router::compare_text_router::compare_text_handler;
 use crate::app_router::json_escape_router::{escape_json_handler, unescape_json_handler};
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::share_file_router::{
@@ -44,6 +45,7 @@ pub async fn build_app_router(
         .route("/format_json", post(format_json_handler))
         .route("/escape_json", post(escape_json_handler))
         .route("/unescape_json", post(unescape_json_handler))
+        .route("/compare_text", post(compare_text_handler))
         .layer(DefaultBodyLimit::disable())
         .route("/encode_url", post(encode_url_handler))
         .route("/decode_url", post(decode_url_handler))

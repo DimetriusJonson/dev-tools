@@ -128,7 +128,7 @@ pub fn JsonPage() -> impl IntoView {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 <TextArea
-                    name="xml".to_owned()
+                    name="json".to_owned()
                     class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
                     placeholder="Вставьте Json".to_owned()
                     value=json

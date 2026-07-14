@@ -20,6 +20,8 @@ pub fn Navbar() -> impl IntoView {
                             color=move || nav_button_color(location.pathname.get(), "/urlEncoder") />
                         <ButtonLink label="JSON".to_owned() href="/json".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/json") />
+                        <ButtonLink label="Сравнить".to_owned() href="/compare_text".to_owned() button_width=ButtonLinkWidth::Auto 
+                            color=move || nav_button_color(location.pathname.get(), "/compare_text") />
                         <ButtonLink label="Поделится файлом".to_owned() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/share_file") />
                     </div>

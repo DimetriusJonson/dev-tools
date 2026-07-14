@@ -7,6 +7,7 @@ use leptos_router::path;
 use crate::components::layout::message_banner::MessageBanner;
 use crate::components::layout::navbar::Navbar;
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor};
+use crate::domain::compare_text::compare_text_page::CompareTextPage;
 use crate::domain::json::json_page::JsonPage;
 use crate::domain::share_file::share_file_upload_page::ShareFileUploadPage;
 use crate::domain::share_file::share_file_view_page::ShareFileViewPage;
@@ -94,6 +95,7 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("/json") view=JsonPage />
                             <Route path=path!("/share_file") view=ShareFileUploadPage />
                             <Route path=path!("/share_file/view") view=ShareFileViewPage />
+                            <Route path=path!("/compare_text") view=CompareTextPage />
                         </Routes>
                     </ErrorBoundary>
 

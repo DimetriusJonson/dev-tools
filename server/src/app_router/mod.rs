@@ -6,12 +6,12 @@ use reqwest::Client;
 pub mod build_app_router;
 pub mod json_escape_router;
 pub mod json_format_router;
-pub mod common_router;
 pub mod share_file_router;
 pub mod share_local_file_router;
 pub mod url_encode_router;
 pub mod xml_escape_router;
 pub mod xml_format_router;
+pub mod compare_text_router;
 
 pub async fn proxy_request_to_remote(
     remote_server_url: String,
