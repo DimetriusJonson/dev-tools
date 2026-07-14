@@ -79,7 +79,7 @@ pub fn CompareTextPage() -> impl IntoView {
 
             //Tab Content Panels
             <div class="mt-4">
-                <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[84dvh] md:h-[87dvh]"
+                <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]"
                     class:block=move || tab_selected.get() == 0
                     class:hidden=move || tab_selected.get() != 0
                     >
