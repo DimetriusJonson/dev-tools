@@ -66,7 +66,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <TextArea
                 name="url".to_owned()
-                class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
+                class_name="md:flex-1 h-[27dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
                 placeholder="Вставьте url".to_owned()
                 value=url
                 set_value=set_url

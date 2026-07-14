@@ -54,7 +54,8 @@ pub fn CompareTextPage() -> impl IntoView {
                 <button role="tab" aria-selected="true" 
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 0
-                    class:text-white=move || tab_selected.get() == 0
+                    class:text-black=move || tab_selected.get() == 0
+                    class:dark:text-white=move || tab_selected.get() == 0
                     class:text-gray-500=move || tab_selected.get() != 0
                     on:click=move |_event| {
                         set_tab_selected.set(0)
@@ -65,7 +66,8 @@ pub fn CompareTextPage() -> impl IntoView {
                 <button role="tab" aria-selected="false" 
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 1
-                    class:text-white=move || tab_selected.get() == 1
+                    class:text-black=move || tab_selected.get() == 1
+                    class:dark:text-black=move || tab_selected.get() == 1
                     class:text-gray-500=move || tab_selected.get() != 1
                     on:click=move |_event| {
                         set_tab_selected.set(1)
@@ -77,54 +79,48 @@ pub fn CompareTextPage() -> impl IntoView {
 
             //Tab Content Panels
             <div class="mt-4">
-                <div class="tab-panel flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[35dvh] md:h-[87dvh]"
+                <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[84dvh] md:h-[87dvh]"
                     class:block=move || tab_selected.get() == 0
                     class:hidden=move || tab_selected.get() != 0
                     >
-                    <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full">
-                        <TextArea
-                            name="text1".to_owned()
-                            class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                            placeholder="Вставьте первый текст".to_owned()
-                            value=text1
-                            set_value=set_text1
-                            on_change=move |_| {
-                                set_local_store_value("compare_text1", text1.get_untracked());
-                            }
-                        />
-                    </div>
+                    <TextArea
+                        name="text1".to_owned()
+                        class_name="flex-1 resize-none".to_owned()
+                        placeholder="Вставьте первый текст".to_owned()
+                        value=text1
+                        set_value=set_text1
+                        on_change=move |_| {
+                            set_local_store_value("compare_text1", text1.get_untracked());
+                        }
+                    />
 
-                    <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full">
-                        <TextArea
-                            name="text2".to_owned()
-                            class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                            placeholder="Вставьте второй текст".to_owned()
-                            value=text2
-                            set_value=set_text2
-                            on_change=move |_| {
-                                set_local_store_value("compare_text2", text2.get_untracked());
-                            }
-                        />
-                    </div>
+                    <TextArea
+                        name="text2".to_owned()
+                        class_name="flex-1 resize-none".to_owned()
+                        placeholder="Вставьте второй текст".to_owned()
+                        value=text2
+                        set_value=set_text2
+                        on_change=move |_| {
+                            set_local_store_value("compare_text2", text2.get_untracked());
+                        }
+                    />
 
-                    <div class="flex flex-col gap-4 items-center justify-center">
-                        <div class="flex flex-row md:flex-col gap-4">
-                            <Button
-                                label="Сравнить".to_owned()
-                                button_width=ButtonWidth::Md
-                                loading=move || in_progress.get()
-                                on_click=on_compare_click
-                                disabled=move || in_progress.get()
-                            />
-                        </div>
+                    <div class="flex gap-4 items-center justify-center">
+                        <Button
+                            label="Сравнить".to_owned()
+                            button_width=ButtonWidth::Md
+                            loading=move || in_progress.get()
+                            on_click=on_compare_click
+                            disabled=move || in_progress.get()
+                        />
                     </div>
                 </div>
                 
-                <div id="tab-dst" class="tab-panel text-sm text-gray-600"
+                <div id="tab-dst" class="text-sm"
                     class:block=move || tab_selected.get() == 1
                     class:hidden=move || tab_selected.get() != 1
                 >
-                    <div class="text-white" inner_html=move || dst_text />
+                    <div class="dark:text-white" inner_html=move || dst_text />
                 </div>
             </div>
         </div>
