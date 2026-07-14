@@ -16,7 +16,8 @@ pub fn CompareTextPage() -> impl IntoView {
 
     let (text1, set_text1) = signal(get_local_store_value("compare_text1", "".to_owned()));
     let (text2, set_text2) = signal(get_local_store_value("compare_text2", "".to_owned()));
-    let (dst_text, set_dst_text) = signal("".to_owned());
+    let (dst_left, set_dst_left) = signal("".to_owned());
+    let (dst_right, set_dst_right) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
 
     let on_compare_click = move |_| {
@@ -33,7 +34,9 @@ pub fn CompareTextPage() -> impl IntoView {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.text().await {
                         Ok(response_text) => { 
-                            set_dst_text.set(response_text);
+                            let texts:Vec<&str> = response_text.split("\n$$$---$$$\n").collect();
+                            set_dst_left.set(texts[0].into());
+                            set_dst_right.set(texts[1].into());
                             set_tab_selected.set(1);
                         },
                         Err(err) => show_error(err.to_string(), messages),
@@ -116,11 +119,12 @@ pub fn CompareTextPage() -> impl IntoView {
                     </div>
                 </div>
                 
-                <div id="tab-dst" class="text-sm"
+                <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]"
                     class:block=move || tab_selected.get() == 1
                     class:hidden=move || tab_selected.get() != 1
                 >
-                    <div class="dark:text-white" inner_html=move || dst_text />
+                    <div class="flex-1 dark:text-white" inner_html=move || dst_left />
+                    <div class="flex-1 dark:text-white" inner_html=move || dst_right />
                 </div>
             </div>
         </div>
