@@ -2,7 +2,7 @@
   "name": "Dev Tools",
   "short_name": "Dev Tools",
   "description": "Useful tools for web developers",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

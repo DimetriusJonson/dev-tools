@@ -1,6 +1,6 @@
 [package]
 name = "webdev_useful_tools"
-version = "0.3.0"
+version = "0.4.0"
 description = "Useful tools for web developers"
 edition = "2024"
 
