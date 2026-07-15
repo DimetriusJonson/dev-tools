@@ -9,17 +9,30 @@ use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::text_area::TextArea;
 
+#[derive(PartialEq, Copy, Clone)]
+enum InProgressType {
+    None, 
+    Encode,
+    Decode
+}
+
+impl InProgressType {
+    fn is_active(self) -> bool {
+        self != InProgressType::None
+    }
+}
+
 #[component]
 pub fn UrlEncoderPage() -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (url, set_url) = signal(get_local_store_value("src_url", "".to_owned()));
     let (dst_url, set_dst_url) = signal("".to_owned());
-    let (in_progress, set_in_progress) = signal(false);
+    let (in_progress, set_in_progress) = signal(InProgressType::None);
 
     let on_encode_click = move |_| {
         spawn_local(async move {
-            set_in_progress.set(true);
+            set_in_progress.set(InProgressType::Encode);
 
             match Request::post("/encode_url")
                 .body(url.get_untracked())
@@ -33,13 +46,13 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 },
                 Err(err) => show_error(err.to_string(), messages),
             }
-            set_in_progress.set(false);
+            set_in_progress.set(InProgressType::None);
         });
     };
 
     let on_decode_click = move |_| {
         spawn_local(async move {
-            set_in_progress.set(true);
+            set_in_progress.set(InProgressType::Decode);
 
             match Request::post("/decode_url")
                 .body(url.get_untracked())
@@ -53,7 +66,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 },
                 Err(err) => show_error(err.to_string(), messages),
             }
-            set_in_progress.set(false);
+            set_in_progress.set(InProgressType::None);
         });
     };
 
@@ -79,16 +92,16 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 <Button
                     label="Encode".to_owned()
                     button_width=ButtonWidth::Md
-                    loading=move || in_progress.get()
+                    loading=move || in_progress.get() == InProgressType::Encode
                     on_click=on_encode_click
-                    disabled=move || in_progress.get()
+                    disabled=move || in_progress.get().is_active()
                 />
                 <Button
                     label="Decode".to_owned()
                     button_width=ButtonWidth::Md
-                    loading=move || in_progress.get()
+                    loading=move || in_progress.get() == InProgressType::Decode
                     on_click=on_decode_click
-                    disabled=move || in_progress.get()
+                    disabled=move || in_progress.get().is_active()
                 />
             </div>
 
@@ -103,9 +116,9 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 <Button
                     label="Скопировать в буфер обмена".to_owned()
                     button_width=ButtonWidth::Auto
-                    loading=move || in_progress.get()
+                    loading=move || false
                     on_click=on_copy_click
-                    disabled=move || in_progress.get()
+                    disabled=move || in_progress.get().is_active()
                 />
 
             </div>

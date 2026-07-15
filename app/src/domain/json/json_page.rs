@@ -11,6 +11,21 @@ use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
+#[derive(PartialEq, Copy, Clone)]
+enum InProgressType {
+    None, 
+    Format,
+    FormatFile,
+    Escape,
+    Unescape
+}
+
+impl InProgressType {
+    fn is_active(self) -> bool {
+        self != InProgressType::None
+    }
+}
+
 #[component]
 pub fn JsonPage() -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -18,13 +33,13 @@ pub fn JsonPage() -> impl IntoView {
     let (json, set_json) = signal(get_local_store_value("src_json", "".to_owned()));
     let (dst_json, set_dst_json) = signal("".to_owned());
     let (ident, set_ident) = signal(get_local_store_value("json_ident", "4".to_owned()));
-    let (in_progress, set_in_progress) = signal(false);
+    let (in_progress, set_in_progress) = signal(InProgressType::None);
 
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
 
     let on_format_click = move |_| {
         spawn_local(async move {
-            set_in_progress.set(true);
+            set_in_progress.set(InProgressType::Format);
 
             match Request::post("/format_json")
                 .query([("ident", ident.get_untracked())])
@@ -40,13 +55,13 @@ pub fn JsonPage() -> impl IntoView {
                 },
                 Err(err) => show_error(err.to_string(), messages),
             }
-            set_in_progress.set(false);
+            set_in_progress.set(InProgressType::None);
         });
     };
 
     let on_format_file_click = move |_| {
         spawn_local(async move {
-            set_in_progress.set(true);
+            set_in_progress.set(InProgressType::FormatFile);
 
             let file_input = file_input_ref.get_untracked().expect("input to exist");
             if let Some(files) = file_input.files()
@@ -79,13 +94,13 @@ pub fn JsonPage() -> impl IntoView {
                 }
             }
 
-            set_in_progress.set(false);
+            set_in_progress.set(InProgressType::None);
         });
     };
 
     let on_escape_click = move |_| {
         spawn_local(async move {
-            set_in_progress.set(true);
+            set_in_progress.set(InProgressType::Escape);
 
             match Request::post("/escape_json").body(json.get_untracked()) {
                 Ok(request) => match request.send().await {
@@ -97,13 +112,13 @@ pub fn JsonPage() -> impl IntoView {
                 },
                 Err(err) => show_error(err.to_string(), messages),
             }
-            set_in_progress.set(false);
+            set_in_progress.set(InProgressType::None);
         });
     };
 
     let on_unescape_click = move |_| {
         spawn_local(async move {
-            set_in_progress.set(true);
+            set_in_progress.set(InProgressType::Unescape);
 
             match Request::post("/unescape_json").body(json.get_untracked()) {
                 Ok(request) => match request.send().await {
@@ -115,7 +130,7 @@ pub fn JsonPage() -> impl IntoView {
                 },
                 Err(err) => show_error(err.to_string(), messages),
             }
-            set_in_progress.set(false);
+            set_in_progress.set(InProgressType::None);
         });
     };
 
@@ -142,9 +157,9 @@ pub fn JsonPage() -> impl IntoView {
                     <Button
                         label="Format".to_owned()
                         button_width=ButtonWidth::Md
-                        loading=move || in_progress.get()
+                        loading=move || in_progress.get() == InProgressType::FormatFile
                         on_click=on_format_file_click
-                        disabled=move || in_progress.get()
+                        disabled=move || in_progress.get().is_active()
                     />
                 </div>
 
@@ -166,9 +181,9 @@ pub fn JsonPage() -> impl IntoView {
                     <Button
                         label="Format".to_owned()
                         button_width=ButtonWidth::Md
-                        loading=move || in_progress.get()
+                        loading=move || in_progress.get() == InProgressType::Format
                         on_click=on_format_click
-                        disabled=move || in_progress.get()
+                        disabled=move || in_progress.get().is_active()
                     />
                 </div>
 
@@ -176,17 +191,17 @@ pub fn JsonPage() -> impl IntoView {
                     <Button
                         label="Unescape".to_owned()
                         button_width=ButtonWidth::Md
-                        loading=move || in_progress.get()
+                        loading=move || in_progress.get() == InProgressType::Unescape
                         on_click=on_unescape_click
-                        disabled=move || in_progress.get()
+                        disabled=move || in_progress.get().is_active()
                     />
 
                     <Button
                         label="Escape".to_owned()
                         button_width=ButtonWidth::Md
-                        loading=move || in_progress.get()
+                        loading=move || in_progress.get() == InProgressType::Escape
                         on_click=on_escape_click
-                        disabled=move || in_progress.get()
+                        disabled=move || in_progress.get().is_active()
                     />
 
                 </div>
@@ -205,9 +220,9 @@ pub fn JsonPage() -> impl IntoView {
                 <Button
                     label="Скопировать в буфер обмена".to_owned()
                     button_width=ButtonWidth::Auto
-                    loading=move || in_progress.get()
+                    loading=move || false
                     on_click=on_copy_click
-                    disabled=move || in_progress.get()
+                    disabled=move || in_progress.get().is_active()
                 />
 
             </div>

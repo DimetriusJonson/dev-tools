@@ -119,7 +119,7 @@ pub fn CompareTextPage() -> impl IntoView {
                         <Button
                             label="⇄".to_owned()
                             button_width=ButtonWidth::Md
-                            loading=move || in_progress.get()
+                            loading=move || false
                             on_click=move |_| {
                                 let temp_text = text1.get();
                                 set_text1.set(text2.get());
