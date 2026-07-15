@@ -157,7 +157,11 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                         result2.push(format!(
                             "<tr>{}{}</tr>",
                             render_td_changed_num(result2.len() + 1),
-                            render_td_text(&normalize_str(text))
+                            render_td_text(&wrap_str(
+                                "<span class=\"bg-cyan-700\">",
+                                normalize_str(text),
+                                "</span>"
+                            ))
                         ));
                     }
                 }
