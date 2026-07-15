@@ -1,3 +1,5 @@
+use std::cmp;
+
 use app::common::app_error::AppError;
 use axum::{body::Body, extract::Multipart, response::IntoResponse};
 use difference::{Changeset, Difference};
@@ -6,8 +8,7 @@ use http::{StatusCode, header};
 pub async fn compare_text_handler(multipart: Multipart) -> Result<impl IntoResponse, AppError> {
     let (text1, text2) = extract_params(multipart).await;
 
-    let result_left = compare_text(&text1, &text2);
-    let result_right = compare_text(&text2, &text1);
+    let (result_left, result_right) = compare_text(&text1, &text2);
 
     let body = Body::new(vec![result_left, result_right].join("\n$$$---$$$\n"));
 
@@ -20,77 +21,199 @@ pub async fn compare_text_handler(multipart: Multipart) -> Result<impl IntoRespo
     Ok(response)
 }
 
-fn compare_text(text1: &str, text2: &str) -> String {
+fn compare_text(text1: &str, text2: &str) -> (String, String) {
     let Changeset { diffs, .. } = Changeset::new(&text2, &text1, "\n");
 
-    let mut result_rows = Vec::new();
+    let mut result1 = Vec::new();
+    let mut result2 = Vec::new();
     for i in 0..diffs.len() {
         match diffs[i] {
             difference::Difference::Same(ref x) => {
-                for text in x.split('\n') {
-                    result_rows.push(format!(
-                        "<tr><td>{}</td><td><pre>{}</pre></td></tr>",
-                        result_rows.len() + 1,
-                        normalize_str(text)
+                for text in x.lines() {
+                    result1.push(format!(
+                        "<tr>{}{}</tr>",
+                        render_td_num(result1.len() + 1),
+                        render_td_text(&normalize_str(text))
+                    ));
+                    result2.push(format!(
+                        "<tr>{}{}</tr>",
+                        render_td_num(result2.len() + 1),
+                        render_td_text(&normalize_str(text))
                     ));
                 }
             }
             difference::Difference::Add(ref x) => {
-                match diffs[i - 1] {
-                    Difference::Rem(ref y) => {
-                        let mut text_row = "".to_owned();
-                        //text_row.push_str("<span class=\"text-green-500\">+</span>");
-                        let Changeset { diffs, .. } = Changeset::new(y, x, " ");
-                        for c in diffs {
-                            match c {
-                                Difference::Same(ref z) => {
-                                    text_row.push_str(&format!(
-                                        "<span class=\"text-green-500\">{}&nbsp;</span>",
-                                        normalize_str(z)
-                                    ));
+                println!("x={}", x);
+                if i > 0 {
+                    match diffs[i - 1] {
+                        Difference::Rem(ref y) => {
+                            println!("rem y={}", y);
+                            let x_lines:Vec<&str> = x.lines().collect();
+                            let y_lines:Vec<&str> = y.lines().collect();
+                            for i in 0..cmp::max(x_lines.len(), y_lines.len()) {
+                                let text_x = x_lines.get(i).unwrap_or(&"");
+                                let text_y = y_lines.get(i).unwrap_or(&"");
+
+                                let mut text_row1 = "".to_owned();
+                                let mut text_row2 = "".to_owned();
+                                //text_row.push_str("<span class=\"text-green-500\">+</span>");
+                                let Changeset { diffs, .. } = Changeset::new(text_y, text_x, " ");
+                                for c in diffs {
+                                    match c {
+                                        Difference::Same(ref z) => {
+                                            text_row1.push_str(&format!(
+                                                "{}&nbsp;",
+                                                wrap_str(
+                                                    "<span class=\"text-green-500\">",
+                                                    normalize_str(z),
+                                                    "</span>"
+                                                )
+                                            ));
+                                            text_row2.push_str(&format!(
+                                                "{}&nbsp;",
+                                                wrap_str(
+                                                    "<span class=\"text-green-500\">",
+                                                    normalize_str(z),
+                                                    "</span>"
+                                                )
+                                            ));
+                                        }
+                                        Difference::Add(ref z) => {
+                                            text_row1.push_str(&wrap_str(
+                                                "<span class=\"text-white bg-green-500\">",
+                                                normalize_str(z),
+                                                "</span>",
+                                            ));
+                                            text_row1.push_str("<span>&nbsp;</span>");
+                                        }
+                                        Difference::Rem(ref z) => {
+                                            text_row2.push_str(&wrap_str(
+                                                "<span class=\"text-white bg-green-500\">",
+                                                normalize_str(z),
+                                                "</span>",
+                                            ));
+                                            text_row2.push_str("<span>&nbsp;</span>");
+                                        }
+                                    }
                                 }
-                                Difference::Add(ref z) => {
-                                    text_row.push_str(&format!(
-                                        "<span class=\"text-white bg-green-500\">{}</span>",
-                                        normalize_str(z)
+
+                                for (i, text) in text_row1.lines().enumerate() {
+                                    result1.push(format!(
+                                        "<tr>{}{}</tr>",
+                                        render_td_changed_num(result1.len() + 1),
+                                        render_td_text(text)
                                     ));
-                                    text_row.push_str("<span>&nbsp;</span>");
+                                    if i > 0 {
+                                        result2.push(format!(
+                                            "<tr>{}{}</tr>",
+                                            render_td_changed_num(result2.len() + 1),
+                                            render_td_empty()
+                                        ));
+                                    }
                                 }
-                                _ => (),
+
+                                for (i, text) in text_row2.lines().enumerate() {
+                                    result2.push(format!(
+                                        "<tr>{}{}</tr>",
+                                        render_td_changed_num(result2.len() + 1),
+                                        render_td_text(text)
+                                    ));
+                                    if i > 0 {
+                                        result1.push(format!(
+                                            "<tr>{}{}</tr>",
+                                            render_td_changed_num(result1.len() + 1),
+                                            render_td_empty(),
+                                        ));
+                                    }
+                                }
                             }
                         }
-                        result_rows.push(format!(
-                            "<tr><td>{}</td><td><pre>{}</pre></td></tr>",
-                            result_rows.len() + 1,
-                            text_row.trim_end()
+                        _ => {
+                            println!("_");
+                            for text in x.lines() {
+                                result1.push(format!(
+                                    "<tr>{}{}</tr>",
+                                    render_td_changed_num(result1.len() + 1),
+                                    render_td_text(&wrap_str("<span class=\"text-white bg-green-500\">", normalize_str(text), "</span>"))
+                                ));
+
+                                result2.push(format!(
+                                    "<tr>{}{}</tr>",
+                                    render_td_changed_num(result2.len() + 1),
+                                    render_td_empty()
+                                ));
+
+                            }
+                        }
+                    };
+                } else {
+                    println!("index < 1");
+                    for text in x.lines() {
+                        result1.push(format!(
+                            "<tr>{}{}</tr>",
+                            render_td_changed_num(result1.len() + 1),
+                            render_td_text(&normalize_str(text))
                         ));
                     }
-                    _ => {
-                        for text in x.split('\n') {
-                            result_rows.push(format!(
-                                "<tr><td>{}</td><td><pre class=\"text-green-300\">{}</pre></td></tr>",
-                                result_rows.len() + 1,
-                                normalize_str(text)
-                            ));
-                        }
-                    }
-                };
-            }
-            difference::Difference::Rem(ref x) => {
-                for _text in x.split('\n') {
-                    result_rows.push(format!(
-                        "<tr><td>{}</td><td></td></tr>",
-                        result_rows.len() + 1
-                    ));
                 }
+            }
+            difference::Difference::Rem(ref _x) => {
+                /* for text in x.lines() {
+                    result1.push(format!(
+                        "<tr><td class=\"bg-red-500\">{}</td><td></td></tr>",
+                        result1.len() + 1
+                    ));
+                    result2.push(format!(
+                        "<tr><td class=\"bg-red-500\">{}</td><td><pre>{}</pre></td></tr>",
+                        result2.len() + 1,
+                        normalize_str(text)
+                    ));
+                } */
             }
         }
     }
 
-    result_rows.insert(0, "<table class=\"table-auto\">".to_owned());
-    result_rows.push("</table>".to_owned());
+    result1.insert(
+        0,
+        "<table class=\"table-fixed w-full bg-mygray \">".to_owned(),
+    );
+    result1.push("</table>".to_owned());
 
-    result_rows.join("\n")
+    result2.insert(
+        0,
+        "<table class=\"table-fixed w-full bg-mygray \">".to_owned(),
+    );
+    result2.push("</table>".to_owned());
+
+    (result1.join("\n"), result2.join("\n"))
+}
+
+fn render_td_changed_num(num: usize) -> String {
+    format!("<td class=\"w-10 bg-green-500 border-r pl-2\">{}</td>", num)
+}
+
+fn render_td_num(num: usize) -> String {
+    format!("<td class=\"w-10 border-r pl-2\">{}</td>", num)
+}
+
+fn render_td_text(text: &str) -> String {
+    format!("<td class=\"w-auto pl-2\"><pre>{}</pre></td>", text)
+}
+
+fn render_td_empty() -> String {
+    "<td class=\"w-auto pl-2\"></td>".to_string()
+}
+
+fn wrap_str(pre: &str, content: String, post: &str) -> String {
+    if content.lines().count() > 1 {
+        let mut res_lines = Vec::new();
+        for line in content.lines() {
+            res_lines.push(format!("{}{}{}", pre, line, post));
+        }
+        res_lines.join("\n")
+    } else {
+        format!("{}{}{}", pre, content, post)
+    }
 }
 
 fn normalize_str(src: &str) -> String {
