@@ -56,43 +56,26 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
 
                                 let mut text_row1 = "".to_owned();
                                 let mut text_row2 = "".to_owned();
-                                //text_row.push_str("<span class=\"text-green-500\">+</span>");
-                                let Changeset { diffs, .. } = Changeset::new(text_y, text_x, " ");
+                                let Changeset { diffs, .. } = Changeset::new(text_y, text_x, "");
                                 for c in diffs {
                                     match c {
                                         Difference::Same(ref z) => {
-                                            text_row1.push_str(&format!(
-                                                "{}&nbsp;",
-                                                wrap_str(
-                                                    "<span class=\"text-green-500\">",
-                                                    normalize_str(z),
-                                                    "</span>"
-                                                )
-                                            ));
-                                            text_row2.push_str(&format!(
-                                                "{}&nbsp;",
-                                                wrap_str(
-                                                    "<span class=\"text-green-500\">",
-                                                    normalize_str(z),
-                                                    "</span>"
-                                                )
-                                            ));
+                                            text_row1.push_str(&format!("{}", normalize_str(z),));
+                                            text_row2.push_str(&format!("{}", normalize_str(z)));
                                         }
                                         Difference::Add(ref z) => {
                                             text_row1.push_str(&wrap_str(
-                                                "<span class=\"text-white bg-green-500\">",
+                                                "<span class=\"bg-cyan-700\">",
                                                 normalize_str(z),
                                                 "</span>",
                                             ));
-                                            text_row1.push_str("<span>&nbsp;</span>");
                                         }
                                         Difference::Rem(ref z) => {
                                             text_row2.push_str(&wrap_str(
-                                                "<span class=\"text-white bg-green-500\">",
+                                                "<span class=\"bg-cyan-700\">",
                                                 normalize_str(z),
                                                 "</span>",
                                             ));
-                                            text_row2.push_str("<span>&nbsp;</span>");
                                         }
                                     }
                                 }
@@ -134,7 +117,7 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                                     "<tr>{}{}</tr>",
                                     render_td_changed_num(result1.len() + 1),
                                     render_td_text(&wrap_str(
-                                        "<span class=\"text-white bg-green-500\">",
+                                        "<span class=\"bg-cyan-700\">",
                                         normalize_str(text),
                                         "</span>"
                                     ))
@@ -192,7 +175,7 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
 }
 
 fn render_td_changed_num(num: usize) -> String {
-    format!("<td class=\"w-10 bg-green-500 border-r pl-2\">{}</td>", num)
+    format!("<td class=\"w-10 bg-green-700 border-r pl-2\">{}</td>", num)
 }
 
 fn render_td_num(num: usize) -> String {

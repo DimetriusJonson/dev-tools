@@ -95,7 +95,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "app"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1283,6 +1283,12 @@ dependencies = [
  "rustc_version",
  "syn 2.0.117",
 ]
+
+[[package]]
+name = "difference"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "524cbf6897b527295dff137cec09ecf3a05f4fddffd7dfcd1585403449e74198"
 
 [[package]]
 name = "digest"
@@ -4361,7 +4367,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -5236,7 +5242,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "app",
@@ -5244,9 +5250,11 @@ dependencies = [
  "axum",
  "axum-macros 0.4.2",
  "bytes",
+ "difference",
  "dotenvy",
  "flate2",
  "futures-util",
+ "html-escape",
  "http",
  "image",
  "json-escape",
@@ -7255,7 +7263,7 @@ dependencies = [
 
 [[package]]
 name = "webdev_useful_tools"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "app",
  "log",
