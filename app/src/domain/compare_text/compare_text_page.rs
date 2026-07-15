@@ -108,12 +108,26 @@ pub fn CompareTextPage() -> impl IntoView {
                         }
                     />
 
-                    <div class="flex gap-4 items-center justify-center">
+                    <div class="flex flex-col gap-4 items-center justify-center">
                         <Button
                             label="Сравнить".to_owned()
                             button_width=ButtonWidth::Md
                             loading=move || in_progress.get()
                             on_click=on_compare_click
+                            disabled=move || in_progress.get()
+                        />
+                        <Button
+                            label="⇄".to_owned()
+                            button_width=ButtonWidth::Md
+                            loading=move || in_progress.get()
+                            on_click=move |_| {
+                                let temp_text = text1.get();
+                                set_text1.set(text2.get());
+                                set_text2.set(temp_text);
+
+                                set_local_store_value("compare_text1", text1.get_untracked());
+                                set_local_store_value("compare_text2", text2.get_untracked());
+                            }
                             disabled=move || in_progress.get()
                         />
                     </div>

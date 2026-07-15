@@ -27,6 +27,8 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
     let mut result1 = Vec::new();
     let mut result2 = Vec::new();
     for i in 0..diffs.len() {
+        //println!("diff={:?}", diffs[i]);
+        //println!("**********************************\n");
         match diffs[i] {
             difference::Difference::Same(ref x) => {
                 for text in x.lines() {
@@ -43,13 +45,11 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                 }
             }
             difference::Difference::Add(ref x) => {
-                println!("x={}", x);
                 if i > 0 {
                     match diffs[i - 1] {
                         Difference::Rem(ref y) => {
-                            println!("rem y={}", y);
-                            let x_lines:Vec<&str> = x.lines().collect();
-                            let y_lines:Vec<&str> = y.lines().collect();
+                            let x_lines: Vec<&str> = x.lines().collect();
+                            let y_lines: Vec<&str> = y.lines().collect();
                             for i in 0..cmp::max(x_lines.len(), y_lines.len()) {
                                 let text_x = x_lines.get(i).unwrap_or(&"");
                                 let text_y = y_lines.get(i).unwrap_or(&"");
@@ -129,12 +129,15 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                             }
                         }
                         _ => {
-                            println!("_");
                             for text in x.lines() {
                                 result1.push(format!(
                                     "<tr>{}{}</tr>",
                                     render_td_changed_num(result1.len() + 1),
-                                    render_td_text(&wrap_str("<span class=\"text-white bg-green-500\">", normalize_str(text), "</span>"))
+                                    render_td_text(&wrap_str(
+                                        "<span class=\"text-white bg-green-500\">",
+                                        normalize_str(text),
+                                        "</span>"
+                                    ))
                                 ));
 
                                 result2.push(format!(
@@ -142,12 +145,10 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                                     render_td_changed_num(result2.len() + 1),
                                     render_td_empty()
                                 ));
-
                             }
                         }
                     };
                 } else {
-                    println!("index < 1");
                     for text in x.lines() {
                         result1.push(format!(
                             "<tr>{}{}</tr>",
@@ -157,32 +158,34 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                     }
                 }
             }
-            difference::Difference::Rem(ref _x) => {
-                /* for text in x.lines() {
-                    result1.push(format!(
-                        "<tr><td class=\"bg-red-500\">{}</td><td></td></tr>",
-                        result1.len() + 1
-                    ));
-                    result2.push(format!(
-                        "<tr><td class=\"bg-red-500\">{}</td><td><pre>{}</pre></td></tr>",
-                        result2.len() + 1,
-                        normalize_str(text)
-                    ));
-                } */
+            difference::Difference::Rem(ref x) => {
+                let mut need = false;
+                if i + 1 < diffs.len() {
+                    match diffs[i + 1] {
+                        Difference::Add(_) => (),
+                        _ => need = true,
+                    }
+                } else {
+                    need = true;
+                }
+
+                if need {
+                    for text in x.lines() {
+                        result2.push(format!(
+                            "<tr>{}{}</tr>",
+                            render_td_changed_num(result2.len() + 1),
+                            render_td_text(&normalize_str(text))
+                        ));
+                    }
+                }
             }
         }
     }
 
-    result1.insert(
-        0,
-        "<table class=\"table-fixed w-full bg-mygray \">".to_owned(),
-    );
+    result1.insert(0, "<table class=\"table-fixed w-full bg-mygray \">".to_owned());
     result1.push("</table>".to_owned());
 
-    result2.insert(
-        0,
-        "<table class=\"table-fixed w-full bg-mygray \">".to_owned(),
-    );
+    result2.insert(0, "<table class=\"table-fixed w-full bg-mygray \">".to_owned());
     result2.push("</table>".to_owned());
 
     (result1.join("\n"), result2.join("\n"))
