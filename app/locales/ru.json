@@ -1,4 +1,8 @@
 {
+    "go_home_btn_label": "Вернутся Домой",
+    "compare_btn_label": "Сравнить",
+    "share_file_btn_label": "Поделится файлом",
+
     "xml_page_src_placeholder": "Вставьте XML",
     "json_page_src_placeholder": "Вставьте JSON",
     "xml_page_saved_file_msg": "Файл {{ file_name }} сохранен",
@@ -8,8 +12,9 @@
     "xml_page_format_btn_label": "Format",
     "xml_page_unescape_btn_label": "Unescape",
     "xml_page_escape_btn_label": "Escape",
-    "ident_option_label_one": "{{ count }} отступ",
-    "ident_option_label_other": "{{ count }} отступа",
+    "ident_option_label_2": "2 отступа",
+    "ident_option_label_3": "3 отступа",
+    "ident_option_label_4": "4 отступа",
     "json_page_copied_to_clipboard_msg": "JSON скопирован в буфер обмена.",
     "json_page_format_btn_label": "Format",
     "json_page_unescape_btn_label": "Unescape",
@@ -33,7 +38,14 @@
     "share_file_upload_info_6": "Вставьте ссылку на файл из буфера обмена.",
     "share_file_upload_info_7": "Срок жизни ссылки <b>3 дня</b>.",
     "share_file_upload_success":"Файл загружен!",
-    "share_file_upload_exceed_file_size":"Файл слишком большой!"
+    "share_file_upload_exceed_file_size":"Файл слишком большой!",
+
+    "share_file_view_download_file": "Скачать {{ file_name }}",
+
+    "compare_page_source_tab": "Исходные данные",
+    "compare_page_result_tab":"Результат",
+    "compare_page_text1_placeholder": "Вставьте первый текст",
+    "compare_page_text2_placeholder": "Вставьте второй текст"
 
 
 }

@@ -2,6 +2,7 @@ use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::prelude::*;
 use web_sys::FormData;
+use crate::i18n::*;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::components::layout::message_banner::{Messages, show_error};
@@ -10,6 +11,7 @@ use crate::components::ui::text_area::TextArea;
 
 #[component]
 pub fn CompareTextPage() -> impl IntoView {
+    let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (tab_selected, set_tab_selected) = signal(0);
@@ -65,7 +67,7 @@ pub fn CompareTextPage() -> impl IntoView {
                         set_tab_selected.set(0)
                     } 
                 >
-                Исходные данные
+                t!(i18n,  compare_page_source_tab)
                 </button>
                 <button role="tab" 
                     aria-selected=move || tab_selected.get() == 1
@@ -78,7 +80,7 @@ pub fn CompareTextPage() -> impl IntoView {
                         set_tab_selected.set(1)
                     } 
                     >
-                Результат
+                t!(i18n, compare_page_result_tab)
                 </button>
             </div>
 
@@ -91,7 +93,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     <TextArea
                         name="text1".to_owned()
                         class_name="flex-1 resize-none".to_owned()
-                        placeholder=move || "Вставьте первый текст".to_owned()
+                        placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
                         value=text1
                         set_value=set_text1
                         on_change=move |_| {
@@ -102,7 +104,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     <TextArea
                         name="text2".to_owned()
                         class_name="flex-1 resize-none".to_owned()
-                        placeholder=move || "Вставьте второй текст".to_owned()
+                        placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
                         value=text2
                         set_value=set_text2
                         on_change=move |_| {
@@ -112,7 +114,7 @@ pub fn CompareTextPage() -> impl IntoView {
 
                     <div class="flex flex-col gap-4 items-center justify-center">
                         <Button
-                            label=move || "Сравнить".to_owned()
+                            label=move || t_display!(i18n, compare_btn_label).to_string()
                             button_width=ButtonWidth::Md
                             loading=move || in_progress.get()
                             on_click=on_compare_click

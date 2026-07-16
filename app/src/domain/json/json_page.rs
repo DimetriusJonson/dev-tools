@@ -84,7 +84,7 @@ pub fn JsonPage() -> impl IntoView {
                                     "application/json",
                                 ) {
                                     Ok(_) => {
-                                        show_info(format!("Файл {} сохранен", file_name), messages)
+                                        show_info(t_display!(i18n, file_saved_file_msg, file_name).to_string(), messages)
                                     }
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
@@ -175,9 +175,9 @@ pub fn JsonPage() -> impl IntoView {
                         label=move || t!(i18n, ident_label).to_html()
                         not_selected_text=move || "".to_owned()
                         options=move || {vec![
-                            (Some("2".to_owned()), t!(i18n, ident_option_label, count = || 2).to_html()), 
-                            (Some("3".to_owned()), t!(i18n, ident_option_label, count = || 3).to_html()), 
-                            (Some("4".to_owned()), t!(i18n, ident_option_label, count = || 4).to_html())
+                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()), 
+                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()), 
+                            (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
                             ]}
                         on_change=move |value| {
                             set_local_store_value("json_ident", value);

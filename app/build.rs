@@ -1,28 +1,30 @@
 // build.rs
 
-use leptos_i18n_build::{TranslationsInfos, Config};
-use std::path::PathBuf;
+use leptos_i18n_build::{Config, ParseOptions, TranslationsInfos};
 use std::error::Error;
+use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn Error>> {
-  println!("cargo::rerun-if-changed=build.rs");
-  println!("cargo::rerun-if-changed=Cargo.toml");
+    println!("cargo::rerun-if-changed=build.rs");
+    println!("cargo::rerun-if-changed=Cargo.toml");
 
-  // where to generate the translations
-  let i18n_mod_directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("i18n");
+    // where to generate the translations
+    let i18n_mod_directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("i18n");
 
-  let cfg = Config::new("en")?.add_locale("ru")?; // "en" is the default locale, "ru" is another locale.
+    let cfg = Config::new("en")?
+        .add_locale("ru")?
+        .parse_options(ParseOptions::default().interpolate_display(true)); 
 
-  let translations_infos = TranslationsInfos::parse(cfg)?;
+    let translations_infos = TranslationsInfos::parse(cfg)?;
 
-  // emit the errors and warnings found during parsing
-  translations_infos.emit_diagnostics();
+    // emit the errors and warnings found during parsing
+    translations_infos.emit_diagnostics();
 
-  // emit "cargo::rerun-if-changed" for every translation file
-  translations_infos.rerun_if_locales_changed();
+    // emit "cargo::rerun-if-changed" for every translation file
+    translations_infos.rerun_if_locales_changed();
 
-  // codegen
-  translations_infos.generate_i18n_module(i18n_mod_directory)?;
+    // codegen
+    translations_infos.generate_i18n_module(i18n_mod_directory)?;
 
-  Ok(())
+    Ok(())
 }

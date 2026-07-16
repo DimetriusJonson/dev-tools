@@ -27,7 +27,7 @@ pub enum ButtonLinkWidth {
 #[component]
 pub fn ButtonLink(
     #[prop(optional)] id: i32,
-    label: String,
+    label: impl Fn() -> String + Send + Sync + 'static,
     href: String,
     color: impl Fn() -> ButtonLinkColor + Send + Sync + 'static,
 
@@ -35,6 +35,7 @@ pub fn ButtonLink(
     #[prop(optional)] button_width: ButtonLinkWidth,
     #[prop(optional)] class_name: String,
 ) -> impl IntoView {
+    let label_memo = Memo::new(move |_| label());
 
     let base_classes = "rounded-3xl cursor-pointer font-medium px-6 py-1 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
@@ -56,11 +57,10 @@ pub fn ButtonLink(
         ButtonLinkWidth::Md => "w-32".to_owned(),
     };
 
-    let aria_label = label.to_owned();
     view! {
-        <a id=id aria-label=aria_label href=href 
+        <a id=id aria-label=label_memo href=href 
             class=move || format!("{} {} {} {} {}", base_classes, variant_classes(), text_size_classes, button_width_classes, class_name)>
-            {label}
+            {label_memo}
         </a>
     }
 }

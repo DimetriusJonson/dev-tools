@@ -85,7 +85,7 @@ pub fn XmlPage() -> impl IntoView {
                                     "application/xml",
                                 ) {
                                     Ok(_) => {
-                                        show_info(t!(i18n, xml_page_saved_file_msg, file_name).to_html(), messages)
+                                        show_info(t_display!(i18n, file_saved_file_msg, file_name).to_string(), messages)
                                     }
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
@@ -150,7 +150,7 @@ pub fn XmlPage() -> impl IntoView {
     };
 
     view! {
-j        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
+        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[29dvh] md:h-[90dvh]">
                 <TextArea
                     name="xml".to_owned()
@@ -181,9 +181,9 @@ j        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md
                         label=move || t!(i18n, ident_label).to_html()
                         not_selected_text=move || "".to_owned()
                         options=move || {vec![
-                            (Some("2".to_owned()), t!(i18n, ident_option_label, count = || 2).to_html()), 
-                            (Some("3".to_owned()), t!(i18n, ident_option_label, count = || 3).to_html()), 
-                            (Some("4".to_owned()), t!(i18n, ident_option_label, count = || 4).to_html())
+                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()), 
+                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()), 
+                            (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
                             ]}
                         on_change=move |value| {
                             set_local_store_value("xml_ident", value);

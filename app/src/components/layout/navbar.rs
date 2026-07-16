@@ -1,10 +1,12 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_location;
+use crate::i18n::*;
 
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
 
 #[component]
 pub fn Navbar() -> impl IntoView {
+    let i18n = use_i18n();
     let location = use_location();
 
     view! {
@@ -14,15 +16,15 @@ pub fn Navbar() -> impl IntoView {
                 <div class="flex">
                     // Brand / Logo Area
                     <div class="flex flex-row flex-wrap gap-4">
-                        <ButtonLink label="XML".to_owned() href="/".to_owned() button_width=ButtonLinkWidth::Auto
+                        <ButtonLink label=move || "XML".to_owned() href="/".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/") />
-                        <ButtonLink label="URL".to_owned() href="/urlEncoder".to_owned() button_width=ButtonLinkWidth::Auto
+                        <ButtonLink label=move || "URL".to_owned() href="/urlEncoder".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/urlEncoder") />
-                        <ButtonLink label="JSON".to_owned() href="/json".to_owned() button_width=ButtonLinkWidth::Auto 
+                        <ButtonLink label=move || "JSON".to_owned() href="/json".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/json") />
-                        <ButtonLink label="Сравнить".to_owned() href="/compare_text".to_owned() button_width=ButtonLinkWidth::Auto 
+                        <ButtonLink label=move || t_display!(i18n, compare_btn_label).to_string() href="/compare_text".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/compare_text") />
-                        <ButtonLink label="Поделится файлом".to_owned() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto 
+                        <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/share_file") />
                     </div>
 

@@ -3,6 +3,7 @@ use leptos::prelude::*;
 use leptos_meta::{Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::components::{Outlet, ParentRoute, Route, Router, Routes};
 use leptos_router::path;
+use crate::i18n::*;
 
 use crate::components::layout::message_banner::MessageBanner;
 use crate::components::layout::navbar::Navbar;
@@ -64,6 +65,7 @@ pub fn App() -> impl IntoView {
                         let on_click = move |_| {
                             errors_clear.set(Errors::default());
                         };
+                        let i18n = use_i18n();
 
                         view! {
                             <section class="container mx-auto pt-8">
@@ -80,7 +82,7 @@ pub fn App() -> impl IntoView {
                                         <ButtonLink
                                             color=move || ButtonLinkColor::Primary
                                             href="/".to_owned()
-                                            label="Вернутся Домой".to_owned()
+                                            label=move || t_display!(i18n, go_home_btn_label).to_string()
                                             on:click=on_click
                                         />
                                     </div>
