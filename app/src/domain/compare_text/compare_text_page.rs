@@ -67,7 +67,7 @@ pub fn CompareTextPage() -> impl IntoView {
                         set_tab_selected.set(0)
                     } 
                 >
-                t!(i18n,  compare_page_source_tab)
+                {t!(i18n,  compare_page_source_tab)}
                 </button>
                 <button role="tab" 
                     aria-selected=move || tab_selected.get() == 1
@@ -80,7 +80,7 @@ pub fn CompareTextPage() -> impl IntoView {
                         set_tab_selected.set(1)
                     } 
                     >
-                t!(i18n, compare_page_result_tab)
+                {t!(i18n, compare_page_result_tab)}
                 </button>
             </div>
 
