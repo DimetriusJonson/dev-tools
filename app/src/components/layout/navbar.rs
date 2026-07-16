@@ -1,5 +1,6 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_location;
+use crate::components::layout::language_selector::LanguageSelector;
 use crate::i18n::*;
 
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
@@ -13,7 +14,7 @@ pub fn Navbar() -> impl IntoView {
         <nav class="w-full relative bg-primary">
 
             <div class="px-1 py-2 sm:px-2 lg:px-4">
-                <div class="flex">
+                <div class="flex justify-between">
                     // Brand / Logo Area
                     <div class="flex flex-row flex-wrap gap-4">
                         <ButtonLink label=move || "XML".to_owned() href="/".to_owned() button_width=ButtonLinkWidth::Auto
@@ -26,6 +27,10 @@ pub fn Navbar() -> impl IntoView {
                             color=move || nav_button_color(location.pathname.get(), "/compare_text") />
                         <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto 
                             color=move || nav_button_color(location.pathname.get(), "/share_file") />
+                    </div>
+
+                    <div>
+                        <LanguageSelector />
                     </div>
 
                 </div>

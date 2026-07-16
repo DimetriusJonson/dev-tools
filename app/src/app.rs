@@ -127,7 +127,11 @@ pub fn AppMeta() -> impl IntoView {
     Effect::new(move |_| {
         #[cfg(not(feature = "ssr"))]
         {
-            let lang = crate::common::ui_utils::get_browser_language();
+            use crate::common::local_store::get_local_store_value;
+
+            let browser_lang = crate::common::ui_utils::get_browser_language();
+            let lang = get_local_store_value("lang", browser_lang);
+
             i18n.set_locale(match lang.as_str() {
                 "ru" => Locale::ru,
                 _ => Locale::en,
