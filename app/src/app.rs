@@ -41,24 +41,20 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
+        <I18nContextProvider>
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/dev_tools.css"/>
 
-        // sets the document title
-        <Title text="Useful tools for web developers"/>
-        <Meta name="keywords" content="web, dev, tools, useful, xml, json, formatting, escape, share file, compare, text" />
-        <Meta name="description" content="Useful tools for web developers" />
+        <AppMeta />
 
         // content for this welcome page
-        <I18nContextProvider>
         <Router>
             <div class="flex flex-col h-dvh">
                 <MessageBanner />
 
                 <Navbar />
                 <main class="flex flex-col flex-1 overflow-auto bg-white dark:bg-dark-bg">
-                    //<MessageBanner />
 
                     <ErrorBoundary fallback=move |errors| {
                         let errors_clear = errors.clone();
@@ -66,7 +62,7 @@ pub fn App() -> impl IntoView {
                             errors_clear.set(Errors::default());
                         };
                         let i18n = use_i18n();
-
+                        
                         view! {
                             <section class="container mx-auto pt-8">
                                 <div class="bg-neutral-100 dark:bg-gray-950 p-8 rounded-lg shadow-md shadow-danger block text-center">
@@ -112,15 +108,27 @@ pub fn App() -> impl IntoView {
 
 #[component]
 pub fn NotFound() -> impl IntoView {
+    let i18n = use_i18n();
     view! {
         <section class="container mx-auto pt-8">
             <div class="bg-neutral-100 dark:bg-gray-950 p-8 rounded-lg shadow-md shadow-danger block text-center">
                 <div class="text-5xl font-extrabold text-danger">404</div>
                 <ul class="text-3xl text-gray-400">
-                    <li>Страница не найдена</li>                
+                    <li>{t!(i18n, not_found_page)}</li>                
                 </ul>
             </div>
         </section>
+    }
+}
+
+#[component]
+pub fn AppMeta() -> impl IntoView {
+    let i18n = use_i18n();
+    view! {
+        // sets the document title
+        <Title text={t_display!(i18n, app_title).to_string()} />
+        <Meta name="keywords" content={t_display!(i18n, meta_keywords).to_string()} />
+        <Meta name="description" content={t_display!(i18n, meta_description).to_string()} />
     }
 }
 

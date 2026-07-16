@@ -1,4 +1,10 @@
 {
+    "app_title": "Полезные инструменты для веб разработчиков",
+    "meta_description": "Полезные инструменты для веб разработчиков: Форматирование XML, JSON; Escape/Unescape URL/XML/JSON; Сравнение текста; Поделится файлом.",
+    "meta_keywords": "web, веб, dev, разработка, tools, инструменты, полезный, xml, json, format, форматирование, escape, share, file, поделится, файл, сравнить, текст",
+
+    "not_found_page": "Страница не найдена",
+
     "go_home_btn_label": "Вернутся Домой",
     "compare_btn_label": "Сравнить",
     "share_file_btn_label": "Поделится файлом",
