@@ -54,7 +54,8 @@ pub fn CompareTextPage() -> impl IntoView {
         <div class="flex-1 px-2 ">
             // Tab Headers
             <div class="flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none" role="tablist">
-                <button role="tab" aria-selected="true" 
+                <button role="tab" 
+                    aria-selected=move || tab_selected.get() == 0
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 0
                     class:text-black=move || tab_selected.get() == 0
@@ -66,7 +67,8 @@ pub fn CompareTextPage() -> impl IntoView {
                 >
                 Исходные данные
                 </button>
-                <button role="tab" aria-selected="false" 
+                <button role="tab" 
+                    aria-selected=move || tab_selected.get() == 1
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 1
                     class:text-black=move || tab_selected.get() == 1

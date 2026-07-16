@@ -45,7 +45,7 @@ pub fn App() -> impl IntoView {
 
         // sets the document title
         <Title text="Useful tools for web developers"/>
-        <Meta name="keywords" content="web, dev, tools, useful, xml, json, formatting, escape, share file" />
+        <Meta name="keywords" content="web, dev, tools, useful, xml, json, formatting, escape, share file, compare, text" />
         <Meta name="description" content="Useful tools for web developers" />
 
         // content for this welcome page
