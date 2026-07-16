@@ -1,11 +1,13 @@
 use leptos::prelude::*;
 use web_sys::{ClipboardEvent, DragEvent, File, HtmlDivElement, Url};
+use crate::i18n::*;
 
 #[component]
 pub fn DragFile(
     #[prop(into)] on_drop_file: Callback<File>,
     #[prop(into)] on_paste_file: Callback<File>,
 ) -> impl IntoView {
+    let i18n = use_i18n();
     let (img_url, set_img_url) = signal("".to_owned());
 
     view! {
@@ -57,8 +59,8 @@ pub fn DragFile(
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
                     <div id="dragText" class="mt-3 text-gray-600 text-base font-medium text-center">
-                        <p>Перетащите файл сюда</p>
-                        <p>или кликните по области и нажмите Ctrl+V</p>
+                        <p>{t!(i18n, drag_file_descr_1)}</p>
+                        <p>{t!(i18n, drag_file_descr_2)}</p>
                     </div>
                 </Show>
 

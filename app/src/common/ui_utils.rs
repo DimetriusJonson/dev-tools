@@ -33,3 +33,24 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
     Ok(())
 }
 
+#[cfg(not(feature = "ssr"))]
+pub fn get_browser_language() -> String {
+    let window = web_sys::window().expect("window should exist");
+    let navigator = window.navigator();
+    
+    let languages = navigator.languages();
+    let mut best_lang = "en".to_string(); 
+    
+    if languages.length() > 0 {
+        if let Some(lang) = languages.get(0).as_string() {
+            best_lang = lang;
+        }
+    }
+    
+    if best_lang.starts_with("ru") {
+        "ru".to_string()
+    } else {
+        "en".to_string()
+    }
+}
+

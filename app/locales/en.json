@@ -52,7 +52,10 @@
     "compare_page_source_tab": "Input data",
     "compare_page_result_tab":"Result",
     "compare_page_text1_placeholder": "Insert the first text",
-    "compare_page_text2_placeholder": "Insert the second text"
+    "compare_page_text2_placeholder": "Insert the second text",
+
+    "drag_file_descr_1": "Drag and drop file here",
+    "drag_file_descr_2": "or click on the area and press Ctrl+V"
 
 
 }

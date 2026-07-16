@@ -9,7 +9,6 @@ use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::{SelectInput, SelectOption};
-use crate::i18n::use_i18n;
 use crate::i18n::*;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;

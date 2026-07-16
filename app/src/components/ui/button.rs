@@ -58,7 +58,7 @@ pub fn Button(
         <button
             node_ref=button_element
             id={id}
-            aria-label=label_memo.get()
+            aria-label=move || label_memo.get()
             class=move || format!("{} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, 
                 match loading_memo.get() {
                     true => "inline-flex leading-6 transition ease-in-out duration-150".to_owned(),

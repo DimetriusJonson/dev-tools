@@ -51,7 +51,9 @@
     "compare_page_source_tab": "Исходные данные",
     "compare_page_result_tab":"Результат",
     "compare_page_text1_placeholder": "Вставьте первый текст",
-    "compare_page_text2_placeholder": "Вставьте второй текст"
+    "compare_page_text2_placeholder": "Вставьте второй текст",
 
+    "drag_file_descr_1": "Перетащите файл сюда",
+    "drag_file_descr_2": "или кликните по области и нажмите Ctrl+V"
 
 }

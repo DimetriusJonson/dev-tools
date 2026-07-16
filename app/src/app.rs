@@ -1,9 +1,8 @@
-
+use crate::i18n::*;
 use leptos::prelude::*;
 use leptos_meta::{Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::components::{Outlet, ParentRoute, Route, Router, Routes};
 use leptos_router::path;
-use crate::i18n::*;
 
 use crate::components::layout::message_banner::MessageBanner;
 use crate::components::layout::navbar::Navbar;
@@ -62,7 +61,7 @@ pub fn App() -> impl IntoView {
                             errors_clear.set(Errors::default());
                         };
                         let i18n = use_i18n();
-                        
+
                         view! {
                             <section class="container mx-auto pt-8">
                                 <div class="bg-neutral-100 dark:bg-gray-950 p-8 rounded-lg shadow-md shadow-danger block text-center">
@@ -114,7 +113,7 @@ pub fn NotFound() -> impl IntoView {
             <div class="bg-neutral-100 dark:bg-gray-950 p-8 rounded-lg shadow-md shadow-danger block text-center">
                 <div class="text-5xl font-extrabold text-danger">404</div>
                 <ul class="text-3xl text-gray-400">
-                    <li>{t!(i18n, not_found_page)}</li>                
+                    <li>{t!(i18n, not_found_page)}</li>
                 </ul>
             </div>
         </section>
@@ -124,11 +123,23 @@ pub fn NotFound() -> impl IntoView {
 #[component]
 pub fn AppMeta() -> impl IntoView {
     let i18n = use_i18n();
+
+    Effect::new(move |_| {
+        #[cfg(not(feature = "ssr"))]
+        {
+            let lang = crate::common::ui_utils::get_browser_language();
+            i18n.set_locale(match lang.as_str() {
+                "ru" => Locale::ru,
+                _ => Locale::en,
+            });
+        }
+    });
+
     view! {
         // sets the document title
-        <Title text={t_display!(i18n, app_title).to_string()} />
-        <Meta name="keywords" content={t_display!(i18n, meta_keywords).to_string()} />
-        <Meta name="description" content={t_display!(i18n, meta_description).to_string()} />
+        <Title text=move || {t_display!(i18n, app_title).to_string()} />
+        <Meta name="keywords" content=move || {t_display!(i18n, meta_keywords).to_string()} />
+        <Meta name="description" content=move || {t_display!(i18n, meta_description).to_string()} />
     }
 }
 
