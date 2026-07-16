@@ -52,6 +52,9 @@ reqwest = { version = "0.12", default-features = false, features = ["stream", "r
 flate2 = "1.0"
 getifs = "0.6"
 difference = "2.0"
+leptos_i18n = { version = "0.6", features = ["plurals"] }
+leptos_i18n_macro = { version = "0.2" }
+leptos_i18n_build = "0.6"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

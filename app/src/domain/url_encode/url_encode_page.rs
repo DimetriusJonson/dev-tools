@@ -8,6 +8,8 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::text_area::TextArea;
+use crate::i18n::use_i18n;
+use crate::i18n::*;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
@@ -24,6 +26,7 @@ impl InProgressType {
 
 #[component]
 pub fn UrlEncoderPage() -> impl IntoView {
+    let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (url, set_url) = signal(get_local_store_value("src_url", "".to_owned()));
@@ -72,7 +75,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_url.get());
-        show_info("Ссылка скопирована в буфер обмена.".to_owned(), messages);
+        show_info(t!(i18n, url_page_copied_to_clipboard_msg).to_html(), messages);
     };
 
     view! {
@@ -80,7 +83,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
             <TextArea
                 name="url".to_owned()
                 class_name="md:flex-1 h-[27dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                placeholder="Вставьте url".to_owned()
+                placeholder=move || t!(i18n, url_page_src_placeholder).to_html()
                 value=url
                 set_value=set_url
                 on_change=move |_| {
@@ -90,14 +93,14 @@ pub fn UrlEncoderPage() -> impl IntoView {
 
             <div class="flex flex-col gap-4 items-center justify-center">
                 <Button
-                    label="Encode".to_owned()
+                    label=move || t!(i18n, url_page_encode_btn_label).to_html()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get() == InProgressType::Encode
                     on_click=on_encode_click
                     disabled=move || in_progress.get().is_active()
                 />
                 <Button
-                    label="Decode".to_owned()
+                    label=move || t!(i18n, url_page_decode_btn_label).to_html()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get() == InProgressType::Decode
                     on_click=on_decode_click
@@ -114,7 +117,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 }
 
                 <Button
-                    label="Скопировать в буфер обмена".to_owned()
+                    label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                     button_width=ButtonWidth::Auto
                     loading=move || false
                     on_click=on_copy_click

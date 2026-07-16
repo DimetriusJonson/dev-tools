@@ -25,7 +25,7 @@ pub enum ButtonWidth {
 #[component]
 pub fn Button(
     #[prop(optional)] id: i32,
-    label: String,
+    label: impl Fn() -> String + Send + Sync + 'static,
     #[prop(optional)] class_name: String,
     #[prop(optional)] color: ButtonColor,
     #[prop(optional)] button_width: ButtonWidth,
@@ -33,11 +33,11 @@ pub fn Button(
     disabled: impl Fn() -> bool + Send + Sync + 'static,
     on_click: impl FnMut(MouseEvent) + 'static,
 ) -> impl IntoView {
+    let label_memo = Memo::new(move |_| label());
     let loading_memo = Memo::new(move |_| loading());
     let disabled_memo = Memo::new(move |_| disabled());
 
     let button_element: NodeRef<html::Button> = NodeRef::new();
-    let aria_label = label.to_owned();
 
     let base_classes = "rounded-3xl font-medium px-6 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
@@ -58,11 +58,11 @@ pub fn Button(
         <button
             node_ref=button_element
             id={id}
-            aria-label={aria_label}
+            aria-label=label_memo.get()
             class=move || format!("{} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, 
                 match loading_memo.get() {
                     true => "inline-flex leading-6 transition ease-in-out duration-150".to_owned(),
-                    false => "".to_owned(),
+                    _ => "".to_owned()
                 }, 
                 match loading_memo.get() || disabled_memo.get() {
                     true => "cursor-not-allowed brightness-40".to_owned(),
@@ -75,7 +75,7 @@ pub fn Button(
 
            <Show
                 when=move || loading_memo.get()
-                fallback=move || view! { {label.to_owned()} }
+                fallback=move || view! { {label_memo} }
             >
                 <svg class="animate-spin [animation-duration:500ms] h-5 w-5 text-black" xmlns="http://w3.org" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

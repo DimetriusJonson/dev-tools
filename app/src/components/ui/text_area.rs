@@ -8,9 +8,11 @@ pub fn TextArea(
     set_value: WriteSignal<String>,
     #[prop(optional, default="4".to_owned())] rows: String,
     #[prop(optional, default="50".to_owned())] cols: String,
-    placeholder: String,
+    placeholder: impl Fn() -> String + Send + Sync + 'static,
     #[prop(into)] on_change: Callback<String>,
 ) -> impl IntoView {
+    let placeholder_memo = Memo::new(move |_| placeholder());
+
     view! {
         <textarea
             class=format!("textblock w-full px-3 py-2 rounded-md shadow-inner
@@ -51,7 +53,7 @@ pub fn TextArea(
             rows=rows
             cols=cols
             name=name
-            placeholder=placeholder
+            placeholder=placeholder_memo
             bind:value=(value, set_value)
             on:change=move |ev| {
                 let val = event_target_value(&ev);

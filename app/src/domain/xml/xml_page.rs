@@ -11,6 +11,8 @@ use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
+use crate::i18n::*;
+
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
     None, 
@@ -28,6 +30,7 @@ impl InProgressType {
 
 #[component]
 pub fn XmlPage() -> impl IntoView {
+    let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (xml, set_xml) = signal(get_local_store_value("src_xml", "".to_owned()));
@@ -82,7 +85,7 @@ pub fn XmlPage() -> impl IntoView {
                                     "application/xml",
                                 ) {
                                     Ok(_) => {
-                                        show_info(format!("Файл {} сохранен", file_name), messages)
+                                        show_info(t!(i18n, xml_page_saved_file_msg, file_name).to_html(), messages)
                                     }
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
@@ -143,16 +146,16 @@ pub fn XmlPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_xml.get());
-        show_info("XML скопирован в буфер обмена.".to_owned(), messages);
+        show_info(t!(i18n, xml_page_copied_to_clipboard_msg).to_html(), messages);
     };
 
     view! {
-        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
+j        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[29dvh] md:h-[90dvh]">
                 <TextArea
                     name="xml".to_owned()
                     class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                    placeholder="Вставьте xml".to_owned()
+                    placeholder=move || {t!(i18n, xml_page_src_placeholder).to_html()}
                     value=xml
                     set_value=set_xml
                     on_change=move |_| {
@@ -162,7 +165,7 @@ pub fn XmlPage() -> impl IntoView {
                 <div class="flex flex-row">
                     <FileInput node_ref=file_input_ref />
                     <Button
-                        label="Format".to_owned()
+                        label=move || t!(i18n, xml_page_format_btn_label).to_html()
                         button_width=ButtonWidth::Md
                         loading=move || in_progress.get() == InProgressType::FormatFile
                         on_click=on_format_file_click
@@ -175,8 +178,13 @@ pub fn XmlPage() -> impl IntoView {
                 <div class="flex flex-row md:flex-col gap-4">
                     <SelectInput
                         name="ident".to_owned()
-                        label="Отступ".to_owned()
-                        options=move || {vec![(Some("2".to_owned()), "2 отступа".to_owned()), (Some("3".to_owned()), "3 отступа".to_owned()), (Some("4".to_owned()), "4 отступа".to_owned())]}
+                        label=move || t!(i18n, ident_label).to_html()
+                        not_selected_text=move || "".to_owned()
+                        options=move || {vec![
+                            (Some("2".to_owned()), t!(i18n, ident_option_label, count = || 2).to_html()), 
+                            (Some("3".to_owned()), t!(i18n, ident_option_label, count = || 3).to_html()), 
+                            (Some("4".to_owned()), t!(i18n, ident_option_label, count = || 4).to_html())
+                            ]}
                         on_change=move |value| {
                             set_local_store_value("xml_ident", value);
                         }
@@ -185,7 +193,7 @@ pub fn XmlPage() -> impl IntoView {
                     />
 
                     <Button
-                        label="Format".to_owned()
+                        label=move || t!(i18n, xml_page_format_btn_label).to_html()
                         button_width=ButtonWidth::Md
                         loading=move || in_progress.get() == InProgressType::Format
                         on_click=on_format_click
@@ -195,7 +203,7 @@ pub fn XmlPage() -> impl IntoView {
 
                 <div class="flex flex-row md:flex-col gap-4 md:py-8">
                     <Button
-                        label="Unescape".to_owned()
+                        label=move || t!(i18n, xml_page_unescape_btn_label).to_html()
                         button_width=ButtonWidth::Md
                         loading=move || in_progress.get() == InProgressType::Unescape
                         on_click=on_unescape_click
@@ -203,7 +211,7 @@ pub fn XmlPage() -> impl IntoView {
                     />
 
                     <Button
-                        label="Escape".to_owned()
+                        label=move || t!(i18n, xml_page_escape_btn_label).to_html()
                         button_width=ButtonWidth::Md
                         loading=move || in_progress.get() == InProgressType::Escape
                         on_click=on_escape_click
@@ -221,7 +229,7 @@ pub fn XmlPage() -> impl IntoView {
                 }
 
                 <Button
-                    label="Скопировать в буфер обмена".to_owned()
+                    label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                     button_width=ButtonWidth::Auto
                     loading=move || false
                     on_click=on_copy_click

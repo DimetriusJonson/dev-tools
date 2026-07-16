@@ -9,11 +9,14 @@ use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::{SelectInput, SelectOption};
+use crate::i18n::use_i18n;
+use crate::i18n::*;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
 
 #[component]
 pub fn ShareFileUploadPage() -> impl IntoView {
+    let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let (shared_url, set_shared_url) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
@@ -29,6 +32,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 set_shared_url,
                 messages,
                 custom_server.get(),
+                i18n, 
                 move |success| {
                     if success {
                         selected_file.set(None);
@@ -41,7 +45,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&shared_url.get());
-        show_info("Ссылка скопирована в буфер обмена.".to_owned(), messages);
+        show_info(t!(i18n, share_file_upload_page_copied_to_clipboard_msg).to_html(), messages);
     };
 
     let custom_servers_resource = OnceResource::new(get_custom_servers());
@@ -52,7 +56,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             class:hidden=move || !shared_url.get().is_empty()>
             <DragFile
                 on_drop_file=move |file| {
-                    upload_file(file, set_in_progress, set_shared_url, messages, custom_server.get(), move |success| {
+                    upload_file(file, set_in_progress, set_shared_url, messages, custom_server.get(), i18n, move |success| {
                         if success {
                             selected_file.set(None);
                             file_input_ref.write().as_mut().unwrap().set_files(None);
@@ -72,7 +76,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     }
                 }/>
                 <Button
-                    label="Загрузить".to_owned()
+                    label=move || t!(i18n, share_file_upload_page_upload_btn_label).to_html()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
                     on_click=on_upload_file_click
@@ -81,27 +85,27 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             </div>
 
             <Transition
-                fallback=move || view! { <div>Загрузка...</div> }
+                fallback=move || view! { <div>{t!(i18n, loading_progress)}</div> }
                 >
                 {move || custom_servers_resource.get().map(|data|
                     data.map(|custom_servers| {
                         if !custom_servers.is_empty() {
                             view! {
                                 <div class="flex items-center">
-                                    <label for="server_addr" title="IP локального сервера или по умолчанию облако.">Сервер: </label>
+                                    <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
                                     <SelectInput
                                         class_name="px-2".to_owned()
                                         name={"server_addr".to_owned()}
                                         value={custom_server}
                                         set_value={set_custom_server}
-                                        label={"Server addr".to_owned()}
+                                        label=move || "Server addr".to_owned()
                                         options=move || custom_servers.clone()
-                                        not_selected_text={"Облако".to_owned()}
+                                        not_selected_text={move || t!(i18n, share_file_upload_page_server_addr_not_selected).to_html()}
                                         on_change=move |_| {}
                                     />
                                 </div>
                                 <p class="text-xs text-gray-600">
-                                    {"Если выбран локальный сервер, то ссылка будет содержать IP вашего компьютера, а не облака."}<br/>{"Т.к. файл сохраняется в оперативной памяти Вашего компьютера, то не закрывайте приложение пока получатель ссылки ей не воспользуется."}
+                                    {t!(i18n, share_file_upload_page_server_addr_descr, <br/> = || view! { <br/> })}
                                 </p>
                             }.into_any()
                         } else {
@@ -120,7 +124,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     </div>
 
                     <Button
-                        label="Скопировать в буфер обмена".to_owned()
+                        label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                         button_width=ButtonWidth::Auto
                         loading=move || in_progress.get()
                         on_click=on_copy_click
@@ -133,16 +137,16 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             <div class="py-4">
                 <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
 
-                    <li>{"Выберите файл, которым хотите поделится. Максимальный размер файла "}<b>{"5 мегабайт"}</b>.</li>
+                    <li>{t!(i18n, share_file_upload_info_1, <b> = <b />)}</li>
                     <ul class="list-disc pl-4">
-                        <li>{"Или перетащите файл в верхнюю область."}</li>
-                        <li>{"Или вставьте изображение из буфера обмена, нажав Ctrl+V в верхней области."}</li>
+                        <li>{t!(i18n, share_file_upload_info_2)}</li>
+                        <li>{t!(i18n, share_file_upload_info_3)}</li>
                     </ul>
 
-                    <li>{"Нажмите "}<b>{"Загрузить"}</b>{" для загрузки файла и формирования на него ссылки."}</li>
-                    <li>{"Нажмите "}<b>{"Скопировать в буфер обмена"}</b>{"."}</li>
-                    <li>{"Вставьте ссылку на файл из буфера обмена."}</li>
-                    <li>{"Срок жизни ссылки "}<b>{"3 дня"}</b>{"."}</li>
+                    <li>{t!(i18n, share_file_upload_info_4, <b> = <b />)}</li>
+                    <li>{t!(i18n, share_file_upload_info_5, <b> = <b />)}</li>
+                    <li>{t!(i18n, share_file_upload_info_6)}</li>
+                    <li>{t!(i18n, share_file_upload_info_7, <b> = <b />)}</li>
                 </ul>
             </div>
 
@@ -156,6 +160,7 @@ fn upload_file(
     set_shared_url: WriteSignal<String>,
     messages: Messages,
     custom_server_url: String,
+    i18n: leptos_i18n::I18nContext<Locale, I18nKeys>,
     callback: impl Fn(bool) + Send + Sync + 'static,
 ) {
     spawn_local(async move {
@@ -201,7 +206,7 @@ fn upload_file(
                             }
                             result = true;
 
-                            show_info("Файл загружен!".to_owned(), messages);
+                            show_info(t!(i18n, share_file_upload_success).to_html(), messages);
                         } else {
                             show_error(response.status_text(), messages);
                         }
@@ -211,7 +216,7 @@ fn upload_file(
                 Err(err) => show_error(err.to_string(), messages),
             }
         } else {
-            show_error("Файл слишком большой!".to_owned(), messages)
+            show_error(t!(i18n, share_file_upload_exceed_file_size).to_html(), messages)
         }
 
         set_in_progress.set(false);

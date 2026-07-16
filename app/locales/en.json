@@ -1,0 +1,41 @@
+{
+    "xml_page_src_placeholder": "Вставьте XML",
+    "json_page_src_placeholder": "Вставьте JSON",
+    "xml_page_saved_file_msg": "Файл {{ file_name }} сохранен",
+    "xml_page_copied_to_clipboard_msg": "XML скопирован в буфер обмена.",
+    "ident_label": "Отступ",
+    "copy_to_clipboard_btn_label": "Скопировать в буфер обмена",
+    "xml_page_format_btn_label": "Format",
+    "xml_page_unescape_btn_label": "Unescape",
+    "xml_page_escape_btn_label": "Escape",
+    "ident_option_label_one": "{{ count }} отступ",
+    "ident_option_label_other": "{{ count }} отступа",
+    "json_page_copied_to_clipboard_msg": "JSON скопирован в буфер обмена.",
+    "json_page_format_btn_label": "Format",
+    "json_page_unescape_btn_label": "Unescape",
+    "json_page_escape_btn_label": "Escape",
+    "url_page_copied_to_clipboard_msg": "Ссылка скопирована в буфер обмена.",
+    "url_page_src_placeholder": "Вставьте URL",
+    "url_page_encode_btn_label": "Encode",
+    "url_page_decode_btn_label": "Decode",
+    "share_file_upload_page_copied_to_clipboard_msg": "Ссылка скопирована в буфер обмена.",
+    "share_file_upload_page_upload_btn_label": "Загрузить",
+    "loading_progress": "Загрузка...",
+    "share_file_upload_page_server_addr_title": "IP локального сервера или по умолчанию облако.",
+    "share_file_upload_page_server_addr_label": "Сервер: ",
+    "share_file_upload_page_server_addr_not_selected": "Облако",
+    "share_file_upload_page_server_addr_descr":"Если выбран локальный сервер, то ссылка будет содержать IP вашего компьютера, а не облака.<br/>Т.к. файл сохраняется в оперативной памяти Вашего компьютера, то не закрывайте приложение пока получатель ссылки ей не воспользуется.",
+
+    "share_file_upload_info_1": "Выберите файл, которым хотите поделится. Максимальный размер файла <b>5 мегабайт</b>.",
+    "share_file_upload_info_2": "Или перетащите файл в верхнюю область.",
+    "share_file_upload_info_3": "Или вставьте изображение из буфера обмена, нажав Ctrl+V в верхней области.",
+    "share_file_upload_info_4": "Нажмите <b>Загрузить</b> для загрузки файла и формирования на него ссылки.",
+    "share_file_upload_info_5": "Нажмите <b>Скопировать в буфер обмена</b>.",
+    "share_file_upload_info_6": "Вставьте ссылку на файл из буфера обмена.",
+    "share_file_upload_info_7": "Срок жизни ссылки <b>3 дня</b>.",
+    "share_file_upload_success":"Файл загружен!",
+    "share_file_upload_exceed_file_size":"Файл слишком большой!"
+
+
+
+}

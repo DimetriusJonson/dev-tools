@@ -4,6 +4,8 @@ pub mod domain;
 pub mod hljs;
 pub mod common;
 
+include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
+
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {

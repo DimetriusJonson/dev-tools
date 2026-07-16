@@ -91,7 +91,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     <TextArea
                         name="text1".to_owned()
                         class_name="flex-1 resize-none".to_owned()
-                        placeholder="Вставьте первый текст".to_owned()
+                        placeholder=move || "Вставьте первый текст".to_owned()
                         value=text1
                         set_value=set_text1
                         on_change=move |_| {
@@ -102,7 +102,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     <TextArea
                         name="text2".to_owned()
                         class_name="flex-1 resize-none".to_owned()
-                        placeholder="Вставьте второй текст".to_owned()
+                        placeholder=move || "Вставьте второй текст".to_owned()
                         value=text2
                         set_value=set_text2
                         on_change=move |_| {
@@ -112,14 +112,14 @@ pub fn CompareTextPage() -> impl IntoView {
 
                     <div class="flex flex-col gap-4 items-center justify-center">
                         <Button
-                            label="Сравнить".to_owned()
+                            label=move || "Сравнить".to_owned()
                             button_width=ButtonWidth::Md
                             loading=move || in_progress.get()
                             on_click=on_compare_click
                             disabled=move || in_progress.get()
                         />
                         <Button
-                            label="⇄".to_owned()
+                            label=move || "⇄".to_owned()
                             button_width=ButtonWidth::Md
                             loading=move || false
                             on_click=move |_| {

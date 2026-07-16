@@ -13,6 +13,7 @@ use crate::domain::share_file::share_file_upload_page::ShareFileUploadPage;
 use crate::domain::share_file::share_file_view_page::ShareFileViewPage;
 use crate::domain::url_encode::url_encode_page::UrlEncoderPage;
 use crate::domain::xml::xml_page::XmlPage;
+use crate::i18n::I18nContextProvider;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -49,6 +50,7 @@ pub fn App() -> impl IntoView {
         <Meta name="description" content="Useful tools for web developers" />
 
         // content for this welcome page
+        <I18nContextProvider>
         <Router>
             <div class="flex flex-col h-dvh">
                 <MessageBanner />
@@ -102,6 +104,7 @@ pub fn App() -> impl IntoView {
                 </main>
             </div>
         </Router>
+        </I18nContextProvider>
     }
 }
 
