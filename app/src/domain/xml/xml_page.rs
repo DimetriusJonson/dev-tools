@@ -166,7 +166,7 @@ pub fn XmlPage() -> impl IntoView {
                     <FileInput node_ref=file_input_ref />
                     <Button
                         label=move || t!(i18n, xml_page_format_btn_label).to_html()
-                        button_width=ButtonWidth::Auto
+                        button_width=ButtonWidth::Lg
                         loading=move || in_progress.get() == InProgressType::FormatFile
                         on_click=on_format_file_click
                         disabled=move || in_progress.get().is_active()
@@ -194,7 +194,7 @@ pub fn XmlPage() -> impl IntoView {
 
                     <Button
                         label=move || t!(i18n, xml_page_format_btn_label).to_html()
-                        button_width=ButtonWidth::Auto
+                        button_width=ButtonWidth::Lg
                         loading=move || in_progress.get() == InProgressType::Format
                         on_click=on_format_click
                         disabled=move || in_progress.get().is_active()
@@ -204,7 +204,7 @@ pub fn XmlPage() -> impl IntoView {
                 <div class="flex flex-row md:flex-col gap-4 md:py-8">
                     <Button
                         label=move || t!(i18n, xml_page_unescape_btn_label).to_html()
-                        button_width=ButtonWidth::Md
+                        button_width=ButtonWidth::Lg
                         loading=move || in_progress.get() == InProgressType::Unescape
                         on_click=on_unescape_click
                         disabled=move || in_progress.get().is_active()
@@ -212,7 +212,7 @@ pub fn XmlPage() -> impl IntoView {
 
                     <Button
                         label=move || t!(i18n, xml_page_escape_btn_label).to_html()
-                        button_width=ButtonWidth::Md
+                        button_width=ButtonWidth::Lg
                         loading=move || in_progress.get() == InProgressType::Escape
                         on_click=on_escape_click
                         disabled=move || in_progress.get().is_active()

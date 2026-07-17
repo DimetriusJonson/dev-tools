@@ -20,6 +20,7 @@ pub enum ButtonWidth {
     #[default]
     Auto,
     Md,
+    Lg
 }
 
 #[component]
@@ -39,7 +40,7 @@ pub fn Button(
 
     let button_element: NodeRef<html::Button> = NodeRef::new();
 
-    let base_classes = "rounded-3xl font-medium px-6 md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl font-medium md:py-2 h-7 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -50,8 +51,9 @@ pub fn Button(
     };
 
     let button_width_classes = match button_width {
-        ButtonWidth::Auto => "w-auto".to_owned(),
-        ButtonWidth::Md => "w-32".to_owned(),
+        ButtonWidth::Auto => "w-auto px-4".to_owned(),
+        ButtonWidth::Md => "w-32 px-4".to_owned(),
+        ButtonWidth::Lg => "w-38 px-4".to_owned(),
     };
 
     view! {
@@ -65,7 +67,7 @@ pub fn Button(
                     _ => "".to_owned()
                 }, 
                 match loading_memo.get() || disabled_memo.get() {
-                    true => "cursor-not-allowed brightness-40".to_owned(),
+                    true => "cursor-not-allowed".to_owned(),
                     false => "cursor-pointer".to_owned(),
                 }, class_name)
             on:click=on_click

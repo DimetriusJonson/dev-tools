@@ -94,14 +94,14 @@ pub fn UrlEncoderPage() -> impl IntoView {
             <div class="flex flex-col gap-4 items-center justify-center">
                 <Button
                     label=move || t!(i18n, url_page_encode_btn_label).to_html()
-                    button_width=ButtonWidth::Auto
+                    button_width=ButtonWidth::Lg
                     loading=move || in_progress.get() == InProgressType::Encode
                     on_click=on_encode_click
                     disabled=move || in_progress.get().is_active()
                 />
                 <Button
                     label=move || t!(i18n, url_page_decode_btn_label).to_html()
-                    button_width=ButtonWidth::Auto
+                    button_width=ButtonWidth::Lg
                     loading=move || in_progress.get() == InProgressType::Decode
                     on_click=on_decode_click
                     disabled=move || in_progress.get().is_active()

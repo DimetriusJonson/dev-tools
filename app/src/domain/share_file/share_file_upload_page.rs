@@ -124,7 +124,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
                     <Button
                         label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
-                        button_width=ButtonWidth::Auto
+                        button_width=ButtonWidth::Lg
                         loading=move || in_progress.get()
                         on_click=on_copy_click
                         disabled=move || in_progress.get()
