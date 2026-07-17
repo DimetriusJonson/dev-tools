@@ -169,10 +169,10 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
         }
     }
 
-    result1.insert(0, "<table class=\"table-fixed w-full bg-mygray \">".to_owned());
+    result1.insert(0, "<table class=\"table-auto w-full bg-mygray \">".to_owned());
     result1.push("</table>".to_owned());
 
-    result2.insert(0, "<table class=\"table-fixed w-full bg-mygray \">".to_owned());
+    result2.insert(0, "<table class=\"table-auto w-full bg-mygray \">".to_owned());
     result2.push("</table>".to_owned());
 
     (result1.join("\n"), result2.join("\n"))

@@ -7,7 +7,7 @@
 
     "go_home_btn_label": "Вернутся Домой",
     "compare_btn_label": "Сравнить",
-    "share_file_btn_label": "Поделится файлом",
+    "share_file_btn_label": "Поделится",
 
     "xml_page_src_placeholder": "Вставьте XML",
     "json_page_src_placeholder": "Вставьте JSON",

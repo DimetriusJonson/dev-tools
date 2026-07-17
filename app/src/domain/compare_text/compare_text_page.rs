@@ -141,8 +141,8 @@ pub fn CompareTextPage() -> impl IntoView {
                     class:block=move || tab_selected.get() == 1
                     class:hidden=move || tab_selected.get() != 1
                 >
-                    <div class="flex-1 dark:text-white px-4" inner_html=move || dst_left />
-                    <div class="flex-1 dark:text-white" inner_html=move || dst_right />
+                    <div class="flex-1 dark:text-white overflow-x-auto w-full" inner_html=move || dst_left />
+                    <div class="flex-1 dark:text-white overflow-x-auto w-full" inner_html=move || dst_right />
                 </div>
             </div>
         </div>

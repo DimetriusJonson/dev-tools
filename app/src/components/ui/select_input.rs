@@ -28,8 +28,9 @@ pub fn SelectInput(
         <span class={class_name}>
             <select aria-label=label_memo
                 id = {name.to_owned()}
-                class={"border rounded-lg block w-full p-2
+                class={"min-w-10 border rounded-lg w-full p-2
             focus:outline-4
+            h-8 md:h-10 text-xs md:text-base
 
             transition-[background-color,border-color,box-shadow,color]
             duration-294

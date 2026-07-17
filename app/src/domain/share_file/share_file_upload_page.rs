@@ -66,7 +66,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 />
         </div>
 
-        <div class="flex flex-col px-[30vw] py-12 gap-4 dark:text-white text-xs md:text-base">
+        <div class="flex flex-col px-4 md:px-[30vw] py-12 gap-4 dark:text-white text-xs md:text-base">
             <div class="flex" class:hidden=move || !shared_url.get().is_empty()>
                 <FileInput node_ref=file_input_ref on:change=move |event| {
                     let input_file = event_target::<HtmlInputElement>(&event);
@@ -133,7 +133,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 </Show>
             </div>
 
-            <div class="py-4">
+            <div class="py-4 px-4">
                 <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
 
                     <li>{t!(i18n, share_file_upload_info_1, <b> = <b />)}</li>
