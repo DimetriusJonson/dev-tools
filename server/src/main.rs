@@ -1,6 +1,10 @@
-use std::env;
+use std::{
+    env::{self, Args},
+    net::SocketAddr,
+};
 
 use dotenvy::dotenv;
+use log::info;
 use server::server_starter::start_axum_server;
 use tracing_log::LogTracer;
 
@@ -16,6 +20,33 @@ async fn main() -> anyhow::Result<()> {
     LogTracer::init().expect("Failed to set logger");
 
     let database_url = std::env::var("DATABASE_URL").ok();
+    let remote_server_url = std::env::var("DEVTOOLS_REMOTE_SERVER_URL")
+        .unwrap_or("https://dev-tools-rust.vercel.app".to_owned());
 
-    start_axum_server(None, Some("https://dev-tools-rust.vercel.app".to_owned()), database_url).await
+    info!("start_axum_server...");
+
+    let args = std::env::args();
+    let addr_arg = get_arg_value(args, "addr");
+
+    let addr_v4 = match addr_arg {
+        Some(addr) => match addr.parse::<SocketAddr>() {
+            Ok(addr) => Some(addr),
+            Err(err) => Err(err)?,
+        },
+        None => None,
+    };
+
+    start_axum_server(addr_v4, Some(remote_server_url), database_url).await
+}
+
+fn get_arg_value(mut args: Args, name: &str) -> Option<String> {
+    let arg_search_str = format!("--{}=", name);
+    args.find_map(|a| {
+        if a.starts_with(&arg_search_str) {
+            let str = &a[arg_search_str.len()..];
+            Some(str.to_owned())
+        } else {
+            None
+        }
+    })
 }

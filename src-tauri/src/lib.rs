@@ -1,46 +1,67 @@
 use std::env;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
-use log::info;
-use server::server_starter::start_axum_server;
+use log::{error, info};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_shell::ShellExt;
+use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 
 #[tauri::command]
 fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
     app_handle.path().resource_dir().unwrap()
 }
 
-async fn start_backend_server(port: u16, resource_dir: PathBuf, remote_server_url: String) {
+fn start_backend_server(
+    app_handle: &AppHandle,
+    port: u16,
+    resource_dir: PathBuf,
+    remote_server_url: String,
+) -> Result<(tokio::sync::mpsc::Receiver<CommandEvent>, CommandChild), String> {
     let addr = format!("0.0.0.0:{}", port);
 
     info!("Backend server starting up on {}...", addr);
 
-    unsafe {
-        let mut site_dir = resource_dir;
-        site_dir.push("_up_");
-        site_dir.push("site");
+    let mut site_dir = resource_dir;
+    site_dir.push("_up_");
+    site_dir.push("site");
 
-        std::env::set_var("LEPTOS_OUTPUT_NAME", "dev_tools");
-        std::env::set_var("LEPTOS_SITE_ROOT", site_dir);
-        std::env::set_var("LEPTOS_SITE_ADDR", addr);
+    let app_handle = app_handle.clone();
+    let shell = app_handle.shell();
+
+    match shell.sidecar("webdev_useful_tools_server") {
+        Ok(sidecar) => match sidecar
+            .env("LEPTOS_OUTPUT_NAME", "dev_tools")
+            .env("LEPTOS_SITE_ADDR", addr.to_owned())
+            .env("LEPTOS_SITE_ROOT", site_dir)
+            .env("DEVTOOLS_REMOTE_SERVER_URL", remote_server_url)
+            .arg(format!("--addr={}", addr))
+            .spawn()
+        {
+            Ok(rx) => Ok(rx),
+            Err(err) => {
+                error!("Error: {}", err);
+                Err(err.to_string())
+            }
+        },
+        Err(err) => {
+            error!("Error: {}", err);
+            Err(err.to_string())
+        }
     }
-
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
-
-    start_axum_server(Some(addr), Some(remote_server_url), None)
-        .await
-        .expect("Failed start backend server");
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let server_cmd_child = Arc::new(Mutex::new(None));
+
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
+        .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
@@ -57,7 +78,7 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
-        .setup(|app| {
+        .setup(move |app| {
             let args: Vec<String> = std::env::args().collect();
 
             let port = match get_arg_value(&args, "port") {
@@ -70,9 +91,27 @@ pub fn run() {
 
             let resource_dir = get_resource_dir(app.app_handle());
 
+            let server_descr = start_backend_server(app.app_handle(), port, resource_dir, arg_remote_server_url)?;
+            *server_cmd_child.lock().unwrap() = Some(server_descr.1);
+
             tauri::async_runtime::spawn(async move {
-                start_backend_server(port, resource_dir, arg_remote_server_url).await;
-            });
+                let mut rx = server_descr.0;
+                while let Some(received) = rx.recv().await {
+                    match received {
+                        tauri_plugin_shell::process::CommandEvent::Stderr(items) => {
+                            error!("server: {}", String::from_utf8_lossy(&items))
+                        }
+                        tauri_plugin_shell::process::CommandEvent::Stdout(items) => {
+                            info!("server: {}", String::from_utf8_lossy(&items))
+                        }
+                        tauri_plugin_shell::process::CommandEvent::Error(err) => {
+                            error!("Error: {}", err)
+                        }
+                        tauri_plugin_shell::process::CommandEvent::Terminated(_) => break,
+                        _ => break,
+                    }
+                }
+            });            
 
             if args.contains(&"--autostart".to_string()) {
                 if let Some(window) = app.get_webview_window("main") {
@@ -80,7 +119,7 @@ pub fn run() {
                 }
             }
 
-            let server_url = format!("http://127.0.0.1:{}", port);
+            let server_url = format!("http://127.0.0.1:{}", port)/*"https://dev-tools-rust.vercel.app"*/;
 
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
 
@@ -100,8 +139,12 @@ pub fn run() {
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| match event.id.as_ref() {
+                .on_menu_event(move |app, event| match event.id.as_ref() {
                     "quit" => {
+                        let mut managed_child = server_cmd_child.lock().unwrap();
+                        if let Some(cmd_child) = managed_child.take() {
+                            let _ = cmd_child.kill(); // Best effort termination
+                        }
                         app.exit(0);
                     }
                     "open" => {

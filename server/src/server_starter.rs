@@ -35,6 +35,8 @@ pub async fn start_axum_server(
     };
     conf.leptos_options.site_addr = addr;
 
+    info!("conf={:?}", conf);
+
     let pool = match database_url {
         Some(database_url) => Some(create_pool(database_url).await),
         None => None,

@@ -28,6 +28,9 @@
     ],
     "resources": [
       "../site/pkg/"
+    ],
+    "externalBin": [
+      "binaries/webdev_useful_tools_server"
     ]
   }
 }
