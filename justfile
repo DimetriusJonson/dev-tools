@@ -7,6 +7,12 @@ set dotenv-load := true
 default:
     @just --list
 
+build-macos:
+    cargo leptos build --release -vv
+    mkdir -p src-tauri/binaries
+    cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-apple-darwin
+    cargo tauri build
+
 build-linux:
     cargo leptos build --release -vv
     mkdir -p src-tauri/binaries
