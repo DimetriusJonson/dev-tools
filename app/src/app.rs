@@ -124,21 +124,6 @@ pub fn NotFound() -> impl IntoView {
 pub fn AppMeta() -> impl IntoView {
     let i18n = use_i18n();
 
-    Effect::new(move |_| {
-        #[cfg(not(feature = "ssr"))]
-        {
-            use crate::common::local_store::get_local_store_value;
-
-            let browser_lang = crate::common::ui_utils::get_browser_language();
-            let lang = get_local_store_value("lang", browser_lang);
-
-            i18n.set_locale(match lang.as_str() {
-                "ru" => Locale::ru,
-                _ => Locale::en,
-            });
-        }
-    });
-
     view! {
         // sets the document title
         <Title text=move || {t_display!(i18n, app_title).to_string()} />
