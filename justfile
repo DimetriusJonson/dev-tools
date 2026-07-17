@@ -7,9 +7,11 @@ set dotenv-load := true
 default:
     @just --list
 
-#build-linux:
-#    cargo build --release --target x86_64-unknown-linux-gnu
-#    cp target/x86_64-unknown-linux-gnu/release/my_app ./dist/my_app-linux
+build-linux:
+    cargo leptos build --release -vv
+    mkdir -p src-tauri/binaries
+    cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-unknown-linux-gnu
+    cargo tauri build
 
 build-windows:
     cargo leptos build --release -vv
