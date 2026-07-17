@@ -5,8 +5,7 @@
   "identifier": "com.shz.app.WebDevUsefulTools",
   "build": {
     "beforeDevCommand": "cargo leptos watch",
-    "devUrl": "http://localhost:3000",
-    "beforeBuildCommand": "cargo leptos build --release"
+    "devUrl": "http://localhost:3000"
   },
   "app": {
     "withGlobalTauri": true,
