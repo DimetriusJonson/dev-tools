@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use log::{error, info};
+use log::{LevelFilter, error, info};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Manager, WindowEvent};
@@ -64,6 +64,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
+                .level(LevelFilter::Info)
                 .targets([
                     Target::new(TargetKind::Stdout),
                     Target::new(TargetKind::LogDir { file_name: Some("webdev_useful_tools.log".to_owned()) }),
@@ -91,27 +92,33 @@ pub fn run() {
 
             let resource_dir = get_resource_dir(app.app_handle());
 
-            let server_descr = start_backend_server(app.app_handle(), port, resource_dir, arg_remote_server_url)?;
-            *server_cmd_child.lock().unwrap() = Some(server_descr.1);
+            let server_url;
+            if !args.contains(&"--no-start-server".to_string()) {
+                let server_descr = start_backend_server(app.app_handle(), port, resource_dir, arg_remote_server_url)?;
+                *server_cmd_child.lock().unwrap() = Some(server_descr.1);
 
-            tauri::async_runtime::spawn(async move {
-                let mut rx = server_descr.0;
-                while let Some(received) = rx.recv().await {
-                    match received {
-                        tauri_plugin_shell::process::CommandEvent::Stderr(items) => {
-                            error!("server: {}", String::from_utf8_lossy(&items))
+                tauri::async_runtime::spawn(async move {
+                    let mut rx = server_descr.0;
+                    while let Some(received) = rx.recv().await {
+                        match received {
+                            tauri_plugin_shell::process::CommandEvent::Stderr(items) => {
+                                error!("server: {}", String::from_utf8_lossy(&items))
+                            }
+                            tauri_plugin_shell::process::CommandEvent::Stdout(items) => {
+                                info!("server: {}", String::from_utf8_lossy(&items))
+                            }
+                            tauri_plugin_shell::process::CommandEvent::Error(err) => {
+                                error!("Error: {}", err)
+                            }
+                            tauri_plugin_shell::process::CommandEvent::Terminated(_) => break,
+                            _ => break,
                         }
-                        tauri_plugin_shell::process::CommandEvent::Stdout(items) => {
-                            info!("server: {}", String::from_utf8_lossy(&items))
-                        }
-                        tauri_plugin_shell::process::CommandEvent::Error(err) => {
-                            error!("Error: {}", err)
-                        }
-                        tauri_plugin_shell::process::CommandEvent::Terminated(_) => break,
-                        _ => break,
                     }
-                }
-            });            
+                });
+                server_url = format!("http://127.0.0.1:{}", port);
+            } else {
+                server_url = arg_remote_server_url.to_owned();
+            }
 
             if args.contains(&"--autostart".to_string()) {
                 if let Some(window) = app.get_webview_window("main") {
@@ -119,10 +126,7 @@ pub fn run() {
                 }
             }
 
-            let server_url = format!("http://127.0.0.1:{}", port)/*"https://dev-tools-rust.vercel.app"*/;
-
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
-
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(target_url))
                 .title("Developer Tools")
                 .inner_size(1500.0, 1000.0)
