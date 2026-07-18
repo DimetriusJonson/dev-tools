@@ -73,7 +73,7 @@ pub fn MessageBanner() -> impl IntoView {
                                 }
                             }
                         >
-                            <span class={format!("inline-flex items-center justify-center px-2.5 py-1 text-base rounded text-black space-x-2 {}", msg_style(&msg))}>
+                            <span class={format!("inline-flex items-center justify-center px-2.5 py-1 text-base font-medium rounded-lg space-x-2 {}", msg_style(&msg))}>
                                 <span class="pr-2">{msg.msg.to_owned()}</span>
                                 <button
                                     aria-label="x"
@@ -145,8 +145,8 @@ fn set_message_state(state: MessageBannerState, id: &str, messages: Messages) {
 
 fn msg_style(msg: &MessageBannerItem) -> String {
     if msg.kind == "INFO" {
-        return "bg-emerald-400".to_owned();
+        return "bg-emerald-800 text-white".to_owned();
     }
 
-    "bg-danger".to_owned()
+    "bg-red-800 text-white".to_owned()
 }
