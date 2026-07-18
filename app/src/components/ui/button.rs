@@ -40,7 +40,7 @@ pub fn Button(
 
     let button_element: NodeRef<html::Button> = NodeRef::new();
 
-    let base_classes = "rounded-3xl font-medium md:py-2 h-8 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl font-medium px-4 py-1 md:py-2 h-8 md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -51,9 +51,9 @@ pub fn Button(
     };
 
     let button_width_classes = match button_width {
-        ButtonWidth::Auto => "w-auto px-4".to_owned(),
-        ButtonWidth::Md => "w-32 px-4".to_owned(),
-        ButtonWidth::Lg => "w-38 px-4".to_owned(),
+        ButtonWidth::Auto => "w-auto".to_owned(),
+        ButtonWidth::Md => "w-32".to_owned(),
+        ButtonWidth::Lg => "w-38".to_owned(),
     };
 
     view! {
