@@ -45,7 +45,7 @@
     "share_file_upload_info_6": "Paste the link to the file from the clipboard.",
     "share_file_upload_info_7": "The link lifetime is <b>3 days</b>.",
     "share_file_upload_success":"File uploaded!",
-    "share_file_upload_exceed_file_size":"The file is too large!",
+    "share_file_upload_exceed_file_size":"File too big for cloud!",
 
     "share_file_view_download_file": "Download {{ file_name }}",
 

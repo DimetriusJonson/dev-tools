@@ -44,7 +44,7 @@
     "share_file_upload_info_6": "Вставьте ссылку на файл из буфера обмена.",
     "share_file_upload_info_7": "Срок жизни ссылки <b>3 дня</b>.",
     "share_file_upload_success":"Файл загружен!",
-    "share_file_upload_exceed_file_size":"Файл слишком большой!",
+    "share_file_upload_exceed_file_size":"Файл слишком большой для облака!",
 
     "share_file_view_download_file": "Скачать {{ file_name }}",
 

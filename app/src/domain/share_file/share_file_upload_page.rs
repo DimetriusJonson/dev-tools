@@ -88,7 +88,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 >
                 {move || custom_servers_resource.get().map(|data|
                     data.map(|custom_servers| {
-                        if !custom_servers.is_empty() {
+                        if !custom_servers.is_empty() && shared_url.get().is_empty() {
                             view! {
                                 <div class="flex items-center">
                                     <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
@@ -124,7 +124,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
                     <Button
                         label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
-                        button_width=ButtonWidth::Lg
+                        button_width=ButtonWidth::Auto
                         loading=move || in_progress.get()
                         on_click=on_copy_click
                         disabled=move || in_progress.get()
@@ -167,13 +167,13 @@ fn upload_file(
 
         let mut result = false;
 
-        let service_name = if !custom_server_url.is_empty() {
-            "/share_local_file_upload"
+        let (service_name, max_file_size) = if !custom_server_url.is_empty() {
+            ("/share_local_file_upload", usize::MAX)
         } else {
-            "/share_file_upload"
+            ("/share_file_upload", MAX_FILE_SIZE)
         };
 
-        if file.size() <= MAX_FILE_SIZE as f64 {
+        if file.size() <= max_file_size as f64 {
             match Request::post(service_name)
                 .header("content-type", &file.type_())
                 .query([("file_name", file.name())])
