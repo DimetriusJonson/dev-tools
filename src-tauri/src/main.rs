@@ -13,11 +13,11 @@ struct Cli {
     #[arg(long, value_name = "REMOTE_SERVER_URL", help="Remote server address. Only for the \"Share File\" feature or if the local server won't start. Defaults to \"https://dev-tools-rust.vercel.app\".")]
     remote_server_url: Option<String>,
     #[arg(long, help="Do not run local server")]
-    no_start_server: Option<bool>,
+    no_start_server: bool,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    webdev_useful_tools_lib::run(cli.port, cli.remote_server_url, cli.no_start_server.unwrap_or(false))
+    webdev_useful_tools_lib::run(cli.port, cli.remote_server_url, cli.no_start_server)
 }
