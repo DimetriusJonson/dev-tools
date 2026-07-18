@@ -32,7 +32,7 @@ pub fn LanguageSelector() -> impl IntoView {
             name="lang".to_owned()
             label=move || "lang".to_owned()
             not_selected_text=move || "".to_owned()
-            options=move || Locale::get_all().into_iter().map(|l| (Some(l.to_string()), l.to_string())).collect()
+            options=move || Locale::get_all().iter().map(|l| (Some(l.to_string()), l.to_string())).collect()
 
             on_change=move |value: String| {
                 let locale = Locale::from_str(&value.to_owned()).unwrap();

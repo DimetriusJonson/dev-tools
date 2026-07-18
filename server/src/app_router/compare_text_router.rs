@@ -10,7 +10,7 @@ pub async fn compare_text_handler(multipart: Multipart) -> Result<impl IntoRespo
 
     let (result_left, result_right) = compare_text(&text1, &text2);
 
-    let body = Body::new(vec![result_left, result_right].join("\n$$$---$$$\n"));
+    let body = Body::new([result_left, result_right].join("\n$$$---$$$\n"));
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
@@ -22,7 +22,7 @@ pub async fn compare_text_handler(multipart: Multipart) -> Result<impl IntoRespo
 }
 
 fn compare_text(text1: &str, text2: &str) -> (String, String) {
-    let Changeset { diffs, .. } = Changeset::new(&text2, &text1, "\n");
+    let Changeset { diffs, .. } = Changeset::new(text2, text1, "\n");
 
     let mut result1 = Vec::new();
     let mut result2 = Vec::new();
@@ -60,8 +60,8 @@ fn compare_text(text1: &str, text2: &str) -> (String, String) {
                                 for c in diffs {
                                     match c {
                                         Difference::Same(ref z) => {
-                                            text_row1.push_str(&format!("{}", normalize_str(z),));
-                                            text_row2.push_str(&format!("{}", normalize_str(z)));
+                                            text_row1.push_str(&normalize_str(z).to_string());
+                                            text_row2.push_str(&normalize_str(z).to_string());
                                         }
                                         Difference::Add(ref z) => {
                                             text_row1.push_str(&wrap_str(
@@ -208,7 +208,7 @@ fn wrap_str(pre: &str, content: String, post: &str) -> String {
 
 fn normalize_str(src: &str) -> String {
     let r = html_escape::encode_text(src);
-    let s = r.trim_end_matches(&['\r', '\n']);
+    let s = r.trim_end_matches(['\r', '\n']);
     s.to_string()
 }
 
