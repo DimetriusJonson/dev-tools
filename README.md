@@ -4,7 +4,9 @@
 
 1) Formatting XML, JSON
 2) Escape/Unescape XML, JSON, URL
-3) Supporting large files
+3) Compare text
+4) Share file
+5) Supporting large files
 
 Web version: https://dev-tools-rust.vercel.app
 
