@@ -145,8 +145,8 @@ fn set_message_state(state: MessageBannerState, id: &str, messages: Messages) {
 
 fn msg_style(msg: &MessageBannerItem) -> String {
     if msg.kind == "INFO" {
-        return "bg-emerald-800 text-white".to_owned();
+        return "bg-emerald-800/75 text-white".to_owned();
     }
 
-    "bg-red-800 text-white".to_owned()
+    "bg-red-800/75 text-white".to_owned()
 }
