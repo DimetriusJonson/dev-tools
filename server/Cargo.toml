@@ -33,6 +33,7 @@ reqwest.workspace=true
 flate2.workspace=true
 difference.workspace=true
 html-escape.workspace=true
+clap.workspace=true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}

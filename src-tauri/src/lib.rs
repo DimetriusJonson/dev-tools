@@ -56,7 +56,7 @@ fn start_backend_server(
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server: bool) {
     let server_cmd_child = Arc::new(Mutex::new(None));
 
     tauri::Builder::default()
@@ -80,21 +80,15 @@ pub fn run() {
             }
         }))
         .setup(move |app| {
-            let args: Vec<String> = std::env::args().collect();
-
-            let port = match get_arg_value(&args, "port") {
-                Some(port) => port.parse::<u16>().unwrap(),
-                None => 3005,
-            };
-
-            let arg_remote_server_url = get_arg_value(&args, "remote-server-url")
+            let port = port.unwrap_or(3005);
+            let remote_server_url = remote_server_url
                 .unwrap_or("https://dev-tools-rust.vercel.app".to_owned());
 
             let resource_dir = get_resource_dir(app.app_handle());
 
             let server_url;
-            if !args.contains(&"--no-start-server".to_string()) {
-                let server_descr = start_backend_server(app.app_handle(), port, resource_dir, arg_remote_server_url)?;
+            if !no_start_server {
+                let server_descr = start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
                 *server_cmd_child.lock().unwrap() = Some(server_descr.1);
 
                 tauri::async_runtime::spawn(async move {
@@ -117,13 +111,7 @@ pub fn run() {
                 });
                 server_url = format!("http://127.0.0.1:{}", port);
             } else {
-                server_url = arg_remote_server_url.to_owned();
-            }
-
-            if args.contains(&"--autostart".to_string()) {
-                if let Some(window) = app.get_webview_window("main") {
-                    window.hide().unwrap();
-                }
+                server_url = remote_server_url.to_owned();
             }
 
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
@@ -175,16 +163,4 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-fn get_arg_value(args: &Vec<String>, name: &str) -> Option<String> {
-    let arg_search_str = format!("--{}=", name);
-    args.iter().find_map(|a| {
-        if a.starts_with(&arg_search_str) {
-            let str = &a[arg_search_str.len()..];
-            Some(str.to_owned())
-        } else {
-            None
-        }
-    })
 }
