@@ -43,7 +43,7 @@ pub async fn share_file_upload(
         Some(pool) => {
             delete_old_share_files_in_db(&pool).await?;
 
-            let prepared_data = share_file_prepare_for_upload(request, headers, file_name).await?;
+            let prepared_data = share_file_prepare_for_upload(request, headers, file_name, MAX_FILE_SIZE).await?;
             create_share_file_in_db(
                 &prepared_data.external_id,
                 file_name,
@@ -60,8 +60,8 @@ pub async fn share_file_upload(
     }
 }
 
-pub async fn share_file_prepare_for_upload(request: Request, headers: HeaderMap, file_name: &str) -> Result<ShareFileUploadData, AppError>  {
-    let bytes = to_bytes(request.into_body(), MAX_FILE_SIZE)
+pub async fn share_file_prepare_for_upload(request: Request, headers: HeaderMap, file_name: &str, max_file_size: usize) -> Result<ShareFileUploadData, AppError>  {
+    let bytes = to_bytes(request.into_body(), max_file_size)
         .await
         .map_err(AppError::system_error)?;
     let mut file_data = bytes.to_vec();

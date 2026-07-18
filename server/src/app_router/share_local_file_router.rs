@@ -26,7 +26,7 @@ pub async fn share_local_file_upload(
     let params = parse_query_params(&query_str);
     let file_name = params.get("file_name").unwrap_or(&"unknown_file");
 
-    let prepared_data = share_file_prepare_for_upload(request, headers, file_name).await?;
+    let prepared_data = share_file_prepare_for_upload(request, headers, file_name, usize::MAX).await?;
 
     let mut local_db = LOCAL_SHARE_DB.lock().unwrap();
     let external_id = prepared_data.external_id.to_owned();

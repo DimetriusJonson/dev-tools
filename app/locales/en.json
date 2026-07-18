@@ -37,7 +37,7 @@
     "share_file_upload_page_server_addr_not_selected": "Cloud",
     "share_file_upload_page_server_addr_descr":"If you select a local server, the link will contain your computer's IP address, not the cloud's.<br/>Since the file is saved in your computer's RAM, do not close the application until the recipient of the link has used it.",
 
-    "share_file_upload_info_1": "Select the file you want to share. The maximum file size is <b>5 megabytes</b>.",
+    "share_file_upload_info_1": "Select the file you want to share. For the cloud, the maximum file size is <b>5 megabytes</b>.",
     "share_file_upload_info_2": "Or drag the file to the top area.",
     "share_file_upload_info_3": "Or paste the image from the clipboard by pressing Ctrl+V in the top area.",
     "share_file_upload_info_4": "Click <b>Upload</b> to upload the file and generate a link to it.",
