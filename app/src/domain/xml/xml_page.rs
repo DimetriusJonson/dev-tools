@@ -4,6 +4,7 @@ use leptos::{html, prelude::*};
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
+use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
@@ -15,11 +16,11 @@ use crate::i18n::*;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
-    None, 
+    None,
     Format,
     FormatFile,
     Escape,
-    Unescape
+    Unescape,
 }
 
 impl InProgressType {
@@ -44,20 +45,11 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Format);
 
-            match Request::post("/format_xml")
-                .query([("ident", ident.get_untracked())])
-                .header("content-type", "application/xml")
-                .body(xml.get_untracked())
+            match format_xml(xml.read_untracked().as_str(), ident.get_untracked().parse().unwrap())
             {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_xml.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
+                Ok(formatted_xml) => set_dst_xml.set(formatted_xml),
                 Err(err) => show_error(err.to_string(), messages),
-            }
+            };
 
             set_in_progress.set(InProgressType::None);
         });
@@ -84,9 +76,11 @@ pub fn XmlPage() -> impl IntoView {
                                     &file_name,
                                     "application/xml",
                                 ) {
-                                    Ok(_) => {
-                                        show_info(t_display!(i18n, file_saved_file_msg, file_name).to_string(), messages)
-                                    }
+                                    Ok(_) => show_info(
+                                        t_display!(i18n, file_saved_file_msg, file_name)
+                                            .to_string(),
+                                        messages,
+                                    ),
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
                             }
@@ -106,19 +100,12 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Unescape);
 
-            match Request::post("/unescape_xml")
-                .header("content-type", "application/xml")
-                .body(xml.get_untracked())
+            match escape_xml(xml.read_untracked().as_str(), false)
             {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_xml.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
+                Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
                 Err(err) => show_error(err.to_string(), messages),
-            }
+            };
+
             set_in_progress.set(InProgressType::None);
         });
     };
@@ -127,19 +114,11 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Escape);
 
-            match Request::post("/escape_xml")
-                .header("content-type", "application/xml")
-                .body(xml.get_untracked())
+            match escape_xml(xml.read_untracked().as_str(), true)
             {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_xml.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
+                Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
                 Err(err) => show_error(err.to_string(), messages),
-            }
+            };
             set_in_progress.set(InProgressType::None);
         });
     };
@@ -181,8 +160,8 @@ pub fn XmlPage() -> impl IntoView {
                         label=move || t!(i18n, ident_label).to_html()
                         not_selected_text=move || "".to_owned()
                         options=move || {vec![
-                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()), 
-                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()), 
+                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()),
+                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()),
                             (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
                             ]}
                         on_change=move |value| {

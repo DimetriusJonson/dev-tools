@@ -12,15 +12,11 @@ use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::app_router::compare_text_router::compare_text_handler;
-use crate::app_router::json_escape_router::{escape_json_handler, unescape_json_handler};
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::share_file_router::{
     share_file_download, share_file_info, share_file_upload,
 };
 use crate::app_router::share_local_file_router::{share_local_file_download, share_local_file_info, share_local_file_upload};
-use crate::app_router::url_encode_router::{decode_url_handler, encode_url_handler};
-use crate::app_router::xml_escape_router::{escape_xml_handler, unescape_xml_handler};
 use crate::app_router::xml_format_router::format_xml_handler;
 
 pub async fn build_app_router(
@@ -40,17 +36,10 @@ pub async fn build_app_router(
 
     let app = Router::new()
         .route("/format_xml", post(format_xml_handler))
-        .route("/unescape_xml", post(unescape_xml_handler))
-        .route("/escape_xml", post(escape_xml_handler))
         .route("/format_json", post(format_json_handler))
-        .route("/escape_json", post(escape_json_handler))
-        .route("/unescape_json", post(unescape_json_handler))
         .route("/share_local_file_upload", post(share_local_file_upload))
         .route("/share_file_upload", post(share_file_upload))
         .layer(DefaultBodyLimit::disable())
-        .route("/compare_text", post(compare_text_handler))
-        .route("/encode_url", post(encode_url_handler))
-        .route("/decode_url", post(decode_url_handler))
         .route("/share_file_download", get(share_file_download))
         .route("/share_file_info", get(share_file_info))
         .route("/share_local_file_info", get(share_local_file_info))

@@ -1,7 +1,12 @@
+use std::borrow::Cow;
+
+use bytes::Bytes;
 use gloo_net::http::Request;
+use json_escape::unescape;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 
+use crate::common::json_formatter::JsonFormatter;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
@@ -12,14 +17,15 @@ use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 use crate::i18n::use_i18n;
 use crate::i18n::*;
+use json_escape::escape_str;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
-    None, 
+    None,
     Format,
     FormatFile,
     Escape,
-    Unescape
+    Unescape,
 }
 
 impl InProgressType {
@@ -44,18 +50,11 @@ pub fn JsonPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Format);
 
-            match Request::post("/format_json")
-                .query([("ident", ident.get_untracked())])
-                .header("content-type", "application/json")
-                .body(json.get_untracked())
-            {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_json.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
+            let mut formatter = JsonFormatter::new(ident.get_untracked().parse().unwrap());
+            let formatted_bytes = formatter.format_bytes(Bytes::from(json.get_untracked()));
+
+            match str::from_utf8(&formatted_bytes) {
+                Ok(str) => set_dst_json.set(str.to_owned()),
                 Err(err) => show_error(err.to_string(), messages),
             }
             set_in_progress.set(InProgressType::None);
@@ -83,9 +82,11 @@ pub fn JsonPage() -> impl IntoView {
                                     &file_name,
                                     "application/json",
                                 ) {
-                                    Ok(_) => {
-                                        show_info(t_display!(i18n, file_saved_file_msg, file_name).to_string(), messages)
-                                    }
+                                    Ok(_) => show_info(
+                                        t_display!(i18n, file_saved_file_msg, file_name)
+                                            .to_string(),
+                                        messages,
+                                    ),
                                     Err(err) => show_error(err.as_string().unwrap(), messages),
                                 }
                             }
@@ -105,16 +106,14 @@ pub fn JsonPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Escape);
 
-            match Request::post("/escape_json").body(json.get_untracked()) {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_json.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
-                Err(err) => show_error(err.to_string(), messages),
+            let json_str = json.read_untracked();
+            let escaped_parts = escape_str(json_str.as_str());
+            let mut escaped_str = String::new();
+            for part in escaped_parts {
+                escaped_str.push_str(part);
             }
+            set_dst_json.set(escaped_str);
+
             set_in_progress.set(InProgressType::None);
         });
     };
@@ -123,16 +122,10 @@ pub fn JsonPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Unescape);
 
-            match Request::post("/unescape_json").body(json.get_untracked()) {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_json.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
-                Err(err) => show_error(err.to_string(), messages),
-            }
+            let json_str = json.read_untracked();
+            let unescaped_json: Cow<str> = unescape(json_str.as_str()).decode_utf8().unwrap();
+            set_dst_json.set(unescaped_json.to_string());
+
             set_in_progress.set(InProgressType::None);
         });
     };
@@ -175,8 +168,8 @@ pub fn JsonPage() -> impl IntoView {
                         label=move || t!(i18n, ident_label).to_html()
                         not_selected_text=move || "".to_owned()
                         options=move || {vec![
-                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()), 
-                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()), 
+                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()),
+                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()),
                             (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
                             ]}
                         on_change=move |value| {

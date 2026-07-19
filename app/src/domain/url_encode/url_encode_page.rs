@@ -1,4 +1,3 @@
-use gloo_net::http::Request;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
@@ -10,6 +9,7 @@ use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::text_area::TextArea;
 use crate::i18n::use_i18n;
 use crate::i18n::*;
+use urlencoding::{decode, encode};
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
@@ -36,19 +36,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
     let on_encode_click = move |_| {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Encode);
-
-            match Request::post("/encode_url")
-                .body(url.get_untracked())
-            {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_url.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
-                Err(err) => show_error(err.to_string(), messages),
-            }
+            set_dst_url.set(encode(&url.get_untracked()).to_string());
             set_in_progress.set(InProgressType::None);
         });
     };
@@ -57,16 +45,8 @@ pub fn UrlEncoderPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Decode);
 
-            match Request::post("/decode_url")
-                .body(url.get_untracked())
-            {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => set_dst_url.set(response_text),
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
+            match decode(&url.get_untracked()) {
+                Ok(decoded_url) => set_dst_url.set(decoded_url.to_string()),
                 Err(err) => show_error(err.to_string(), messages),
             }
             set_in_progress.set(InProgressType::None);

@@ -8,7 +8,6 @@ use axum::{
 use futures_util::StreamExt;
 
 use crate::common::dev_utils::parse_query_params;
-use crate::common::json_formatter::JsonFormatter;
 
 pub async fn format_json_handler(
     RawQuery(query): RawQuery,
@@ -43,6 +42,8 @@ async fn process_json_data(body: Body, ident: usize) -> Body {
 
 #[cfg(target_os = "windows")]
 async fn process_json_data(body: Body, ident: usize) -> Body {
+    use app::common::json_formatter::JsonFormatter;
+
     let request_body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
     let mut formatter = JsonFormatter::new(ident);

@@ -1,18 +1,15 @@
-use gloo_net::http::Request;
-use leptos::task::spawn_local;
-use leptos::prelude::*;
-use web_sys::FormData;
+use crate::common::text_comparator::compare_text;
 use crate::i18n::*;
+use leptos::prelude::*;
+use leptos::task::spawn_local;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::text_area::TextArea;
 
 #[component]
 pub fn CompareTextPage() -> impl IntoView {
     let i18n = use_i18n();
-    let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (tab_selected, set_tab_selected) = signal(0);
 
@@ -26,27 +23,13 @@ pub fn CompareTextPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(true);
 
-            let form_data = FormData::new().unwrap();
-            form_data.append_with_str("text1", text1.read_untracked().as_str()).unwrap();
-            form_data.append_with_str("text2", text2.read_untracked().as_str()).unwrap();
+            let text1_str = text1.read_untracked();
+            let text2_str = text2.read_untracked();
+            let texts = compare_text(text1_str.as_str(), text2_str.as_str());
+            set_dst_left.set(texts.0);
+            set_dst_right.set(texts.1);
+            set_tab_selected.set(1);
 
-            match Request::post("/compare_text")
-                .body(form_data)
-            {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.text().await {
-                        Ok(response_text) => { 
-                            let texts:Vec<&str> = response_text.split("\n$$$---$$$\n").collect();
-                            set_dst_left.set(texts[0].into());
-                            set_dst_right.set(texts[1].into());
-                            set_tab_selected.set(1);
-                        },
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
-                Err(err) => show_error(err.to_string(), messages),
-            }
             set_in_progress.set(false);
         });
     };
@@ -56,7 +39,7 @@ pub fn CompareTextPage() -> impl IntoView {
         <div class="flex-1 px-2 ">
             // Tab Headers
             <div class="flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none" role="tablist">
-                <button role="tab" 
+                <button role="tab"
                     aria-selected=move || tab_selected.get() == 0
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 0
@@ -65,11 +48,11 @@ pub fn CompareTextPage() -> impl IntoView {
                     class:text-gray-500=move || tab_selected.get() != 0
                     on:click=move |_event| {
                         set_tab_selected.set(0)
-                    } 
+                    }
                 >
                 {t!(i18n,  compare_page_source_tab)}
                 </button>
-                <button role="tab" 
+                <button role="tab"
                     aria-selected=move || tab_selected.get() == 1
                     class="flex-1 py-2.5 border-b-2 cursor-pointer"
                     class:border-blue-600=move || tab_selected.get() == 1
@@ -78,7 +61,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     class:text-gray-500=move || tab_selected.get() != 1
                     on:click=move |_event| {
                         set_tab_selected.set(1)
-                    } 
+                    }
                     >
                 {t!(i18n, compare_page_result_tab)}
                 </button>
@@ -136,7 +119,7 @@ pub fn CompareTextPage() -> impl IntoView {
                         />
                     </div>
                 </div>
-                
+
                 <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]"
                     class:block=move || tab_selected.get() == 1
                     class:hidden=move || tab_selected.get() != 1
