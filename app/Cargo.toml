@@ -20,7 +20,6 @@ gloo-utils.workspace = true
 html-escape.workspace = true
 web-sys.workspace = true
 uuid.workspace = true
-reqwest.workspace = true
 leptos_i18n.workspace = true
 leptos_i18n_macro.workspace = true
 
@@ -38,6 +37,7 @@ anyhow = { workspace = true, optional = true }
 js-sys = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
 getifs = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
 
 [build-dependencies]
 leptos_i18n_build.workspace = true
@@ -64,6 +64,7 @@ ssr = [
     "dep:anyhow",
     "dep:sqlx",
     "dep:getifs",
+    "dep:reqwest",
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",
