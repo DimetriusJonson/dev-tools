@@ -8,9 +8,7 @@ use leptos::prelude::*;
 #[component]
 pub fn LanguageSelector() -> impl IntoView {
     let i18n = use_i18n();
-    let locale_memo = Memo::new(move |_| i18n.get_locale().to_string());
-
-    let (value, set_value) = signal(locale_memo.get_untracked());
+    let (value, set_value) = signal(i18n.get_locale_untracked().to_string());
 
     Effect::new(move |_| {
         #[cfg(not(feature = "ssr"))]
