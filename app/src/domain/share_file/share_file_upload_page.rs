@@ -31,7 +31,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 set_shared_url,
                 messages,
                 custom_server.get(),
-                i18n, 
+                i18n,
                 move |success| {
                     if success {
                         selected_file.set(None);
@@ -88,28 +88,27 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 >
                 {move || custom_servers_resource.get().map(|data|
                     data.map(|custom_servers| {
-                        if !custom_servers.is_empty() && shared_url.get().is_empty() {
-                            view! {
-                                <div class="flex items-center">
-                                    <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
-                                    <SelectInput
-                                        class_name="px-2".to_owned()
-                                        name={"server_addr".to_owned()}
-                                        value={custom_server}
-                                        set_value={set_custom_server}
-                                        label=move || "Server addr".to_owned()
-                                        options=move || custom_servers.clone()
-                                        not_selected_text={move || t!(i18n, share_file_upload_page_server_addr_not_selected).to_html()}
-                                        on_change=move |_| {}
-                                    />
-                                </div>
-                                <p class="text-xs text-gray-600">
-                                    {t!(i18n, share_file_upload_page_server_addr_descr, <br/> = || view! { <br/> })}
-                                </p>
-                            }.into_any()
-                        } else {
-                            view! {<span></span>}.into_any()
-                        }
+                        let hidden = custom_servers.is_empty() || !shared_url.get().is_empty();
+                        view! {
+                            <div class="flex items-center"
+                                class:hidden=hidden>
+                                <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
+                                <SelectInput
+                                    class_name="px-2".to_owned()
+                                    name={"server_addr".to_owned()}
+                                    value={custom_server}
+                                    set_value={set_custom_server}
+                                    label=move || "Server addr".to_owned()
+                                    options=move || custom_servers.clone()
+                                    not_selected_text={move || t!(i18n, share_file_upload_page_server_addr_not_selected).to_html()}
+                                    on_change=move |_| {}
+                                />
+                            </div>
+                            <p class="text-xs text-gray-600"
+                                class:hidden=hidden>
+                                {t!(i18n, share_file_upload_page_server_addr_descr, <br/> = || view! { <br/> })}
+                            </p>
+                        }.into_view()
                     })
                 )}
             </Transition>

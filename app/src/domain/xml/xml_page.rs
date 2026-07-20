@@ -202,7 +202,7 @@ pub fn XmlPage() -> impl IntoView {
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
-                        <CodeInner code={dst_xml.get()} lang="xml".to_string()/>
+                        <CodeInner code={dst_xml.get()} lang=move || "xml".to_string()/>
                     </div>
                     }
                 }
