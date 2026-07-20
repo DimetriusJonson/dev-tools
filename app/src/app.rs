@@ -1,4 +1,3 @@
-use crate::domain::rest_client::rest_client_page::RestClientPage;
 use crate::i18n::*;
 use leptos::prelude::*;
 use leptos_meta::{Meta, MetaTags, Stylesheet, Title, provide_meta_context};
@@ -96,7 +95,8 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("/share_file") view=ShareFileUploadPage />
                             <Route path=path!("/share_file/view") view=ShareFileViewPage />
                             <Route path=path!("/compare_text") view=CompareTextPage />
-                            <Route path=path!("/rest_client") view=RestClientPage />
+
+                            <Route path=path!("/rest_client") view=crate::domain::rest_client::RestClientPage />
                         </Routes>
                     </ErrorBoundary>
 
