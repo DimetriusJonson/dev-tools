@@ -3,6 +3,7 @@ use std::{
     net::SocketAddr,
 };
 
+use app::common::constants::REMOTE_SERVER_HOST;
 use clap::Parser;
 use dotenvy::dotenv;
 use log::info;
@@ -43,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
     let remote_server_url = match cli.remote_server_url {
         Some(remote_server_url) => remote_server_url,
         None => std::env::var("DEVTOOLS_REMOTE_SERVER_URL")
-            .unwrap_or("https://dev-tools-rust.vercel.app".to_owned()),
+            .unwrap_or(format!("https://{}", REMOTE_SERVER_HOST)),
     };
 
     let addr_v4 = match cli.addr {

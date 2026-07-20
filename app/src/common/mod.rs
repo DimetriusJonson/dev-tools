@@ -6,3 +6,4 @@ pub mod app_error;
 pub mod xml_processor;
 pub mod json_formatter;
 pub mod text_comparator;
+pub mod constants;

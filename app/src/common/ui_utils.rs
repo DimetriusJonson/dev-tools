@@ -1,4 +1,7 @@
-use web_sys::{Blob, BlobPropertyBag, HtmlAnchorElement, Url, js_sys, wasm_bindgen::{JsCast, JsValue}};
+use web_sys::{
+    Blob, BlobPropertyBag, HtmlAnchorElement, Url, js_sys,
+    wasm_bindgen::{JsCast, JsValue},
+};
 
 pub fn copy_to_clipboard(_data: &str) {
     #[cfg(not(feature = "ssr"))]
@@ -37,20 +40,38 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
 pub fn get_browser_language() -> String {
     let window = web_sys::window().expect("window should exist");
     let navigator = window.navigator();
-    
+
     let languages = navigator.languages();
-    let mut best_lang = "en".to_string(); 
-    
+    let mut best_lang = "en".to_string();
+
     if languages.length() > 0 {
         if let Some(lang) = languages.get(0).as_string() {
             best_lang = lang;
         }
     }
-    
-    if best_lang.starts_with("ru") {
-        "ru".to_string()
-    } else {
-        "en".to_string()
-    }
+
+    if best_lang.starts_with("ru") { "ru".to_string() } else { "en".to_string() }
 }
 
+#[cfg(not(feature = "ssr"))]
+pub async fn get_host_name() -> String {
+    leptos::prelude::window().location().hostname().unwrap_or_default()
+}
+
+#[cfg(feature = "ssr")]
+pub async fn get_host_name() -> String {
+    use axum::http::HeaderMap;
+    use leptos_axum::extract;
+
+    match extract::<HeaderMap>().await {
+        Ok(headers) => headers
+            .get("host")
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| "unknown".to_string()),
+        Err(err) => {
+            eprintln!("Error:{}", err);
+            err.to_string()
+        },
+    }
+}
