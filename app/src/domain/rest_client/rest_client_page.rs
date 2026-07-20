@@ -37,7 +37,7 @@ pub fn RestClientPage() -> impl IntoView {
     let (content_type, set_content_type) =
         signal(get_local_store_value("rest_client_content_type", "".to_owned()));
     let (accept, set_accept) =
-        signal(get_local_store_value("rest_client_content_type", "".to_owned()));
+        signal(get_local_store_value("rest_client_accept", "".to_owned()));
     let (url, set_url) = signal(get_local_store_value("rest_client_url", "".to_owned()));
     let (body, set_body) = signal(get_local_store_value("rest_client_body", "".to_owned()));
     let (response, set_response) = signal(None);
@@ -139,7 +139,7 @@ pub fn RestClientPage() -> impl IntoView {
                         not_selected_text=move || "Accept".to_owned()
                         options=move || {media_types_options()}
                         on_change=move |value| {
-                            set_local_store_value("rest_client_content_type", value);
+                            set_local_store_value("rest_client_accept", value);
                         }
                         value=accept
                         set_value=set_accept
