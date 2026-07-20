@@ -69,12 +69,12 @@ pub fn SelectInput(
                     on_change.run(val)
                 }
             >
-                {move || {
-                    options_memo.get().into_iter()
+                {
+                    options_memo.get_untracked().into_iter()
                     .map(|option| view! { 
                         <option class="dark:bg-dark-bg" value={option.0.to_owned()} selected={move || option.0 == Some(value.get())}>{option.1}</option>
                     }).collect::<Vec<_>>()
-                }}
+                }
 
             </select>
         </span>
