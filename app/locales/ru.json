@@ -8,6 +8,7 @@
     "go_home_btn_label": "Вернутся Домой",
     "compare_btn_label": "Сравнить",
     "share_file_btn_label": "Поделится",
+    "rest_client_btn_label": "Rest client",
 
     "xml_page_src_placeholder": "Вставьте XML",
     "json_page_src_placeholder": "Вставьте JSON",
@@ -54,6 +55,13 @@
     "compare_page_text2_placeholder": "Вставьте второй текст",
 
     "drag_file_descr_1": "Перетащите файл сюда",
-    "drag_file_descr_2": "или кликните по области и нажмите Ctrl+V"
+    "drag_file_descr_2": "или кликните по области и нажмите Ctrl+V",
+
+    "rest_client_body_placeholder": "Тело запроса",
+    "rest_client_send_btn_label": "Отправить",
+    "rest_client_url_placeholder": "Url",
+    "rest_client_response_body_tab": "Response",
+    "rest_client_response_headers_tab": "Headers"
+
 
 }

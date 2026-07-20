@@ -3,5 +3,5 @@
     "window.zoomLevel": 1,
     "terminal.integrated.scrollback": 10000,
     "editor.autoClosingBrackets": "never",
-    "rust-analyzer.check.command": "clippy"
+    "rust-analyzer.check.command": "check"
 }

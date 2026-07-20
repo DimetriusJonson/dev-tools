@@ -27,9 +27,11 @@ sqlx.workspace=true
 http.workspace=true
 nanoid.workspace=true
 image.workspace=true
-reqwest.workspace=true
+reqwest.workspace = true
 flate2.workspace=true
 clap.workspace=true
+serde.workspace = true
+serde_json.workspace = true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}

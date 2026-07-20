@@ -8,6 +8,7 @@
     "go_home_btn_label": "Go home",
     "compare_btn_label": "Compare",
     "share_file_btn_label": "Share",
+    "rest_client_btn_label": "Rest client",
 
     "xml_page_src_placeholder": "Paste XML",
     "json_page_src_placeholder": "Insert JSON",
@@ -55,7 +56,12 @@
     "compare_page_text2_placeholder": "Insert the second text",
 
     "drag_file_descr_1": "Drag and drop file here",
-    "drag_file_descr_2": "or click on the area and press Ctrl+V"
+    "drag_file_descr_2": "or click on the area and press Ctrl+V",
 
-
+    "rest_client_body_placeholder": "Request body",
+    "rest_client_send_btn_label": "Send",
+    "rest_client_url_placeholder": "Url",
+    "rest_client_response_body_tab": "Response",
+    "rest_client_response_headers_tab": "Headers"
+        
 }

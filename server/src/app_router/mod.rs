@@ -8,6 +8,7 @@ pub mod json_format_router;
 pub mod share_file_router;
 pub mod share_local_file_router;
 pub mod xml_format_router;
+pub mod rest_client_router;
 
 pub async fn proxy_request_to_remote(
     remote_server_url: String,

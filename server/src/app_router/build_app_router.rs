@@ -7,16 +7,22 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use http::Request;
 use leptos::prelude::*;
-use leptos_axum::{LeptosRoutes, generate_route_list, handle_server_fns_with_context, render_app_to_stream_with_context};
+use leptos_axum::{
+    LeptosRoutes, generate_route_list, handle_server_fns_with_context,
+    render_app_to_stream_with_context,
+};
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
+use crate::app_router::rest_client_router::rest_client_send_handler;
 use crate::app_router::share_file_router::{
     share_file_download, share_file_info, share_file_upload,
 };
-use crate::app_router::share_local_file_router::{share_local_file_download, share_local_file_info, share_local_file_upload};
+use crate::app_router::share_local_file_router::{
+    share_local_file_download, share_local_file_info, share_local_file_upload,
+};
 use crate::app_router::xml_format_router::format_xml_handler;
 
 pub async fn build_app_router(
@@ -28,13 +34,11 @@ pub async fn build_app_router(
 
     let routes = generate_route_list(App);
 
-    let app_state = AppState {
-        leptos_options: leptos_options.clone(),
-        pool: pool.clone(),
-        remote_server_url,
-    };
+    let app_state =
+        AppState { leptos_options: leptos_options.clone(), pool: pool.clone(), remote_server_url };
 
     let app = Router::new()
+        .route("/rest_client_send", post(rest_client_send_handler))
         .route("/format_xml", post(format_xml_handler))
         .route("/format_json", post(format_json_handler))
         .route("/share_local_file_upload", post(share_local_file_upload))

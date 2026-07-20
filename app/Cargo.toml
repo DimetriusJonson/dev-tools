@@ -27,6 +27,9 @@ urlencoding.workspace=true
 bytes.workspace=true
 json-escape.workspace=true
 difference.workspace=true
+http.workspace=true
+serde.workspace = true
+serde_json.workspace = true
 
 tracing = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
