@@ -63,15 +63,16 @@ pub async fn get_host_name() -> String {
     use axum::http::HeaderMap;
     use leptos_axum::extract;
 
-    match extract::<HeaderMap>().await {
-        Ok(headers) => headers
-            .get("host")
-            .and_then(|h| h.to_str().ok())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "unknown".to_string()),
-        Err(err) => {
-            eprintln!("Error:{}", err);
-            err.to_string()
+    let host = match extract::<HeaderMap>().await {
+        Ok(headers) => headers.get("host").and_then(|h| h.to_str().ok()).map(|s| s.to_string()),
+        Err(_) => None,
+    };
+
+    match host {
+        Some(host) => host,
+        None => match extract::<axum::http::request::Parts>().await {
+            Ok(parts) => parts.uri.authority().map(|a| a.to_string()).unwrap_or_default(),
+            Err(err) => err.to_string(),
         },
     }
 }
