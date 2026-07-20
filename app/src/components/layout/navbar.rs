@@ -14,10 +14,6 @@ pub fn Navbar() -> impl IntoView {
     let location = use_location();
 
     view! {
-    /*        <Await future=get_host_name() let:host_name>
-                    <p>{host_name.to_owned()}</p>
-            </Await>
-     */
             <nav class="w-full relative bg-primary">
                 <div class="px-1 py-2 sm:px-2 lg:px-4">
                     <div class="flex justify-between">
