@@ -88,7 +88,7 @@ pub async fn server_fn_handler(
 #[cfg(feature = "standalone")]
 pub async fn rest_client_send_handler_wrapper(
     axum::Json(request): axum::Json<app::model::rest_client_request::RestClientRequest>,
-) -> Result<axum::Json<app::model::rest_client_response::RestClientResponse>, AppError> {
+) -> Result<axum::Json<app::model::rest_client_response::RestClientResponse>, app::common::app_error::AppError> {
     crate::app_router::rest_client_router::rest_client_send_handler(axum::Json(request)).await
 }
 
