@@ -1,12 +1,11 @@
 use std::borrow::Cow;
 
-use bytes::Bytes;
 use gloo_net::http::Request;
 use json_escape::unescape;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 
-use crate::common::json_formatter::JsonFormatter;
+use crate::common::json_processor::format_json;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
@@ -50,13 +49,11 @@ pub fn JsonPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Format);
 
-            let mut formatter = JsonFormatter::new(ident.get_untracked().parse().unwrap());
-            let formatted_bytes = formatter.format_bytes(Bytes::from(json.get_untracked()));
+            set_dst_json.set(format_json(
+                json.read_untracked().as_borrowed(),
+                ident.get_untracked().parse().unwrap(),
+            ));
 
-            match str::from_utf8(&formatted_bytes) {
-                Ok(str) => set_dst_json.set(str.to_owned()),
-                Err(err) => show_error(err.to_string(), messages),
-            }
             set_in_progress.set(InProgressType::None);
         });
     };

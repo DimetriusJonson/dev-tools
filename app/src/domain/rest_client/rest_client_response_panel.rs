@@ -1,4 +1,8 @@
 use crate::common::constants::MEDIA_TYPES;
+use crate::common::json_processor::format_json;
+use crate::common::local_store::get_local_store_value;
+use crate::common::xml_processor::format_xml;
+use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::code_inner::CodeInner;
 use crate::i18n::*;
 use leptos::prelude::*;
@@ -18,12 +22,17 @@ pub struct RestClientPanelData {
 
 #[component]
 pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) -> impl IntoView {
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
+
+    let (formatting, set_formatting) =
+        signal(get_local_store_value("rest_client_formatting", "false".to_owned()).parse::<bool>().unwrap());
+
     let (resp_tab_selected, set_resp_tab_selected) = signal(ResponceTabKind::Body);
     {
         move || {
             set_resp_tab_selected.set(ResponceTabKind::Body);
-            let (response_status, response_text, response_headers, resp_code_lang) =
+            let (response_status, mut response_text, response_headers, resp_code_lang) =
                 match data.get() {
                     Some(response) => (
                         response.status_code.to_string(),
@@ -41,6 +50,17 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                     ),
                     None => ("".to_owned(), "".to_owned(), Vec::new(), "html".to_owned()),
                 };
+
+            if formatting.get_untracked() {
+                if resp_code_lang == "xml" {
+                    match format_xml(&response_text, 4) {
+                        Ok(formatted_text) => response_text = formatted_text,
+                        Err(err) => show_error(format!("Cant format xml: {}", err), messages),
+                    }
+                } else if resp_code_lang == "json" {
+                    response_text = format_json(&response_text, 4);
+                }
+            }
 
             view! {
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
@@ -76,8 +96,12 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                         class:block=move || resp_tab_selected.get() == ResponceTabKind::Body
                         class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Body
                     >
-                        <div class="flex">
+                        <div class="flex justify-between">
                             <span class="dark:text-white">{format!("Status: {}", response_status)}</span>
+                            <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting)/>
+                                <label for="formatting" class="dark:text-white">Format</label>
+                            </div>
                         </div>
                         <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                             <CodeInner code={response_text} lang={move || resp_code_lang.to_owned()}/>
