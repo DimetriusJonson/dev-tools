@@ -2,7 +2,7 @@ use gloo_net::http::Request;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
-use crate::common::constants::MEDIA_TYPES;
+use crate::common::constants::MEDIA_TYPES_AUTOCOMPLETE;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::get_accept_language;
 use crate::components::layout::message_banner::{Messages, show_error};
@@ -139,7 +139,7 @@ pub fn RestClientPage() -> impl IntoView {
                     <AutocompleteInput 
                         class_name="min-w-36".to_owned()
                         placeholder=move || "Content-Type".to_owned()
-                        options={MEDIA_TYPES.iter().map(|v|v.0.to_owned()).collect::<Vec<String>>()}
+                        options={MEDIA_TYPES_AUTOCOMPLETE}
                         value=content_type
                         set_value=set_content_type
                         on_change=move |value| {
@@ -150,7 +150,7 @@ pub fn RestClientPage() -> impl IntoView {
                     <AutocompleteInput 
                         class_name="min-w-36".to_owned()
                         placeholder=move || "Accept".to_owned()
-                        options={MEDIA_TYPES.iter().map(|v|v.0.to_owned()).collect::<Vec<String>>()}
+                        options={MEDIA_TYPES_AUTOCOMPLETE}
                         on_change=move |value| {
                             set_local_store_value("rest_client_accept", value);
                         }
@@ -219,8 +219,4 @@ pub fn RestClientPage() -> impl IntoView {
 
 fn single_select_option(value: &str) -> (Option<String>, String) {
     (Some(value.to_owned()), value.to_owned())
-}
-
-fn media_types_options() -> Vec<(Option<String>, String)> {
-    MEDIA_TYPES.into_iter().map(|v| single_select_option(v.0)).collect()
 }

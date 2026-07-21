@@ -3,7 +3,7 @@ use web_sys::KeyboardEvent;
 
 #[component]
 pub fn AutocompleteInput(
-    #[prop(into)] options: Vec<String>,
+    #[prop(into)] options: Vec<&'static str>,
     #[prop(optional)] class_name: String,
     placeholder: impl Fn() -> String + Send + Sync + 'static,
     value: ReadSignal<String>,
@@ -23,7 +23,7 @@ pub fn AutocompleteInput(
                 .iter()
                 .filter(|opt| opt.to_lowercase().contains(&query))
                 .cloned()
-                .collect::<Vec<String>>()
+                .collect::<Vec<&'static str>>()
         }
     });
 
@@ -122,9 +122,9 @@ pub fn AutocompleteInput(
                         <ul class="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-dark-bg border border-gray-300 dark:border-gray-700 rounded-lg">
                             <ForEnumerate
                                 each=move || filtered_options.get()
-                                key=|option| option.clone()
-                                children={move |index:ReadSignal<usize>, option: String| {
-                                    let opt_clone = option.clone();
+                                key=|option| option.to_owned()
+                                children={move |index:ReadSignal<usize>, option: &'static str| {
+                                    let opt_clone = option.to_owned();
                                     view! {
                                         <li
                                             class="px-4 py-2 text-sm text-gray-700 dark:text-gray-50 hover:bg-blue-50 hover:text-blue-900 cursor-pointer transition-colors duration-150"
