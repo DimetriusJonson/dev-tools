@@ -35,7 +35,7 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                             .filter(|v| v.0.to_lowercase() == "content-type")
                             .map(|v| get_media_type_code(&v.1))
                             .filter(|v| v.is_some())
-                            .map(|v|v.unwrap_or("html".to_owned()))
+                            .map(|v| v.unwrap_or("html".to_owned()))
                             .nth(0)
                             .unwrap_or("html".to_owned()),
                     ),
@@ -88,29 +88,8 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                         class:block=move || resp_tab_selected.get() == ResponceTabKind::Headers
                         class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Headers
                     >
-                        <div class="overflow-x-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm">
-                            <table class="w-full table-fixed border-collapse text-left text-sm text-gray-500">
-                                <thead class="text-xs font-semibold uppercase text-gray-900 dark:text-gray-50 bg-gray-100 dark:bg-gray-900">
-                                    <tr>
-                                        <th scope="col" class="w-1/2 px-6 py-4">Header</th>
-                                        <th scope="col" class="w-1/2 px-6 py-4">Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-300 dark:divide-gray-700 border-t font-medium">
-                                    <ForEnumerate
-                                        each=move || response_headers.clone()
-                                        key=|header| header.0.to_owned()
-                                        let(idx, header)
-                                    >
-                                            <tr class=(["hover:bg-gray-200", "dark:hover:bg-gray-800", "dark:text-gray-300", "text-gray-900"], move || idx.get() % 2 == 0)
-                                                class=(["bg-gray-100", "hover:bg-gray-200", "dark:bg-gray-900", "dark:hover:bg-gray-800", "text-gray-900", "dark:text-gray-50"], move || idx.get() % 2 == 1)
-                                                >
-                                                <td class="px-6 py-4">{header.0}</td>
-                                                <td class="px-6 py-4">{header.1}</td>
-                                            </tr>
-                                    </ ForEnumerate>
-                                </tbody>
-                            </table>
+                        <div class="rounded-md border border-gray-300 dark:border-gray-700 shadow-sm ">
+                            <div class="grid grid-cols-2 gap-4 px-4 overflow-hidden dark:text-white" inner_html={render_headers(response_headers)}/>
                         </div>
                     </div>
                 </div>
@@ -126,4 +105,10 @@ fn get_media_type_code(media_type: &str) -> Option<String> {
         .filter(|v| media_type.to_uppercase().contains(&v.0.to_uppercase()))
         .map(|v| v.1.to_owned())
         .nth(0)
+}
+
+fn render_headers(headers: Vec<(String, String)>) -> String {
+    let list: Vec<String> =
+        headers.iter().map(|h| format!("<div>{}</div><div>{}</div>", h.0, h.1)).collect();
+    list.join("\n")
 }

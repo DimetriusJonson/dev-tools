@@ -1,5 +1,4 @@
 use app::app::{App, shell};
-use app::common::app_error::AppError;
 use app::common::app_state::ssr::AppState;
 use axum::Router;
 use axum::body::Body as AxumBody;
@@ -17,6 +16,7 @@ use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
+use crate::app_router::rest_client_router::rest_client_send_handler;
 use crate::app_router::share_file_router::{
     share_file_download, share_file_info, share_file_upload,
 };
@@ -38,7 +38,7 @@ pub async fn build_app_router(
         AppState { leptos_options: leptos_options.clone(), pool: pool.clone(), remote_server_url };
 
     let app = Router::new()
-        .route("/rest_client_send", post(rest_client_send_handler_wrapper))
+        .route("/rest_client_send", post(rest_client_send_handler))
         .route("/format_xml", post(format_xml_handler))
         .route("/format_json", post(format_json_handler))
         .route("/share_local_file_upload", post(share_local_file_upload))
@@ -85,22 +85,3 @@ pub async fn server_fn_handler(
     )
     .await
 }
-
-#[cfg(feature = "rest_client")]
-pub async fn rest_client_send_handler_wrapper(
-    axum::Json(request): axum::Json<app::model::rest_client_request::RestClientRequest>,
-) -> Result<axum::Json<app::model::rest_client_response::RestClientResponse>, AppError> {
-    use crate::app_router::rest_client_router::rest_client_send_handler;
-
-    rest_client_send_handler(axum::Json(request)).await
-}
-
-#[cfg(not(feature = "rest_client"))]
-pub async fn rest_client_send_handler_wrapper(
-    axum::Json(_request): axum::Json<app::model::rest_client_request::RestClientRequest>,
-) -> Result<axum::Json<app::model::rest_client_response::RestClientResponse>, AppError> {
-    Err(AppError::system_error("Service unavailable".to_owned()))?
-}
-
-
-
