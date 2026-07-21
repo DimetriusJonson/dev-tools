@@ -119,7 +119,7 @@ pub fn AutocompleteInput(
 
             <Show when=move || is_open.get() && !filtered_options.read().is_empty()>
                 {view! {
-                        <ul class="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-dark-bg border border-gray-300 dark:border-gray-700 rounded-lg">
+                        <ul class="absolute z-10 w-fit mt-1 max-h-60 overflow-auto bg-white dark:bg-dark-bg border border-gray-300 dark:border-gray-700 rounded-lg">
                             <ForEnumerate
                                 each=move || filtered_options.get()
                                 key=|option| option.to_owned()
