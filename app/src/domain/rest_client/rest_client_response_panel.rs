@@ -88,8 +88,8 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                         class:block=move || resp_tab_selected.get() == ResponceTabKind::Headers
                         class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Headers
                     >
-                        <div class="rounded-md border border-gray-300 dark:border-gray-700 shadow-sm ">
-                            <div class="grid grid-cols-2 gap-4 px-4 overflow-hidden dark:text-white" inner_html={render_headers(response_headers)}/>
+                        <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm ">
+                            <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={render_headers(response_headers)}/>
                         </div>
                     </div>
                 </div>
