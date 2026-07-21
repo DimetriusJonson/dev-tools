@@ -4,6 +4,7 @@ use leptos::task::spawn_local;
 
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
+use crate::common::ui_utils::get_accept_language;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::select_input::SelectInput;
@@ -40,6 +41,8 @@ pub fn RestClientPage() -> impl IntoView {
         signal(get_local_store_value("rest_client_accept", "".to_owned()));
     let (user_agent, set_user_agent) =
         signal(get_local_store_value("rest_client_user_agent", "WebDevUsefulTools Client".to_owned()));
+    let (accept_lang, set_accept_lang) =
+        signal(get_local_store_value("rest_client_accept_lang", get_accept_language()));
     let (url, set_url) = signal(get_local_store_value("rest_client_url", "".to_owned()));
     let (body, set_body) = signal(get_local_store_value("rest_client_body", "".to_owned()));
     let (response, set_response) = signal(None);
@@ -55,6 +58,9 @@ pub fn RestClientPage() -> impl IntoView {
             }
             if !accept.read_untracked().is_empty() {
                 headers.push(("accept".to_owned(), accept.get_untracked()));
+            }
+            if !accept_lang.read_untracked().is_empty() {
+                headers.push(("accept_language".to_owned(), accept_lang.get_untracked()));
             }
             if !user_agent.read_untracked().is_empty() {
                 headers.push(("user-agent".to_owned(), user_agent.get_untracked()));
@@ -151,6 +157,17 @@ pub fn RestClientPage() -> impl IntoView {
                         }
                         value=accept
                         set_value=set_accept
+                    />
+                    <TextInput
+                        name="accept-lang".to_owned()
+                        input_type="text".to_owned()
+                        class_name="w-max-36".to_owned()
+                        placeholder=|| "Accept-Language".to_owned()
+                        value=accept_lang
+                        set_value=set_accept_lang
+                        on_change=move |_| {
+                            set_local_store_value("rest_client_accept_lang", accept_lang.get_untracked());
+                        }
                     />
                     <TextInput
                         name="user-agent".to_owned()

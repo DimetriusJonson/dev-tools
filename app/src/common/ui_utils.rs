@@ -76,3 +76,14 @@ pub async fn get_host_name() -> String {
         },
     }
 }
+
+pub fn get_accept_language() -> String {
+    #[cfg(not(feature = "ssr"))]
+    let val = leptos::prelude::window().navigator().language().unwrap_or("en-US".to_owned());
+
+    #[cfg(feature = "ssr")]
+    let val = "en-US".to_owned();
+
+    val
+}
+
