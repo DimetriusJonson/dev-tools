@@ -77,3 +77,4 @@ ssr = [
     "leptos_i18n/axum",
     "leptos_i18n_build/ssr",
 ]
+standalone=[]

@@ -1,9 +1,9 @@
-use crate::domain::rest_client::rest_client_page::RestClientPage;
 use crate::i18n::*;
 use leptos::prelude::*;
 use leptos_meta::{Meta, MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::components::{Outlet, ParentRoute, Route, Router, Routes};
 use leptos_router::path;
+use crate::domain::rest_client::RestClientPage;
 
 use crate::components::layout::message_banner::MessageBanner;
 use crate::components::layout::navbar::Navbar;

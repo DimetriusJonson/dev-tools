@@ -28,3 +28,21 @@ You can disable server startup with the --no-start-server option.
 For example, 
     webdev_useful_tools.exe --no-start-server
 The application will work with the server specified in the --remote-server-url option.
+
+
+Useful commands:
+
+1) Build standolone app
+
+just build-windows
+just build-linux
+just build-macos
+
+2) Enable standalone feature in Windows
+
+$env:RUSTFLAGS='--cfg feature="standalone"'
+
+3) Debug
+cargo leptos watch
+
+

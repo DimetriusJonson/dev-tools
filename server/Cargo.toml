@@ -35,3 +35,6 @@ serde_json.workspace = true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}
+
+[features]
+standalone=[]
