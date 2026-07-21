@@ -6,6 +6,7 @@ use crate::common::constants::MEDIA_TYPES;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::get_accept_language;
 use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::ui::autocomplete_input::AutocompleteInput;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
@@ -134,30 +135,29 @@ pub fn RestClientPage() -> impl IntoView {
                 </div>
 
                 <div class="flex gap-4">
-                    <SelectInput
-                        name="content-type".to_owned()
-                        class_name="max-w-36".to_owned()
-                        label=move || "Content-Type".to_owned()
-                        not_selected_text=move || "Content-Type".to_owned()
-                        options=move || {media_types_options()}
+
+                    <AutocompleteInput 
+                        class_name="min-w-36".to_owned()
+                        placeholder=move || "Content-Type".to_owned()
+                        options={MEDIA_TYPES.iter().map(|v|v.0.to_owned()).collect::<Vec<String>>()}
+                        value=content_type
+                        set_value=set_content_type
                         on_change=move |value| {
                             set_local_store_value("rest_client_content_type", value);
                         }
-                        value=content_type
-                        set_value=set_content_type
                     />
-                    <SelectInput
-                        name="accept".to_owned()
-                        class_name="max-w-36".to_owned()
-                        label=move || "Accept".to_owned()
-                        not_selected_text=move || "Accept".to_owned()
-                        options=move || {media_types_options()}
+
+                    <AutocompleteInput 
+                        class_name="min-w-36".to_owned()
+                        placeholder=move || "Accept".to_owned()
+                        options={MEDIA_TYPES.iter().map(|v|v.0.to_owned()).collect::<Vec<String>>()}
                         on_change=move |value| {
                             set_local_store_value("rest_client_accept", value);
                         }
                         value=accept
                         set_value=set_accept
                     />
+
                     <TextInput
                         name="accept-lang".to_owned()
                         input_type="text".to_owned()

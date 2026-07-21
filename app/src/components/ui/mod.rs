@@ -6,3 +6,4 @@ pub mod code_inner;
 pub mod file_input;
 pub mod drag_file;
 pub mod text_input;
+pub mod autocomplete_input;
