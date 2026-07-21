@@ -10,7 +10,7 @@ use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLink
 pub fn Navbar() -> impl IntoView {
     let i18n = use_i18n();
     let location = use_location();
-    let host_name_resource = LocalResource::new(get_host_name);
+    let host_name_resource = OnceResource::new(async {get_host_name().await});
 
     view! {
             <nav class="w-full relative bg-primary">
