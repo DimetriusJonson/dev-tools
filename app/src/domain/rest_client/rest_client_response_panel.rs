@@ -1,8 +1,10 @@
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
 use crate::common::local_store::get_local_store_value;
+use crate::common::ui_utils::copy_to_clipboard;
 use crate::common::xml_processor::format_xml;
-use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::layout::message_banner::{Messages, show_error, show_info};
+use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::i18n::*;
 use leptos::prelude::*;
@@ -27,6 +29,13 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
 
     let (formatting, set_formatting) =
         signal(get_local_store_value("rest_client_formatting", "false".to_owned()).parse::<bool>().unwrap());
+
+    let on_copy_click = move |_| {
+        if data.read_untracked().is_some() {
+            copy_to_clipboard(&data.get_untracked().unwrap().body);
+            show_info(t!(i18n, rest_client_response_copied_to_clipboard_msg).to_html(), messages);
+        }
+    };
 
     let (resp_tab_selected, set_resp_tab_selected) = signal(ResponceTabKind::Body);
     {
@@ -105,6 +114,16 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                         </div>
                         <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                             <CodeInner code={response_text} lang={move || resp_code_lang.to_owned()}/>
+                        </div>
+                        <div class="flex">
+                            <Button
+                                label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                                class_name="w-full".to_owned()
+                                button_width=ButtonWidth::Auto
+                                loading=move || false
+                                on_click=on_copy_click
+                                disabled=move || false
+                            />
                         </div>
                     </div>
 
