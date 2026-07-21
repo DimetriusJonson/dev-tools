@@ -20,15 +20,11 @@ pub async fn rest_client_send_handler(
         );
     }
 
-    //println!("req headers={:?}", headers);
-
     let rb = Client::new().request(method, request.url).body(reqwest::Body::from(request.body));
 
     let response = rb.send().await.map_err(AppError::system_error)?;
 
     let status_code = response.status().as_u16();
-
-    //println!("resp headers={:?}", response.headers());
 
     let headers: Vec<(String, String)> = response
         .headers()
@@ -40,8 +36,6 @@ pub async fn rest_client_send_handler(
         })
         .collect();
     let body = response.text().await.map_err(AppError::system_error)?;
-
-    //println!("return headers={:?}", headers);
 
     Ok(Json(RestClientResponse { status_code, headers, body }))
 }
