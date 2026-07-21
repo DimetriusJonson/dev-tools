@@ -38,6 +38,8 @@ pub fn RestClientPage() -> impl IntoView {
         signal(get_local_store_value("rest_client_content_type", "".to_owned()));
     let (accept, set_accept) =
         signal(get_local_store_value("rest_client_accept", "".to_owned()));
+    let (user_agent, set_user_agent) =
+        signal(get_local_store_value("rest_client_user_agent", "WebDevUsefulTools Client".to_owned()));
     let (url, set_url) = signal(get_local_store_value("rest_client_url", "".to_owned()));
     let (body, set_body) = signal(get_local_store_value("rest_client_body", "".to_owned()));
     let (response, set_response) = signal(None);
@@ -53,6 +55,9 @@ pub fn RestClientPage() -> impl IntoView {
             }
             if !accept.read_untracked().is_empty() {
                 headers.push(("accept".to_owned(), accept.get_untracked()));
+            }
+            if !user_agent.read_untracked().is_empty() {
+                headers.push(("user-agent".to_owned(), user_agent.get_untracked()));
             }
 
             let rc_request = RestClientRequest {
@@ -90,6 +95,7 @@ pub fn RestClientPage() -> impl IntoView {
                     <SelectInput
                         name="method".to_owned()
                         label=move || "Method".to_owned()
+                        class_name="max-w-24".to_owned()
                         not_selected_text=move || "".to_owned()
                         options=move || {vec![
                             single_select_option("GET"),
@@ -110,7 +116,7 @@ pub fn RestClientPage() -> impl IntoView {
                     <TextInput
                         name="url".to_owned()
                         input_type="text".to_owned()
-                        class_name="".to_owned()
+                        class_name="w-full".to_owned()
                         placeholder=move || {t!(i18n, rest_client_url_placeholder).to_html()}
                         value=url
                         set_value=set_url
@@ -124,6 +130,7 @@ pub fn RestClientPage() -> impl IntoView {
                 <div class="flex gap-4">
                     <SelectInput
                         name="content-type".to_owned()
+                        class_name="max-w-36".to_owned()
                         label=move || "Content-Type".to_owned()
                         not_selected_text=move || "Content-Type".to_owned()
                         options=move || {media_types_options()}
@@ -135,6 +142,7 @@ pub fn RestClientPage() -> impl IntoView {
                     />
                     <SelectInput
                         name="accept".to_owned()
+                        class_name="max-w-36".to_owned()
                         label=move || "Accept".to_owned()
                         not_selected_text=move || "Accept".to_owned()
                         options=move || {media_types_options()}
@@ -143,6 +151,17 @@ pub fn RestClientPage() -> impl IntoView {
                         }
                         value=accept
                         set_value=set_accept
+                    />
+                    <TextInput
+                        name="user-agent".to_owned()
+                        input_type="text".to_owned()
+                        class_name="w-full".to_owned()
+                        placeholder=|| "User-Agent".to_owned()
+                        value=user_agent
+                        set_value=set_user_agent
+                        on_change=move |_| {
+                            set_local_store_value("rest_client_user_agent", user_agent.get_untracked());
+                        }
                     />
                 </div>
 

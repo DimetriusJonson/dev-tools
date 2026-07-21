@@ -71,7 +71,7 @@ pub async fn get_host_name() -> String {
     match host {
         Some(host) => host,
         None => match extract::<axum::http::request::Parts>().await {
-            Ok(parts) => parts.uri.authority().map(|a| a.to_string()).unwrap_or_default(),
+            Ok(parts) => parts.uri.authority().map(|a| a.host().to_owned()).unwrap_or_default(),
             Err(err) => err.to_string(),
         },
     }
