@@ -1,5 +1,4 @@
 use gloo_net::http::Request;
-use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
@@ -158,6 +157,15 @@ pub fn RestClientPage() -> impl IntoView {
                         }
                     />
 
+                    <Button
+                        label=move || t!(i18n, rest_client_send_btn_label).to_html()
+                        button_width=ButtonWidth::Lg
+                        loading=move || in_progress.get() == InProgressType::Send
+                        on_click=on_send_click
+                        disabled=move || in_progress.get().is_active()
+                    />
+
+
                 </div>
 
                 <div class="flex gap-4">
@@ -227,6 +235,7 @@ pub fn RestClientPage() -> impl IntoView {
                         />
                         <Button
                             label=move || "+".to_owned()
+                            class_name="text-bold".to_owned()
                             button_width=ButtonWidth::OneSymbol
                             color=ButtonColor::Success
                             loading=move || false
@@ -280,6 +289,7 @@ pub fn RestClientPage() -> impl IntoView {
                                 />
                                 <Button
                                     label=move || "-".to_owned()
+                                    class_name="text-bold".to_owned()
                                     button_width=ButtonWidth::OneSymbol
                                     color=ButtonColor::Danger
                                     loading=move || false
@@ -307,21 +317,6 @@ pub fn RestClientPage() -> impl IntoView {
                     />
                 </div>
             </div>
-
-            <div class="flex flex-col gap-4 items-center justify-center">
-                <div class="flex flex-row md:flex-col gap-4">
-
-                    <Button
-                        label=move || t!(i18n, rest_client_send_btn_label).to_html()
-                        button_width=ButtonWidth::Lg
-                        loading=move || in_progress.get() == InProgressType::Send
-                        on_click=on_send_click
-                        disabled=move || in_progress.get().is_active()
-                    />
-                </div>
-
-            </div>
-
 
             <RestClientResponsePanel data=response/>
 

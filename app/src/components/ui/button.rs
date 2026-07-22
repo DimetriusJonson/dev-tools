@@ -50,7 +50,7 @@ pub fn Button(
         ButtonColor::Light => {
             "bg-gray-200 dark:hover:bg-gray-50 hover:bg-gray-300 text-black".to_owned()
         }
-        ButtonColor::Danger => "bg-danger hover:bg-danger/80 text-black".to_owned(),
+        ButtonColor::Danger => "bg-red-800 hover:bg-red-800/80 text-white".to_owned(),
     };
 
     let button_width_classes = match button_width {
