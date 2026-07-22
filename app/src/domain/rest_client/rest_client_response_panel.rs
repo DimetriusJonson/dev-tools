@@ -28,7 +28,7 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
     let i18n = use_i18n();
 
     let (formatting, set_formatting) =
-        signal(get_local_store_value("rest_client_formatting", "true".to_owned()).parse::<bool>().unwrap());
+        signal(get_local_store_value("rc_formatting", "true".to_owned()).parse::<bool>().unwrap());
 
     let on_copy_click = move |_| {
         if data.read_untracked().is_some() {
@@ -111,7 +111,7 @@ pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) ->
                                 <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
                                     on:change=move |e| {
                                         let value = event_target_value(&e);
-                                        set_local_store_value("rest_client_formatting", value);
+                                        set_local_store_value("rc_formatting", value);
                                     }/>
                                 <label for="formatting" class="dark:text-white">Format</label>
                             </div>

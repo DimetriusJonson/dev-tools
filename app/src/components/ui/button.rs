@@ -4,6 +4,7 @@ use leptos::{ev::MouseEvent, html, prelude::*};
 pub enum ButtonColor {
     #[default]
     Primary,
+    Success,
     Light,
     Danger,
 }
@@ -19,6 +20,7 @@ pub enum ButtonTextSize {
 pub enum ButtonWidth {
     #[default]
     Auto,
+    OneSymbol,
     Md,
     Lg
 }
@@ -44,6 +46,7 @@ pub fn Button(
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
+        ButtonColor::Success => "bg-emerald-800 hover:bg-emerald-800/80 text-white".to_owned(),
         ButtonColor::Light => {
             "bg-gray-200 dark:hover:bg-gray-50 hover:bg-gray-300 text-black".to_owned()
         }
@@ -52,6 +55,7 @@ pub fn Button(
 
     let button_width_classes = match button_width {
         ButtonWidth::Auto => "w-auto".to_owned(),
+        ButtonWidth::OneSymbol => "w-14".to_owned(),
         ButtonWidth::Md => "w-32".to_owned(),
         ButtonWidth::Lg => "w-38".to_owned(),
     };

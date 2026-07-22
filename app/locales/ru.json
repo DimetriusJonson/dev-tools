@@ -60,6 +60,9 @@
     "rest_client_body_placeholder": "Тело запроса",
     "rest_client_send_btn_label": "Отправить",
     "rest_client_url_placeholder": "Ссылка",
+    "rest_client_header_name": "Имя заголовка",
+    "rest_client_header_value": "Значение заголовка",
+ 
     "rest_client_response_body_tab": "Ответ",
     "rest_client_response_headers_tab": "Заголовки",
     "rest_client_response_copied_to_clipboard_msg":"Ответ скопирован в буфер обмена."
