@@ -87,3 +87,11 @@ pub fn get_accept_language() -> String {
     val
 }
 
+pub fn single_select_option(value: &str) -> (Option<String>, String) {
+    (Some(value.to_owned()), value.to_owned())
+}
+
+pub fn is_base_header_name(name: &str) -> bool {
+    name == "content-type" || name == "accept" || name == "accept-language" || name == "user-agent"
+}
+

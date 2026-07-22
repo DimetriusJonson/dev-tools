@@ -16,14 +16,14 @@ enum ResponceTabKind {
 }
 
 #[derive(Clone)]
-pub struct RestClientPanelData {
+pub struct ReqResultData {
     pub status_code: u16,
     pub body: String,
     pub headers: Vec<(String, String)>,
 }
 
 #[component]
-pub fn RestClientResponsePanel(data: ReadSignal<Option<RestClientPanelData>>) -> impl IntoView {
+pub fn ReqResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
 
