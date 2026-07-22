@@ -1,5 +1,4 @@
 use gloo_net::http::Request;
-use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
