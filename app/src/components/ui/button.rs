@@ -55,7 +55,7 @@ pub fn Button(
 
     let button_width_classes = match button_width {
         ButtonWidth::Auto => "w-auto".to_owned(),
-        ButtonWidth::OneSymbol => "w-14".to_owned(),
+        ButtonWidth::OneSymbol => "w-12".to_owned(),
         ButtonWidth::Md => "w-32".to_owned(),
         ButtonWidth::Lg => "w-38".to_owned(),
     };
