@@ -47,6 +47,7 @@ pub async fn build_app_router(
         .route("/share_file_info", get(share_file_info))
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
+        .route("/test_json", get(test_json_handler))
         .route("/api/{*fn_name}", get(server_fn_handler).post(server_fn_handler))
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
@@ -94,5 +95,15 @@ pub async fn rest_client_send_handler_wrapper(
 
 #[cfg(not(feature = "standalone"))]
 pub async fn rest_client_send_handler_wrapper() -> Result<http::StatusCode, app::common::app_error::AppError> {
+    Err(app::common::app_error::AppError::system_error("Service disabled".to_owned()))?
+}
+
+#[cfg(feature = "standalone")]
+pub async fn test_json_handler() -> Result<axum::Json<crate::app_router::test_json_router::TestJsonResult>, app::common::app_error::AppError> {
+    crate::app_router::test_json_router::test_json_handler().await
+}
+
+#[cfg(not(feature = "standalone"))]
+pub async fn test_json_handler() -> Result<http::StatusCode, app::common::app_error::AppError> {
     Err(app::common::app_error::AppError::system_error("Service disabled".to_owned()))?
 }

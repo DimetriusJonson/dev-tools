@@ -66,6 +66,7 @@
 
     "rest_client_response_body_tab": "Response",
     "rest_client_response_headers_tab": "Headers",
-    "rest_client_response_copied_to_clipboard_msg":"The response has been copied to the clipboard."
+    "rest_client_response_copied_to_clipboard_msg":"The response has been copied to the clipboard.",
+    "rest_client_request_not_selected_msg":"Select or create a request."
         
 }

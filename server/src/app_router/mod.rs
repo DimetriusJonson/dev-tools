@@ -11,6 +11,8 @@ pub mod xml_format_router;
 
 #[cfg(feature = "standalone")]
 pub mod rest_client_router;
+#[cfg(feature = "standalone")]
+pub mod test_json_router;
 
 pub async fn proxy_request_to_remote(
     remote_server_url: String,

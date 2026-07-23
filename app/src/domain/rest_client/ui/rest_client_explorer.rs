@@ -16,7 +16,7 @@ pub fn RestClientExplorer(
     let on_create_request = move |_| {
         let request = RequestInfo {
             id: generate_request_id(),
-            url: "https://test.com/api".to_owned(),
+            url: format!("http://{}/test_json", window().location().host().unwrap()),
             method: "GET".to_owned(),
         };
 
@@ -45,7 +45,7 @@ pub fn RestClientExplorer(
     );
 
     view! {
-        <div class="flex flex-col p-0 dark:text-white border-r-2 border-gray-700">
+        <div class="flex flex-col gap-y-4 dark:text-white border-r-2 border-gray-700">
             <div class="p-4">
                 <Button
                     label=move || "Create Request".to_owned()
@@ -59,8 +59,10 @@ pub fn RestClientExplorer(
 
             { move || { requests.read().iter()
                 .map(|request| {
+                    let request_cloned = request.get();
                     view! {
-                        <div class="flex w-full h-10 items-center justify-center hover:bg-slate-500/50 cursor-pointer p-2"
+                        <div class="flex w-full h-10 items-center hover:bg-sky-500/50 cursor-pointer p-2"
+                            class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
                             on:click={
                                 let request_cloned = request.get();
                                 move |_| {
@@ -68,7 +70,7 @@ pub fn RestClientExplorer(
                                 }
                             }
                             >
-                            <span class="bg-sky-500">{request.get().method}</span><span class="pl-2">{request.get().url}</span>
+                            <span class="bg-sky-500 p-2">{request.get().method}</span><span class="pl-2">{request.get().url}</span>
                         </div>
                     }
                 }).collect_view()

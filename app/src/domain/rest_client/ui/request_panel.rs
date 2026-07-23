@@ -1,7 +1,12 @@
+use crate::i18n::*;
 use leptos::prelude::*;
 
 use crate::{
-    common::{local_store::{get_local_store_value, set_local_store_value}, ui_utils::get_accept_language}, domain::rest_client::ui::{
+    common::{
+        local_store::{get_local_store_value, set_local_store_value},
+        ui_utils::get_accept_language,
+    },
+    domain::rest_client::ui::{
         request_params::{CustomHeader, RequestInfo, RequestParams},
         request_params_panel::RequestParamsPanel,
         request_result_panel::RequestResultPanel,
@@ -13,6 +18,8 @@ pub fn RequestPanel(
     request_info: ReadSignal<RequestInfo>,
     set_request_info: WriteSignal<RequestInfo>,
 ) -> impl IntoView {
+    let i18n = use_i18n();
+
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
@@ -54,7 +61,7 @@ pub fn RequestPanel(
 
     view! {
         <Show when=move || { request_info.read().id > 0 }
-            fallback=|| view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{"Select project please."}</div> }
+            fallback=move || view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
             <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
                 <RequestParamsPanel
