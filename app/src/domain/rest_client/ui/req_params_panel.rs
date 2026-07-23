@@ -1,5 +1,5 @@
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::ui::req_params::{RequestParamKind, RequestParams};
+use crate::domain::rest_client::ui::req_params::RequestParams;
 use crate::domain::rest_client::ui::req_params_headers_panel::ReqParamsHeadersPanel;
 use crate::domain::rest_client::ui::req_result_panel::ReqResultData;
 use crate::i18n::*;
@@ -20,7 +20,6 @@ use crate::model::rest_client_response::RestClientResponse;
 pub fn ReqParamsPanel(
     params: ReadSignal<RequestParams>,
     #[prop(into)] on_result: Callback<ReqResultData>,
-    #[prop(into)] on_change: Callback<RequestParamKind>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -100,9 +99,7 @@ pub fn ReqParamsPanel(
                         single_select_option("HEAD"),
                         single_select_option("OPTIONS"),
                         ]}
-                    on_change=move |_| {
-                        on_change.run(RequestParamKind::Method);
-                    }
+                    on_change=move |_| {}
                     value=params.read_untracked().method
                     set_value=params.read_untracked().set_method
                 />
@@ -114,9 +111,7 @@ pub fn ReqParamsPanel(
                     placeholder=move || {t!(i18n, rest_client_url_placeholder).to_html()}
                     value=params.read_untracked().url
                     set_value=params.read_untracked().set_url
-                    on_change=move |_| {
-                        on_change.run(RequestParamKind::Url);
-                    }
+                    on_change=move |_| {}
                 />
 
                 <Button
@@ -130,9 +125,7 @@ pub fn ReqParamsPanel(
 
             </div>
 
-            <ReqParamsHeadersPanel params 
-                on_change=move |kind| on_change.run(kind)
-            />
+            <ReqParamsHeadersPanel params />
 
             <div class="flex-1 flex">
                 <TextArea
@@ -141,9 +134,7 @@ pub fn ReqParamsPanel(
                     placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
                     value=params.read_untracked().body
                     set_value=params.read_untracked().set_body
-                    on_change=move |_| {
-                        on_change.run(RequestParamKind::Body);
-                    }
+                    on_change=move |_| {}
                 />
             </div>
         </div>

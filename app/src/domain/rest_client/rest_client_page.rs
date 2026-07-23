@@ -7,7 +7,7 @@ use crate::{
     },
     domain::rest_client::ui::{
         req_panel::ReqPanel,
-        req_params::{CustomHeader, RequestParamKind, RequestParams},
+        req_params::{CustomHeader, RequestParams},
     },
 };
 
@@ -47,44 +47,38 @@ pub fn RestClientPage() -> impl IntoView {
         req_params.read_untracked().set_custom_headers.set(restore_custom_headers());
     });
 
+    create_req_watchers(req_params);
+
     view! {
-        <ReqPanel params=req_params
-            on_change=move |kind| save_changed_request(kind, req_params)
-        />
+        <ReqPanel params=req_params />
     }
 }
 
-fn save_changed_request(kind: RequestParamKind, params: ReadSignal<RequestParams>) {
-    match kind {
-        RequestParamKind::Url => {
-            set_local_store_value("rc_url", params.read_untracked().url.get_untracked())
-        }
-        RequestParamKind::Method => {
-            set_local_store_value("rc_method", params.read_untracked().method.get_untracked())
-        }
-        RequestParamKind::Body => {
-            set_local_store_value("rc_body", params.read_untracked().body.get_untracked())
-        }
-        RequestParamKind::ContentType => set_local_store_value(
-            "rc_content_type",
-            params.read_untracked().content_type.get_untracked(),
-        ),
-        RequestParamKind::Accept => {
-            set_local_store_value("rc_accept", params.read_untracked().accept.get_untracked())
-        }
-        RequestParamKind::AcceptLanguage => set_local_store_value(
-            "rc_accept_lang",
-            params.read_untracked().accept_lang.get_untracked(),
-        ),
-        RequestParamKind::UserAgent => set_local_store_value(
-            "rc_user_agent",
-            params.read_untracked().user_agent.get_untracked(),
-        ),
-        RequestParamKind::CustomHeaders => set_local_store_value(
-            "rc_custom_headers",
-            custom_headers_to_string(&params.read_untracked().custom_headers.get_untracked()),
-        ),
-    }
+fn create_req_watchers(params: ReadSignal<RequestParams>) {
+    create_watcher(params.read_untracked().url, "rc_url");
+    create_watcher(params.read_untracked().method, "rc_method");
+    create_watcher(params.read_untracked().body, "rc_body");
+    create_watcher(params.read_untracked().content_type, "rc_content_type");
+    create_watcher(params.read_untracked().accept, "rc_accept");
+    create_watcher(params.read_untracked().accept_lang, "rc_accept_lang");
+    create_watcher(params.read_untracked().user_agent, "rc_user_agent");
+
+    Effect::watch(
+        move || params.read_untracked().custom_headers.get(),
+        move |value, _prev, _| {
+            set_local_store_value("rc_custom_headers", custom_headers_to_string(value))
+        },
+        false,
+    );
+}
+
+fn create_watcher(value: ReadSignal<String>, save_path: &str) {
+    let save_path = save_path.to_owned();
+    Effect::watch(
+        move || value.get(),
+        move |value, _prev, _| set_local_store_value(&save_path, value.to_string()),
+        false,
+    );
 }
 
 fn custom_headers_to_string(headers: &Vec<CustomHeader>) -> String {

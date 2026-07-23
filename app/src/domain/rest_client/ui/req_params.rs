@@ -1,16 +1,5 @@
 use leptos::prelude::{ReadSignal, WriteSignal};
 
-pub enum RequestParamKind {
-    Url,
-    Method,
-    Body,
-    ContentType,
-    Accept,
-    AcceptLanguage,
-    UserAgent,
-    CustomHeaders
-}
-
 #[derive(Clone, Debug)]
 pub struct RequestParams {
     pub url: ReadSignal<String>,

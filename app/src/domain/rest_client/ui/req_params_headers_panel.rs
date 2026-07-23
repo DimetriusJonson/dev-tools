@@ -1,7 +1,7 @@
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
 use crate::common::ui_utils::is_base_header_name;
 use crate::components::ui::button::{Button, ButtonColor, ButtonWidth};
-use crate::domain::rest_client::ui::req_params::{CustomHeader, RequestParamKind, RequestParams};
+use crate::domain::rest_client::ui::req_params::{CustomHeader, RequestParams};
 use crate::i18n::*;
 use leptos::prelude::*;
 
@@ -13,7 +13,6 @@ use crate::{
 #[component]
 pub fn ReqParamsHeadersPanel(
     params: ReadSignal<RequestParams>,
-    #[prop(into)] on_change: Callback<RequestParamKind>,
 ) -> impl IntoView {
     let i18n = use_i18n();
 
@@ -29,18 +28,14 @@ pub fn ReqParamsHeadersPanel(
                 options={MEDIA_TYPES_AUTOCOMPLETE}
                 value=params.read_untracked().content_type
                 set_value=params.read_untracked().set_content_type
-                on_change=move |_| {
-                    on_change.run(RequestParamKind::ContentType);
-                }
+                on_change=move |_| {}
             />
 
             <AutocompleteInput
                 class_name="min-w-36".to_owned()
                 placeholder=move || "Accept".to_owned()
                 options={MEDIA_TYPES_AUTOCOMPLETE}
-                on_change=move |_| {
-                    on_change.run(RequestParamKind::Accept);
-                }
+                on_change=move |_| {}
                 value=params.read_untracked().accept
                 set_value=params.read_untracked().set_accept
             />
@@ -52,9 +47,7 @@ pub fn ReqParamsHeadersPanel(
                 placeholder=|| "Accept-Language".to_owned()
                 value=params.read_untracked().accept_lang
                 set_value=params.read_untracked().set_accept_lang
-                on_change=move |_| {
-                    on_change.run(RequestParamKind::AcceptLanguage);
-                }
+                on_change=move |_| {}
             />
             <TextInput
                 name="user-agent".to_owned()
@@ -63,9 +56,7 @@ pub fn ReqParamsHeadersPanel(
                 placeholder=|| "User-Agent".to_owned()
                 value=params.read_untracked().user_agent
                 set_value=params.read_untracked().set_user_agent
-                on_change=move |_| {
-                    on_change.run(RequestParamKind::UserAgent);
-                }
+                on_change=move |_| {}
             />
         </div>
 
@@ -107,7 +98,6 @@ pub fn ReqParamsHeadersPanel(
                                 params.read_untracked().set_custom_headers.write().push(CustomHeader{ id, name, set_name, value, set_value });
                                 set_custom_header_name.set("".to_owned());
                                 set_custom_header_value.set("".to_owned());
-                                on_change.run(RequestParamKind::CustomHeaders);
                             }
                         }
                     }
@@ -126,7 +116,9 @@ pub fn ReqParamsHeadersPanel(
                             placeholder=move || t_display!(i18n, rest_client_header_name).to_string()
                             options={HEADERS_AUTOCOMPLETE}
                             on_change=move |_| {
-                                on_change.run(RequestParamKind::CustomHeaders);
+                                params.read_untracked().set_custom_headers.write().iter_mut()
+                                    .filter(|h|h.id != custom_header.id)
+                                    .for_each(|h| {h.set_name.set(custom_header.name.get_untracked())});
                             }
                             value=custom_header.name
                             set_value=custom_header.set_name
@@ -136,7 +128,9 @@ pub fn ReqParamsHeadersPanel(
                             placeholder=move || t_display!(i18n, rest_client_header_value).to_string()
                             options={MEDIA_TYPES_AUTOCOMPLETE}
                             on_change=move |_| {
-                                on_change.run(RequestParamKind::CustomHeaders);
+                                params.read_untracked().set_custom_headers.write().iter_mut()
+                                    .filter(|h|h.id != custom_header.id)
+                                    .for_each(|h| {h.set_value.set(custom_header.value.get_untracked())});
                             }
                             value=custom_header.value
                             set_value=custom_header.set_value
@@ -150,7 +144,6 @@ pub fn ReqParamsHeadersPanel(
                             disabled=move || false
                             on_click=move |_| {
                                 params.read_untracked().set_custom_headers.write().retain(|h| h.id != custom_header.id);
-                                on_change.run(RequestParamKind::CustomHeaders);
                             }
                         />
                     </div>
