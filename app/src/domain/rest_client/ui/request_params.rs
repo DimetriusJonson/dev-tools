@@ -20,7 +20,7 @@ pub struct RequestParams {
     pub set_custom_headers: WriteSignal<Vec<CustomHeader>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RequestInfo {
     pub id: i32,
     pub url: String,
@@ -28,7 +28,7 @@ pub struct RequestInfo {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CustomHeader {
     pub id: usize,
     pub name: ReadSignal<String>,

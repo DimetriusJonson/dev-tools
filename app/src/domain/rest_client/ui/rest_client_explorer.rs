@@ -8,10 +8,10 @@ use crate::{
 
 #[component]
 pub fn RestClientExplorer(
-    current_request: ReadSignal<Option<RequestInfo>>,
-    set_current_request: WriteSignal<Option<RequestInfo>>,
+    current_request: ReadSignal<RequestInfo>,
+    set_current_request: WriteSignal<RequestInfo>,
 ) -> impl IntoView {
-    let (requests, set_requests) = signal(vec![]);
+    let (requests, set_requests) = signal(Vec::<RwSignal<RequestInfo>>::new());
 
     let on_create_request = move |_| {
         let request = RequestInfo {
@@ -20,8 +20,8 @@ pub fn RestClientExplorer(
             method: "GET".to_owned(),
         };
 
-        set_requests.write().push(request.clone());
-        set_current_request.set(Some(request.clone()));
+        set_requests.write().push(RwSignal::new(request.clone()));
+        set_current_request.set(request.clone());
         save_requests_ids(&requests.read_untracked());
         set_local_store_value(&format!("{}-rc_url", request.id), request.url);
         set_local_store_value(&format!("{}-rc_method", request.id), request.method);
@@ -31,9 +31,21 @@ pub fn RestClientExplorer(
         set_requests.set(load_requests());
     });
 
+    Effect::watch(
+        move || current_request.get(),
+        move |value, _prev, _| {
+            if let Some(req) =
+                requests.read_untracked().iter().find(|r| r.read_untracked().id == value.id)
+            {
+                req.write().url = value.url.to_owned();
+                req.write().method = value.method.to_owned();
+            }
+        },
+        false,
+    );
+
     view! {
         <div class="flex flex-col p-0 dark:text-white border-r-2 border-gray-700">
-
             <div class="p-4">
                 <Button
                     label=move || "Create Request".to_owned()
@@ -45,24 +57,22 @@ pub fn RestClientExplorer(
                 />
             </div>
 
-            <For
-                each=move || requests.get()
-                key=|request| request.id
-                children=move |request| {
-                    let request_cloned = request.clone();
+            { move || { requests.read().iter()
+                .map(|request| {
                     view! {
                         <div class="flex w-full h-10 items-center justify-center hover:bg-slate-500/50 cursor-pointer p-2"
-                        on:click={
-                            move |_| {
-                                set_current_request.set(Some(request_cloned.clone()));
+                            on:click={
+                                let request_cloned = request.get();
+                                move |_| {
+                                    set_current_request.set(request_cloned.clone());
+                                }
                             }
-                        }
-                        >
-                            <span class="bg-sky-500">{request.method}</span><span class="pl-2">{request.url}</span>
+                            >
+                            <span class="bg-sky-500">{request.get().method}</span><span class="pl-2">{request.get().url}</span>
                         </div>
                     }
-                }
-            />
+                }).collect_view()
+            }}
         </div>
     }
 }
@@ -87,18 +97,22 @@ fn load_requests_ids() -> Vec<i32> {
     }
 }
 
-fn load_requests() -> Vec<RequestInfo> {
+fn load_requests() -> Vec<RwSignal<RequestInfo>> {
     load_requests_ids()
         .iter()
         .map(|id| {
             let url = get_local_store_value(&format!("{}-rc_url", id), "".to_owned());
             let method = get_local_store_value(&format!("{}-rc_method", id), "".to_owned());
-            RequestInfo { id: *id, url, method }
+            RwSignal::new(RequestInfo { id: *id, url, method })
         })
         .collect()
 }
 
-fn save_requests_ids(requests: &Vec<RequestInfo>) {
-    let value = requests.iter().map(|r| r.id.to_string()).collect::<Vec<String>>().join(",");
+fn save_requests_ids(requests: &Vec<RwSignal<RequestInfo>>) {
+    let value = requests
+        .iter()
+        .map(|r| r.read_untracked().id.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
     set_local_store_value("rc_requests_ids", value);
 }
