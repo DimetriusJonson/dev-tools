@@ -1,7 +1,7 @@
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::ui::req_params::RequestParams;
-use crate::domain::rest_client::ui::req_params_headers_panel::ReqParamsHeadersPanel;
-use crate::domain::rest_client::ui::req_result_panel::ReqResultData;
+use crate::domain::rest_client::ui::request_params::RequestParams;
+use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
+use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
 use gloo_net::http::Request;
 use leptos::prelude::*;
@@ -17,7 +17,7 @@ use crate::model::rest_client_request::RestClientRequest;
 use crate::model::rest_client_response::RestClientResponse;
 
 #[component]
-pub fn ReqParamsPanel(
+pub fn RequestParamsPanel(
     params: ReadSignal<RequestParams>,
     #[prop(into)] on_result: Callback<ReqResultData>,
 ) -> impl IntoView {
@@ -125,7 +125,7 @@ pub fn ReqParamsPanel(
 
             </div>
 
-            <ReqParamsHeadersPanel params />
+            <RequestHeadersPanel params />
 
             <div class="flex-1 flex">
                 <TextArea

@@ -23,7 +23,7 @@ pub struct ReqResultData {
 }
 
 #[component]
-pub fn ReqResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoView {
+pub fn RequestResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
 

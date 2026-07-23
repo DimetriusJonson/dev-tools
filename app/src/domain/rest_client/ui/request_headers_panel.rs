@@ -1,7 +1,7 @@
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
 use crate::common::ui_utils::is_base_header_name;
 use crate::components::ui::button::{Button, ButtonColor, ButtonWidth};
-use crate::domain::rest_client::ui::req_params::{CustomHeader, RequestParams};
+use crate::domain::rest_client::ui::request_params::{CustomHeader, RequestParams};
 use crate::i18n::*;
 use leptos::prelude::*;
 
@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[component]
-pub fn ReqParamsHeadersPanel(
+pub fn RequestHeadersPanel(
     params: ReadSignal<RequestParams>,
 ) -> impl IntoView {
     let i18n = use_i18n();

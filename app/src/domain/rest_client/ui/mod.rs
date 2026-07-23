@@ -1,5 +1,6 @@
-pub mod req_params_panel;
-pub mod req_result_panel;
-pub mod req_params_headers_panel;
-pub mod req_panel;
-pub mod req_params;
+pub mod request_params_panel;
+pub mod request_result_panel;
+pub mod request_headers_panel;
+pub mod request_panel;
+pub mod request_params;
+pub mod rest_explorer_panel;
