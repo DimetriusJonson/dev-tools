@@ -1,11 +1,7 @@
 use leptos::prelude::*;
 
 use crate::{
-    common::{
-        local_store::{get_local_store_value, set_local_store_value},
-        ui_utils::get_accept_language,
-    },
-    domain::rest_client::ui::{
+    common::{local_store::{get_local_store_value, set_local_store_value}, ui_utils::get_accept_language}, domain::rest_client::ui::{
         request_params::{CustomHeader, RequestInfo, RequestParams},
         request_params_panel::RequestParamsPanel,
         request_result_panel::RequestResultPanel,
@@ -17,35 +13,13 @@ pub fn RequestPanel(
     request_info: ReadSignal<RequestInfo>,
     set_request_info: WriteSignal<RequestInfo>,
 ) -> impl IntoView {
-    let (url, set_url) = signal(get_stored_value(
-        "rc_url",
-        request_info.read_untracked().url.to_owned(),
-        request_info.read_untracked().id,
-    ));
-    let (method, set_method) = signal(get_stored_value(
-        "rc_method",
-        request_info.read_untracked().method.to_owned(),
-        request_info.read_untracked().id,
-    ));
-    let (body, set_body) =
-        signal(get_stored_value("rc_body", "".to_owned(), request_info.read_untracked().id));
-    let (content_type, set_content_type) = signal(get_stored_value(
-        "rc_content_type",
-        "".to_owned(),
-        request_info.read_untracked().id,
-    ));
-    let (accept, set_accept) =
-        signal(get_stored_value("rc_accept", "".to_owned(), request_info.read_untracked().id));
-    let (user_agent, set_user_agent) = signal(get_stored_value(
-        "rc_user_agent",
-        "WebDevUsefulTools Client".to_owned(),
-        request_info.read_untracked().id,
-    ));
-    let (accept_lang, set_accept_lang) = signal(get_stored_value(
-        "rc_accept_lang",
-        get_accept_language(),
-        request_info.read_untracked().id,
-    ));
+    let (url, set_url) = signal("".to_owned());
+    let (method, set_method) = signal("".to_owned());
+    let (body, set_body) = signal("".to_owned());
+    let (content_type, set_content_type) = signal("".to_owned());
+    let (accept, set_accept) = signal("".to_owned());
+    let (user_agent, set_user_agent) = signal("".to_owned());
+    let (accept_lang, set_accept_lang) = signal("".to_owned());
     let (custom_headers, set_custom_headers) = signal(Vec::<CustomHeader>::new());
     let (params, _set_params) = signal(RequestParams {
         url,
@@ -73,21 +47,26 @@ pub fn RequestPanel(
             .set(load_custom_headers(request_info.read_untracked().id));
     });
 
+    create_request_info_watcher(params, request_info);
     create_req_watchers(params, request_info, set_request_info);
 
     let (response, set_response) = signal(None);
 
     view! {
-        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-            <RequestParamsPanel
-                params on_result=move|res| {
-                    set_response.set(Some(res));
-                }
-            />
+        <Show when=move || { request_info.read().id > 0 }
+            fallback=|| view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{"Select project please."}</div> }
+        >
+            <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
+                <RequestParamsPanel
+                    params on_result=move|res| {
+                        set_response.set(Some(res));
+                    }
+                />
 
-            <RequestResultPanel data=response/>
+                <RequestResultPanel data=response/>
 
-        </div>
+            </div>
+        </Show>
     }
 }
 
@@ -100,44 +79,6 @@ fn create_req_watchers(
     request_info: ReadSignal<RequestInfo>,
     set_request_info: WriteSignal<RequestInfo>,
 ) {
-    Effect::watch(
-        move || request_info.get(),
-        move |value, prev, _| {
-            let id = value.id;
-            if prev.is_none() || id != prev.unwrap().id {
-                params.read_untracked().set_url.set(value.url.to_owned());
-                params.read_untracked().set_method.set(value.method.to_owned());
-                params.read_untracked().set_body.set(get_stored_value(
-                    "rc_body",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_content_type.set(get_stored_value(
-                    "rc_content_type",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_accept.set(get_stored_value(
-                    "rc_accept",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_accept_lang.set(get_stored_value(
-                    "rc_accept_lang",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_user_agent.set(get_stored_value(
-                    "rc_user_agent",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_custom_headers.set(load_custom_headers(id));
-            }
-        },
-        false,
-    );
-
     Effect::watch(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
@@ -180,6 +121,49 @@ fn create_req_watchers(
                     &format!("{}-rc_custom_headers", request_info.read_untracked().id),
                     custom_headers_to_string(value),
                 )
+            }
+        },
+        false,
+    );
+}
+
+fn create_request_info_watcher(
+    params: ReadSignal<RequestParams>,
+    request_info: ReadSignal<RequestInfo>,
+) {
+    Effect::watch(
+        move || request_info.get(),
+        move |value, prev, _| {
+            let id = value.id;
+            if prev.is_none() || id != prev.unwrap().id {
+                params.read_untracked().set_url.set(value.url.to_owned());
+                params.read_untracked().set_method.set(value.method.to_owned());
+                params.read_untracked().set_body.set(get_stored_value(
+                    "rc_body",
+                    "".to_owned(),
+                    id,
+                ));
+                params.read_untracked().set_content_type.set(get_stored_value(
+                    "rc_content_type",
+                    "".to_owned(),
+                    id,
+                ));
+                params.read_untracked().set_accept.set(get_stored_value(
+                    "rc_accept",
+                    "".to_owned(),
+                    id,
+                ));
+                params.read_untracked().set_accept_lang.set(get_stored_value(
+                    "rc_accept_lang",
+                    get_accept_language(),
+                    id,
+                ));
+                params.read_untracked().set_user_agent.set(get_stored_value(
+                    "rc_user_agent",
+                    "WebDevUsefulTools Client".to_owned(),
+                    id,
+                ));
+                params.read_untracked().set_custom_headers.set(load_custom_headers(id));
             }
         },
         false,

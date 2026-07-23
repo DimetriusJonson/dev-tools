@@ -11,13 +11,7 @@ pub fn RestClientPage() -> impl IntoView {
     view! {
         <div class="flex flex-row dark:text-white">
             <RestClientExplorer current_request set_current_request />
-
-           <Show when=move || { current_request.read().id > 0 }
-                fallback=|| view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{"Select project please."}</div> }
-            >
-                <RequestPanel request_info=current_request set_request_info=set_current_request/>
-            </Show>
-
+            <RequestPanel request_info=current_request set_request_info=set_current_request/>
         </div>
     }
 }
