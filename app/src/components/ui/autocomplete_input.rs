@@ -70,6 +70,7 @@ pub fn AutocompleteInput(
             <input
                 type="text"
                 placeholder=placeholder_memo
+                title=placeholder_memo
                 class="w-full border rounded-lg w-full p-2
         focus:outline-4
         h-8 md:h-10 text-xs md:text-base

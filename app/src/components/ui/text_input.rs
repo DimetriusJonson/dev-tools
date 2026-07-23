@@ -69,6 +69,7 @@ pub fn TextInput(
                 type=input_type
                 name=name.to_owned()
                 placeholder=placeholder_memo
+                title=placeholder_memo
                 bind:value=(value, set_value)
                 on:change=move |ev| {
                     let val = event_target_value(&ev);
