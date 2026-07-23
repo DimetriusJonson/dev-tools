@@ -20,6 +20,14 @@ pub struct RequestParams {
     pub set_custom_headers: WriteSignal<Vec<CustomHeader>>,
 }
 
+#[derive(Clone)]
+pub struct RequestInfo {
+    pub id: i32,
+    pub url: String,
+    pub method: String,
+}
+
+
 #[derive(Clone, Debug)]
 pub struct CustomHeader {
     pub id: usize,

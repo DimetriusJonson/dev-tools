@@ -3,4 +3,4 @@ pub mod request_result_panel;
 pub mod request_headers_panel;
 pub mod request_panel;
 pub mod request_params;
-pub mod rest_explorer_panel;
+pub mod rest_client_explorer;

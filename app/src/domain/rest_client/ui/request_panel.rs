@@ -4,26 +4,23 @@ use crate::{
     common::{
         local_store::{get_local_store_value, set_local_store_value},
         ui_utils::get_accept_language,
-    },
-    domain::rest_client::ui::{
-        request_params::{CustomHeader, RequestParams},
-        request_params_panel::RequestParamsPanel,
-        request_result_panel::RequestResultPanel,
+    }, domain::rest_client::ui::{
+        request_params::{CustomHeader, RequestInfo, RequestParams}, request_params_panel::RequestParamsPanel, request_result_panel::RequestResultPanel,
     },
 };
 
 #[component]
-pub fn RequestPanel(id: usize) -> impl IntoView {
-    let (url, set_url) = signal(get_stored_value("rc_url", "".to_owned(), id));
-    let (method, set_method) = signal(get_stored_value("rc_method", "GET".to_owned(), id));
-    let (body, set_body) = signal(get_stored_value("rc_body", "".to_owned(), id));
+pub fn RequestPanel(request_info: RequestInfo) -> impl IntoView {
+    let (url, set_url) = signal(get_stored_value("rc_url", request_info.url, request_info.id));
+    let (method, set_method) = signal(get_stored_value("rc_method", request_info.method, request_info.id));
+    let (body, set_body) = signal(get_stored_value("rc_body", "".to_owned(), request_info.id));
     let (content_type, set_content_type) =
-        signal(get_stored_value("rc_content_type", "".to_owned(), id));
-    let (accept, set_accept) = signal(get_stored_value("rc_accept", "".to_owned(), id));
+        signal(get_stored_value("rc_content_type", "".to_owned(), request_info.id));
+    let (accept, set_accept) = signal(get_stored_value("rc_accept", "".to_owned(), request_info.id));
     let (user_agent, set_user_agent) =
-        signal(get_stored_value("rc_user_agent", "WebDevUsefulTools Client".to_owned(), id));
+        signal(get_stored_value("rc_user_agent", "WebDevUsefulTools Client".to_owned(), request_info.id));
     let (accept_lang, set_accept_lang) =
-        signal(get_stored_value("rc_accept_lang", get_accept_language(), id));
+        signal(get_stored_value("rc_accept_lang", get_accept_language(), request_info.id));
     let (custom_headers, set_custom_headers) = signal(Vec::<CustomHeader>::new());
     let (params, _set_params) = signal(RequestParams {
         url,
@@ -48,7 +45,7 @@ pub fn RequestPanel(id: usize) -> impl IntoView {
         params.read_untracked().set_custom_headers.set(restore_custom_headers());
     });
 
-    create_req_watchers(params, id);
+    create_req_watchers(params, request_info.id);
 
     let (response, set_response) = signal(None);
 
@@ -66,11 +63,11 @@ pub fn RequestPanel(id: usize) -> impl IntoView {
     }
 }
 
-fn get_stored_value(name: &str, default: String, request_id: usize) -> String {
+fn get_stored_value(name: &str, default: String, request_id: i32) -> String {
     get_local_store_value(&format!("{}-{}", request_id, name), default)
 }
 
-fn create_req_watchers(params: ReadSignal<RequestParams>, request_id: usize) {
+fn create_req_watchers(params: ReadSignal<RequestParams>, request_id: i32) {
     create_watcher(params.read_untracked().url, "rc_url", request_id);
     create_watcher(params.read_untracked().method, "rc_method", request_id);
     create_watcher(params.read_untracked().body, "rc_body", request_id);
@@ -88,7 +85,7 @@ fn create_req_watchers(params: ReadSignal<RequestParams>, request_id: usize) {
     );
 }
 
-fn create_watcher(value: ReadSignal<String>, name: &str, request_id: usize) {
+fn create_watcher(value: ReadSignal<String>, name: &str, request_id: i32) {
     let name = name.to_owned();
     Effect::watch(
         move || value.get(),
