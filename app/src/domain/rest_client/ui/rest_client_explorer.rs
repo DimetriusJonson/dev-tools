@@ -79,10 +79,10 @@ pub fn RestClientExplorer(
 
 fn generate_request_id() -> i32 {
     let requests_ids = load_requests_ids();
-    if !requests_ids.is_empty() {
-        if let Some(id) = requests_ids.iter().max() {
-            return *id + 1;
-        }
+    if !requests_ids.is_empty()
+        && let Some(id) = requests_ids.iter().max()
+    {
+        return *id + 1;
     }
 
     1
@@ -108,7 +108,7 @@ fn load_requests() -> Vec<RwSignal<RequestInfo>> {
         .collect()
 }
 
-fn save_requests_ids(requests: &Vec<RwSignal<RequestInfo>>) {
+fn save_requests_ids(requests: &[RwSignal<RequestInfo>]) {
     let value = requests
         .iter()
         .map(|r| r.read_untracked().id.to_string())

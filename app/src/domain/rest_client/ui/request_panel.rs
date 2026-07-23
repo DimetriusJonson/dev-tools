@@ -186,7 +186,7 @@ fn create_watcher(value: ReadSignal<String>, name: &str, request_info: ReadSigna
     );
 }
 
-fn custom_headers_to_string(headers: &Vec<CustomHeader>) -> String {
+fn custom_headers_to_string(headers: &[CustomHeader]) -> String {
     headers
         .iter()
         .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))

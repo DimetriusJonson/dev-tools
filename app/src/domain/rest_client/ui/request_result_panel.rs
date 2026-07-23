@@ -51,10 +51,8 @@ pub fn RequestResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoV
                             .headers
                             .iter()
                             .filter(|v| v.0.to_lowercase() == "content-type")
-                            .map(|v| get_media_type_code(&v.1))
-                            .filter(|v| v.is_some())
-                            .map(|v| v.unwrap_or("html".to_owned()))
-                            .nth(0)
+                            .filter_map(|v| get_media_type_code(&v.1))
+                            .next()
                             .unwrap_or("html".to_owned()),
                     ),
                     None => ("".to_owned(), "".to_owned(), Vec::new(), "html".to_owned()),
@@ -150,8 +148,7 @@ fn get_media_type_code(media_type: &str) -> Option<String> {
     MEDIA_TYPES
         .iter()
         .filter(|v| media_type.to_uppercase().contains(&v.0.to_uppercase()))
-        .map(|v| v.1.to_owned())
-        .nth(0)
+        .map(|v| v.1.to_owned()).next()
 }
 
 fn render_headers(headers: Vec<(String, String)>) -> String {

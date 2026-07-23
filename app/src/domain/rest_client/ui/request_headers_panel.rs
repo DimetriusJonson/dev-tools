@@ -11,9 +11,7 @@ use crate::{
 };
 
 #[component]
-pub fn RequestHeadersPanel(
-    params: ReadSignal<RequestParams>,
-) -> impl IntoView {
+pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let i18n = use_i18n();
 
     let (custom_header_name, set_custom_header_name) = signal("".to_owned());
@@ -89,8 +87,8 @@ pub fn RequestHeadersPanel(
                         let name_converted = custom_header_name.get_untracked().trim().to_lowercase();
                         if !name_converted.is_empty() &&
                             !is_base_header_name(&name_converted) &&
-                            !custom_header_value.read_untracked().is_empty() {
-                            if params.read_untracked().custom_headers.read_untracked().iter().find(|h|h.name.read_untracked().trim().to_lowercase() == name_converted).is_none() {
+                            !custom_header_value.read_untracked().is_empty()
+                            && params.read_untracked().custom_headers.read_untracked().iter().find(|h|h.name.read_untracked().trim().to_lowercase() == name_converted).is_none() {
                                 let id = params.read_untracked().custom_headers.read_untracked().iter().map(|h|h.id).max().unwrap_or_default() + 1;
                                 let (name, set_name) = signal(custom_header_name.get_untracked());
                                 let (value, set_value) = signal(custom_header_value.get_untracked());
@@ -99,7 +97,6 @@ pub fn RequestHeadersPanel(
                                 set_custom_header_name.set("".to_owned());
                                 set_custom_header_value.set("".to_owned());
                             }
-                        }
                     }
                 />
             </div>
