@@ -1,14 +1,20 @@
 use std::{collections::HashMap, time::Duration};
 
 use leptos::{
-    ev, html::{Div, Input}, leptos_dom::{self, logging::console_log}, prelude::*,
+    ev,
+    html::{Div, Input},
+    leptos_dom::{self},
+    prelude::*,
 };
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::{
-    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value}, components::ui::{
-        button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth}, text_input::TextInput,
-    }, domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
+    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+    components::ui::{
+        button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth},
+        text_input::TextInput,
+    },
+    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
 
 #[component]
@@ -103,7 +109,7 @@ pub fn RestClientExplorer(
                 />
             </div>
 
-            { move || { requests.read().iter()
+            { move || { requests.get().into_iter()
                 .map(|request| {
                     let request_cloned = request.get();
 
@@ -125,6 +131,7 @@ pub fn RestClientExplorer(
                                     if current_request.read_untracked().id != request_cloned.id {
                                         set_current_request.set(request_cloned.clone());
                                         set_edit_name_mode.set(false);
+                                        set_timeout(move || set_popup_menu_show.set(request_cloned.id), Duration::from_millis(250));
                                     } else {
                                         set_popup_menu_show.set(request_cloned.id);
                                     }
@@ -138,70 +145,75 @@ pub fn RestClientExplorer(
                                         <span class={format!("p-2 rounded-xl {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
                                         <span class="p-2 w-full truncate">{request_cloned.display_name()}</span>
 
-                                        <Show when=move || request_cloned.id == current_request.read().id>
-                                            <div id={format!("div-menu-{}", request_cloned.id)} class="relative px-2 hidden group-hover:block z-50" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
-                                                <Button
-                                                    label=move || "...".to_owned()
-                                                    class_name="hover:bg-sky-500/80 w-8 h-5 pb-6".to_owned()
-                                                    button_width=ButtonWidth::Custom
-                                                    button_height=ButtonHeight::Custom
-                                                    text_size=ButtonTextSize::Sm
-                                                    color=ButtonColor::Custom
-                                                    loading=move || false
-                                                    on_click=move |_|{
-                                                        set_popup_menu_show.set(request_cloned.id);
-                                                    }
-                                                    disabled=move || false
-                                                />
-
-                                                <Show when=move || popup_menu_show.get() == request_cloned.id>
-                                                    {
-                                                        view! {
-                                                        <RequestPopupMenu class_name="absolute inset-0".to_owned()
-                                                            items=move || {vec![
-                                                                    ("run".to_owned(), "Run request".to_owned()),
-                                                                    ("rename".to_owned(), "Rename".to_owned()),
-                                                                    ("delete".to_owned(), "Delete".to_owned()),
-                                                                    ]}
-                                                            on_selected=move |val:(String, String)| {
-                                                                match val.0.as_str() {
-                                                                    "delete" => {
-                                                                        set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
-                                                                        set_menu_refs.write().remove(&request_cloned.id);
-
-                                                                        set_current_request.set(RequestInfo::new_empty());
-                                                                        save_requests_ids(&requests.read_untracked());
-                                                                        delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
-                                                                        set_popup_menu_show.set(0);
-                                                                    },
-                                                                    "rename" => {
-                                                                        set_edit_name_mode.set(true);
-                                                                        set_edit_name.set(current_request.read_untracked().display_name());
-
-                                                                        set_timeout(move || {
-                                                                            if let Some(input) = edit_name_ref.get() {
-                                                                                input.focus().unwrap();
-                                                                                input.select();
-                                                                                set_popup_menu_show.set(0);
-                                                                            }
-                                                                        }, Duration::from_millis(250));
-                                                                    }
-                                                                    _ => ()
-                                                                }
-                                                            }
-                                                        />
+                                        <div id={format!("div-menu-{}", request_cloned.id)} class="relative px-2 hidden group-hover:block z-50" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
+                                            <Button
+                                                label=move || "...".to_owned()
+                                                class_name="hover:bg-sky-500/80 w-8 h-5 pb-6".to_owned()
+                                                button_width=ButtonWidth::Custom
+                                                button_height=ButtonHeight::Custom
+                                                text_size=ButtonTextSize::Sm
+                                                color=ButtonColor::Custom
+                                                loading=move || false
+                                                on_click={
+                                                    let request_cloned = request.get();
+                                                    move |_|{
+                                                        if current_request.read_untracked().id != request_cloned.id {
+                                                            set_current_request.set(request_cloned.clone());
+                                                            set_timeout(move || set_popup_menu_show.set(request_cloned.id), Duration::from_millis(250));
+                                                        } else {
+                                                            set_popup_menu_show.set(request_cloned.id);
+                                                        }
                                                     }}
-                                                </Show>
-                                            </div>
-                                        </Show>
+                                                disabled=move || false
+                                            />
+
+                                            <Show when=move || popup_menu_show.get() == request_cloned.id>
+                                                {
+                                                    view! {
+                                                    <RequestPopupMenu class_name="absolute inset-0".to_owned()
+                                                        items=move || {vec![
+                                                                ("run".to_owned(), "Run request".to_owned()),
+                                                                ("rename".to_owned(), "Rename".to_owned()),
+                                                                ("delete".to_owned(), "Delete".to_owned()),
+                                                                ]}
+                                                        on_selected=move |val:(String, String)| {
+                                                            match val.0.as_str() {
+                                                                "delete" => {
+                                                                    set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
+                                                                    set_menu_refs.write().remove(&request_cloned.id);
+
+                                                                    set_current_request.set(RequestInfo::new_empty());
+                                                                    save_requests_ids(&requests.read_untracked());
+                                                                    delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
+                                                                    set_popup_menu_show.set(0);
+                                                                },
+                                                                "rename" => {
+                                                                    set_edit_name_mode.set(true);
+                                                                    set_edit_name.set(current_request.read_untracked().display_name());
+
+                                                                    set_timeout(move || {
+                                                                        if let Some(input) = edit_name_ref.get() {
+                                                                            input.focus().unwrap();
+                                                                            input.select();
+                                                                            set_popup_menu_show.set(0);
+                                                                        }
+                                                                    }, Duration::from_millis(250));
+                                                                }
+                                                                _ => ()
+                                                            }
+                                                        }
+                                                    />
+                                                }}
+                                            </Show>
+                                        </div>
                                     }}>
                                 {move || view! {
                                     <TextInput node_ref=edit_name_ref
