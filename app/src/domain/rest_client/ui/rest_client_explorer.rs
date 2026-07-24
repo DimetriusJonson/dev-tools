@@ -9,12 +9,9 @@ use leptos::{
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::{
-    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
-    components::ui::{
-        button::{Button, ButtonColor, ButtonWidth},
-        text_input::TextInput,
-    },
-    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
+    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value}, components::ui::{
+        button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth}, text_input::TextInput,
+    }, domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
 
 #[component]
@@ -137,8 +134,11 @@ pub fn RestClientExplorer(
                                         <div id={format!("div-menu-{}", request_cloned.id)} class="relative px-2 hidden group-hover:block z-50" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
                                             <Button
                                                 label=move || "...".to_owned()
-                                                button_width=ButtonWidth::OneSymbol
-                                                color=ButtonColor::Light
+                                                class_name="hover:bg-sky-500/80 w-8 h-5 pb-6".to_owned()
+                                                button_width=ButtonWidth::Custom
+                                                button_height=ButtonHeight::Custom
+                                                text_size=ButtonTextSize::Sm
+                                                color=ButtonColor::Custom
                                                 loading=move || false
                                                 on_click=move |_|{
                                                     set_popup_menu_show.set(request_cloned.id);

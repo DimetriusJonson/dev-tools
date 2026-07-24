@@ -4,8 +4,6 @@ use leptos::prelude::{ReadSignal, WriteSignal};
 pub struct RequestParams {
     pub url: ReadSignal<String>,
     pub set_url: WriteSignal<String>,
-    pub name: ReadSignal<String>,
-    pub set_name: WriteSignal<String>,
     pub method: ReadSignal<String>,
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,

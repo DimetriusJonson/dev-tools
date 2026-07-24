@@ -7,6 +7,7 @@ pub enum ButtonColor {
     Success,
     Light,
     Danger,
+    Custom,
 }
 
 #[derive(Default)]
@@ -22,7 +23,15 @@ pub enum ButtonWidth {
     Auto,
     OneSymbol,
     Md,
-    Lg
+    Lg,
+    Custom
+}
+
+#[derive(Default)]
+pub enum ButtonHeight {
+    Custom,
+    #[default]
+    Md,
 }
 
 #[component]
@@ -32,6 +41,8 @@ pub fn Button(
     #[prop(optional)] class_name: String,
     #[prop(optional)] color: ButtonColor,
     #[prop(optional)] button_width: ButtonWidth,
+    #[prop(optional)] button_height: ButtonHeight,
+    #[prop(optional)] text_size: ButtonTextSize,
     loading: impl Fn() -> bool + Send + Sync + 'static,
     disabled: impl Fn() -> bool + Send + Sync + 'static,
     on_click: impl FnMut(MouseEvent) + 'static,
@@ -42,7 +53,7 @@ pub fn Button(
 
     let button_element: NodeRef<html::Button> = NodeRef::new();
 
-    let base_classes = "rounded-3xl font-medium px-4 py-1 md:py-2 h-8dvh md:h-10 justify-center items-center text-sm md:text-base transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl font-medium justify-center items-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -51,13 +62,25 @@ pub fn Button(
             "bg-gray-200 dark:hover:bg-gray-50 hover:bg-gray-300 text-black".to_owned()
         }
         ButtonColor::Danger => "bg-red-800 hover:bg-red-800/80 text-white".to_owned(),
+        ButtonColor::Custom => "".to_owned(),
     };
 
     let button_width_classes = match button_width {
-        ButtonWidth::Auto => "w-auto".to_owned(),
-        ButtonWidth::OneSymbol => "w-12".to_owned(),
-        ButtonWidth::Md => "w-32".to_owned(),
-        ButtonWidth::Lg => "w-38".to_owned(),
+        ButtonWidth::Auto => "w-auto px-4".to_owned(),
+        ButtonWidth::OneSymbol => "w-12 px-4".to_owned(),
+        ButtonWidth::Md => "w-32 px-4".to_owned(),
+        ButtonWidth::Lg => "w-38 px-4".to_owned(),
+        ButtonWidth::Custom => "".to_owned(),
+    };
+
+    let button_height_classes = match button_height {
+        ButtonHeight::Custom => "".to_owned(),
+        ButtonHeight::Md => "h-8dvh md:h-10 py-1 md:py-2".to_owned(),
+    };
+
+    let text_size_classes = match text_size {
+        ButtonTextSize::Sm => "text-xs md:text-sm".to_owned(),
+        ButtonTextSize::Md => "text-sm md:text-base".to_owned(),
     };
 
     view! {
@@ -65,7 +88,7 @@ pub fn Button(
             node_ref=button_element
             id={id}
             aria-label=move || label_memo.get()
-            class=move || format!("{} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, 
+            class=move || format!("{} {} {} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, button_height_classes, text_size_classes,
                 match loading_memo.get() {
                     true => "inline-flex leading-6 transition ease-in-out duration-150".to_owned(),
                     _ => "".to_owned()
