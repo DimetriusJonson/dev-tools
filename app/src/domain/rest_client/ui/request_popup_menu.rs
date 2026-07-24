@@ -2,15 +2,12 @@ use leptos::prelude::*;
 
 #[component]
 pub fn RequestPopupMenu(
-    show: impl Fn() -> bool + Send + Sync + 'static,
     #[prop(optional)] class_name: String,
     items: impl Fn() -> Vec<(String, String)> + Send + Sync + 'static,
     #[prop(into)] on_selected: Callback<(String, String)>,
 ) -> impl IntoView {
     view! {
-        <div class={format!("flex flex-col bg-gray-800 rounded-xl shadow-2xl text-gray-300 w-fit h-fit whitespace-nowrap p-4 items-center {}", class_name)}
-            class:hidden = move || !show()>
-
+        <div class={format!("flex flex-col bg-gray-800 rounded-xl shadow-2xl text-gray-300 w-fit h-fit whitespace-nowrap p-4 items-center {}", class_name)}>
             {
                 items().into_iter()
                   .map(|item| {

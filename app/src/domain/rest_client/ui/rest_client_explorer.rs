@@ -9,9 +9,7 @@ use leptos::{
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::{
-    common::local_store::{get_local_store_value, set_local_store_value},
-    components::ui::button::{Button, ButtonWidth},
-    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
+    common::local_store::{get_local_store_value, set_local_store_value}, components::ui::button::{Button, ButtonColor, ButtonWidth}, domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
 
 #[component]
@@ -103,30 +101,35 @@ pub fn RestClientExplorer(
                                 }
                             }
                             >
-                            <span class="bg-sky-500 p-2 rounded-xl">{request.get().method}</span>
-                            <span class="p-2 w-full truncate">{request.get().url}</span>
+                            <span class={format!("p-2 rounded-xl {}", get_method_color(&request.read().method))}>{request.read().method.to_owned()}</span>
+                            <span class="p-2 w-full truncate">{request.read().url.to_owned()}</span>
                             <div class="relative px-2 hidden group-hover:block z-50" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
                                 <Button
                                     label=move || "...".to_owned()
-                                    button_width=ButtonWidth::Auto
+                                    button_width=ButtonWidth::OneSymbol
+                                    color=ButtonColor::Light
                                     loading=move || false
                                     on_click=move |_|{
                                         set_popup_menu_show.set(request_cloned.id);
                                     }
                                     disabled=move || false
                                 />
-                                <RequestPopupMenu class_name="absolute inset-0".to_owned()
-                                    show=move || popup_menu_show.get() == request_cloned.id
-                                    items=move || {vec![
-                                            ("run".to_owned(), "Run request".to_owned()),
-                                            ("rename".to_owned(), "Rename".to_owned()),
-                                            ("delete".to_owned(), "Delete".to_owned()),
-                                            ]}
-                                    on_selected=move |val:(String, String)| {
-                                        set_popup_menu_show.set(0);
-                                        console_log(&val.0);
-                                    }
-                                    />
+
+                                <Show when=move || popup_menu_show.get() == request_cloned.id>
+                                    {view! {
+                                        <RequestPopupMenu class_name="absolute inset-0".to_owned()
+                                            items=move || {vec![
+                                                    ("run".to_owned(), "Run request".to_owned()),
+                                                    ("rename".to_owned(), "Rename".to_owned()),
+                                                    ("delete".to_owned(), "Delete".to_owned()),
+                                                    ]}
+                                            on_selected=move |val:(String, String)| {
+                                                set_popup_menu_show.set(0);
+                                                console_log(&val.0);
+                                            }
+                                        />
+                                    }}
+                                </Show>
                             </div>
                         </div>
                     }
@@ -174,4 +177,18 @@ fn save_requests_ids(requests: &[RwSignal<RequestInfo>]) {
         .collect::<Vec<String>>()
         .join(",");
     set_local_store_value("rc_requests_ids", value);
+}
+
+fn get_method_color(method: &str) -> String {
+    match method {
+        "GET" => "bg-sky-500/50".to_owned(),
+        "POST" => "bg-green-500/50".to_owned(),
+        "PUT" => "bg-green-400/50".to_owned(),
+        "DELETE" => "bg-red-500/50".to_owned(),
+        "PATCH" => "bg-green-400/50".to_owned(),
+        "HEAD" => "bg-gray-500/50".to_owned(),
+        "OPTIONS" => "bg-gray-500/50".to_owned(),
+        _ => "bg-sky-500".to_owned()
+    }
+    
 }
