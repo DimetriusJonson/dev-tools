@@ -6,7 +6,7 @@ use crate::domain::rest_client::ui::{
 
 #[component]
 pub fn RestClientPage() -> impl IntoView {
-    let (current_request, set_current_request) = signal(RequestInfo{ id: 0, url: "".to_owned(), method: "".to_owned() });
+    let (current_request, set_current_request) = signal(RequestInfo::new_empty());
 
     view! {
         <div class="flex flex-row dark:text-white">

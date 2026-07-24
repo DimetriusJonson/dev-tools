@@ -4,6 +4,8 @@ use leptos::prelude::{ReadSignal, WriteSignal};
 pub struct RequestParams {
     pub url: ReadSignal<String>,
     pub set_url: WriteSignal<String>,
+    pub name: ReadSignal<String>,
+    pub set_name: WriteSignal<String>,
     pub method: ReadSignal<String>,
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,
@@ -24,9 +26,9 @@ pub struct RequestParams {
 pub struct RequestInfo {
     pub id: i32,
     pub url: String,
+    pub name: String,
     pub method: String,
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CustomHeader {
@@ -35,4 +37,18 @@ pub struct CustomHeader {
     pub set_name: WriteSignal<String>,
     pub value: ReadSignal<String>,
     pub set_value: WriteSignal<String>,
+}
+
+impl RequestInfo {
+    pub fn new(id: i32, url: String, name: String, method: String) -> Self {
+        Self { id, url, method, name }
+    }
+
+    pub fn new_empty() -> Self {
+        Self { id: 0, url: "".to_owned(), method: "".to_owned(), name: "".to_owned() }
+    }
+
+    pub fn display_name(&self) -> String {
+        if !self.name.is_empty() { self.name.to_owned() } else { self.url.to_owned() }
+    }
 }

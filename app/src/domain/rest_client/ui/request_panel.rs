@@ -21,6 +21,7 @@ pub fn RequestPanel(
     let i18n = use_i18n();
 
     let (url, set_url) = signal("".to_owned());
+    let (name, set_name) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
     let (content_type, set_content_type) = signal("".to_owned());
@@ -31,6 +32,8 @@ pub fn RequestPanel(
     let (params, _set_params) = signal(RequestParams {
         url,
         set_url,
+        name,
+        set_name,
         method,
         set_method,
         body,

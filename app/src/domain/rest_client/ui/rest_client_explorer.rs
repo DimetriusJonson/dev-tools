@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use leptos::{
     ev,
-    html::Div,
+    html::{Div, Input},
     leptos_dom::{self},
     prelude::*,
 };
@@ -10,7 +10,10 @@ use web_sys::wasm_bindgen::JsCast;
 
 use crate::{
     common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
-    components::ui::button::{Button, ButtonColor, ButtonWidth},
+    components::ui::{
+        button::{Button, ButtonColor, ButtonWidth},
+        text_input::TextInput,
+    },
     domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
 
@@ -21,14 +24,18 @@ pub fn RestClientExplorer(
 ) -> impl IntoView {
     let (requests, set_requests) = signal(Vec::<RwSignal<RequestInfo>>::new());
     let (popup_menu_show, set_popup_menu_show) = signal(0);
+    let (edit_name_mode, set_edit_name_mode) = signal(false);
+    let (edit_name, set_edit_name) = signal("".to_owned());
     let (menu_refs, set_menu_refs) = signal(HashMap::<i32, NodeRef<Div>>::new());
+    let edit_name_ref = NodeRef::<Input>::new();
 
     let on_create_request = move |_| {
-        let request = RequestInfo {
-            id: generate_request_id(),
-            url: format!("http://{}/test_json", window().location().host().unwrap()),
-            method: "GET".to_owned(),
-        };
+        let request = RequestInfo::new(
+            generate_request_id(),
+            format!("http://{}/test_json", window().location().host().unwrap()),
+            "".to_owned(),
+            "GET".to_owned(),
+        );
 
         set_requests.write().push(RwSignal::new(request.clone()));
         set_menu_refs.write().insert(request.id, NodeRef::<Div>::new());
@@ -61,16 +68,28 @@ pub fn RestClientExplorer(
     );
 
     let _ = leptos_dom::helpers::window_event_listener(ev::click, move |ev| {
-        if popup_menu_show.get() == 0 {
+        if popup_menu_show.get() > 0 {
+            if let Some(target_ref) =
+                menu_refs.read_untracked().get(&popup_menu_show.get_untracked())
+            {
+                if let Some(target_element) = target_ref.get() {
+                    if let Some(clicked_target) = ev.target() {
+                        let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
+                        if !target_element.contains(Some(clicked_node)) {
+                            set_popup_menu_show.set(0);
+                        }
+                    }
+                }
+            }
             return;
         }
 
-        if let Some(target_ref) = menu_refs.read_untracked().get(&popup_menu_show.get_untracked()) {
-            if let Some(target_element) = target_ref.get() {
+        if edit_name_mode.get_untracked() {
+            if let Some(target_element) = edit_name_ref.get() {
                 if let Some(clicked_target) = ev.target() {
                     let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
                     if !target_element.contains(Some(clicked_node)) {
-                        set_popup_menu_show.set(0);
+                        set_edit_name_mode.set(false);
                     }
                 }
             }
@@ -78,7 +97,7 @@ pub fn RestClientExplorer(
     });
 
     view! {
-        <div class="flex flex-col gap-y-4 dark:text-white border-r-2 border-gray-700 w-64">
+        <div id="div-explorer-root" class="flex flex-col gap-y-4 dark:text-white border-r-2 border-gray-700 w-64">
             <div class="p-4">
                 <Button
                     label=move || "Create Request".to_owned()
@@ -93,63 +112,111 @@ pub fn RestClientExplorer(
             { move || { requests.read().iter()
                 .map(|request| {
                     let request_cloned = request.get();
+
                     view! {
-                        <div class="group flex w-full h-10 items-center hover:bg-sky-500/50 cursor-pointer p-2"
+                        <div id={format!("div-req-{}", request_cloned.id)} class="group flex w-full h-10 items-center hover:bg-sky-500/50 cursor-pointer p-2"
                             class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
                             on:click={
                                 let request_cloned = request.get();
                                 move |_| {
-                                    set_current_request.set(request_cloned.clone());
+                                    if current_request.read_untracked().id != request_cloned.id {
+                                        set_current_request.set(request_cloned.clone());
+                                        set_edit_name_mode.set(false);
+                                    }
                                 }
                             }
                             >
-                            <span class={format!("p-2 rounded-xl {}", get_method_color(&request.read().method))}>{request.read().method.to_owned()}</span>
-                            <span class="p-2 w-full truncate">{request.read().url.to_owned()}</span>
-                            <div class="relative px-2 hidden group-hover:block z-50" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
-                                <Button
-                                    label=move || "...".to_owned()
-                                    button_width=ButtonWidth::OneSymbol
-                                    color=ButtonColor::Light
-                                    loading=move || false
-                                    on_click=move |_|{
-                                        set_popup_menu_show.set(request_cloned.id);
-                                    }
-                                    disabled=move || false
-                                />
 
-                                <Show when=move || popup_menu_show.get() == request_cloned.id>
-                                    {view! {
-                                        <RequestPopupMenu class_name="absolute inset-0".to_owned()
-                                            items=move || {vec![
-                                                    ("run".to_owned(), "Run request".to_owned()),
-                                                    ("rename".to_owned(), "Rename".to_owned()),
-                                                    ("delete".to_owned(), "Delete".to_owned()),
-                                                    ]}
-                                            on_selected=move |val:(String, String)| {
-                                                set_popup_menu_show.set(0);
-                                                match val.0.as_str() {
-                                                    "delete" => {
-                                                        set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
-                                                        set_menu_refs.write().remove(&request_cloned.id);
+                            <Show when=move || request_cloned.id == current_request.read().id && edit_name_mode.get()
+                                fallback={
+                                    let request_cloned = request.get();
+                                    move || view!{
+                                        <span class={format!("p-2 rounded-xl {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
+                                        <span class="p-2 w-full truncate">{request_cloned.display_name()}</span>
 
-                                                        set_current_request.set(RequestInfo { id: 0, url: "".to_owned(), method: "".to_owned() });
-                                                        save_requests_ids(&requests.read_untracked());
-                                                        delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
-                                                        delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
-                                                    },
-                                                    _ => ()
+                                        <div id={format!("div-menu-{}", request_cloned.id)} class="relative px-2 hidden group-hover:block z-50" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
+                                            <Button
+                                                label=move || "...".to_owned()
+                                                button_width=ButtonWidth::OneSymbol
+                                                color=ButtonColor::Light
+                                                loading=move || false
+                                                on_click=move |_|{
+                                                    set_popup_menu_show.set(request_cloned.id);
                                                 }
-                                            }
+                                                disabled=move || false
+                                            />
+
+                                            <Show when=move || popup_menu_show.get() == request_cloned.id>
+                                                {
+                                                    view! {
+                                                    <RequestPopupMenu class_name="absolute inset-0".to_owned()
+                                                        items=move || {vec![
+                                                                ("run".to_owned(), "Run request".to_owned()),
+                                                                ("rename".to_owned(), "Rename".to_owned()),
+                                                                ("delete".to_owned(), "Delete".to_owned()),
+                                                                ]}
+                                                        on_selected=move |val:(String, String)| {
+                                                            match val.0.as_str() {
+                                                                "delete" => {
+                                                                    set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
+                                                                    set_menu_refs.write().remove(&request_cloned.id);
+
+                                                                    set_current_request.set(RequestInfo::new_empty());
+                                                                    save_requests_ids(&requests.read_untracked());
+                                                                    delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
+                                                                    delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
+                                                                    set_popup_menu_show.set(0);
+                                                                },
+                                                                "rename" => {
+                                                                    set_edit_name_mode.set(true);
+                                                                    set_edit_name.set(current_request.read_untracked().display_name());
+
+                                                                    set_timeout(move || {
+                                                                        if let Some(input) = edit_name_ref.get() {
+                                                                            input.focus().unwrap();
+                                                                            input.select();
+                                                                            set_popup_menu_show.set(0);
+                                                                        }
+                                                                    }, Duration::from_millis(250));
+                                                                }
+                                                                _ => ()
+                                                            }
+                                                        }
+                                                    />
+                                                }}
+                                            </Show>
+                                        </div>
+
+
+                                    }}>
+                                {move || view! {
+                                    <TextInput node_ref=edit_name_ref
+                                        name="request-name".to_owned()
+                                        class_name="w-full".to_owned()
+                                        placeholder=move || "Name".to_owned()
+                                        input_type="text".to_owned()
+                                        value=edit_name
+                                        set_value=set_edit_name
+                                        on_change=move |v: String| {
+                                            requests.read_untracked().iter().filter(|r|r.read_untracked().id == request_cloned.id).for_each(|r|{
+                                                r.write().name = v.to_owned();
+                                                set_local_store_value(
+                                                    &format!("{}-{}", r.get_untracked().id, "rc_name"),
+                                                    v.to_owned(),
+                                                );
+                                            });
+                                        }
                                         />
-                                    }}
-                                </Show>
-                            </div>
+                                }}
+                            </Show>
+
                         </div>
                     }
                 }).collect_view()
@@ -183,8 +250,9 @@ fn load_requests() -> Vec<RwSignal<RequestInfo>> {
         .iter()
         .map(|id| {
             let url = get_local_store_value(&format!("{}-rc_url", id), "".to_owned());
+            let name = get_local_store_value(&format!("{}-rc_name", id), "".to_owned());
             let method = get_local_store_value(&format!("{}-rc_method", id), "".to_owned());
-            RwSignal::new(RequestInfo { id: *id, url, method })
+            RwSignal::new(RequestInfo::new(*id, url, name, method))
         })
         .collect()
 }

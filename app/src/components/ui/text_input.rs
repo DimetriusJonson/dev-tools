@@ -1,9 +1,10 @@
-use leptos::prelude::*;
+use leptos::{html::Input, prelude::*};
 
 #[component]
 pub fn TextInput(
     name: String,
     #[prop(optional)] class_name: String,
+    #[prop(optional)] node_ref: NodeRef<Input>,
     placeholder: impl Fn() -> String + Send + Sync + 'static,
     input_type: String,
     value: ReadSignal<String>,
@@ -13,7 +14,7 @@ pub fn TextInput(
     let placeholder_memo = Memo::new(move |_| placeholder());
 
     view! {
-            <input
+            <input node_ref=node_ref
                 class={format!("px-4 py-2 rounded-md shadow-inner
             text-gray-700 
             placeholder:text-gray-500 
