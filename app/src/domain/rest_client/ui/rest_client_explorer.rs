@@ -1,10 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use leptos::{
-    ev,
-    html::{Div, Input},
-    leptos_dom::{self},
-    prelude::*,
+    ev, html::{Div, Input}, leptos_dom::{self, logging::console_log}, prelude::*,
 };
 use web_sys::wasm_bindgen::JsCast;
 
@@ -122,6 +119,16 @@ pub fn RestClientExplorer(
                                     }
                                 }
                             }
+                            on:contextmenu={
+                                let request_cloned = request.get();
+                                move|e| {e.prevent_default();
+                                    if current_request.read_untracked().id != request_cloned.id {
+                                        set_current_request.set(request_cloned.clone());
+                                        set_edit_name_mode.set(false);
+                                    } else {
+                                        set_popup_menu_show.set(request_cloned.id);
+                                    }
+                                }}
                             >
 
                             <Show when=move || request_cloned.id == current_request.read().id && edit_name_mode.get()
