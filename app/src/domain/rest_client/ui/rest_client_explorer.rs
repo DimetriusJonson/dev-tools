@@ -3,13 +3,15 @@ use std::collections::HashMap;
 use leptos::{
     ev,
     html::Div,
-    leptos_dom::{self, logging::console_log},
+    leptos_dom::{self},
     prelude::*,
 };
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::{
-    common::local_store::{get_local_store_value, set_local_store_value}, components::ui::button::{Button, ButtonColor, ButtonWidth}, domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
+    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+    components::ui::button::{Button, ButtonColor, ButtonWidth},
+    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
 
 #[component]
@@ -68,7 +70,7 @@ pub fn RestClientExplorer(
                 if let Some(clicked_target) = ev.target() {
                     let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
                     if !target_element.contains(Some(clicked_node)) {
-                       set_popup_menu_show.set(0);
+                        set_popup_menu_show.set(0);
                     }
                 }
             }
@@ -125,7 +127,24 @@ pub fn RestClientExplorer(
                                                     ]}
                                             on_selected=move |val:(String, String)| {
                                                 set_popup_menu_show.set(0);
-                                                console_log(&val.0);
+                                                match val.0.as_str() {
+                                                    "delete" => {
+                                                        set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
+                                                        set_menu_refs.write().remove(&request_cloned.id);
+
+                                                        set_current_request.set(RequestInfo { id: 0, url: "".to_owned(), method: "".to_owned() });
+                                                        save_requests_ids(&requests.read_untracked());
+                                                        delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
+                                                        delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
+                                                    },
+                                                    _ => ()
+                                                }
                                             }
                                         />
                                     }}
@@ -188,7 +207,6 @@ fn get_method_color(method: &str) -> String {
         "PATCH" => "bg-green-400/50".to_owned(),
         "HEAD" => "bg-gray-500/50".to_owned(),
         "OPTIONS" => "bg-gray-500/50".to_owned(),
-        _ => "bg-sky-500".to_owned()
+        _ => "bg-sky-500".to_owned(),
     }
-    
 }

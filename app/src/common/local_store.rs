@@ -19,3 +19,8 @@ pub fn set_local_store_value(key: &str, value: String) {
     use gloo_storage::{LocalStorage, Storage};
     LocalStorage::set(key, value).unwrap_or(());
 }
+
+pub fn delete_local_store_value(key: &str) {
+    use gloo_storage::{LocalStorage, Storage};
+    LocalStorage::delete(key);
+}
