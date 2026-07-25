@@ -76,27 +76,24 @@ pub fn RestClientExplorer(
         if popup_menu_show.get() > 0 {
             if let Some(target_ref) =
                 menu_refs.read_untracked().get(&popup_menu_show.get_untracked())
+                && let Some(target_element) = target_ref.get()
+                && let Some(clicked_target) = ev.target()
             {
-                if let Some(target_element) = target_ref.get() {
-                    if let Some(clicked_target) = ev.target() {
-                        let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
-                        if !target_element.contains(Some(clicked_node)) {
-                            set_popup_menu_show.set(0);
-                        }
-                    }
+                let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
+                if !target_element.contains(Some(clicked_node)) {
+                    set_popup_menu_show.set(0);
                 }
             }
             return;
         }
 
-        if edit_name_mode.get_untracked() {
-            if let Some(target_element) = edit_name_ref.get() {
-                if let Some(clicked_target) = ev.target() {
-                    let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
-                    if !target_element.contains(Some(clicked_node)) {
-                        set_edit_name_mode.set(false);
-                    }
-                }
+        if edit_name_mode.get_untracked()
+            && let Some(target_element) = edit_name_ref.get()
+            && let Some(clicked_target) = ev.target()
+        {
+            let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
+            if !target_element.contains(Some(clicked_node)) {
+                set_edit_name_mode.set(false);
             }
         }
     });

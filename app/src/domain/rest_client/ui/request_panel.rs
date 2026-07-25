@@ -1,7 +1,13 @@
-use std::cmp::max;
-
-use crate::{common::ui_utils::get_browser_width, domain::rest_client::ui::request_result_panel::ReqResultData, i18n::*};
-use leptos::{ev, html::{Button, Div}, leptos_dom, prelude::*};
+use crate::{
+    common::ui_utils::get_browser_width,
+    domain::rest_client::ui::request_result_panel::ReqResultData, i18n::*,
+};
+use leptos::{
+    ev,
+    html::{Button, Div},
+    leptos_dom,
+    prelude::*,
+};
 
 use crate::{
     common::{
@@ -53,22 +59,24 @@ pub fn RequestPanel(
     let min_params_width = screen_width / 4;
 
     let (params_width, set_params_width) = signal(
-        get_local_store_value("rc_params_width", min_params_width.to_string()).parse::<i32>().unwrap(),
+        get_local_store_value("rc_params_width", min_params_width.to_string())
+            .parse::<i32>()
+            .unwrap(),
     );
     let (params_dragging, set_params_dragging) = signal(false);
     let params_ref = NodeRef::<Div>::new();
     let params_dragbar_ref = NodeRef::<Div>::new();
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
-        if params_dragging.get() {
-            if let Some(params_elem) = params_ref.get() {
-                let rect = params_elem.get_bounding_client_rect();
-                let new_width = ev.client_x() - rect.left() as i32;
+        if params_dragging.get()
+            && let Some(params_elem) = params_ref.get()
+        {
+            let rect = params_elem.get_bounding_client_rect();
+            let new_width = ev.client_x() - rect.left() as i32;
 
-                if new_width > min_params_width && new_width < screen_width - (screen_width / 3) {
-                    set_params_width.set(new_width);
-                    set_local_store_value("rc_params_width", new_width.to_string());
-                }
+            if new_width > min_params_width && new_width < screen_width - (screen_width / 3) {
+                set_params_width.set(new_width);
+                set_local_store_value("rc_params_width", new_width.to_string());
             }
         }
     });
@@ -88,10 +96,9 @@ pub fn RequestPanel(
             .set(load_custom_headers(request_info.read_untracked().id));
     });
 
-
     create_request_info_watcher(params, request_info, send_btn_node_ref, set_response);
     create_req_watchers(params, request_info, set_request_info);
-    
+
     view! {
         <Show when=move || { request_info.read().id > 0 }
             fallback=move || view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
@@ -185,10 +192,11 @@ fn create_request_info_watcher(
         move |value, prev, _| {
             let id = value.id;
 
-            if value.autorun && (prev.is_none() || !prev.unwrap().autorun) {
-                if let Some(send_btn) = send_btn_ref.get_untracked() {
-                    send_btn.click();
-                }
+            if value.autorun
+                && (prev.is_none() || !prev.unwrap().autorun)
+                && let Some(send_btn) = send_btn_ref.get_untracked()
+            {
+                send_btn.click();
             }
 
             if prev.is_none() || id != prev.unwrap().id {

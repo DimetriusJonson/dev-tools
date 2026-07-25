@@ -32,8 +32,8 @@ pub fn RestClientPage() -> impl IntoView {
     let explorer_dragbar_ref = NodeRef::<Div>::new();
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
-        if explorer_dragging.get() {
-            if let Some(explorer_elem) = explorer_ref.get() {
+        if explorer_dragging.get()
+            && let Some(explorer_elem) = explorer_ref.get() {
                 let rect = explorer_elem.get_bounding_client_rect();
                 let new_width = ev.client_x() - rect.left() as i32;
 
@@ -42,7 +42,6 @@ pub fn RestClientPage() -> impl IntoView {
                     set_local_store_value("rc_explorer_width", new_width.to_string());
                 }
             }
-        }
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mouseup, move |_ev| {
