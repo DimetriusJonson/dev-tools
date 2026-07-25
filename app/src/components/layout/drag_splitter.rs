@@ -23,7 +23,7 @@ pub fn DragSplitter(
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
-        if dragging.get()
+        if dragging.get_untracked()
             && let Some(target_elem) = target_ref.get()
         {
             let rect = target_elem.get_bounding_client_rect();
