@@ -100,7 +100,7 @@ pub fn RestClientExplorer(
     });
 
     view! {
-        <div class="flex flex-col gap-y-4 dark:text-white border-r-2 border-gray-700 w-64">
+        <div class="flex flex-col gap-y-0 dark:text-white border-r-2 border-gray-700 w-64">
             <div class="p-4">
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
@@ -117,8 +117,9 @@ pub fn RestClientExplorer(
                     let request_cloned = request.get();
 
                     view! {
-                        <div class="flex w-full h-10 items-center hover:bg-sky-500/50 cursor-pointer p-2"
+                        <div class="flex w-full h-10 items-center cursor-pointer p-2"
                             class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
+                            class=(["hover:bg-gray-600/50"], move || request_cloned.id != current_request.read().id)
                             on:click={
                                 let request_cloned = request.get();
                                 move |_| {
