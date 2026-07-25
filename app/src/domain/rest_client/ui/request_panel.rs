@@ -64,7 +64,9 @@ pub fn RequestPanel(
                     }
                 />
 
-                <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width" min_width={min_params_width} max_width={screen_width - (screen_width / 3)}/>
+                <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width" 
+                    min_width={min_params_width} max_width={screen_width - (screen_width / 3)}
+                    default_width={min_params_width} />
 
                 <RequestResultPanel data=response/>
 

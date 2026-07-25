@@ -8,12 +8,13 @@ pub fn DragSplitter(
     local_store_prop_name: &'static str,
     min_width: i32,
     max_width: i32,
+    default_width: i32,
 ) -> impl IntoView {
     let (dragging, set_dragging) = signal(false);
     let dragbar_ref = NodeRef::<Div>::new();
 
     let _ = Effect::new(move || {
-        let init_width = get_local_store_value(local_store_prop_name, min_width.to_string())
+        let init_width = get_local_store_value(local_store_prop_name, default_width.to_string())
             .parse::<i32>()
             .unwrap();
         if let Some(target_elem) = target_ref.get() {

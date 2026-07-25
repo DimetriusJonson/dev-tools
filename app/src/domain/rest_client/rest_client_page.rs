@@ -23,7 +23,9 @@ pub fn RestClientPage() -> impl IntoView {
         <div class="flex flex-row dark:text-white">
             <RestClientExplorer node_ref=explorer_ref current_request set_current_request />
 
-            <DragSplitter target_ref=explorer_ref local_store_prop_name="rc_explorer_width" min_width={min_explorer_width} max_width={screen_width / 2}/>
+            <DragSplitter target_ref=explorer_ref local_store_prop_name="rc_explorer_width" 
+                min_width={min_explorer_width} max_width={screen_width / 2}
+                default_width={min_explorer_width} />
 
             <RequestPanel request_info=current_request set_request_info=set_current_request/>
         </div>
