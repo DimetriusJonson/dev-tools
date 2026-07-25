@@ -176,38 +176,44 @@ pub fn RestClientExplorer(
                                                                 ("rename".to_owned(), "Rename".to_owned()),
                                                                 ("delete".to_owned(), "Delete".to_owned()),
                                                                 ]}
-                                                        on_selected=move |val:(String, String)| {
-                                                            match val.0.as_str() {
-                                                                "delete" => {
-                                                                    set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
-                                                                    set_menu_refs.write().remove(&request_cloned.id);
+                                                        on_selected={
+                                                            let request_cloned=request.get();
+                                                            move |val:(String, String)| {
+                                                                match val.0.as_str() {
+                                                                    "delete" => {
+                                                                        set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
+                                                                        set_menu_refs.write().remove(&request_cloned.id);
 
-                                                                    set_current_request.set(RequestInfo::new_empty());
-                                                                    save_requests_ids(&requests.read_untracked());
-                                                                    delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
-                                                                    delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
-                                                                    set_popup_menu_show.set(0);
-                                                                },
-                                                                "rename" => {
-                                                                    set_edit_name_mode.set(true);
-                                                                    set_edit_name.set(current_request.read_untracked().display_name());
+                                                                        set_current_request.set(RequestInfo::new_empty());
+                                                                        save_requests_ids(&requests.read_untracked());
+                                                                        delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
+                                                                        delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
+                                                                        set_popup_menu_show.set(0);
+                                                                    },
+                                                                    "rename" => {
+                                                                        set_edit_name_mode.set(true);
+                                                                        set_edit_name.set(current_request.read_untracked().display_name());
 
-                                                                    set_timeout(move || {
-                                                                        if let Some(input) = edit_name_ref.get() {
-                                                                            input.focus().unwrap();
-                                                                            input.select();
-                                                                            set_popup_menu_show.set(0);
-                                                                        }
-                                                                    }, Duration::from_millis(250));
+                                                                        set_timeout(move || {
+                                                                            if let Some(input) = edit_name_ref.get() {
+                                                                                input.focus().unwrap();
+                                                                                input.select();
+                                                                                set_popup_menu_show.set(0);
+                                                                            }
+                                                                        }, Duration::from_millis(250));
+                                                                    },
+                                                                    "run" => {
+                                                                        set_current_request.set(request_cloned.clone_and_run());
+                                                                    },
+                                                                    _ => ()
                                                                 }
-                                                                _ => ()
                                                             }
                                                         }
                                                     />

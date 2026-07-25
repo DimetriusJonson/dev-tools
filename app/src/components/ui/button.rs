@@ -46,12 +46,16 @@ pub fn Button(
     loading: impl Fn() -> bool + Send + Sync + 'static,
     disabled: impl Fn() -> bool + Send + Sync + 'static,
     on_click: impl FnMut(MouseEvent) + 'static,
+    #[prop(optional)] node_ref: Option<NodeRef::<leptos::html::Button>>,
 ) -> impl IntoView {
     let label_memo = Memo::new(move |_| label());
     let loading_memo = Memo::new(move |_| loading());
     let disabled_memo = Memo::new(move |_| disabled());
 
-    let button_element: NodeRef<html::Button> = NodeRef::new();
+    let button_element: NodeRef<html::Button> = match node_ref {
+        Some(node_ref) => node_ref,
+        None => NodeRef::new(),
+    };
 
     let base_classes = "rounded-3xl font-medium justify-center items-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 

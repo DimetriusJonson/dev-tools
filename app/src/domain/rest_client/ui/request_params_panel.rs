@@ -20,6 +20,7 @@ use crate::model::rest_client_response::RestClientResponse;
 pub fn RequestParamsPanel(
     params: ReadSignal<RequestParams>,
     #[prop(into)] on_result: Callback<ReqResultData>,
+    send_btn_node_ref: NodeRef::<leptos::html::Button>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -114,7 +115,7 @@ pub fn RequestParamsPanel(
                     on_change=move |_| {}
                 />
 
-                <Button
+                <Button node_ref=send_btn_node_ref
                     label=move || t!(i18n, rest_client_send_btn_label).to_html()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get()

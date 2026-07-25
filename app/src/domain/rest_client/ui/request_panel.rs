@@ -1,5 +1,5 @@
-use crate::i18n::*;
-use leptos::prelude::*;
+use crate::{domain::rest_client::ui::request_result_panel::ReqResultData, i18n::*};
+use leptos::{html::Button, prelude::*};
 
 use crate::{
     common::{
@@ -47,6 +47,10 @@ pub fn RequestPanel(
         set_custom_headers,
     });
 
+    let send_btn_node_ref = NodeRef::<Button>::new();
+
+    let (response, set_response) = signal(None);
+
     let _ = Effect::new(move || {
         params
             .read_untracked()
@@ -54,17 +58,17 @@ pub fn RequestPanel(
             .set(load_custom_headers(request_info.read_untracked().id));
     });
 
-    create_request_info_watcher(params, request_info);
+
+    create_request_info_watcher(params, request_info, send_btn_node_ref, set_response);
     create_req_watchers(params, request_info, set_request_info);
 
-    let (response, set_response) = signal(None);
 
     view! {
         <Show when=move || { request_info.read().id > 0 }
             fallback=move || view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
             <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                <RequestParamsPanel
+                <RequestParamsPanel send_btn_node_ref
                     params on_result=move|res| {
                         set_response.set(Some(res));
                     }
@@ -137,12 +141,22 @@ fn create_req_watchers(
 fn create_request_info_watcher(
     params: ReadSignal<RequestParams>,
     request_info: ReadSignal<RequestInfo>,
+    send_btn_ref: NodeRef<Button>,
+    set_response: WriteSignal<Option<ReqResultData>>,
 ) {
     Effect::watch(
         move || request_info.get(),
         move |value, prev, _| {
             let id = value.id;
+
+            if value.autorun && (prev.is_none() || !prev.unwrap().autorun) {
+                if let Some(send_btn) = send_btn_ref.get_untracked() {
+                    send_btn.click();
+                }
+            }
+
             if prev.is_none() || id != prev.unwrap().id {
+                set_response.set(None);
                 params.read_untracked().set_url.set(value.url.to_owned());
                 params.read_untracked().set_method.set(value.method.to_owned());
                 params.read_untracked().set_body.set(get_stored_value(

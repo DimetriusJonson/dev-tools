@@ -129,11 +129,11 @@ pub fn RequestResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoV
                         </div>
                     </div>
 
-                    <div class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base min-h-0"
+                    <div class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base min-h-0 w-full"
                         class:block=move || resp_tab_selected.get() == ResponceTabKind::Headers
                         class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Headers
                     >
-                        <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm ">
+                        <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
                             <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={render_headers(response_headers)}/>
                         </div>
                     </div>

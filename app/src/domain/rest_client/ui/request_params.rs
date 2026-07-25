@@ -26,6 +26,7 @@ pub struct RequestInfo {
     pub url: String,
     pub name: String,
     pub method: String,
+    pub autorun: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -39,11 +40,17 @@ pub struct CustomHeader {
 
 impl RequestInfo {
     pub fn new(id: i32, url: String, name: String, method: String) -> Self {
-        Self { id, url, method, name }
+        Self { id, url, method, name, autorun: false }
+    }
+
+    pub fn clone_and_run(&self) -> Self {
+        let mut info = self.clone();
+        info.autorun = true;
+        info
     }
 
     pub fn new_empty() -> Self {
-        Self { id: 0, url: "".to_owned(), method: "".to_owned(), name: "".to_owned() }
+        Self { id: 0, url: "".to_owned(), method: "".to_owned(), name: "".to_owned(), autorun: false  }
     }
 
     pub fn display_name(&self) -> String {
