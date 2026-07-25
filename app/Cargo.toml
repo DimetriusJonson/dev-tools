@@ -50,7 +50,7 @@ reqwest = { workspace = true, optional = true }
 leptos_i18n_build.workspace = true
 
 [features]
-default = ["csr","standalone"]
+default = ["csr"]
 csr = ["leptos/csr"]
 hydrate = [
     "leptos/hydrate", 
