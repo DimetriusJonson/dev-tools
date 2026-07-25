@@ -8,7 +8,6 @@ use clap::Parser;
 use dotenvy::dotenv;
 use tracing::info;
 use server::server_starter::start_axum_server;
-use tracing_log::LogTracer;
 
 #[derive(Parser)]
 #[command(name = "Dev Tools Server")]
@@ -33,8 +32,6 @@ async fn main() -> anyhow::Result<()> {
 
     dotenv().ok();
     dotenvy::from_filename_override(env_file_name).ok();
-
-    LogTracer::init().expect("Failed to set logger");
 
     let database_url = match cli.database_url {
         Some(database_url) => Some(database_url),
