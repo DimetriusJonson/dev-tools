@@ -37,23 +37,10 @@ pub fn RequestParamsPanel(
             let params = params.read_untracked();
 
             let mut headers = Vec::new();
-            if !params.content_type.read_untracked().is_empty() {
-                headers.push(("content-type".to_owned(), params.content_type.get_untracked()));
-            }
-            if !params.accept.read_untracked().is_empty() {
-                headers.push(("accept".to_owned(), params.accept.get_untracked()));
-            }
-            if !params.accept_lang.read_untracked().is_empty() {
-                headers.push(("accept_language".to_owned(), params.accept_lang.get_untracked()));
-            }
-            if !params.user_agent.read_untracked().is_empty() {
-                headers.push(("user-agent".to_owned(), params.user_agent.get_untracked()));
-            }
-
-            for custom_header in params.custom_headers.get_untracked() {
+            for header in params.headers.get_untracked() {
                 headers.push((
-                    custom_header.name.get_untracked(),
-                    custom_header.value.get_untracked(),
+                    header.name.get_untracked(),
+                    header.value.get_untracked(),
                 ));
             }
 

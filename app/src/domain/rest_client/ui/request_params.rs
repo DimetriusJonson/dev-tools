@@ -8,16 +8,8 @@ pub struct RequestParams {
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,
     pub set_body: WriteSignal<String>,
-    pub content_type: ReadSignal<String>,
-    pub set_content_type: WriteSignal<String>,
-    pub accept: ReadSignal<String>,
-    pub set_accept: WriteSignal<String>,
-    pub user_agent: ReadSignal<String>,
-    pub set_user_agent: WriteSignal<String>,
-    pub accept_lang: ReadSignal<String>,
-    pub set_accept_lang: WriteSignal<String>,
-    pub custom_headers: ReadSignal<Vec<CustomHeader>>,
-    pub set_custom_headers: WriteSignal<Vec<CustomHeader>>,
+    pub headers: ReadSignal<Vec<CustomHeader>>,
+    pub set_headers: WriteSignal<Vec<CustomHeader>>,
 }
 
 #[derive(Clone, Debug)]

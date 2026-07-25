@@ -8,7 +8,6 @@ use leptos::{
 };
 use web_sys::wasm_bindgen::JsCast;
 
-use crate::i18n::*;
 use crate::{
     common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
     components::ui::{
@@ -17,6 +16,7 @@ use crate::{
     },
     domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
+use crate::{common::ui_utils::get_accept_language, i18n::*};
 
 #[component]
 pub fn RestClientExplorer(
@@ -49,6 +49,16 @@ pub fn RestClientExplorer(
         save_requests_ids(&requests.read_untracked());
         set_local_store_value(&format!("{}-rc_url", request.id), request.url);
         set_local_store_value(&format!("{}-rc_method", request.id), request.method);
+
+        let headers = vec![
+            ("Accept".to_owned(), "application/json".to_owned()),
+            ("Accept-Language".to_owned(), get_accept_language()),
+            ("User-Agent".to_owned(), "WebDevUsefulTools Client".to_owned()),
+        ];
+        set_local_store_value(
+            &format!("{}-rc_headers", request.id),
+            headers.iter().map(|h| format!("{}:{}", h.0, h.1)).collect::<Vec<String>>().join("\n"),
+        );
     };
 
     let _ = Effect::new(move || {
@@ -195,11 +205,7 @@ pub fn RestClientExplorer(
                                                                             delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
                                                                             delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
                                                                             delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
-                                                                            delete_local_store_value(&format!("{}-rc_content_type", request_cloned.id));
-                                                                            delete_local_store_value(&format!("{}-rc_accept", request_cloned.id));
-                                                                            delete_local_store_value(&format!("{}-rc_accept_lang", request_cloned.id));
-                                                                            delete_local_store_value(&format!("{}-rc_user_agent", request_cloned.id));
-                                                                            delete_local_store_value(&format!("{}-rc_custom_headers", request_cloned.id));
+                                                                            delete_local_store_value(&format!("{}-rc_headers", request_cloned.id));
                                                                             set_popup_menu_show.set(0);
                                                                         },
                                                                         "rename" => {

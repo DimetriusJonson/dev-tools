@@ -10,10 +10,7 @@ use leptos::{
 };
 
 use crate::{
-    common::{
-        local_store::{get_local_store_value, set_local_store_value},
-        ui_utils::get_accept_language,
-    },
+    common::local_store::{get_local_store_value, set_local_store_value},
     domain::rest_client::ui::{
         request_params::{CustomHeader, RequestInfo, RequestParams},
         request_params_panel::RequestParamsPanel,
@@ -31,11 +28,7 @@ pub fn RequestPanel(
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
-    let (content_type, set_content_type) = signal("".to_owned());
-    let (accept, set_accept) = signal("".to_owned());
-    let (user_agent, set_user_agent) = signal("".to_owned());
-    let (accept_lang, set_accept_lang) = signal("".to_owned());
-    let (custom_headers, set_custom_headers) = signal(Vec::<CustomHeader>::new());
+    let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
     let (params, _set_params) = signal(RequestParams {
         url,
         set_url,
@@ -43,20 +36,12 @@ pub fn RequestPanel(
         set_method,
         body,
         set_body,
-        content_type,
-        set_content_type,
-        accept,
-        set_accept,
-        user_agent,
-        set_user_agent,
-        accept_lang,
-        set_accept_lang,
-        custom_headers,
-        set_custom_headers,
+        headers,
+        set_headers,
     });
 
     let screen_width = get_browser_width().unwrap();
-    let min_params_width = screen_width / 4;
+    let min_params_width = screen_width / 6;
 
     let (params_width, set_params_width) = signal(
         get_local_store_value("rc_params_width", min_params_width.to_string())
@@ -90,10 +75,7 @@ pub fn RequestPanel(
     let (response, set_response) = signal(None);
 
     let _ = Effect::new(move || {
-        params
-            .read_untracked()
-            .set_custom_headers
-            .set(load_custom_headers(request_info.read_untracked().id));
+        params.read_untracked().set_headers.set(load_headers(request_info.read_untracked().id));
     });
 
     create_request_info_watcher(params, request_info, send_btn_node_ref, set_response);
@@ -162,18 +144,14 @@ fn create_req_watchers(
     );
 
     create_watcher(params.read_untracked().body, "rc_body", request_info);
-    create_watcher(params.read_untracked().content_type, "rc_content_type", request_info);
-    create_watcher(params.read_untracked().accept, "rc_accept", request_info);
-    create_watcher(params.read_untracked().accept_lang, "rc_accept_lang", request_info);
-    create_watcher(params.read_untracked().user_agent, "rc_user_agent", request_info);
 
     Effect::watch(
-        move || params.read_untracked().custom_headers.get(),
+        move || params.read_untracked().headers.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_local_store_value(
-                    &format!("{}-rc_custom_headers", request_info.read_untracked().id),
-                    custom_headers_to_string(value),
+                    &format!("{}-rc_headers", request_info.read_untracked().id),
+                    headers_to_string(value),
                 )
             }
         },
@@ -208,27 +186,7 @@ fn create_request_info_watcher(
                     "".to_owned(),
                     id,
                 ));
-                params.read_untracked().set_content_type.set(get_stored_value(
-                    "rc_content_type",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_accept.set(get_stored_value(
-                    "rc_accept",
-                    "".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_accept_lang.set(get_stored_value(
-                    "rc_accept_lang",
-                    get_accept_language(),
-                    id,
-                ));
-                params.read_untracked().set_user_agent.set(get_stored_value(
-                    "rc_user_agent",
-                    "WebDevUsefulTools Client".to_owned(),
-                    id,
-                ));
-                params.read_untracked().set_custom_headers.set(load_custom_headers(id));
+                params.read_untracked().set_headers.set(load_headers(id));
             }
         },
         false,
@@ -251,7 +209,7 @@ fn create_watcher(value: ReadSignal<String>, name: &str, request_info: ReadSigna
     );
 }
 
-fn custom_headers_to_string(headers: &[CustomHeader]) -> String {
+fn headers_to_string(headers: &[CustomHeader]) -> String {
     headers
         .iter()
         .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
@@ -259,9 +217,8 @@ fn custom_headers_to_string(headers: &[CustomHeader]) -> String {
         .join("\n")
 }
 
-fn load_custom_headers(request_id: i32) -> Vec<CustomHeader> {
-    let stored_value =
-        get_local_store_value(&format!("{}-rc_custom_headers", request_id), "".to_owned());
+fn load_headers(request_id: i32) -> Vec<CustomHeader> {
+    let stored_value = get_local_store_value(&format!("{}-rc_headers", request_id), "".to_owned());
     if stored_value.is_empty() {
         return Vec::new();
     }
