@@ -1,8 +1,5 @@
 use crate::common::text_comparator::compare_text;
-use crate::common::ui_utils::get_browser_width;
-use crate::components::layout::drag_splitter::DragSplitter;
 use crate::i18n::*;
-use leptos::html::Div;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
@@ -21,10 +18,6 @@ pub fn CompareTextPage() -> impl IntoView {
     let (dst_left, set_dst_left) = signal("".to_owned());
     let (dst_right, set_dst_right) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
-
-    let screen_width = get_browser_width().unwrap();
-    let min_text1_width = screen_width / 6;
-    let text1_ref = NodeRef::<Div>::new();
 
     let on_compare_click = move |_| {
         spawn_local(async move {
@@ -76,26 +69,16 @@ pub fn CompareTextPage() -> impl IntoView {
                     class:block=move || tab_selected.get() == 0
                     class:hidden=move || tab_selected.get() != 0
                     >
-
-                    <div node_ref=text1_ref class="flex">
-                        <TextArea
-                            name="text1".to_owned()
-                            class_name="w-full resize-none".to_owned()
-                            placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
-                            value=text1
-                            set_value=set_text1
-                            on_change=move |_| {
-                                set_local_store_value("compare_text1", text1.get_untracked());
-                            }
-                        />
-                    </div>
-
-                    <DragSplitter 
-                        target_ref=text1_ref 
-                        local_store_prop_name="compare_text1_width"
-                        min_width={min_text1_width} 
-                        max_width={screen_width - screen_width / 4} 
-                        default_width={screen_width / 2 - 128}/>
+                    <TextArea
+                        name="text1".to_owned()
+                        class_name="flex-1 resize-none".to_owned()
+                        placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
+                        value=text1
+                        set_value=set_text1
+                        on_change=move |_| {
+                            set_local_store_value("compare_text1", text1.get_untracked());
+                        }
+                    />
 
                     <TextArea
                         name="text2".to_owned()
