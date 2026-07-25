@@ -1,17 +1,10 @@
 use std::cmp::max;
 
-use leptos::{
-    ev,
-    html::Div,
-    leptos_dom::{self},
-    prelude::*,
-};
+use leptos::{html::Div, prelude::*};
 
 use crate::{
-    common::{
-        local_store::{get_local_store_value, set_local_store_value},
-        ui_utils::get_browser_width,
-    },
+    common::{local_store::get_local_store_value, ui_utils::get_browser_width},
+    components::layout::drag_splitter::DragSplitter,
     domain::rest_client::ui::{
         request_panel::RequestPanel, request_params::RequestInfo,
         rest_client_explorer::RestClientExplorer,
@@ -25,39 +18,17 @@ pub fn RestClientPage() -> impl IntoView {
 
     let (current_request, set_current_request) = signal(RequestInfo::new_empty());
     let (explorer_width, set_explorer_width) = signal(
-        get_local_store_value("rc_explorer_width", min_explorer_width.to_string()).parse::<i32>().unwrap(),
+        get_local_store_value("rc_explorer_width", min_explorer_width.to_string())
+            .parse::<i32>()
+            .unwrap(),
     );
-    let (explorer_dragging, set_explorer_dragging) = signal(false);
     let explorer_ref = NodeRef::<Div>::new();
-    let explorer_dragbar_ref = NodeRef::<Div>::new();
-
-    let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
-        if explorer_dragging.get()
-            && let Some(explorer_elem) = explorer_ref.get() {
-                let rect = explorer_elem.get_bounding_client_rect();
-                let new_width = ev.client_x() - rect.left() as i32;
-
-                if new_width > min_explorer_width && new_width < screen_width / 2 {
-                    set_explorer_width.set(new_width);
-                    set_local_store_value("rc_explorer_width", new_width.to_string());
-                }
-            }
-    });
-
-    let _ = leptos_dom::helpers::window_event_listener(ev::mouseup, move |_ev| {
-        set_explorer_dragging.set(false);
-    });
 
     view! {
         <div class="flex flex-row dark:text-white">
             <RestClientExplorer node_ref=explorer_ref current_request set_current_request width=explorer_width />
 
-            <div node_ref=explorer_dragbar_ref class="w-1 bg-gray-700 hover:bg-blue-400/50 cursor-col-resize h-full transition-colors"
-                on:mousedown=move |e| {
-                    e.prevent_default();
-                    set_explorer_dragging.set(true);
-                }
-            />
+            <DragSplitter target_ref=explorer_ref set_width=set_explorer_width local_store_prop_name="rc_explorer_width" min_width={min_explorer_width} max_width={screen_width / 2}/>
 
             <RequestPanel request_info=current_request set_request_info=set_current_request/>
         </div>
