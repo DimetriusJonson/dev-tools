@@ -1,9 +1,18 @@
+use std::cmp::max;
+
 use leptos::{
-    ev, html::Div, leptos_dom::{self, logging::console_log}, prelude::*,
+    ev,
+    html::Div,
+    leptos_dom::{self},
+    prelude::*,
 };
 
 use crate::{
-    common::{local_store::{get_local_store_value, set_local_store_value}, ui_utils::get_browser_width}, domain::rest_client::ui::{
+    common::{
+        local_store::{get_local_store_value, set_local_store_value},
+        ui_utils::get_browser_width,
+    },
+    domain::rest_client::ui::{
         request_panel::RequestPanel, request_params::RequestInfo,
         rest_client_explorer::RestClientExplorer,
     },
@@ -11,8 +20,13 @@ use crate::{
 
 #[component]
 pub fn RestClientPage() -> impl IntoView {
+    let screen_width = get_browser_width().unwrap();
+    let min_explorer_width = max(256, screen_width / 6);
+
     let (current_request, set_current_request) = signal(RequestInfo::new_empty());
-    let (width, set_width) = signal(get_local_store_value("rc_explorer_width", "250".to_owned()).parse::<i32>().unwrap());
+    let (width, set_width) = signal(
+        get_local_store_value("rc_explorer_width", min_explorer_width.to_string()).parse::<i32>().unwrap(),
+    );
     let (drag_mode, set_drag_mode) = signal(false);
 
     let explorer_node_ref = NodeRef::<Div>::new();
@@ -24,12 +38,9 @@ pub fn RestClientPage() -> impl IntoView {
                 let rect = explorer_elem.get_bounding_client_rect();
                 let new_width = ev.client_x() - rect.left() as i32;
 
-                if let Ok(screen_width) = get_browser_width() {
-                    if new_width > 150 && new_width < screen_width / 2 {
-                        console_log(&format!("set {}", new_width));
-                        set_width.set(new_width);
-                        set_local_store_value("rc_explorer_width", new_width.to_string());
-                    }
+                if new_width > min_explorer_width && new_width < screen_width / 2 {
+                    set_width.set(new_width);
+                    set_local_store_value("rc_explorer_width", new_width.to_string());
                 }
             }
         }
