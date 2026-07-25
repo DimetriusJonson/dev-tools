@@ -34,7 +34,7 @@ bytes = "1.12.0"
 gloo-net = { version="0.6", features=["http"] }
 gloo-storage = "0.3"
 async-stream = "0.3"
-gloo-utils = "0.3.0"
+gloo-utils = "0.2.0"
 js-sys = "0.3.102"
 html-escape = "0.2.13"
 urlencoding = "2.1"
@@ -83,17 +83,17 @@ lib-profile-release = "wasm-release"
 
 [profile.wasm-release]
 inherits = "release"
-opt-level = 'z'
-lto = true
+opt-level = 1
+lto = false
 codegen-units = 1
 panic = "abort"
 
 [profile.release]
 # Optimize for size
-opt-level = "z"      # Optimize for size (or "s" for slightly less aggressive)
-lto = true           # Link-Time Optimization
+opt-level = 1      # Optimize for size (or "s" for slightly less aggressive)
+lto = false           # Link-Time Optimization
 codegen-units = 1    # Single codegen unit for better optimization
-#panic = "abort"      # Smaller binary, no unwinding
+panic = "abort"      # Smaller binary, no unwinding
 strip = true         # Strip symbols
 
 [profile.release.package."*"]
