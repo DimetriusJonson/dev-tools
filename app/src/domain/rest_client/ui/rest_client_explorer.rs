@@ -8,6 +8,7 @@ use leptos::{
 };
 use web_sys::wasm_bindgen::JsCast;
 
+use crate::i18n::*;
 use crate::{
     common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
     components::ui::{
@@ -22,6 +23,8 @@ pub fn RestClientExplorer(
     current_request: ReadSignal<RequestInfo>,
     set_current_request: WriteSignal<RequestInfo>,
 ) -> impl IntoView {
+    let i18n = use_i18n();
+
     let (requests, set_requests) = signal(Vec::<RwSignal<RequestInfo>>::new());
     let (popup_menu_show, set_popup_menu_show) = signal(0);
     let (edit_name_mode, set_edit_name_mode) = signal(false);
@@ -100,7 +103,7 @@ pub fn RestClientExplorer(
         <div class="flex flex-col gap-y-4 dark:text-white border-r-2 border-gray-700 w-64">
             <div class="p-4">
                 <Button
-                    label=move || "Create Request".to_owned()
+                    label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
                     class_name="w-full".to_owned()
                     button_width=ButtonWidth::Lg
                     loading=move || false
@@ -142,7 +145,7 @@ pub fn RestClientExplorer(
                                 fallback={
                                     let request_cloned = request.get();
                                     move || view!{
-                                        <span class={format!("p-2 rounded-xl {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
+                                        <span class={format!("rounded-xl h-5 px-2 pb-4 font-medium text-sm {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
                                         <span class="p-2 w-full truncate">{request_cloned.display_name()}</span>
 
                                         <Show when=move || request_cloned.id == current_request.read().id>
@@ -173,9 +176,9 @@ pub fn RestClientExplorer(
                                                         view! {
                                                         <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
                                                             items=move || {vec![
-                                                                    ("run".to_owned(), "Run request".to_owned()),
-                                                                    ("rename".to_owned(), "Rename".to_owned()),
-                                                                    ("delete".to_owned(), "Delete".to_owned()),
+                                                                    ("run".to_owned(), t_display!(i18n, rest_client_explorer_run_request).to_string()),
+                                                                    ("rename".to_owned(), t_display!(i18n, rest_client_explorer_rename_request).to_string()),
+                                                                    ("delete".to_owned(), t_display!(i18n, rest_client_explorer_delete_request).to_string()),
                                                                     ]}
                                                             on_selected={
                                                                 let request_cloned=request.get();

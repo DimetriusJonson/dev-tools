@@ -66,5 +66,11 @@
     "rest_client_response_body_tab": "Ответ",
     "rest_client_response_headers_tab": "Заголовки",
     "rest_client_response_copied_to_clipboard_msg":"Ответ скопирован в буфер обмена.",
-    "rest_client_request_not_selected_msg":"Выберите или создайте запрос."
+    "rest_client_request_not_selected_msg":"Выберите или создайте запрос.",
+    "rest_client_explorer_create_request":"Создать запрос",
+    "rest_client_explorer_run_request":"Выполнить запрос",
+    "rest_client_explorer_rename_request":"Переименовать",
+    "rest_client_explorer_delete_request":"Удалить"
+
+
 }
