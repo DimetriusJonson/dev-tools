@@ -7,11 +7,11 @@ pub const MEDIA_TYPES: [(&str, &str); 4] = [
     ("text/xml", "xml"),
 ];
 
-pub const HEADERS_AUTOCOMPLETE: [&str; 57] = [
-//    "Accept",
+pub const HEADERS_AUTOCOMPLETE: [&str; 61] = [
+    "Accept",
     "Accept-Charset",
     "Accept-Encoding",
-//    "Accept-Language",
+    "Accept-Language",
     "Accept-Patch",
     "Accept-Ranges",
     "Access-Control-Allow-Credentials",
@@ -33,7 +33,7 @@ pub const HEADERS_AUTOCOMPLETE: [&str; 57] = [
     "Content-Length",
     "Content-Location",
     "Content-Range",
-//    "Content-Type",
+    "Content-Type",
     "Cookie",
     "Date",
     "ETag",
@@ -64,7 +64,7 @@ pub const HEADERS_AUTOCOMPLETE: [&str; 57] = [
     "Trailer",
     "Transfer-Encoding",
     "Upgrade",
-//    "User-Agent",
+    "User-Agent",
     "Vary",
     "Via",
     "Warning",
