@@ -1,5 +1,7 @@
-use crate::{domain::rest_client::ui::request_result_panel::ReqResultData, i18n::*};
-use leptos::{html::Button, prelude::*};
+use std::cmp::max;
+
+use crate::{common::ui_utils::get_browser_width, domain::rest_client::ui::request_result_panel::ReqResultData, i18n::*};
+use leptos::{ev, html::{Button, Div}, leptos_dom, prelude::*};
 
 use crate::{
     common::{
@@ -47,6 +49,34 @@ pub fn RequestPanel(
         set_custom_headers,
     });
 
+    let screen_width = get_browser_width().unwrap();
+    let min_params_width = screen_width / 4;
+
+    let (params_width, set_params_width) = signal(
+        get_local_store_value("rc_params_width", min_params_width.to_string()).parse::<i32>().unwrap(),
+    );
+    let (params_dragging, set_params_dragging) = signal(false);
+    let params_ref = NodeRef::<Div>::new();
+    let params_dragbar_ref = NodeRef::<Div>::new();
+
+    let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
+        if params_dragging.get() {
+            if let Some(params_elem) = params_ref.get() {
+                let rect = params_elem.get_bounding_client_rect();
+                let new_width = ev.client_x() - rect.left() as i32;
+
+                if new_width > min_params_width && new_width < screen_width - (screen_width / 3) {
+                    set_params_width.set(new_width);
+                    set_local_store_value("rc_params_width", new_width.to_string());
+                }
+            }
+        }
+    });
+
+    let _ = leptos_dom::helpers::window_event_listener(ev::mouseup, move |_ev| {
+        set_params_dragging.set(false);
+    });
+
     let send_btn_node_ref = NodeRef::<Button>::new();
 
     let (response, set_response) = signal(None);
@@ -61,16 +91,22 @@ pub fn RequestPanel(
 
     create_request_info_watcher(params, request_info, send_btn_node_ref, set_response);
     create_req_watchers(params, request_info, set_request_info);
-
-
+    
     view! {
         <Show when=move || { request_info.read().id > 0 }
             fallback=move || view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
             <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                <RequestParamsPanel send_btn_node_ref
+                <RequestParamsPanel node_ref=params_ref send_btn_node_ref width=params_width
                     params on_result=move|res| {
                         set_response.set(Some(res));
+                    }
+                />
+
+                <div node_ref=params_dragbar_ref class="w-1 bg-gray-700 hover:bg-blue-400/50 cursor-col-resize h-full transition-colors"
+                    on:mousedown=move |e| {
+                        e.prevent_default();
+                        set_params_dragging.set(true);
                     }
                 />
 

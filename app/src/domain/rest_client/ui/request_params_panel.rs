@@ -4,6 +4,7 @@ use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
 use gloo_net::http::Request;
+use leptos::html::Div;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
@@ -21,6 +22,8 @@ pub fn RequestParamsPanel(
     params: ReadSignal<RequestParams>,
     #[prop(into)] on_result: Callback<ReqResultData>,
     send_btn_node_ref: NodeRef::<leptos::html::Button>,
+    node_ref: NodeRef<Div>,
+    width: ReadSignal<i32>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -84,7 +87,7 @@ pub fn RequestParamsPanel(
 
     view! {
 
-        <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[29dvh] md:h-[90dvh]">
+        <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-4 h-[29dvh] md:h-[90dvh]" style=move || format!("width: {}px;", width.get())>
             <div class="flex gap-4">
                 <SelectInput
                     name="method".to_owned()
