@@ -23,7 +23,6 @@ pub fn RequestParamsPanel(
     #[prop(into)] on_result: Callback<ReqResultData>,
     send_btn_node_ref: NodeRef::<leptos::html::Button>,
     node_ref: NodeRef<Div>,
-    width: ReadSignal<i32>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -74,7 +73,7 @@ pub fn RequestParamsPanel(
 
     view! {
 
-        <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-4 h-[29dvh] md:h-[90dvh]" style=move || format!("width: {}px;", width.get())>
+        <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-4 h-[29dvh] md:h-[90dvh]">
             <div class="flex gap-4">
                 <SelectInput
                     name="method".to_owned()

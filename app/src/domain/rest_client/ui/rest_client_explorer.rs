@@ -23,7 +23,6 @@ pub fn RestClientExplorer(
     current_request: ReadSignal<RequestInfo>,
     set_current_request: WriteSignal<RequestInfo>,
     node_ref: NodeRef<Div>,
-    width: ReadSignal<i32>,
 ) -> impl IntoView {
     let i18n = use_i18n();
 
@@ -109,8 +108,7 @@ pub fn RestClientExplorer(
     });
 
     view! {
-        <div node_ref=node_ref class="flex flex-col gap-y-0 dark:text-white"
-            style=move || format!("width: {}px;", width.get())>
+        <div node_ref=node_ref class="flex flex-col gap-y-0 dark:text-white">
             <div class="p-4">
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()

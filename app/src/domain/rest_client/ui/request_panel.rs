@@ -41,13 +41,7 @@ pub fn RequestPanel(
     let screen_width = get_browser_width().unwrap();
     let min_params_width = screen_width / 6;
 
-    let (params_width, set_params_width) = signal(
-        get_local_store_value("rc_params_width", min_params_width.to_string())
-            .parse::<i32>()
-            .unwrap(),
-    );
     let params_ref = NodeRef::<Div>::new();
-
     let send_btn_node_ref = NodeRef::<Button>::new();
 
     let (response, set_response) = signal(None);
@@ -64,13 +58,13 @@ pub fn RequestPanel(
             fallback=move || view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
             <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                <RequestParamsPanel node_ref=params_ref send_btn_node_ref width=params_width
+                <RequestParamsPanel node_ref=params_ref send_btn_node_ref
                     params on_result=move|res| {
                         set_response.set(Some(res));
                     }
                 />
 
-                <DragSplitter target_ref=params_ref set_width=set_params_width local_store_prop_name="rc_params_width" min_width={min_params_width} max_width={screen_width - (screen_width / 3)}/>
+                <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width" min_width={min_params_width} max_width={screen_width - (screen_width / 3)}/>
 
                 <RequestResultPanel data=response/>
 

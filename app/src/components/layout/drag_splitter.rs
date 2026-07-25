@@ -1,17 +1,25 @@
 use leptos::{ev, html::Div, leptos_dom, prelude::*};
 
-use crate::common::local_store::set_local_store_value;
+use crate::common::local_store::{get_local_store_value, set_local_store_value};
 
 #[component]
 pub fn DragSplitter(
     target_ref: NodeRef<Div>,
-    set_width: WriteSignal<i32>,
     local_store_prop_name: &'static str,
     min_width: i32,
     max_width: i32,
 ) -> impl IntoView {
     let (dragging, set_dragging) = signal(false);
     let dragbar_ref = NodeRef::<Div>::new();
+
+    let _ = Effect::new(move || {
+        let init_width = get_local_store_value(local_store_prop_name, min_width.to_string())
+            .parse::<i32>()
+            .unwrap();
+        if let Some(target_elem) = target_ref.get() {
+            (*target_elem).style().set_property("width", &format!("{}px", init_width)).unwrap();
+        }
+    });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
         if dragging.get()
@@ -21,7 +29,8 @@ pub fn DragSplitter(
             let new_width = ev.client_x() - rect.left() as i32;
 
             if new_width > min_width && new_width < max_width {
-                set_width.set(new_width);
+                (*target_elem).style().set_property("width", &format!("{}px", new_width)).unwrap();
+
                 set_local_store_value(local_store_prop_name, new_width.to_string());
             }
         }
