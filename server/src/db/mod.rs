@@ -1,6 +1,6 @@
 pub mod share_files_db;
 
-use log::info;
+use tracing::info;
 use sqlx::{Pool, Postgres};
 
 pub async fn create_pool(database_url: String) -> Pool<Postgres> {

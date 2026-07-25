@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 use std::thread;
 
 use leptos::prelude::*;
-use log::{error, info};
+use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::app_router::build_app_router::build_app_router;

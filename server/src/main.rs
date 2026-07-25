@@ -6,7 +6,7 @@ use std::{
 use app::common::constants::REMOTE_SERVER_HOST;
 use clap::Parser;
 use dotenvy::dotenv;
-use log::info;
+use tracing::info;
 use server::server_starter::start_axum_server;
 use tracing_log::LogTracer;
 
