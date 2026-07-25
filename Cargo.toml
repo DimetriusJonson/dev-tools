@@ -26,6 +26,8 @@ web-sys = { version = "0.3", features = ["Window", "Navigator", "Clipboard", "Ht
   "HtmlAnchorElement",
   "Document",
   "DataTransfer",
+  "DomRect",
+  "Window", 
   ]}
 tw_merge = { version = "0.1", features = ["variant", "debug"]}
 quick-xml = { version = "0.40.1", features = ["async-tokio"]}

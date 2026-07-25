@@ -22,6 +22,8 @@ use crate::{
 pub fn RestClientExplorer(
     current_request: ReadSignal<RequestInfo>,
     set_current_request: WriteSignal<RequestInfo>,
+    node_ref: NodeRef<Div>,
+    width: ReadSignal<i32>,
 ) -> impl IntoView {
     let i18n = use_i18n();
 
@@ -100,7 +102,8 @@ pub fn RestClientExplorer(
     });
 
     view! {
-        <div class="flex flex-col gap-y-0 dark:text-white border-r-2 border-gray-700 w-64">
+        <div node_ref=node_ref class="flex flex-col gap-y-0 dark:text-white"
+            style=move || format!("width: {}px;", width.get())>
             <div class="p-4">
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
@@ -119,11 +122,7 @@ pub fn RestClientExplorer(
                     view! {
                         <div class="flex w-full h-10 items-center cursor-pointer p-2"
                             class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
-                            class=(["hover:bg-gray-600/
-                            
-                            
-                            
-                            50"], move || request_cloned.id != current_request.read().id)
+                            class=(["hover:bg-gray-600/50"], move || request_cloned.id != current_request.read().id)
                             on:click={
                                 let request_cloned = request.get();
                                 move |_| {
