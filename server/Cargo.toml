@@ -30,11 +30,15 @@ image.workspace=true
 reqwest.workspace = true
 flate2.workspace=true
 clap.workspace=true
-serde.workspace = true
-serde_json.workspace = true
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}
 
 [features]
-standalone=["app/standalone"]
+standalone=[
+    "app/standalone",
+    "dep:serde",
+    "dep:serde_json"
+    ]

@@ -119,7 +119,11 @@ pub fn RestClientExplorer(
                     view! {
                         <div class="flex w-full h-10 items-center cursor-pointer p-2"
                             class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
-                            class=(["hover:bg-gray-600/50"], move || request_cloned.id != current_request.read().id)
+                            class=(["hover:bg-gray-600/
+                            
+                            
+                            
+                            50"], move || request_cloned.id != current_request.read().id)
                             on:click={
                                 let request_cloned = request.get();
                                 move |_| {
