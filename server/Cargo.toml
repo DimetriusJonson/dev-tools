@@ -36,6 +36,7 @@ leptos = { workspace = true, features = [ "ssr" ]}
 
 [features]
 default = ["standalone"]
+#default = ["standalone"]
 
 standalone=[
     "app/standalone",
