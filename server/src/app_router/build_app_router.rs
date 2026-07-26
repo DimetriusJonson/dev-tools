@@ -17,7 +17,8 @@ use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::share_file_router::{
-    share_file_download, share_file_info, share_file_upload,
+    share_file_custom_servers_handler, share_file_download, share_file_info,
+    share_file_info_ex_handler, share_file_upload,
 };
 use crate::app_router::share_local_file_router::{
     share_local_file_download, share_local_file_info, share_local_file_upload,
@@ -45,6 +46,8 @@ pub async fn build_app_router(
         .layer(DefaultBodyLimit::disable())
         .route("/share_file_download", get(share_file_download))
         .route("/share_file_info", get(share_file_info))
+        .route("/share_file_custom_servers", get(share_file_custom_servers_handler))
+        .route("/share_file_info_ex", get(share_file_info_ex_handler))
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
         .route("/test_json", get(test_json_handler))
@@ -89,17 +92,24 @@ pub async fn server_fn_handler(
 #[cfg(feature = "standalone")]
 pub async fn rest_client_send_handler_wrapper(
     axum::Json(request): axum::Json<app::model::rest_client_request::RestClientRequest>,
-) -> Result<axum::Json<app::model::rest_client_response::RestClientResponse>, app::common::app_error::AppError> {
+) -> Result<
+    axum::Json<app::model::rest_client_response::RestClientResponse>,
+    app::common::app_error::AppError,
+> {
     crate::app_router::rest_client_router::rest_client_send_handler(axum::Json(request)).await
 }
 
 #[cfg(not(feature = "standalone"))]
-pub async fn rest_client_send_handler_wrapper() -> Result<http::StatusCode, app::common::app_error::AppError> {
+pub async fn rest_client_send_handler_wrapper()
+-> Result<http::StatusCode, app::common::app_error::AppError> {
     Err(app::common::app_error::AppError::system_error("Service disabled".to_owned()))?
 }
 
 #[cfg(feature = "standalone")]
-pub async fn test_json_handler() -> Result<axum::Json<crate::app_router::test_json_router::TestJsonResult>, app::common::app_error::AppError> {
+pub async fn test_json_handler() -> Result<
+    axum::Json<crate::app_router::test_json_router::TestJsonResult>,
+    app::common::app_error::AppError,
+> {
     crate::app_router::test_json_router::test_json_handler().await
 }
 

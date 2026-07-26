@@ -1,4 +1,4 @@
-use app::common::{app_error::AppError, app_state::ssr::AppState};
+use app::common::{app_error::AppError, app_state::ssr::AppState, net_utils::ssr::get_local_addrs};
 use axum::{
     body::to_bytes,
     extract::{RawQuery, Request, State},
@@ -8,9 +8,13 @@ use http::{HeaderMap, HeaderValue, header};
 use nanoid::nanoid;
 
 use crate::{
-    app_router::proxy_request_to_remote, common::{
-        compress_utils::{compress_bytes, decompress_bytes}, dev_utils::{is_mime_image, parse_query_params}, image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
-    }, db::share_files_db::{
+    app_router::proxy_request_to_remote,
+    common::{
+        compress_utils::{compress_bytes, decompress_bytes},
+        dev_utils::{is_mime_image, parse_query_params},
+        image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
+    },
+    db::share_files_db::{
         create_share_file_in_db, delete_old_share_files_in_db, get_share_file_from_db,
         get_share_file_info_from_db, get_share_file_thumbnail_from_db,
     },
@@ -43,7 +47,8 @@ pub async fn share_file_upload(
         Some(pool) => {
             delete_old_share_files_in_db(&pool).await?;
 
-            let prepared_data = share_file_prepare_for_upload(request, headers, file_name, MAX_FILE_SIZE).await?;
+            let prepared_data =
+                share_file_prepare_for_upload(request, headers, file_name, MAX_FILE_SIZE).await?;
             create_share_file_in_db(
                 &prepared_data.external_id,
                 file_name,
@@ -60,23 +65,26 @@ pub async fn share_file_upload(
     }
 }
 
-pub async fn share_file_prepare_for_upload(request: Request, headers: HeaderMap, file_name: &str, max_file_size: usize) -> Result<ShareFileUploadData, AppError>  {
-    let bytes = to_bytes(request.into_body(), max_file_size)
-        .await
-        .map_err(AppError::system_error)?;
+pub async fn share_file_prepare_for_upload(
+    request: Request,
+    headers: HeaderMap,
+    file_name: &str,
+    max_file_size: usize,
+) -> Result<ShareFileUploadData, AppError> {
+    let bytes =
+        to_bytes(request.into_body(), max_file_size).await.map_err(AppError::system_error)?;
     let mut file_data = bytes.to_vec();
     let image_thumbnail;
 
     let default_content_type = HeaderValue::from_static(DEFAULT_CONTENT_TYPE);
-    let mut content_type = headers.get("content-type").unwrap_or(&default_content_type).to_str().unwrap().to_owned();
+    let mut content_type =
+        headers.get("content-type").unwrap_or(&default_content_type).to_str().unwrap().to_owned();
 
     if is_mime_image(&content_type) {
-        image_thumbnail = Some(
-            create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?,
-        );
+        image_thumbnail =
+            Some(create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?);
         if content_type != MIME_IMAGE_JPG {
-            file_data =
-                convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
+            file_data = convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
             content_type = MIME_IMAGE_JPG.to_owned();
         }
     } else {
@@ -86,8 +94,13 @@ pub async fn share_file_prepare_for_upload(request: Request, headers: HeaderMap,
 
     let external_id = nanoid!();
 
-    Ok(ShareFileUploadData{ file_data, image_thumbnail, mime_type: content_type, external_id, file_name: file_name.to_owned() })
-
+    Ok(ShareFileUploadData {
+        file_data,
+        image_thumbnail,
+        mime_type: content_type,
+        external_id,
+        file_name: file_name.to_owned(),
+    })
 }
 
 #[axum::debug_handler]
@@ -164,5 +177,60 @@ pub async fn share_file_info(
             .into_response())
         }
         None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
+    }
+}
+
+#[axum::debug_handler]
+pub async fn share_file_custom_servers_handler(
+    State(app_state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    if app_state.pool.is_some() {
+        return Ok("".into_response());
+    }
+
+    let addrs = get_local_addrs().map_err(AppError::system_error)?;
+
+    let site_addr = app_state.leptos_options.site_addr;
+
+    let res = addrs
+        .iter()
+        .map(|a| format!("http://{}:{};{} ({})", a.0.to_owned(), site_addr.port(), a.1, a.0))
+        .collect::<Vec<String>>()
+        .join("\n");
+
+    Ok(res.into_response())
+}
+
+pub async fn share_file_info_ex_handler(
+    RawQuery(query): RawQuery,
+    State(app_state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let query_str = query.unwrap_or_default();
+    let params = parse_query_params(&query_str);
+    let id = params.get("id").unwrap_or(&"");
+    let local =
+        params.get("local").unwrap_or(&"false").parse::<bool>().map_err(AppError::system_error)?;
+
+    let site_addr = app_state.leptos_options.site_addr;
+
+    let srv_name = if local { "share_local_file_info" } else { "share_file_info" };
+
+    let response =
+        reqwest::get(&format!("http://127.0.0.1:{}/{}?id={}", site_addr.port(), srv_name, id))
+            .await
+            .map_err(AppError::system_error)?;
+
+    if response.status() == 200 {
+        let response_text = response.text().await.map_err(AppError::system_error)?;
+
+        let parts: Vec<&str> = response_text.split('\n').collect();
+        let file_name = parts[0].to_owned();
+        let is_image = parts[2].parse::<bool>().unwrap();
+
+        Ok(format!("{};{}", file_name, is_image))
+    } else {
+        let response_text = response.text().await.map_err(AppError::system_error)?;
+
+        Err(AppError::system_error(response_text))?
     }
 }

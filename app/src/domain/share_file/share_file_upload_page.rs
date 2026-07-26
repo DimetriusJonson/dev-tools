@@ -8,7 +8,7 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
-use crate::components::ui::select_input::{SelectInput, SelectOption};
+use crate::components::ui::select_input::SelectInput;
 use crate::i18n::*;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
@@ -47,7 +47,25 @@ pub fn ShareFileUploadPage() -> impl IntoView {
         show_info(t!(i18n, share_file_upload_page_copied_to_clipboard_msg).to_html(), messages);
     };
 
-    let custom_servers_resource = OnceResource::new(get_custom_servers());
+    let custom_servers_resource = LocalResource::new(async move || {
+        match Request::get("/share_file_custom_servers").build() {
+            Ok(request) => match request.send().await {
+                Ok(response) => match response.text().await {
+                    Ok(response_text) => {
+                        let mut result = Vec::new();
+                        for line in response_text.lines() {
+                            let parts = line.split(';').collect::<Vec<&str>>();
+                            result.push((Some(parts[0].to_owned()), parts[1].to_owned()));
+                        }
+                        result
+                    }
+                    Err(_err) => Vec::new(),
+                },
+                Err(_err) => Vec::new(),
+            },
+            Err(_err) => Vec::new(),
+        }
+    });
 
     view! {
 
@@ -83,35 +101,30 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 />
             </div>
 
-            <Transition
-                fallback=move || view! { <div>{t!(i18n, loading_progress)}</div> }
-                >
-                {move || custom_servers_resource.get().map(|data|
-                    data.map(|custom_servers| {
-                        let hidden = custom_servers.is_empty() || !shared_url.get().is_empty();
-                        view! {
-                            <div class="flex items-center"
-                                class:hidden=hidden>
-                                <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
-                                <SelectInput
-                                    class_name="px-2".to_owned()
-                                    name={"server_addr".to_owned()}
-                                    value={custom_server}
-                                    set_value={set_custom_server}
-                                    label=move || "Server addr".to_owned()
-                                    options=move || custom_servers.clone()
-                                    not_selected_text={move || t!(i18n, share_file_upload_page_server_addr_not_selected).to_html()}
-                                    on_change=move |_| {}
-                                />
-                            </div>
-                            <p class="text-xs text-gray-600"
-                                class:hidden=hidden>
-                                {t!(i18n, share_file_upload_page_server_addr_descr, <br/> = || view! { <br/> })}
-                            </p>
-                        }.into_view()
-                    })
-                )}
-            </Transition>
+            {move || custom_servers_resource.get().map(|custom_servers| {
+                    let hidden = custom_servers.is_empty() || !shared_url.get().is_empty();
+                    view! {
+                        <div class="flex items-center"
+                            class:hidden=hidden>
+                            <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
+                            <SelectInput
+                                class_name="px-2".to_owned()
+                                name={"server_addr".to_owned()}
+                                value={custom_server}
+                                set_value={set_custom_server}
+                                label=move || "Server addr".to_owned()
+                                options=move || custom_servers.clone()
+                                not_selected_text={move || t!(i18n, share_file_upload_page_server_addr_not_selected).to_html()}
+                                on_change=move |_| {}
+                            />
+                        </div>
+                        <p class="text-xs text-gray-600"
+                            class:hidden=hidden>
+                            {t!(i18n, share_file_upload_page_server_addr_descr, <br/> = || view! { <br/> })}
+                        </p>
+                    }.into_view()
+                }
+            )}
 
             <div class="flex flex-col gap-4 items-center justify-center">
                 <Show when=move || { !shared_url.get().is_empty() }>
@@ -220,32 +233,4 @@ fn upload_file(
         set_in_progress.set(false);
         callback(result);
     });
-}
-
-#[server]
-pub async fn get_custom_servers() -> Result<Vec<SelectOption>, ServerFnError> {
-    use crate::common::app_state::ssr::AppState;
-    use crate::common::net_utils::ssr::get_local_addrs;
-
-    let app_state =
-        use_context::<AppState>().ok_or_else(|| ServerFnError::new("App state missing."))?;
-
-    if app_state.pool.is_some() {
-        return Ok(Vec::new());
-    }
-
-    let site_addr = app_state.leptos_options.site_addr;
-
-    let addrs =
-        get_local_addrs().map_err(|e| ServerFnError::new(format!("Request failed: {e}")))?;
-
-    Ok(addrs
-        .iter()
-        .map(|a| {
-            (
-                Some(format!("http://{}:{}", a.0.to_owned(), site_addr.port())),
-                format!("{} ({})", a.1, a.0),
-            )
-        })
-        .collect())
 }
