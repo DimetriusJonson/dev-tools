@@ -100,7 +100,6 @@ dependencies = [
  "bytes",
  "console_error_panic_hook",
  "difference",
- "getifs",
  "gloo-net",
  "gloo-storage",
  "gloo-utils",
@@ -115,6 +114,7 @@ dependencies = [
  "leptos_i18n_macro 0.2.3",
  "leptos_meta",
  "leptos_router",
+ "model",
  "quick-xml",
  "reqwest",
  "serde",
@@ -370,9 +370,9 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f3f6da4992df95bbcd9af42a6c7dcb994498fc9048230405f3b36ff7cd3f145"
+checksum = "a88b7ea17d208c4193f2c1e6de3c35fe71f98c96982d5ced308bdcc749ff6e1f"
 dependencies = [
  "bytes",
  "cfg_aliases",
@@ -2800,6 +2800,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "model"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4007,10 +4014,12 @@ dependencies = [
  "dotenvy",
  "flate2",
  "futures-util",
+ "getifs",
  "http",
  "image",
  "leptos",
  "leptos_axum",
+ "model",
  "nanoid",
  "quick-xml",
  "reqwest",

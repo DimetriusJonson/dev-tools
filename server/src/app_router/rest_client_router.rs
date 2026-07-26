@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
-use app::{
-    common::app_error::AppError,
-    model::{rest_client_request::RestClientRequest, rest_client_response::RestClientResponse},
-};
+use crate::common::app_error::AppError;
 use axum::Json;
 use http::{HeaderMap, HeaderName, HeaderValue, Method};
+use model::restclient::{
+    rest_client_request::RestClientRequest, rest_client_response::RestClientResponse,
+};
 use reqwest::Client;
 
 pub async fn rest_client_send_handler(

@@ -4,7 +4,6 @@ pub mod components;
 pub mod domain;
 pub mod hljs;
 pub mod common;
-pub mod model;
 
 include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
 

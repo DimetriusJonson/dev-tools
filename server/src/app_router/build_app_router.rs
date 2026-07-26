@@ -1,5 +1,4 @@
 use app::app::{App, shell};
-use app::common::app_state::ssr::AppState;
 use axum::Router;
 use axum::body::Body as AxumBody;
 use axum::extract::{DefaultBodyLimit, State};
@@ -24,6 +23,7 @@ use crate::app_router::share_local_file_router::{
     share_local_file_download, share_local_file_info, share_local_file_upload,
 };
 use crate::app_router::xml_format_router::format_xml_handler;
+use crate::common::app_state::AppState;
 
 pub async fn build_app_router(
     conf_file: ConfFile,
@@ -91,10 +91,10 @@ pub async fn server_fn_handler(
 
 #[cfg(feature = "standalone")]
 pub async fn rest_client_send_handler_wrapper(
-    axum::Json(request): axum::Json<app::model::rest_client_request::RestClientRequest>,
+    axum::Json(request): axum::Json<model::restclient::rest_client_request::RestClientRequest>,
 ) -> Result<
-    axum::Json<app::model::rest_client_response::RestClientResponse>,
-    app::common::app_error::AppError,
+    axum::Json<model::restclient::rest_client_response::RestClientResponse>,
+    crate::common::app_error::AppError,
 > {
     crate::app_router::rest_client_router::rest_client_send_handler(axum::Json(request)).await
 }
@@ -108,7 +108,7 @@ pub async fn rest_client_send_handler_wrapper()
 #[cfg(feature = "standalone")]
 pub async fn test_json_handler() -> Result<
     axum::Json<crate::app_router::test_json_router::TestJsonResult>,
-    app::common::app_error::AppError,
+    crate::common::app_error::AppError,
 > {
     crate::app_router::test_json_router::test_json_handler().await
 }

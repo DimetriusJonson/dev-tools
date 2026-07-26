@@ -28,9 +28,11 @@ image.workspace=true
 reqwest.workspace = true
 flate2.workspace=true
 clap.workspace=true
+getifs.workspace = true
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 
+model = { path = "../model" }
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = [ "ssr" ]}
 
@@ -40,6 +42,7 @@ default = ["standalone"]
 
 standalone=[
     "app/standalone",
+    "model/standalone",
     "dep:serde",
     "dep:serde_json"
     ]

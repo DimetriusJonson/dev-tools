@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use app::common::app_error::AppError;
+use crate::common::app_error::AppError;
 use axum::{
     extract::{RawQuery, Request},
     response::IntoResponse,

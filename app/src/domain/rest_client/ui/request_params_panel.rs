@@ -7,6 +7,8 @@ use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use model::restclient::rest_client_request::RestClientRequest;
+use model::restclient::rest_client_response::RestClientResponse;
 
 use crate::common::ui_utils::single_select_option;
 use crate::components::ui::button::{Button, ButtonWidth};
@@ -14,8 +16,6 @@ use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
 use crate::components::ui::text_input::TextInput;
-use crate::model::rest_client_request::RestClientRequest;
-use crate::model::rest_client_response::RestClientResponse;
 
 #[component]
 pub fn RequestParamsPanel(

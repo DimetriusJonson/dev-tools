@@ -1,4 +1,4 @@
-use app::common::app_error::AppError;
+use crate::common::app_error::AppError;
 use sqlx::{Pool, Postgres, Row};
 
 use crate::{model::share_file::ShareFile};

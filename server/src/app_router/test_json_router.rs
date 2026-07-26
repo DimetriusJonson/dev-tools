@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use app::common::app_error::AppError;
+use crate::common::app_error::AppError;
 use axum::Json;
 
 #[derive(Serialize)]
