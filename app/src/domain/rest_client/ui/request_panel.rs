@@ -1,6 +1,11 @@
 use crate::{
-    common::ui_utils::get_browser_width, components::layout::drag_splitter::DragSplitter,
-    domain::rest_client::ui::request_result_panel::ReqResultData, i18n::*,
+    common::{local_store::delete_local_store_value, ui_utils::get_browser_width},
+    components::layout::{
+        drag_splitter::DragSplitter,
+        message_banner::{Messages, show_error},
+    },
+    domain::rest_client::ui::request_result_panel::ReqResultData,
+    i18n::*,
 };
 use leptos::{
     html::{Button, Div},
@@ -22,6 +27,7 @@ pub fn RequestPanel(
     set_request_info: WriteSignal<RequestInfo>,
 ) -> impl IntoView {
     let i18n = use_i18n();
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
@@ -37,6 +43,7 @@ pub fn RequestPanel(
         headers,
         set_headers,
     });
+    let (save_response, set_save_response) = signal(false);
 
     let screen_width = get_browser_width().unwrap();
     let min_params_width = screen_width / 6;
@@ -50,8 +57,16 @@ pub fn RequestPanel(
         params.read_untracked().set_headers.set(load_headers(request_info.read_untracked().id));
     });
 
-    create_request_info_watcher(params, request_info, send_btn_node_ref, set_response);
+    create_request_info_watcher(
+        params,
+        request_info,
+        send_btn_node_ref,
+        set_response,
+        set_save_response,
+        messages,
+    );
     create_req_watchers(params, request_info, set_request_info);
+    create_watcher_bool(save_response, "rc_save_response", request_info);
 
     view! {
         <Show when=move || { request_info.read().id > 0 }
@@ -59,7 +74,16 @@ pub fn RequestPanel(
         >
             <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
                 <RequestParamsPanel node_ref=params_ref send_btn_node_ref
-                    params on_result=move|res| {
+                    params on_result=move|res: ReqResultData| {
+                        if *save_response.read_untracked() {
+                            let json_string = serde_json::to_string(&res).unwrap();
+                            set_local_store_value(
+                                &format!("{}-rc_save_response_data", request_info.read_untracked().id),
+                                json_string,
+                            )
+                        } else {
+                            delete_local_store_value(&format!("{}-rc_save_response_data", request_info.read_untracked().id))
+                        }
                         set_response.set(Some(res));
                     }
                 />
@@ -68,7 +92,7 @@ pub fn RequestPanel(
                     min_width={min_params_width} max_width={screen_width - (screen_width / 3)}
                     default_width={min_params_width} />
 
-                <RequestResultPanel data=response/>
+                <RequestResultPanel save_response set_save_response data=response/>
 
             </div>
         </Show>
@@ -131,6 +155,8 @@ fn create_request_info_watcher(
     request_info: ReadSignal<RequestInfo>,
     send_btn_ref: NodeRef<Button>,
     set_response: WriteSignal<Option<ReqResultData>>,
+    set_save_response: WriteSignal<bool>,
+    messages: Messages,
 ) {
     Effect::watch(
         move || request_info.get(),
@@ -154,6 +180,26 @@ fn create_request_info_watcher(
                     id,
                 ));
                 params.read_untracked().set_headers.set(load_headers(id));
+
+                let save_response = get_local_store_value(
+                    &format!("{}-rc_save_response", request_info.read_untracked().id),
+                    "false".to_owned(),
+                )
+                .parse::<bool>()
+                .unwrap();
+                set_save_response.set(save_response);
+                if save_response {
+                    let data_str = get_local_store_value(
+                        &format!("{}-rc_save_response_data", id),
+                        "".to_owned(),
+                    );
+                    if !data_str.is_empty() {
+                        match serde_json::from_str::<ReqResultData>(&data_str) {
+                            Ok(data) => set_response.set(Some(data)),
+                            Err(err) => show_error(err.to_string(), messages),
+                        }
+                    }
+                }
             }
         },
         false,
@@ -161,6 +207,22 @@ fn create_request_info_watcher(
 }
 
 fn create_watcher(value: ReadSignal<String>, name: &str, request_info: ReadSignal<RequestInfo>) {
+    let name = name.to_owned();
+    Effect::watch(
+        move || value.get(),
+        move |value, prev, _| {
+            if prev.is_none() || value != prev.unwrap() {
+                set_local_store_value(
+                    &format!("{}-{}", request_info.read_untracked().id, name),
+                    value.to_string(),
+                )
+            }
+        },
+        false,
+    );
+}
+
+fn create_watcher_bool(value: ReadSignal<bool>, name: &str, request_info: ReadSignal<RequestInfo>) {
     let name = name.to_owned();
     Effect::watch(
         move || value.get(),

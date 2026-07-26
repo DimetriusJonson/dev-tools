@@ -8,6 +8,7 @@ use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::i18n::*;
 use leptos::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Copy, Clone)]
 enum ResponceTabKind {
@@ -15,7 +16,7 @@ enum ResponceTabKind {
     Headers,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct ReqResultData {
     pub status_code: u16,
     pub body: String,
@@ -23,7 +24,11 @@ pub struct ReqResultData {
 }
 
 #[component]
-pub fn RequestResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoView {
+pub fn RequestResultPanel(
+    save_response: ReadSignal<bool>,
+    set_save_response: WriteSignal<bool>,
+    data: ReadSignal<Option<ReqResultData>>,
+) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
 
@@ -105,13 +110,19 @@ pub fn RequestResultPanel(data: ReadSignal<Option<ReqResultData>>) -> impl IntoV
                     >
                         <div class="flex justify-between">
                             <span class="dark:text-white">{format!("Status: {}", response_status)}</span>
-                            <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
-                                    on:change=move |e| {
-                                        let value = event_target_value(&e);
-                                        set_local_store_value("rc_formatting", value);
-                                    }/>
-                                <label for="formatting" class="dark:text-white">Format</label>
+                            <div class="flex">
+                                <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
+                                        on:change=move |e| {
+                                            let value = event_target_value(&e);
+                                            set_local_store_value("rc_formatting", value);
+                                        }/>
+                                    <label for="formatting" class="dark:text-white">Format</label>
+                                </div>
+                                <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
+                                    <label for="save-response" class="dark:text-white">Save</label>
+                                </div>
                             </div>
                         </div>
                         <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
@@ -148,7 +159,8 @@ fn get_media_type_code(media_type: &str) -> Option<String> {
     MEDIA_TYPES
         .iter()
         .filter(|v| media_type.to_uppercase().contains(&v.0.to_uppercase()))
-        .map(|v| v.1.to_owned()).next()
+        .map(|v| v.1.to_owned())
+        .next()
 }
 
 fn render_headers(headers: Vec<(String, String)>) -> String {
