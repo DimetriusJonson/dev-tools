@@ -64,7 +64,7 @@ pub fn RequestPanel(
                     }
                 />
 
-                <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width" 
+                <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width"
                     min_width={min_params_width} max_width={screen_width - (screen_width / 3)}
                     default_width={min_params_width} />
 
@@ -116,13 +116,11 @@ fn create_req_watchers(
 
     Effect::watch(
         move || params.read_untracked().headers.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_local_store_value(
-                    &format!("{}-rc_headers", request_info.read_untracked().id),
-                    headers_to_string(value),
-                )
-            }
+        move |value, _prev, _| {
+            set_local_store_value(
+                &format!("{}-rc_headers", request_info.read_untracked().id),
+                headers_to_string(value),
+            )
         },
         false,
     );

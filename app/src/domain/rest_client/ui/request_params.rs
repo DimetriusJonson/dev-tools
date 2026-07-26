@@ -21,7 +21,7 @@ pub struct RequestInfo {
     pub autorun: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct CustomHeader {
     pub id: usize,
     pub name: ReadSignal<String>,
@@ -42,7 +42,13 @@ impl RequestInfo {
     }
 
     pub fn new_empty() -> Self {
-        Self { id: 0, url: "".to_owned(), method: "".to_owned(), name: "".to_owned(), autorun: false  }
+        Self {
+            id: 0,
+            url: "".to_owned(),
+            method: "".to_owned(),
+            name: "".to_owned(),
+            autorun: false,
+        }
     }
 
     pub fn display_name(&self) -> String {
