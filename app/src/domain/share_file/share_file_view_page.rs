@@ -17,7 +17,7 @@ pub fn ShareFileViewPage() -> impl IntoView {
 
     let share_info_resource = LocalResource::new(move || async move {
         match Request::get("/share_file_info_ex")
-            .query([("id", params.read().get("id").unwrap_or_default()), ("local", params.read().get("local").unwrap_or_default())])
+            .query([("id", params.read().get("id").unwrap_or_default()), ("local", params.read().get("local").unwrap_or("false".to_owned()))])
             .build()
         {
             Ok(request) => match request.send().await {
