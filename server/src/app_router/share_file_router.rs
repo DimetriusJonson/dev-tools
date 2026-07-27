@@ -204,7 +204,7 @@ pub async fn share_file_info_ex_handler(
     let params = parse_query_params(&query_str);
     let id = params.get("id").unwrap_or(&"");
     let local =
-        params.get("local").unwrap_or(&"false").parse::<bool>().map_err(AppError::system_error)?;
+        params.get("local").unwrap_or(&"false").parse::<bool>().unwrap_or(false);
 
     let site_addr = app_state.addr;
 
