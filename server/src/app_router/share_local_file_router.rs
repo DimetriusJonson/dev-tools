@@ -2,10 +2,10 @@ use std::sync::LazyLock;
 
 use crate::common::app_error::AppError;
 use axum::{
-    extract::{RawQuery, Request},
-    response::IntoResponse,
+    Json, extract::{RawQuery, Request}, response::IntoResponse,
 };
 use http::{HeaderMap, header};
+use model::share_file::share_file_info_dto::ShareFileInfoDto;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -46,7 +46,11 @@ pub async fn share_local_file_info(
     let local_db = LOCAL_SHARE_DB.lock().unwrap();
     if let Some(data) = local_db.get(external_id.to_owned()) {
         let is_image = is_mime_image(&data.mime_type);
-        Ok(format!("{}\n{}\n{}", data.file_name, data.mime_type, is_image).into_response())
+        Ok(Json(ShareFileInfoDto {
+                file_name: data.file_name.to_owned(),
+                mime_type: data.mime_type.to_owned(),
+                is_image,
+            }).into_response())
     } else {
         Err(AppError::SystemError(format!("Not found file id={}!", external_id)))
     }

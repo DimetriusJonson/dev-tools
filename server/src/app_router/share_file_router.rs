@@ -1,15 +1,26 @@
 use axum::{
+    Json,
     body::to_bytes,
     extract::{RawQuery, Request, State},
     response::IntoResponse,
 };
 use http::{HeaderMap, HeaderValue, header};
+use model::share_file::{
+    share_file_info_dto::ShareFileInfoDto, share_file_server::ShareFileServerDto,
+};
 use nanoid::nanoid;
 
 use crate::{
-    app_router::proxy_request_to_remote, common::{
-        app_error::AppError, app_state::AppState, compress_utils::{compress_bytes, decompress_bytes}, dev_utils::{is_mime_image, parse_query_params}, image_utils::{convert_image_data_to_jpg, create_image_thumbnail}, net_utils::get_local_addrs,
-    }, db::share_files_db::{
+    app_router::proxy_request_to_remote,
+    common::{
+        app_error::AppError,
+        app_state::AppState,
+        compress_utils::{compress_bytes, decompress_bytes},
+        dev_utils::{is_mime_image, parse_query_params},
+        image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
+        net_utils::get_local_addrs,
+    },
+    db::share_files_db::{
         create_share_file_in_db, delete_old_share_files_in_db, get_share_file_from_db,
         get_share_file_info_from_db, get_share_file_thumbnail_from_db,
     },
@@ -165,10 +176,11 @@ pub async fn share_file_info(
         Some(pool) => {
             let share_file_info = get_share_file_info_from_db(external_id, &pool).await?;
             let is_image = is_mime_image(&share_file_info.mime_type);
-            Ok(format!(
-                "{}\n{}\n{}",
-                share_file_info.file_name, share_file_info.mime_type, is_image
-            )
+            Ok(Json(ShareFileInfoDto {
+                file_name: share_file_info.file_name,
+                mime_type: share_file_info.mime_type,
+                is_image,
+            })
             .into_response())
         }
         None => proxy_request_to_remote(app_state.remote_server_url.unwrap(), request).await,
@@ -178,22 +190,23 @@ pub async fn share_file_info(
 #[axum::debug_handler]
 pub async fn share_file_custom_servers_handler(
     State(app_state): State<AppState>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<Json<Vec<ShareFileServerDto>>, AppError> {
     if app_state.pool.is_some() {
-        return Ok("".into_response());
+        return Ok(Json(Vec::new()));
     }
 
     let addrs = get_local_addrs().map_err(AppError::system_error)?;
-
     let site_addr = app_state.addr;
 
-    let res = addrs
-        .iter()
-        .map(|a| format!("http://{}:{};{} ({})", a.0.to_owned(), site_addr.port(), a.1, a.0))
-        .collect::<Vec<String>>()
-        .join("\n");
-
-    Ok(res.into_response())
+    Ok(Json(
+        addrs
+            .iter()
+            .map(|a| ShareFileServerDto {
+                url: format!("http://{}:{}", a.0.to_owned(), site_addr.port()),
+                description: format!("{} ({})", a.1, a.0),
+            })
+            .collect(),
+    ))
 }
 
 pub async fn share_file_info_ex_handler(
@@ -203,8 +216,7 @@ pub async fn share_file_info_ex_handler(
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
     let id = params.get("id").unwrap_or(&"");
-    let local =
-        params.get("local").unwrap_or(&"false").parse::<bool>().unwrap_or(false);
+    let local = params.get("local").unwrap_or(&"false").parse::<bool>().unwrap_or(false);
 
     let site_addr = app_state.addr;
 
@@ -216,13 +228,9 @@ pub async fn share_file_info_ex_handler(
             .map_err(AppError::system_error)?;
 
     if response.status() == 200 {
-        let response_text = response.text().await.map_err(AppError::system_error)?;
-
-        let parts: Vec<&str> = response_text.split('\n').collect();
-        let file_name = parts[0].to_owned();
-        let is_image = parts[2].parse::<bool>().unwrap();
-
-        Ok(format!("{};{}", file_name, is_image))
+        let share_file_info_dto =
+            response.json::<ShareFileInfoDto>().await.map_err(AppError::system_error)?;
+        Ok(Json(share_file_info_dto).into_response())
     } else {
         let response_text = response.text().await.map_err(AppError::system_error)?;
 

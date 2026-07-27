@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["app", "model", "server"]
+default-members = ["server"]
 
 [workspace.dependencies]
 

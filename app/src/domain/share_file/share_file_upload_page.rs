@@ -1,6 +1,7 @@
 use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
+use model::share_file::share_file_server::ShareFileServerDto;
 use web_sys::{File, HtmlInputElement};
 
 use crate::common::ui_utils::copy_to_clipboard;
@@ -50,12 +51,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let custom_servers_resource = LocalResource::new(async move || {
         match Request::get("/share_file_custom_servers").build() {
             Ok(request) => match request.send().await {
-                Ok(response) => match response.text().await {
-                    Ok(response_text) => {
+                Ok(response) => match response.json::<Vec<ShareFileServerDto>>().await {
+                    Ok(servers) => {
                         let mut result = Vec::new();
-                        for line in response_text.lines() {
-                            let parts = line.split(';').collect::<Vec<&str>>();
-                            result.push((Some(parts[0].to_owned()), parts[1].to_owned()));
+                        for server in servers {
+                            result
+                                .push((Some(server.url.to_owned()), server.description.to_owned()));
                         }
                         result
                     }
