@@ -4,7 +4,7 @@ use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::common::ui_utils::{copy_to_clipboard, get_browser_width, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
@@ -42,11 +42,7 @@ pub fn XmlPage() -> impl IntoView {
     let (in_progress, set_in_progress) = signal(InProgressType::None);
 
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
-
-    let screen_width = get_browser_width().unwrap();
-    let min_left_panel_width = screen_width / 6;
     let left_panel_ref = NodeRef::<Div>::new();
-
 
     let on_format_click = move |_| {
         spawn_local(async move {
@@ -213,9 +209,9 @@ pub fn XmlPage() -> impl IntoView {
                 target_ref=left_panel_ref 
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name="xml_left_panel_width"
-                min_width={min_left_panel_width} 
-                max_width={screen_width - screen_width / 4} 
-                default_width={screen_width / 2 - 128}/>
+                min_scr_ration={1.0 / 6.0} 
+                max_scr_ration={3.0 / 4.0} 
+                default_scr_ration={1.0 / 2.0}/>
 
             // RIGHT SIDE
             <div class="md:flex-1 overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">

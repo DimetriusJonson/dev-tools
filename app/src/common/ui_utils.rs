@@ -69,7 +69,7 @@ pub fn is_base_header_name(name: &str) -> bool {
     name == "content-type" || name == "accept" || name == "accept-language" || name == "user-agent"
 }
 
-pub fn get_browser_width() -> Result<i32, JsValue> {
+pub fn get_browser_width() -> Result<f64, JsValue> {
     let window = web_sys::window().ok_or_else(|| JsValue::from_str("No global window found"))?;
     
     let width = window
@@ -77,5 +77,5 @@ pub fn get_browser_width() -> Result<i32, JsValue> {
         .as_f64()
         .ok_or_else(|| JsValue::from_str("Could not convert inner_width to f64"))?;
         
-    Ok(width as i32)
+    Ok(width)
 }

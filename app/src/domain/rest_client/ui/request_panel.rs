@@ -1,5 +1,5 @@
 use crate::{
-    common::{local_store::delete_local_store_value, ui_utils::get_browser_width},
+    common::local_store::delete_local_store_value,
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
@@ -45,9 +45,6 @@ pub fn RequestPanel(
     });
     let (save_response, set_save_response) = signal(false);
 
-    let screen_width = get_browser_width().unwrap();
-    let min_params_width = screen_width / 6;
-
     let params_ref = NodeRef::<Div>::new();
     let send_btn_node_ref = NodeRef::<Button>::new();
 
@@ -89,8 +86,9 @@ pub fn RequestPanel(
                 />
 
                 <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width"
-                    min_width={min_params_width} max_width={screen_width - (screen_width / 3)}
-                    default_width={min_params_width} />
+                    min_scr_ration={1.0 / 6.0} 
+                    max_scr_ration={2.0 / 3.0}
+                    default_scr_ration={1.0 / 6.0} />
 
                 <RequestResultPanel save_response set_save_response data=response/>
 

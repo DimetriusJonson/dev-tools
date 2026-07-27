@@ -1,5 +1,4 @@
 use crate::common::text_comparator::compare_text;
-use crate::common::ui_utils::get_browser_width;
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::i18n::*;
 use leptos::html::Div;
@@ -22,8 +21,6 @@ pub fn CompareTextPage() -> impl IntoView {
     let (dst_right, set_dst_right) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
 
-    let screen_width = get_browser_width().unwrap();
-    let min_text1_width = screen_width / 6;
     let text1_ref = NodeRef::<Div>::new();
 
     let on_compare_click = move |_| {
@@ -94,9 +91,9 @@ pub fn CompareTextPage() -> impl IntoView {
                         target_ref=text1_ref 
                         class_name="hidden md:block".to_owned()
                         local_store_prop_name="compare_text1_width"
-                        min_width={min_text1_width} 
-                        max_width={screen_width - screen_width / 4} 
-                        default_width={screen_width / 2 - 128}/>
+                        min_scr_ration={1.0 / 6.0} 
+                        max_scr_ration={3.0 / 4.0} 
+                        default_scr_ration={1.0 / 2.0}/>
 
                     <TextArea
                         name="text2".to_owned()

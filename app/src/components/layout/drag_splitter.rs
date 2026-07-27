@@ -6,7 +6,7 @@ use leptos::{
 };
 
 use crate::common::{
-    local_store::{get_local_store_value, set_local_store_value},
+    local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
     ui_utils::get_browser_width,
 };
 
@@ -14,22 +14,65 @@ use crate::common::{
 pub fn DragSplitter(
     target_ref: NodeRef<Div>,
     local_store_prop_name: &'static str,
-    min_width: i32,
-    max_width: i32,
-    default_width: i32,
+    min_scr_ration: f64,
+    max_scr_ration: f64,
+    default_scr_ration: f64,
     #[prop(optional)] class_name: String,
     #[prop(optional)] allow_mobile: bool,
 ) -> impl IntoView {
     let (dragging, set_dragging) = signal(false);
     let dragbar_ref = NodeRef::<Div>::new();
 
+    let screen_width = get_browser_width().unwrap() as f64;
+
+    let (width, set_width) = signal(screen_width * default_scr_ration);
+
     let _ = Effect::new(move || {
-        let init_width = get_local_store_value(local_store_prop_name, default_width.to_string())
-            .parse::<i32>()
-            .unwrap();
+        let init_width = get_local_store_value(
+            local_store_prop_name,
+            (screen_width * default_scr_ration).to_string(),
+        )
+        .parse::<f64>()
+        .unwrap();
+
         if !is_mobile() || allow_mobile {
             if let Some(target_elem) = target_ref.get() {
                 (*target_elem).style().set_property("width", &format!("{}px", init_width)).unwrap();
+            }
+        }
+    });
+
+    let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
+        if let Some(target_elem) = target_ref.get()
+            && let Ok(screen_width) = get_browser_width()
+        {
+            let default_width = screen_width * default_scr_ration;
+            if !is_mobile() || allow_mobile {
+                let current_width = width.get();
+
+                let min_width = screen_width * min_scr_ration;
+                let max_width = screen_width * max_scr_ration;
+
+                if current_width < min_width {
+                    (*target_elem)
+                        .style()
+                        .set_property("width", &format!("{}px", min_width))
+                        .unwrap();
+                    set_width.set(min_width);
+                    set_local_store_value(local_store_prop_name, min_width.to_string());
+                }
+                if current_width > max_width {
+                    (*target_elem)
+                        .style()
+                        .set_property("width", &format!("{}px", max_width))
+                        .unwrap();
+                    set_width.set(max_width);
+                    set_local_store_value(local_store_prop_name, max_width.to_string());
+                }
+            } else {
+                (*target_elem).style().remove_property("width").unwrap();
+                delete_local_store_value(local_store_prop_name);
+                set_width.set(default_width);
             }
         }
     });
@@ -38,13 +81,17 @@ pub fn DragSplitter(
         if dragging.get_untracked()
             && let Some(target_elem) = target_ref.get()
             && (!is_mobile() || allow_mobile)
+            && let Ok(screen_width) = get_browser_width()
         {
+            let min_width = screen_width * min_scr_ration;
+            let max_width = screen_width * max_scr_ration;
+
             let rect = target_elem.get_bounding_client_rect();
-            let new_width = ev.client_x() - rect.left() as i32;
+            let new_width = ev.client_x() as f64 - rect.left();
 
             if new_width > min_width && new_width < max_width {
                 (*target_elem).style().set_property("width", &format!("{}px", new_width)).unwrap();
-
+                set_width.set(new_width);
                 set_local_store_value(local_store_prop_name, new_width.to_string());
             }
         }
@@ -65,5 +112,5 @@ pub fn DragSplitter(
 }
 
 fn is_mobile() -> bool {
-    get_browser_width().unwrap() < 768
+    get_browser_width().unwrap() < 768.0
 }
