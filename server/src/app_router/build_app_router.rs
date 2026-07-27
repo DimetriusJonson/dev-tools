@@ -43,7 +43,12 @@ pub async fn build_app_router(
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
         .route("/test_json", get(test_json_handler))
+        .route("/urlEncoder", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
+        .route("/json", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
+        .route("/share_file", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
         .route("/share_file/view", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
+        .route("/compare_text", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
+        .route("/rest_client", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
         .fallback_service(ServeDir::new(dist_dir))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
@@ -51,4 +56,3 @@ pub async fn build_app_router(
 
     Ok(app)
 }
-
