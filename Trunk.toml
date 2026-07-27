@@ -3,6 +3,7 @@ tailwindcss = "4.3.2"
 
 [build]
 target = "app/index.html"
+sri = "disabled"
 
 # Ensure Trunk outputs built assets to the proper directory
 dist = "dist"
