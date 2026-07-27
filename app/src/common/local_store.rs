@@ -1,13 +1,7 @@
-
 pub fn get_local_store_value(_key: &str, default: String) -> String {
-    #[cfg(not(feature = "ssr"))]
     use gloo_storage::{LocalStorage, Storage};
 
-    #[cfg(not(feature = "ssr"))]
-    let val = LocalStorage::get(_key); 
-    
-    #[cfg(feature = "ssr")]
-    let val: Result<String, std::convert::Infallible> = Ok(default.to_owned());
+    let val = LocalStorage::get(_key);
 
     match val {
         Ok(value) => value,

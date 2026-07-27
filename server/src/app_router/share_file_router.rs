@@ -185,7 +185,7 @@ pub async fn share_file_custom_servers_handler(
 
     let addrs = get_local_addrs().map_err(AppError::system_error)?;
 
-    let site_addr = app_state.leptos_options.site_addr;
+    let site_addr = app_state.addr;
 
     let res = addrs
         .iter()
@@ -206,7 +206,7 @@ pub async fn share_file_info_ex_handler(
     let local =
         params.get("local").unwrap_or(&"false").parse::<bool>().map_err(AppError::system_error)?;
 
-    let site_addr = app_state.leptos_options.site_addr;
+    let site_addr = app_state.addr;
 
     let srv_name = if local { "share_local_file_info" } else { "share_file_info" };
 

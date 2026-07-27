@@ -1,7 +1,9 @@
 use std::str::FromStr;
 
 use crate::{
-    common::local_store::set_local_store_value, components::ui::select_input::SelectInput, i18n::*,
+    common::local_store::{get_local_store_value, set_local_store_value},
+    components::ui::select_input::SelectInput,
+    i18n::*,
 };
 use leptos::prelude::*;
 
@@ -11,19 +13,14 @@ pub fn LanguageSelector() -> impl IntoView {
     let (value, set_value) = signal(i18n.get_locale_untracked().to_string());
 
     Effect::new(move |_| {
-        #[cfg(not(feature = "ssr"))]
-        {
-            use crate::common::local_store::get_local_store_value;
+        let browser_lang = crate::common::ui_utils::get_browser_language();
+        let lang = get_local_store_value("lang", browser_lang);
 
-            let browser_lang = crate::common::ui_utils::get_browser_language();
-            let lang = get_local_store_value("lang", browser_lang);
-
-            i18n.set_locale(match lang.as_str() {
-                "ru" => Locale::ru,
-                _ => Locale::en,
-            });
-            set_value.set(i18n.get_locale().to_string());
-        }
+        i18n.set_locale(match lang.as_str() {
+            "ru" => Locale::ru,
+            _ => Locale::en,
+        });
+        set_value.set(i18n.get_locale().to_string());
     });
 
     view! {

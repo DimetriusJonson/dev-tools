@@ -4,12 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-serde = { workspace = true, optional = true }
-
-[features]
-#default = []
-default = ["standalone"]
-
-standalone=[
-    "dep:serde",
-    ]
+serde = { version = "1", features = ["derive"]}
+bytes = "1.12.0"

@@ -1,5 +1,7 @@
-use crate::components::layout::language_selector::LanguageSelector;
 use crate::i18n::*;
+use crate::{
+    common::ui_utils::get_host_name, components::layout::language_selector::LanguageSelector,
+};
 use leptos::prelude::*;
 use leptos_router::hooks::use_location;
 
@@ -45,21 +47,19 @@ fn nav_button_color(curr_path: String, button_path: &str) -> ButtonLinkColor {
     if curr_path.as_str() == button_path { ButtonLinkColor::Black } else { ButtonLinkColor::Brown }
 }
 
-#[cfg(feature = "standalone")]
 #[component]
 fn RestClientButton() -> impl IntoView {
     let i18n = use_i18n();
     let location = use_location();
 
     view! {
-        <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href="/rest_client".to_owned()
-        button_width=ButtonLinkWidth::Auto
-        color=move || nav_button_color(location.pathname.get(), "/rest_client") />
+        <Show
+            when=move || { !get_host_name().contains("dev-tools") }
+            fallback=move || view! {}
+        >
+            <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href="/rest_client".to_owned()
+            button_width=ButtonLinkWidth::Auto
+            color=move || nav_button_color(location.pathname.get(), "/rest_client") />
+        </Show>
     }
-}
-
-#[cfg(not(feature = "standalone"))]
-#[component]
-fn RestClientButton() -> impl IntoView {
-    view! {}
 }

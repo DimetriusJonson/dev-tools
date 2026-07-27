@@ -1,5 +1,9 @@
 use crate::common::app_error::AppError;
-use axum::{body::Body, extract::Request, response::{IntoResponse, Response}};
+use axum::{
+    body::Body,
+    extract::Request,
+    response::{IntoResponse, Response},
+};
 use http::HeaderValue;
 use reqwest::Client;
 
@@ -9,9 +13,7 @@ pub mod share_file_router;
 pub mod share_local_file_router;
 pub mod xml_format_router;
 
-#[cfg(feature = "standalone")]
 pub mod rest_client_router;
-#[cfg(feature = "standalone")]
 pub mod test_json_router;
 
 pub async fn proxy_request_to_remote(
@@ -33,7 +35,9 @@ pub async fn proxy_request_to_remote(
     let mut upstream_req = Client::new().request(method, &target_url).body(reqwest_body);
 
     for hv in headers {
-        if let Some(name) = hv.0 && name != "host" {
+        if let Some(name) = hv.0
+            && name != "host"
+        {
             upstream_req = upstream_req.header(name, hv.1);
         }
     }
@@ -53,4 +57,3 @@ pub async fn proxy_request_to_remote(
 
     Ok(response)
 }
-

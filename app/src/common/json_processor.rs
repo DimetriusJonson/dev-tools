@@ -1,6 +1,6 @@
 use bytes::Bytes;
 
-use crate::common::json_formatter::JsonFormatter;
+use model::utils::json_formatter::JsonFormatter;
 
 pub fn format_json(json: &str, ident: usize) -> String {
     let mut formatter = JsonFormatter::new(ident);
