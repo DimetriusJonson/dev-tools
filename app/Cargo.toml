@@ -22,17 +22,17 @@ web-sys = { version = "0.3", features = ["Window", "Navigator", "Clipboard", "Ht
   "CssStyleDeclaration",
   "HtmlElement",
   ]}
-quick-xml = { version = "0.40.1", features = ["async-tokio"]}
-gloo-net = { version="0.6", features=["http"] }
-gloo-storage = "0.3"
-gloo-utils = "0.2.0"
+quick-xml = { version = "0.41", features = ["async-tokio"]}
+gloo-net = { version="0.7", features=["http"] }
+gloo-storage = "0.4"
+gloo-utils = "0.3"
 js-sys = "0.3.102"
 html-escape = "0.2.13"
 urlencoding = "2.1"
 uuid = { version = "1.23", features = ["v4", "fast-rng", "js"] }
 http = "1"
 leptos_i18n = { version = "0.6", features = ["plurals", "csr"] }
-leptos_i18n_macro = { version = "0.2" }
+leptos_i18n_macro = { version = "0.6" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 bytes = "1.12.0"
