@@ -5,7 +5,6 @@ use std::{
 
 use clap::Parser;
 use dotenvy::dotenv;
-use tracing::info;
 use server::server_starter::start_axum_server;
 
 pub const REMOTE_SERVER_HOST: &str = "dev-tools-rust.vercel.app";
@@ -60,6 +59,5 @@ async fn main() -> anyhow::Result<()> {
         None => None,
     };
 
-    info!("start_axum_server...");
     start_axum_server(addr_v4, Some(remote_server_url), database_url, dist_dir).await
 }

@@ -28,6 +28,8 @@ pub async fn start_axum_server(
         Err(e) => error!("Error getting parallelism: {}", e),
     }
 
+    info!("dist_dir={}", dist_dir);
+
     let addr = match custom_addr {
         Some(custom_addr) => custom_addr,
         None => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3000),

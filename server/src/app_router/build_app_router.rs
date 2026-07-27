@@ -2,10 +2,10 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
-use axum::routing::{get, post};
+use axum::routing::{get, get_service, post};
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
@@ -43,6 +43,7 @@ pub async fn build_app_router(
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
         .route("/test_json", get(test_json_handler))
+        .route("/share_file/view", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
         .fallback_service(ServeDir::new(dist_dir))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
@@ -50,3 +51,4 @@ pub async fn build_app_router(
 
     Ok(app)
 }
+
