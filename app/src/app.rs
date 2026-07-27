@@ -1,7 +1,7 @@
 use crate::domain::rest_client::rest_client_page::RestClientPage;
 use crate::i18n::*;
 use leptos::prelude::*;
-use leptos_meta::{Stylesheet, provide_meta_context};
+use leptos_meta::provide_meta_context;
 use leptos_router::components::{Outlet, ParentRoute, Route, Router, Routes};
 use leptos_router::path;
 
@@ -38,10 +38,6 @@ pub fn App() -> impl IntoView {
 
     view! {
         <I18nContextProvider>
-        // injects a stylesheet into the document <head>
-        // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/dev_tools.css"/>
-
         // content for this welcome page
         <Router>
             <div class="flex flex-col h-dvh">
