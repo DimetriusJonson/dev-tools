@@ -11,7 +11,7 @@ pub const REMOTE_SERVER_HOST: &str = "dev-tools-rust.vercel.app";
 
 #[derive(Parser)]
 #[command(name = "Dev Tools Server")]
-#[command(version = "0.4.0")]
+#[command(version = "0.5.0")]
 #[command(about = "WebDev Useful Tools Server", long_about = None)]
 struct Cli {
     #[arg(long, value_name = "ADDR", help="Server socket addr. Example \"--ADDR 0.0.0.0:3005\"")]
