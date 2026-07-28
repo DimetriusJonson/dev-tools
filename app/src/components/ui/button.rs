@@ -70,10 +70,10 @@ pub fn Button(
     };
 
     let button_width_classes = match button_width {
-        ButtonWidth::Auto => "w-auto px-4".to_owned(),
-        ButtonWidth::OneSymbol => "w-12 px-4".to_owned(),
-        ButtonWidth::Md => "w-32 px-4".to_owned(),
-        ButtonWidth::Lg => "w-38 px-4".to_owned(),
+        ButtonWidth::Auto => "w-auto px-2 md:px-4".to_owned(),
+        ButtonWidth::OneSymbol => "w-12 px-2 md:px-4".to_owned(),
+        ButtonWidth::Md => "w-32 px-2 md:px-4".to_owned(),
+        ButtonWidth::Lg => "w-38 px-2 md:px-4".to_owned(),
         ButtonWidth::Custom => "".to_owned(),
     };
 

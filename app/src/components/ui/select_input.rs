@@ -27,7 +27,7 @@ pub fn SelectInput(
     view! {
         <select aria-label=label_memo
             id = {name.to_owned()}
-            class={format!("border rounded-lg w-full p-2
+            class={format!("border rounded-lg p-2
         focus:outline-4
         h-8 md:h-10 text-xs md:text-base
 

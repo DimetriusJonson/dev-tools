@@ -108,8 +108,8 @@ pub fn RestClientExplorer(
     });
 
     view! {
-        <div node_ref=node_ref class="flex flex-col gap-y-0 dark:text-white">
-            <div class="p-4">
+        <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
+            <div class="p-2 md:p-4">
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
                     class_name="w-full".to_owned()
@@ -125,7 +125,7 @@ pub fn RestClientExplorer(
                     let request_cloned = request.get();
 
                     view! {
-                        <div class="flex w-full h-10 items-center cursor-pointer p-2"
+                        <div class="flex h-8 sm:h-10 items-center cursor-pointer p-1 sm:p-2 text-xs md:text-base"
                             class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
                             class=(["hover:bg-gray-600/50"], move || request_cloned.id != current_request.read().id)
                             on:click={
@@ -154,11 +154,11 @@ pub fn RestClientExplorer(
                                 fallback={
                                     let request_cloned = request.get();
                                     move || view!{
-                                        <span class={format!("rounded-xl h-5 px-2 pb-4 font-medium text-sm {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
-                                        <span class="p-2 w-full truncate">{request_cloned.display_name()}</span>
+                                        <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
+                                        <span class="p-1 sm:p-2 w-full truncate">{request_cloned.display_name()}</span>
 
                                         <Show when=move || request_cloned.id == current_request.read().id>
-                                            <div class="relative px-2" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
+                                            <div class="relative px-1 sm:px-2" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
                                                 <Button
                                                     label=move || "...".to_owned()
                                                     class_name="hover:bg-sky-500/80 w-8 h-5 pb-6".to_owned()

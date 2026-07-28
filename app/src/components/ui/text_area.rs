@@ -15,7 +15,7 @@ pub fn TextArea(
 
     view! {
         <textarea
-            class=format!("textblock w-full px-3 py-2 rounded-md shadow-inner
+            class=format!("textblock px-1 md:px-4 py-2 rounded-md shadow-inner
         focus:outline-4
         border
         text-gray-700 

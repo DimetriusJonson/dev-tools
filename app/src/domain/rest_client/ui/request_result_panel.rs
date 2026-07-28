@@ -75,12 +75,12 @@ pub fn RequestResultPanel(
             }
 
             view! {
-            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
+            <div class="flex-1 overflow-y-auto flex flex-col gap-4">
                 // Tab Headers
-                <div class="flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none" role="tablist">
+                <div class="flex flex-row border-b border-gray-200 text-xs md:text-sm font-medium text-center focus:outline-none" role="tablist">
                     <button role="tab"
                         aria-selected=move || resp_tab_selected.get() == ResponceTabKind::Body
-                        class="flex-1 py-2.5 border-b-2 cursor-pointer"
+                        class="py-2.5 border-b-2 cursor-pointer w-full"
                         class=(["border-blue-600", "text-black", "dark:text-white"], move || resp_tab_selected.get() == ResponceTabKind::Body)
                         class=(["text-gray-500"], move || resp_tab_selected.get() != ResponceTabKind::Body)
                         on:click=move |_event| {
@@ -91,7 +91,7 @@ pub fn RequestResultPanel(
                     </button>
                     <button role="tab"
                         aria-selected=move || resp_tab_selected.get() == ResponceTabKind::Headers
-                        class="flex-1 py-2.5 border-b-2 cursor-pointer"
+                        class="py-2.5 border-b-2 cursor-pointer w-full"
                         class=(["border-blue-600", "text-black", "dark:text-white"], move || resp_tab_selected.get() == ResponceTabKind::Headers)
                         class=(["text-gray-500"], move || resp_tab_selected.get() != ResponceTabKind::Headers)
                         on:click=move |_event| {
@@ -103,7 +103,7 @@ pub fn RequestResultPanel(
                 </div>
 
                 //Tab Content Panels
-                <div class="md:flex-1 min-h-0 overflow-y-auto flex">
+                <div class="flex-1 overflow-y-auto flex">
                     <div class="flex flex-col gap-4 w-full"
                         class:block=move || resp_tab_selected.get() == ResponceTabKind::Body
                         class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Body
@@ -125,7 +125,7 @@ pub fn RequestResultPanel(
                                 </div>
                             </div>
                         </div>
-                        <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
+                        <div class="flex-1 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                             <CodeInner code={response_text} lang={move || resp_code_lang.to_owned()}/>
                         </div>
                         <div class="flex">
@@ -140,7 +140,7 @@ pub fn RequestResultPanel(
                         </div>
                     </div>
 
-                    <div class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base min-h-0 w-full"
+                    <div class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full"
                         class:block=move || resp_tab_selected.get() == ResponceTabKind::Headers
                         class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Headers
                     >

@@ -73,12 +73,12 @@ pub fn RequestParamsPanel(
 
     view! {
 
-        <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-4 h-[29dvh] md:h-[90dvh]">
-            <div class="flex gap-4">
+        <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-2 md:gap-4">
+            <div class="flex flex-col sm:flex-row gap-2 md:gap-4">
                 <SelectInput
                     name="method".to_owned()
                     label=move || "Method".to_owned()
-                    class_name="max-w-24".to_owned()
+                    class_name="max-w-12 md:max-w-24".to_owned()
                     not_selected_text=move || "".to_owned()
                     options=move || {vec![
                         single_select_option("GET"),
@@ -105,6 +105,7 @@ pub fn RequestParamsPanel(
                 />
 
                 <Button node_ref=send_btn_node_ref
+                    class_name="max-w-16 sm:max-w-none".to_owned()
                     label=move || t!(i18n, rest_client_send_btn_label).to_html()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get()
@@ -117,16 +118,14 @@ pub fn RequestParamsPanel(
 
             <RequestHeadersPanel params />
 
-            <div class="flex-1 flex">
-                <TextArea
-                    name="body".to_owned()
-                    class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                    placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
-                    value=params.read_untracked().body
-                    set_value=params.read_untracked().set_body
-                    on_change=move |_| {}
-                />
-            </div>
+            <TextArea
+                name="body".to_owned()
+                class_name="flex-1 w-full md:h-auto overflow-y-auto resize-none".to_owned()
+                placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
+                value=params.read_untracked().body
+                set_value=params.read_untracked().set_body
+                on_change=move |_| {}
+            />
         </div>
 
     }

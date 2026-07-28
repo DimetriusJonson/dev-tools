@@ -15,7 +15,7 @@ pub fn TextInput(
 
     view! {
             <input node_ref=node_ref
-                class={format!("px-4 py-2 rounded-md shadow-inner
+                class={format!("px-1 md:px-4 py-2 rounded-md shadow-inner
             text-gray-700 
             placeholder:text-gray-500 
             dark:text-gray-50 

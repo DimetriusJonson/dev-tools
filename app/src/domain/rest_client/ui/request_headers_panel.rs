@@ -23,10 +23,10 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let (header_value, set_header_value) = signal("".to_owned());
 
     view! {
-        <div class="flex gap-4">
-            <div class="flex gap-4 w-full">
+        <div class="flex flex-col gap-1 md:gap-4">
+            <div class="flex flex-row gap-1 md:gap-4">
                 <AutocompleteInput
-                    class_name="min-w-36".to_owned()
+                    class_name="sm:min-w-36".to_owned()
                     placeholder=move || t_display!(i18n, rest_client_header_name).to_string()
                     options={HEADERS_AUTOCOMPLETE}
                     on_change=move |_| {}
@@ -80,9 +80,9 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
             key=|header| header.id
             children=move |header| {
                 view! {
-                    <div class="flex gap-4 w-full">
+                    <div class="flex gap-1 md:gap-4">
                         <AutocompleteInput
-                            class_name="min-w-36".to_owned()
+                            class_name="sm:min-w-36".to_owned()
                             placeholder=move || t_display!(i18n, rest_client_header_name).to_string()
                             options={HEADERS_AUTOCOMPLETE}
                             on_change=move |value: String| {
@@ -127,7 +127,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     </div>
                 }
             }
-        />
+        /> 
 
     }
 }

@@ -67,9 +67,9 @@ pub fn RequestPanel(
 
     view! {
         <Show when=move || { request_info.read().id > 0 }
-            fallback=move || view! { <div class="flex-1 flex h-[94dvh] items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
+            fallback=move || view! { <div class="flex-1 flex items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
-            <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
+            <div class="flex-2 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
                 <RequestParamsPanel node_ref=params_ref send_btn_node_ref
                     params on_result=move|res: ReqResultData| {
                         if *save_response.read_untracked() {
@@ -85,9 +85,12 @@ pub fn RequestPanel(
                     }
                 />
 
-                <DragSplitter target_ref=params_ref local_store_prop_name="rc_params_width"
+                <DragSplitter 
+                    class_name="hidden md:block".to_owned()
+                    target_ref=params_ref 
+                    local_store_prop_name="rc_params_width"
                     min_scr_ration={1.0 / 6.0} 
-                    max_scr_ration={2.0 / 3.0}
+                    max_scr_ration={1.0 / 2.0}
                     default_scr_ration={1.0 / 6.0} />
 
                 <RequestResultPanel save_response set_save_response data=response/>

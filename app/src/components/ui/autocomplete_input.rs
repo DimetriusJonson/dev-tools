@@ -66,12 +66,12 @@ pub fn AutocompleteInput(
     };
 
     view! {
-        <div class={format!("relative w-64 dark:text-white {}", class_name)}>
+        <div class={format!("relative dark:text-white {}", class_name)}>
             <input
                 type="text"
                 placeholder=placeholder_memo
                 title=placeholder_memo
-                class="w-full border rounded-lg w-full p-2
+                class="w-full border rounded-lg p-1 md:p-2
         focus:outline-4
         h-8 md:h-10 text-xs md:text-base
 

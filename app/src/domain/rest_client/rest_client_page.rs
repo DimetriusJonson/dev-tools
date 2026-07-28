@@ -15,10 +15,13 @@ pub fn RestClientPage() -> impl IntoView {
     let explorer_ref = NodeRef::<Div>::new();
 
     view! {
-        <div class="flex flex-row dark:text-white">
+        <div class="flex flex-row dark:text-white h-screen md:h-[95dvh] text-xs md:text-base">
             <RestClientExplorer node_ref=explorer_ref current_request set_current_request />
 
-            <DragSplitter target_ref=explorer_ref local_store_prop_name="rc_explorer_width" 
+            <DragSplitter 
+                class_name="hidden md:block".to_owned()
+                target_ref=explorer_ref 
+                local_store_prop_name="rc_explorer_width" 
                 min_scr_ration={1.0 / 10.0} 
                 max_scr_ration={1.0 / 2.0}
                 default_scr_ration={1.0 / 6.0} />
