@@ -11,6 +11,9 @@ use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLink
 pub fn Navbar() -> impl IntoView {
     let i18n = use_i18n();
     let location = use_location();
+
+    let rest_client_route = if get_host_name().contains("dev-tools") { "/rest_client_info"} else { "/rest_client" };
+
     view! {
         <nav class="w-full relative bg-primary">
             <div class="px-1 py-2 sm:px-2 lg:px-4">
@@ -27,8 +30,9 @@ pub fn Navbar() -> impl IntoView {
                             color=move || nav_button_color(location.pathname.get(), "/compare_text") />
                         <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/share_file") />
-
-                        <RestClientButton />
+                        <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href=rest_client_route.to_owned()
+                            button_width=ButtonLinkWidth::Auto
+                            color=move || nav_button_color(location.pathname.get(), rest_client_route) />
                     </div>
 
                     <div class="flex">
@@ -45,21 +49,4 @@ pub fn Navbar() -> impl IntoView {
 
 fn nav_button_color(curr_path: String, button_path: &str) -> ButtonLinkColor {
     if curr_path.as_str() == button_path { ButtonLinkColor::Black } else { ButtonLinkColor::Brown }
-}
-
-#[component]
-fn RestClientButton() -> impl IntoView {
-    let i18n = use_i18n();
-    let location = use_location();
-
-    view! {
-        <Show
-            when=move || { !get_host_name().contains("dev-tools") }
-            fallback=move || view! {}
-        >
-            <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href="/rest_client".to_owned()
-            button_width=ButtonLinkWidth::Auto
-            color=move || nav_button_color(location.pathname.get(), "/rest_client") />
-        </Show>
-    }
 }

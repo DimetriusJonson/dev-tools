@@ -29,6 +29,8 @@ pub async fn build_app_router(
 ) -> anyhow::Result<Router> {
     let app_state = AppState { addr, pool: pool.clone(), remote_server_url };
 
+    let index_service = get_service(ServeFile::new(format!("{}/index.html", dist_dir)));
+
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))
         .route("/format_xml", post(format_xml_handler))
@@ -43,12 +45,13 @@ pub async fn build_app_router(
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
         .route("/test_json", get(test_json_handler))
-        .route("/urlEncoder", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
-        .route("/json", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
-        .route("/share_file", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
-        .route("/share_file/view", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
-        .route("/compare_text", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
-        .route("/rest_client", get_service(ServeFile::new(format!("{}/index.html", dist_dir))))
+        .route("/urlEncoder", index_service.clone())
+        .route("/json", index_service.clone())
+        .route("/share_file", index_service.clone())
+        .route("/share_file/view", index_service.clone())
+        .route("/compare_text", index_service.clone())
+        .route("/rest_client", index_service.clone())
+        .route("/rest_client_info", index_service.clone())
         .fallback_service(ServeDir::new(dist_dir))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
