@@ -43,7 +43,7 @@ pub fn DragSplitter(
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
-        if let Some(target_elem) = target_ref.get()
+        if let Some(Some(target_elem)) = target_ref.try_get()
             && let Ok(screen_width) = get_browser_width()
         {
             let default_width = screen_width * default_scr_ration;
@@ -78,27 +78,32 @@ pub fn DragSplitter(
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
-        if dragging.get_untracked()
-            && let Some(target_elem) = target_ref.get()
-            && (!is_mobile() || allow_mobile)
-            && let Ok(screen_width) = get_browser_width()
-        {
-            let min_width = screen_width * min_scr_ration;
-            let max_width = screen_width * max_scr_ration;
+        if let Some(dragging) = dragging.try_get_untracked() {
+            if dragging
+                && let Some(Some(target_elem)) = target_ref.try_get()
+                && (!is_mobile() || allow_mobile)
+                && let Ok(screen_width) = get_browser_width()
+            {
+                let min_width = screen_width * min_scr_ration;
+                let max_width = screen_width * max_scr_ration;
 
-            let rect = target_elem.get_bounding_client_rect();
-            let new_width = ev.client_x() as f64 - rect.left();
+                let rect = target_elem.get_bounding_client_rect();
+                let new_width = ev.client_x() as f64 - rect.left();
 
-            if new_width > min_width && new_width < max_width {
-                (*target_elem).style().set_property("width", &format!("{}px", new_width)).unwrap();
-                set_width.set(new_width);
-                set_local_store_value(local_store_prop_name, new_width.to_string());
+                if new_width > min_width && new_width < max_width {
+                    (*target_elem)
+                        .style()
+                        .set_property("width", &format!("{}px", new_width))
+                        .unwrap();
+                    set_width.set(new_width);
+                    set_local_store_value(local_store_prop_name, new_width.to_string());
+                }
             }
         }
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mouseup, move |_ev| {
-        set_dragging.set(false);
+        set_dragging.try_set(false);
     });
 
     view! {

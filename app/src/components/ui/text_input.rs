@@ -10,6 +10,7 @@ pub fn TextInput(
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
     #[prop(into)] on_change: Callback<String>,
+    #[prop(into, optional)] on_cancel_change: Option<Callback<()>>,
 ) -> impl IntoView {
     let placeholder_memo = Memo::new(move |_| placeholder());
 
@@ -74,7 +75,14 @@ pub fn TextInput(
                 bind:value=(value, set_value)
                 on:change=move |ev| {
                     let val = event_target_value(&ev);
-                    on_change.run(val)
+                    on_change.try_run(val);
+                }
+                on:keydown=move |ev: leptos::ev::KeyboardEvent| {
+                    if ev.key() == "Escape" {
+                        if let Some(on_cancel_change) = on_cancel_change {
+                            on_cancel_change.try_run(());
+                        }
+                    }
                 }
             />
     }
