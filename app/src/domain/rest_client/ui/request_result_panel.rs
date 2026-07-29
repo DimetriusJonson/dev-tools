@@ -4,17 +4,13 @@ use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
+use crate::components::layout::tabs::Tabs;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::i18n::*;
+use leptos::html::Div;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
-
-#[derive(PartialEq, Copy, Clone)]
-enum ResponceTabKind {
-    Body,
-    Headers,
-}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ReqResultData {
@@ -42,10 +38,13 @@ pub fn RequestResultPanel(
         }
     };
 
-    let (resp_tab_selected, set_resp_tab_selected) = signal(ResponceTabKind::Body);
+    let (tab_selected, set_tab_selected) = signal(0);
+    let tab_body_ref = NodeRef::<Div>::new();
+    let tab_headers_ref = NodeRef::<Div>::new();
+
     {
         move || {
-            set_resp_tab_selected.set(ResponceTabKind::Body);
+            set_tab_selected.set(0);
             let (response_status, mut response_text, response_headers, resp_code_lang) =
                 match data.get() {
                     Some(response) => (
@@ -75,82 +74,56 @@ pub fn RequestResultPanel(
             }
 
             view! {
-            <div class="flex-1 overflow-y-auto flex flex-col gap-4">
-                // Tab Headers
-                <div class="flex flex-row border-b border-gray-200 text-xs md:text-sm font-medium text-center focus:outline-none" role="tablist">
-                    <button role="tab"
-                        aria-selected=move || resp_tab_selected.get() == ResponceTabKind::Body
-                        class="py-2.5 border-b-2 cursor-pointer w-full"
-                        class=(["border-blue-600", "text-black", "dark:text-white"], move || resp_tab_selected.get() == ResponceTabKind::Body)
-                        class=(["text-gray-500"], move || resp_tab_selected.get() != ResponceTabKind::Body)
-                        on:click=move |_event| {
-                            set_resp_tab_selected.set(ResponceTabKind::Body)
-                        }
-                    >
-                    {t!(i18n, rest_client_response_body_tab)}
-                    </button>
-                    <button role="tab"
-                        aria-selected=move || resp_tab_selected.get() == ResponceTabKind::Headers
-                        class="py-2.5 border-b-2 cursor-pointer w-full"
-                        class=(["border-blue-600", "text-black", "dark:text-white"], move || resp_tab_selected.get() == ResponceTabKind::Headers)
-                        class=(["text-gray-500"], move || resp_tab_selected.get() != ResponceTabKind::Headers)
-                        on:click=move |_event| {
-                            set_resp_tab_selected.set(ResponceTabKind::Headers)
-                        }
-                        >
-                    {t!(i18n, rest_client_response_headers_tab)}
-                    </button>
-                </div>
+                <div class="flex-1 overflow-y-auto flex flex-col gap-4">
 
-                //Tab Content Panels
-                <div class="flex-1 overflow-y-auto flex">
-                    <div class="flex flex-col gap-4 w-full"
-                        class:block=move || resp_tab_selected.get() == ResponceTabKind::Body
-                        class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Body
-                    >
-                        <div class="flex justify-between">
-                            <span class="dark:text-white">{format!("Status: {}", response_status)}</span>
-                            <div class="flex">
-                                <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
-                                        on:change=move |e| {
-                                            let value = event_target_value(&e);
-                                            set_local_store_value("rc_formatting", value);
-                                        }/>
-                                    <label for="formatting" class="dark:text-white">Format</label>
-                                </div>
-                                <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
-                                    <label for="save-response" class="dark:text-white">Save</label>
+                    <Tabs tab_selected set_tab_selected items=move || vec![
+                            (t_string!(i18n, rest_client_response_body_tab), tab_body_ref), 
+                            (t_string!(i18n, rest_client_response_headers_tab), tab_headers_ref)
+                        ] />
+
+                    //Tab Content Panels
+                    <div class="flex-1 overflow-y-auto flex">
+                        <div node_ref=tab_body_ref class="flex flex-col gap-4 w-full">
+                            <div class="flex justify-between">
+                                <span class="dark:text-white">{format!("Status: {}", response_status)}</span>
+                                <div class="flex">
+                                    <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
+                                            on:change=move |e| {
+                                                let value = event_target_value(&e);
+                                                set_local_store_value("rc_formatting", value);
+                                            }/>
+                                        <label for="formatting" class="dark:text-white">Format</label>
+                                    </div>
+                                    <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
+                                        <label for="save-response" class="dark:text-white">Save</label>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="flex-1 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
+                                <CodeInner code={response_text} lang={move || resp_code_lang.to_owned()}/>
+                            </div>
+                            <div class="flex">
+                                <Button
+                                    label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                                    class_name="w-full".to_owned()
+                                    button_width=ButtonWidth::Auto
+                                    loading=move || false
+                                    on_click=on_copy_click
+                                    disabled=move || false
+                                />
+                            </div>
                         </div>
-                        <div class="flex-1 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
-                            <CodeInner code={response_text} lang={move || resp_code_lang.to_owned()}/>
-                        </div>
-                        <div class="flex">
-                            <Button
-                                label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
-                                class_name="w-full".to_owned()
-                                button_width=ButtonWidth::Auto
-                                loading=move || false
-                                on_click=on_copy_click
-                                disabled=move || false
-                            />
-                        </div>
-                    </div>
 
-                    <div class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full"
-                        class:block=move || resp_tab_selected.get() == ResponceTabKind::Headers
-                        class:hidden=move || resp_tab_selected.get() != ResponceTabKind::Headers
-                    >
-                        <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
-                            <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={render_headers(response_headers)}/>
+                        <div node_ref=tab_headers_ref class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full">
+                            <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
+                                <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={render_headers(response_headers)}/>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }.into_view()
+            }
         }
     }
 }

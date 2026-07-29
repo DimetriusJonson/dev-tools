@@ -7,6 +7,13 @@ pub fn Tabs(
     set_tab_selected: WriteSignal<usize>,
 ) -> impl IntoView {
     move || {
+    Effect::new({
+        let tabs = items();
+        move |_| {
+            update_selected(tabs.clone(), tab_selected.get());
+        }
+    });
+
         Effect::watch(
             move || tab_selected.get(),
             {
