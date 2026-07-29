@@ -1,5 +1,6 @@
 use crate::common::text_comparator::compare_text;
 use crate::components::layout::drag_splitter::DragSplitter;
+use crate::components::layout::tabs::Tabs;
 use crate::i18n::*;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -14,6 +15,8 @@ pub fn CompareTextPage() -> impl IntoView {
     let i18n = use_i18n();
 
     let (tab_selected, set_tab_selected) = signal(0);
+    let tab_source_ref = NodeRef::<Div>::new();
+    let tab_result_ref = NodeRef::<Div>::new();
 
     let (text1, set_text1) = signal(get_local_store_value("compare_text1", "".to_owned()));
     let (text2, set_text2) = signal(get_local_store_value("compare_text2", "".to_owned()));
@@ -41,38 +44,14 @@ pub fn CompareTextPage() -> impl IntoView {
     view! {
 
         <div class="flex-1 px-2 ">
-            // Tab Headers
-            <div class="flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none" role="tablist">
-                <button role="tab"
-                    aria-selected=move || tab_selected.get() == 0
-                    class="flex-1 py-2.5 border-b-2 cursor-pointer"
-                    class=(["border-blue-600", "text-black", "dark:text-white"], move || tab_selected.get() == 0)
-                    class=(["text-gray-500"], move || tab_selected.get() != 0)
-                    on:click=move |_event| {
-                        set_tab_selected.set(0)
-                    }
-                >
-                {t!(i18n,  compare_page_source_tab)}
-                </button>
-                <button role="tab"
-                    aria-selected=move || tab_selected.get() == 1
-                    class="flex-1 py-2.5 border-b-2 cursor-pointer"
-                    class=(["border-blue-600", "text-black", "dark:text-white"], move || tab_selected.get() == 1)
-                    class=(["text-gray-500"], move || tab_selected.get() != 1)
-                    on:click=move |_event| {
-                        set_tab_selected.set(1)
-                    }
-                    >
-                {t!(i18n, compare_page_result_tab)}
-                </button>
-            </div>
+            <Tabs tab_selected set_tab_selected items=move || vec![
+                    (t_string!(i18n, compare_page_source_tab), tab_source_ref), 
+                    (t_string!(i18n, compare_page_result_tab), tab_result_ref)
+                ] />
 
             //Tab Content Panels
             <div class="mt-4">
-                <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]"
-                    class:block=move || tab_selected.get() == 0
-                    class:hidden=move || tab_selected.get() != 0
-                    >
+                <div node_ref=tab_source_ref class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]">
 
                     <div node_ref=text1_ref class="flex-1 sm:flex-none flex">
                         <TextArea
@@ -131,10 +110,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     </div>
                 </div>
 
-                <div class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]"
-                    class:block=move || tab_selected.get() == 1
-                    class:hidden=move || tab_selected.get() != 1
-                >
+                <div node_ref=tab_result_ref class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]">
                     <div class="flex-1 dark:text-white overflow-x-auto w-full" inner_html=move || dst_left />
                     <div class="flex-1 dark:text-white overflow-x-auto w-full" inner_html=move || dst_right />
                 </div>
