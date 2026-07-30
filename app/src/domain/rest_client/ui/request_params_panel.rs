@@ -4,9 +4,7 @@ use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::tabs::Tabs;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
-use crate::domain::rest_client::ui::request_params::{
-    RequestBodyFormValue, RequestInfo, RequestParams,
-};
+use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestParams};
 use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
 use gloo_net::http::Request;
@@ -25,7 +23,8 @@ use crate::components::ui::text_input::TextInput;
 
 #[component]
 pub fn RequestParamsPanel(
-    request_info: ReadSignal<RequestInfo>,
+    body_tab_selected: ReadSignal<usize>,
+    set_body_tab_selected: WriteSignal<usize>,
     params: ReadSignal<RequestParams>,
     #[prop(into)] on_result: Callback<ReqResultData>,
     send_btn_node_ref: NodeRef<leptos::html::Button>,
@@ -36,18 +35,8 @@ pub fn RequestParamsPanel(
 
     let (in_progress, set_in_progress) = signal(false);
 
-    let (body_tab_selected, set_body_tab_selected) = signal(0);
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();
-
-    Effect::watch(
-        move || request_info.get(),
-        move |_value, _prev, _| match params.read_untracked().body_type.read_untracked().as_str() {
-            "formencoded" => set_body_tab_selected.set(1),
-            _ => set_body_tab_selected.set(0),
-        },
-        false,
-    );
 
     Effect::watch(
         move || body_tab_selected.get(),
@@ -70,13 +59,15 @@ pub fn RequestParamsPanel(
             }
 
             let body = match params.body_type.read_untracked().as_str() {
-                "formencoded" => match formencoded_to_str(params.body_formencoded.get_untracked()) {
-                    Ok(url) => url,
-                    Err(err) => {
-                        show_error(format!("Error: {}", err), messages);
-                        return;
-                    },
-                },
+                "formencoded" => {
+                    match formencoded_to_str(params.body_formencoded.get_untracked()) {
+                        Ok(url) => url,
+                        Err(err) => {
+                            show_error(format!("Error: {}", err), messages);
+                            return;
+                        }
+                    }
+                }
                 _ => params.body.get_untracked(),
             };
 

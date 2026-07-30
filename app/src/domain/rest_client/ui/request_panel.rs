@@ -54,6 +54,8 @@ pub fn RequestPanel(
     });
     let (save_response, set_save_response) = signal(false);
 
+    let (body_tab_selected, set_body_tab_selected) = signal(0);
+
     let params_ref = NodeRef::<Div>::new();
     let send_btn_node_ref = NodeRef::<Button>::new();
 
@@ -73,6 +75,7 @@ pub fn RequestPanel(
         send_btn_node_ref,
         set_response,
         set_save_response,
+        set_body_tab_selected,
         messages,
     );
     create_req_watchers(params, request_info, set_request_info);
@@ -83,11 +86,12 @@ pub fn RequestPanel(
             fallback=move || view! { <div class="flex-1 flex items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
             <div class="flex-2 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                <RequestParamsPanel 
-                    node_ref=params_ref 
+                <RequestParamsPanel
+                    node_ref=params_ref
                     send_btn_node_ref
-                    request_info 
-                    params 
+                    body_tab_selected
+                    set_body_tab_selected
+                    params
                     on_result=move|res: ReqResultData| {
                         if *save_response.read_untracked() {
                             let json_string = serde_json::to_string(&res).unwrap();
@@ -186,6 +190,7 @@ fn create_request_info_watcher(
     send_btn_ref: NodeRef<Button>,
     set_response: WriteSignal<Option<ReqResultData>>,
     set_save_response: WriteSignal<bool>,
+    set_body_tab_selected: WriteSignal<usize>,
     messages: Messages,
 ) {
     Effect::watch(
@@ -214,6 +219,12 @@ fn create_request_info_watcher(
                     "".to_owned(),
                     id,
                 ));
+                set_body_tab_selected.set(
+                    match params.read_untracked().body_type.read_untracked().as_str() {
+                        "formencoded" => 1,
+                        _ => 0,
+                    },
+                );
                 params.read_untracked().set_headers.set(load_headers(id));
                 params.read_untracked().set_body_formencoded.set(load_body_formencoded(id));
 
