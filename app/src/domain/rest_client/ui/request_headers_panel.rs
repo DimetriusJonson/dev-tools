@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
-use crate::common::ui_utils::is_base_header_name;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{Button, ButtonColor, ButtonWidth};
 use crate::domain::rest_client::ui::request_params::{CustomHeader, RequestParams};
@@ -50,26 +49,25 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     disabled=move || false
                     on_click=move |_| {
                         let name_converted = header_name.get_untracked().to_lowercase();
-                        if !is_base_header_name(&name_converted) 
-                            && params.read_untracked().headers.read_untracked().iter().find(|h|h.name.read_untracked().to_lowercase() == name_converted).is_none() {
-                                if let Err(err) = HeaderName::from_str(&header_name.get_untracked()) {
-                                    show_error(err.to_string(), messages);
-                                    return;
-                                }
-
-                                if let Err(err) = HeaderValue::from_str(&header_value.get_untracked()) {
-                                    show_error(err.to_string(), messages);
-                                    return;
-                                }
-
-                                let id = params.read_untracked().headers.read_untracked().iter().map(|h|h.id).max().unwrap_or_default() + 1;
-                                let (name, set_name) = signal(header_name.get_untracked());
-                                let (value, set_value) = signal(header_value.get_untracked());
-
-                                params.read_untracked().set_headers.write().push(CustomHeader{ id, name, set_name, value, set_value });
-                                set_header_name.set("".to_owned());
-                                set_header_value.set("".to_owned());
+                        if params.read_untracked().headers.read_untracked().iter().find(|h|h.name.read_untracked().to_lowercase() == name_converted).is_none() {
+                            if let Err(err) = HeaderName::from_str(&header_name.get_untracked()) {
+                                show_error(err.to_string(), messages);
+                                return;
                             }
+
+                            if let Err(err) = HeaderValue::from_str(&header_value.get_untracked()) {
+                                show_error(err.to_string(), messages);
+                                return;
+                            }
+
+                            let id = params.read_untracked().headers.read_untracked().iter().map(|h|h.id).max().unwrap_or_default() + 1;
+                            let (name, set_name) = signal(header_name.get_untracked());
+                            let (value, set_value) = signal(header_value.get_untracked());
+
+                            params.read_untracked().set_headers.write().push(CustomHeader{ id, name, set_name, value, set_value });
+                            set_header_name.set("".to_owned());
+                            set_header_value.set("".to_owned());
+                        }
                     }
                 />
             </div>
@@ -127,7 +125,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     </div>
                 }
             }
-        /> 
+        />
 
     }
 }
