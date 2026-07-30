@@ -20,7 +20,10 @@ pub async fn rest_client_send_handler(
         );
     }
 
-    let rb = Client::new().request(method, request.url).body(reqwest::Body::from(request.body));
+    let rb = Client::new()
+        .request(method, request.url)
+        .headers(headers)
+        .body(reqwest::Body::from(request.body));
 
     let response = rb.send().await.map_err(AppError::system_error)?;
 
