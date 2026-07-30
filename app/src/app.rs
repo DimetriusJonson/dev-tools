@@ -1,3 +1,4 @@
+use crate::domain::rest_client::rest_client_info_page::RestClientInfoPage;
 use crate::domain::rest_client::rest_client_page::RestClientPage;
 use crate::i18n::*;
 use leptos::prelude::*;
@@ -98,6 +99,7 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("/compare_text") view=CompareTextPage />
 
                             <Route path=path!("/rest_client") view=RestClientPage />
+                            <Route path=path!("/rest_client_info") view=RestClientInfoPage />
                         </Routes>
                     </ErrorBoundary>
 
