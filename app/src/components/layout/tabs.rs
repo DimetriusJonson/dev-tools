@@ -2,6 +2,7 @@ use leptos::{html::Div, prelude::*};
 
 #[component]
 pub fn Tabs(
+    #[prop(optional)] class_name: String,
     items: impl Fn() -> Vec<(&'static str, NodeRef<Div>)> + Send + Sync + 'static,
     tab_selected: ReadSignal<usize>,
     set_tab_selected: WriteSignal<usize>,
@@ -30,7 +31,7 @@ pub fn Tabs(
         let tabs = items();
         let tabs2 = items();
         view! {
-             <div class="flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none" role="tablist">
+             <div class={format!("flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none {}", class_name)} role="tablist">
 
                  <ForEnumerate
                      each=move || tabs.clone()

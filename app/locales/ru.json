@@ -71,6 +71,9 @@
     "rest_client_info_1":"К сожалению, Rest client недоступен в Web версии приложения.",
     "rest_client_info_2":"Данная функция доступна только в <b>бесплатном</b> автономном приложении.",
     "rest_client_info_3":"Автономное приложение работает в операционных системах: Windows, Linux и Mac OS.",
-    "rest_client_info_4":"Скачать приложение Вы можете по следующей <a>ссылке</a>."
+    "rest_client_info_4":"Скачать приложение Вы можете по следующей <a>ссылке</a>.",
+
+    "rest_client_param_name_placeholder": "Название параметра",
+    "rest_client_param_value_placeholder": "Значение параметра"
 
 }

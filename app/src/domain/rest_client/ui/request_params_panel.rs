@@ -1,6 +1,12 @@
+use std::collections::HashMap;
+
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::ui::request_params::RequestParams;
+use crate::components::layout::tabs::Tabs;
+use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
+use crate::domain::rest_client::ui::request_params::{
+    RequestBodyFormValue, RequestInfo, RequestParams,
+};
 use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
 use gloo_net::http::Request;
@@ -19,15 +25,38 @@ use crate::components::ui::text_input::TextInput;
 
 #[component]
 pub fn RequestParamsPanel(
+    request_info: ReadSignal<RequestInfo>,
     params: ReadSignal<RequestParams>,
     #[prop(into)] on_result: Callback<ReqResultData>,
-    send_btn_node_ref: NodeRef::<leptos::html::Button>,
+    send_btn_node_ref: NodeRef<leptos::html::Button>,
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (in_progress, set_in_progress) = signal(false);
+
+    let (body_tab_selected, set_body_tab_selected) = signal(0);
+    let tab_body_text_ref = NodeRef::<Div>::new();
+    let tab_body_form_encoded_ref = NodeRef::<Div>::new();
+
+    Effect::watch(
+        move || request_info.get(),
+        move |_value, _prev, _| match params.read_untracked().body_type.read_untracked().as_str() {
+            "formencoded" => set_body_tab_selected.set(1),
+            _ => set_body_tab_selected.set(0),
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || body_tab_selected.get(),
+        move |value, _prev, _| match value {
+            1 => params.read_untracked().set_body_type.set("formencoded".to_owned()),
+            _ => params.read_untracked().set_body_type.set("text".to_owned()),
+        },
+        false,
+    );
 
     let on_send_click = move |_| {
         spawn_local(async move {
@@ -37,17 +66,25 @@ pub fn RequestParamsPanel(
 
             let mut headers = Vec::new();
             for header in params.headers.get_untracked() {
-                headers.push((
-                    header.name.get_untracked(),
-                    header.value.get_untracked(),
-                ));
+                headers.push((header.name.get_untracked(), header.value.get_untracked()));
             }
+
+            let body = match params.body_type.read_untracked().as_str() {
+                "formencoded" => match formencoded_to_str(params.body_formencoded.get_untracked()) {
+                    Ok(url) => url,
+                    Err(err) => {
+                        show_error(format!("Error: {}", err), messages);
+                        return;
+                    },
+                },
+                _ => params.body.get_untracked(),
+            };
 
             let rc_request = RestClientRequest {
                 method: params.method.get_untracked(),
                 url: params.url.get_untracked(),
                 headers,
-                body: params.body.get_untracked(),
+                body,
             };
 
             match Request::post("/rest_client_send").json(&rc_request) {
@@ -118,15 +155,39 @@ pub fn RequestParamsPanel(
 
             <RequestHeadersPanel params />
 
-            <TextArea
-                name="body".to_owned()
-                class_name="flex-1 w-full md:h-auto overflow-y-auto resize-none".to_owned()
-                placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
-                value=params.read_untracked().body
-                set_value=params.read_untracked().set_body
-                on_change=move |_| {}
-            />
+            <div class="flex-1 flex flex-col">
+                <Tabs class_name="".to_owned()
+                    tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
+                    items=move || vec![
+                        ("Text", tab_body_text_ref),
+                        ("Form Encoded", tab_body_form_encoded_ref),
+                    ] />
+
+                <div node_ref=tab_body_text_ref class="flex-1 flex overflow-y-auto">
+                    <TextArea
+                        name="body".to_owned()
+                        class_name="w-full resize-none".to_owned()
+                        placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
+                        value=params.read_untracked().body
+                        set_value=params.read_untracked().set_body
+                        on_change=move |_| {}
+                    />
+                </div>
+
+                <div node_ref=tab_body_form_encoded_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
+                    <RequestBodyFormPanel params/>
+                </div>
+            </div>
         </div>
 
     }
+}
+
+fn formencoded_to_str(form_values: Vec<RequestBodyFormValue>) -> Result<String, Error> {
+    let map: HashMap<String, String> = form_values
+        .into_iter()
+        .map(|fv| (fv.name.get_untracked(), fv.value.get_untracked()))
+        .collect();
+
+    Ok(serde_urlencoded::to_string(&map)?)
 }

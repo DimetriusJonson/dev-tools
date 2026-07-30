@@ -4,11 +4,14 @@ use crate::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
     },
-    domain::rest_client::ui::request_result_panel::ReqResultData,
+    domain::rest_client::ui::{
+        request_params::RequestBodyFormValue, request_result_panel::ReqResultData,
+    },
     i18n::*,
 };
 use leptos::{
     html::{Button, Div},
+    leptos_dom::logging::console_log,
     prelude::*,
 };
 
@@ -32,6 +35,8 @@ pub fn RequestPanel(
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
+    let (body_type, set_body_type) = signal("text".to_owned());
+    let (body_formencoded, set_body_formencoded) = signal(Vec::new());
     let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
     let (params, _set_params) = signal(RequestParams {
         url,
@@ -40,6 +45,10 @@ pub fn RequestPanel(
         set_method,
         body,
         set_body,
+        body_type,
+        set_body_type,
+        body_formencoded,
+        set_body_formencoded,
         headers,
         set_headers,
     });
@@ -52,6 +61,10 @@ pub fn RequestPanel(
 
     let _ = Effect::new(move || {
         params.read_untracked().set_headers.set(load_headers(request_info.read_untracked().id));
+        params
+            .read_untracked()
+            .set_body_formencoded
+            .set(load_body_formencoded(request_info.read_untracked().id));
     });
 
     create_request_info_watcher(
@@ -70,8 +83,12 @@ pub fn RequestPanel(
             fallback=move || view! { <div class="flex-1 flex items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
             <div class="flex-2 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                <RequestParamsPanel node_ref=params_ref send_btn_node_ref
-                    params on_result=move|res: ReqResultData| {
+                <RequestParamsPanel 
+                    node_ref=params_ref 
+                    send_btn_node_ref
+                    request_info 
+                    params 
+                    on_result=move|res: ReqResultData| {
                         if *save_response.read_untracked() {
                             let json_string = serde_json::to_string(&res).unwrap();
                             set_local_store_value(
@@ -85,11 +102,11 @@ pub fn RequestPanel(
                     }
                 />
 
-                <DragSplitter 
+                <DragSplitter
                     class_name="hidden md:block".to_owned()
-                    target_ref=params_ref 
+                    target_ref=params_ref
                     local_store_prop_name="rc_params_width"
-                    min_scr_ration={1.0 / 6.0} 
+                    min_scr_ration={1.0 / 6.0}
                     max_scr_ration={1.0 / 2.0}
                     default_scr_ration={1.0 / 6.0} />
 
@@ -138,6 +155,7 @@ fn create_req_watchers(
     );
 
     create_watcher(params.read_untracked().body, "rc_body", request_info);
+    create_watcher(params.read_untracked().body_type, "rc_body_type", request_info);
 
     Effect::watch(
         move || params.read_untracked().headers.get(),
@@ -145,6 +163,17 @@ fn create_req_watchers(
             set_local_store_value(
                 &format!("{}-rc_headers", request_info.read_untracked().id),
                 headers_to_string(value),
+            )
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || params.read_untracked().body_formencoded.get(),
+        move |value, _prev, _| {
+            set_local_store_value(
+                &format!("{}-rc_body_formencoded", request_info.read_untracked().id),
+                body_form_to_string(value),
             )
         },
         false,
@@ -180,7 +209,13 @@ fn create_request_info_watcher(
                     "".to_owned(),
                     id,
                 ));
+                params.read_untracked().set_body_type.set(get_stored_value(
+                    "rc_body_type",
+                    "".to_owned(),
+                    id,
+                ));
                 params.read_untracked().set_headers.set(load_headers(id));
+                params.read_untracked().set_body_formencoded.set(load_body_formencoded(id));
 
                 let save_response = get_local_store_value(
                     &format!("{}-rc_save_response", request_info.read_untracked().id),
@@ -266,3 +301,35 @@ fn load_headers(request_id: i32) -> Vec<CustomHeader> {
 
     result
 }
+
+fn body_form_to_string(form_values: &[RequestBodyFormValue]) -> String {
+    let list: KeyValueVector =
+        form_values.iter().map(|h| (h.name.get_untracked(), h.value.get_untracked())).collect();
+
+    serde_json::to_string(&list).unwrap()
+}
+
+fn load_body_formencoded(request_id: i32) -> Vec<RequestBodyFormValue> {
+    let stored_value =
+        get_local_store_value(&format!("{}-rc_body_formencoded", request_id), "".to_owned());
+    if stored_value.is_empty() {
+        return Vec::new();
+    }
+
+    let mut result = Vec::new();
+    match serde_json::from_str::<KeyValueVector>(&stored_value) {
+        Ok(values) => {
+            for (i, value) in values.iter().enumerate() {
+                let (name, set_name) = signal(value.0.to_owned());
+                let (value, set_value) = signal(value.1.to_owned());
+
+                let header = RequestBodyFormValue { id: i + 1, name, set_name, value, set_value };
+                result.push(header);
+            }
+        }
+        Err(err) => console_log(&format!("Error: {}", err)),
+    }
+    result
+}
+
+type KeyValueVector = Vec<(String, String)>;

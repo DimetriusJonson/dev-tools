@@ -5,3 +5,4 @@ pub mod request_panel;
 pub mod request_params;
 pub mod rest_client_explorer;
 pub mod request_popup_menu;
+pub mod request_body_form_panel;

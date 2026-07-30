@@ -114,6 +114,7 @@ dependencies = [
  "quick-xml",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "tw_merge",
  "urlencoding",
  "uuid",

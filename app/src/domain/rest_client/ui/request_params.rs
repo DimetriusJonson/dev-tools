@@ -8,8 +8,21 @@ pub struct RequestParams {
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,
     pub set_body: WriteSignal<String>,
+    pub body_type: ReadSignal<String>,
+    pub set_body_type: WriteSignal<String>,
+    pub body_formencoded: ReadSignal<Vec<RequestBodyFormValue>>,
+    pub set_body_formencoded: WriteSignal<Vec<RequestBodyFormValue>>,
     pub headers: ReadSignal<Vec<CustomHeader>>,
     pub set_headers: WriteSignal<Vec<CustomHeader>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct RequestBodyFormValue {
+    pub id: usize,
+    pub name: ReadSignal<String>,
+    pub set_name: WriteSignal<String>,
+    pub value: ReadSignal<String>,
+    pub set_value: WriteSignal<String>,
 }
 
 #[derive(Clone, Debug)]
