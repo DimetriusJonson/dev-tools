@@ -3,7 +3,6 @@ node_modules/
 .vscode/
 src-tauri/
 site/
-dist/
 justfile
 package-lock.json
 rustfmt.toml

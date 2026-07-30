@@ -49,7 +49,7 @@ pub fn RestClientExplorer(
         set_local_store_value(&format!("{}-rc_url", request.id), request.url);
         set_local_store_value(&format!("{}-rc_method", request.id), request.method);
 
-        let headers = vec![
+        let headers = [
             ("Accept".to_owned(), "application/json".to_owned()),
             ("Accept-Language".to_owned(), get_accept_language()),
             ("User-Agent".to_owned(), "WebDevUsefulTools Client".to_owned()),
@@ -85,8 +85,8 @@ pub fn RestClientExplorer(
         if let Some(popup_menu_show) = popup_menu_show.try_get()
             && popup_menu_show > 0
         {
-            if let Some(menu_refs) = menu_refs.try_read_untracked() {
-                if let Some(target_ref) = menu_refs.get(&popup_menu_show)
+            if let Some(menu_refs) = menu_refs.try_read_untracked()
+                && let Some(target_ref) = menu_refs.get(&popup_menu_show)
                     && let Some(Some(target_element)) = target_ref.try_get()
                     && let Some(clicked_target) = ev.target()
                 {
@@ -95,7 +95,6 @@ pub fn RestClientExplorer(
                         set_popup_menu_show.set(0);
                     }
                 }
-            }
             return;
         }
 

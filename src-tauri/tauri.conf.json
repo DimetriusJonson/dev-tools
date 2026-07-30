@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "WebDev Useful Tools",
-  "version": "0.5.0",
+  "version": "0.4.0",
   "identifier": "com.shz.app.WebDevUsefulTools",
   "build": {
     "beforeDevCommand": "cargo leptos watch",
@@ -26,7 +26,7 @@
       "icons/128x128@2x.png"
     ],
     "resources": [
-      "../dist/"
+      "../site/pkg/"
     ],
     "externalBin": [
       "binaries/webdev_useful_tools_server"

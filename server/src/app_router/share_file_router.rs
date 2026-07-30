@@ -5,7 +5,7 @@ use axum::{
     response::IntoResponse,
 };
 use http::{HeaderMap, HeaderValue, header};
-use model::share_file::{
+use app::model::share_file::{
     share_file_info_dto::ShareFileInfoDto, share_file_server::ShareFileServerDto,
 };
 use nanoid::nanoid;
@@ -196,7 +196,7 @@ pub async fn share_file_custom_servers_handler(
     }
 
     let addrs = get_local_addrs().map_err(AppError::system_error)?;
-    let site_addr = app_state.addr;
+    let site_addr = app_state.leptos_options.site_addr;
 
     Ok(Json(
         addrs
@@ -218,7 +218,7 @@ pub async fn share_file_info_ex_handler(
     let id = params.get("id").unwrap_or(&"");
     let local = params.get("local").unwrap_or(&"false").parse::<bool>().unwrap_or(false);
 
-    let site_addr = app_state.addr;
+    let site_addr = app_state.leptos_options.site_addr;
 
     let srv_name = if local { "share_local_file_info" } else { "share_file_info" };
 

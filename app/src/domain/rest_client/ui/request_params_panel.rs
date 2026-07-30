@@ -7,12 +7,12 @@ use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestParams};
 use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
+use crate::model::restclient::rest_client_request::RestClientRequest;
+use crate::model::restclient::rest_client_response::RestClientResponse;
 use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use model::restclient::rest_client_request::RestClientRequest;
-use model::restclient::rest_client_response::RestClientResponse;
 
 use crate::common::ui_utils::single_select_option;
 use crate::components::ui::button::{Button, ButtonWidth};

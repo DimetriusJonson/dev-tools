@@ -31,7 +31,7 @@ pub async fn format_json_handler(
 
 #[cfg(not(target_os = "windows"))]
 async fn process_json_data(body: Body, ident: usize) -> Body {
-    let mut formatter = model::utils::json_formatter::JsonFormatter::new(ident);
+    let mut formatter = app::common::json_formatter::JsonFormatter::new(ident);
     let output_stream = body.into_data_stream().map(move |result| match result {
         Ok(data) => Ok(formatter.format_bytes(data)),
         Err(err) => Err(std::io::Error::other(err)),
@@ -42,7 +42,7 @@ async fn process_json_data(body: Body, ident: usize) -> Body {
 
 #[cfg(target_os = "windows")]
 async fn process_json_data(body: Body, ident: usize) -> Body {
-    use model::utils::json_formatter::JsonFormatter;
+    use app::common::json_formatter::JsonFormatter;
 
     let request_body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 

@@ -1,9 +1,0 @@
-[tools]
-tailwindcss = "4.3.2"
-
-[build]
-target = "app/index.html"
-no_sri = true
-
-# Ensure Trunk outputs built assets to the proper directory
-dist = "dist"

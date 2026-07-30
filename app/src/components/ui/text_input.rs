@@ -78,11 +78,10 @@ pub fn TextInput(
                     on_change.try_run(val);
                 }
                 on:keydown=move |ev: leptos::ev::KeyboardEvent| {
-                    if ev.key() == "Escape" {
-                        if let Some(on_cancel_change) = on_cancel_change {
+                    if ev.key() == "Escape"
+                        && let Some(on_cancel_change) = on_cancel_change {
                             on_cancel_change.try_run(());
                         }
-                    }
                 }
             />
     }

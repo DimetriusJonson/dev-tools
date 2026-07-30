@@ -1,11 +1,15 @@
-use std::net::SocketAddr;
 
+use axum::body::Body as AxumBody;
+use app::app::{App, shell};
 use axum::Router;
-use axum::extract::DefaultBodyLimit;
-use axum::routing::{get, get_service, post};
+use axum::extract::{DefaultBodyLimit, Request, State};
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, post};
+use leptos::config::ConfFile;
+use leptos::context::provide_context;
+use leptos_axum::{LeptosRoutes, generate_route_list, handle_server_fns_with_context, render_app_to_stream_with_context};
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
-use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
@@ -22,14 +26,16 @@ use crate::app_router::xml_format_router::format_xml_handler;
 use crate::common::app_state::AppState;
 
 pub async fn build_app_router(
-    addr: SocketAddr,
+    conf_file: ConfFile,
     pool: Option<Pool<Postgres>>,
     remote_server_url: Option<String>,
-    dist_dir: String,
 ) -> anyhow::Result<Router> {
-    let app_state = AppState { addr, pool: pool.clone(), remote_server_url };
+    let leptos_options = conf_file.leptos_options;
 
-    let index_service = get_service(ServeFile::new(format!("{}/index.html", dist_dir)));
+    let routes = generate_route_list(App);
+
+    let app_state =
+        AppState { leptos_options: leptos_options.clone(), pool: pool.clone(), remote_server_url };
 
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))
@@ -45,17 +51,40 @@ pub async fn build_app_router(
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
         .route("/test_json", get(test_json_handler))
-        .route("/urlEncoder", index_service.clone())
-        .route("/json", index_service.clone())
-        .route("/share_file", index_service.clone())
-        .route("/share_file/view", index_service.clone())
-        .route("/compare_text", index_service.clone())
-        .route("/rest_client", index_service.clone())
-        .route("/rest_client_info", index_service.clone())
-        .fallback_service(ServeDir::new(dist_dir))
+        .route("/api/{*fn_name}", get(server_fn_handler).post(server_fn_handler))
+        .leptos_routes_with_handler(routes, get(leptos_routes_handler))
+        .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
         .with_state(app_state);
 
     Ok(app)
+}
+
+#[axum_macros::debug_handler]
+pub async fn leptos_routes_handler(
+    State(app_state): State<AppState>,
+    req: Request<AxumBody>,
+) -> Response {
+    let leptos_options = app_state.leptos_options.clone();
+
+    let handler = render_app_to_stream_with_context(
+        move || provide_context(app_state.clone()),
+        move || shell(leptos_options.clone()),
+    );
+    handler(req).await.into_response()
+}
+
+#[axum_macros::debug_handler]
+pub async fn server_fn_handler(
+    State(state): State<AppState>,
+    request: Request<AxumBody>,
+) -> impl IntoResponse {
+    handle_server_fns_with_context(
+        move || {
+            provide_context(state.clone());
+        },
+        request,
+    )
+    .await
 }

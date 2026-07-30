@@ -26,18 +26,20 @@ fn start_backend_server(
 
     info!("Backend server starting up on {}...", addr);
 
-    let mut dist_dir = resource_dir;
-    dist_dir.push("_up_");
-    dist_dir.push("dist");
+    let mut site_dir = resource_dir;
+    site_dir.push("_up_");
+    site_dir.push("site");
 
     let app_handle = app_handle.clone();
     let shell = app_handle.shell();
 
     match shell.sidecar("webdev_useful_tools_server") {
         Ok(sidecar) => match sidecar
+            .env("LEPTOS_OUTPUT_NAME", "dev_tools")
+            .env("LEPTOS_SITE_ADDR", addr.to_owned())
+            .env("LEPTOS_SITE_ROOT", site_dir)
             .env("DEVTOOLS_REMOTE_SERVER_URL", remote_server_url)
             .arg(format!("--addr={}", addr))
-            .arg(format!("--dist-dir={}", dist_dir.display()))
             .spawn()
         {
             Ok(rx) => Ok(rx),

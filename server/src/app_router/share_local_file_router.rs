@@ -5,7 +5,7 @@ use axum::{
     Json, extract::{RawQuery, Request}, response::IntoResponse,
 };
 use http::{HeaderMap, header};
-use model::share_file::share_file_info_dto::ShareFileInfoDto;
+use app::model::share_file::share_file_info_dto::ShareFileInfoDto;
 use std::collections::HashMap;
 use std::sync::Mutex;
 

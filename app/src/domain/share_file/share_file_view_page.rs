@@ -2,10 +2,10 @@ use gloo_net::http::Request;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_router::hooks::use_query_map;
-use model::share_file::share_file_info_dto::ShareFileInfoDto;
 
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
 use crate::i18n::*;
+use crate::model::share_file::share_file_info_dto::ShareFileInfoDto;
 
 #[component]
 pub fn ShareFileViewPage() -> impl IntoView {

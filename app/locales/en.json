@@ -1,4 +1,8 @@
 {
+"app_title": "Useful tools for web developers",
+    "meta_description": "Useful tools for web developers: XML, JSON formatting; Escape/Unescape URL/XML/JSON; Text comparison; Share file.",
+    "meta_keywords": "web, dev, tools, useful, xml, json, formatting, escape, share file, compare, text",
+    
     "not_found_page": "Page not found",
 
     "go_home_btn_label": "Go home",

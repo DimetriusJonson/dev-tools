@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::common::app_error::AppError;
 use axum::Json;
 use http::{HeaderMap, HeaderName, HeaderValue, Method};
-use model::restclient::{
+use app::model::restclient::{
     rest_client_request::RestClientRequest, rest_client_response::RestClientResponse,
 };
 use reqwest::Client;

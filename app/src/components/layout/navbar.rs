@@ -12,7 +12,7 @@ pub fn Navbar() -> impl IntoView {
     let i18n = use_i18n();
     let location = use_location();
 
-    let rest_client_route = if get_host_name().contains("dev-tools") { "/rest_client_info"} else { "/rest_client" };
+    let rest_client_route = OnceResource::new(get_rest_client_route());
 
     view! {
         <nav class="w-full relative bg-primary">
@@ -30,9 +30,19 @@ pub fn Navbar() -> impl IntoView {
                             color=move || nav_button_color(location.pathname.get(), "/compare_text") />
                         <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/share_file") />
-                        <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href=rest_client_route.to_owned()
-                            button_width=ButtonLinkWidth::Auto
-                            color=move || nav_button_color(location.pathname.get(), rest_client_route) />
+
+
+                        <Transition>
+                            {move || Suspend::new(async move {
+                                let rest_client_route = rest_client_route.await;
+                                view! {
+                                    <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href=rest_client_route.to_owned()
+                                        button_width=ButtonLinkWidth::Auto
+                                        color=move || nav_button_color(location.pathname.get(), &rest_client_route) />
+                                }
+                            })}
+                        </Transition>                            
+
                     </div>
 
                     <div class="flex">
@@ -49,4 +59,12 @@ pub fn Navbar() -> impl IntoView {
 
 fn nav_button_color(curr_path: String, button_path: &str) -> ButtonLinkColor {
     if curr_path.as_str() == button_path { ButtonLinkColor::Black } else { ButtonLinkColor::Brown }
+}
+
+async fn get_rest_client_route() -> String {
+    if get_host_name().await.contains("dev-tools") {
+        "/rest_client_info".to_owned()
+    } else {
+        "/rest_client".to_owned()
+    }
 }

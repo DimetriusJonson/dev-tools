@@ -13,7 +13,13 @@ pub fn CodeInner(code: String, lang: impl Fn() -> String + Send + Sync + 'static
             move || {
                 let lang = lang_memo.get();
 
+                // lang is currently unused for SSR, so just drop it now to use it to avoid warning.
+                #[cfg(feature = "ssr")]
+                drop(lang);
                 if use_context::<InnerEffect>().is_none() {
+                    #[cfg(feature = "ssr")]
+                    let inner = Some(html_escape::encode_text(&code).into_owned());
+                    #[cfg(not(feature = "ssr"))]
                     let inner = {
                         let inner = crate::hljs::highlight(code.to_owned(), lang.to_owned());
                         inner
@@ -24,6 +30,11 @@ pub fn CodeInner(code: String, lang: impl Fn() -> String + Send + Sync + 'static
                     .into_any()
                 } else {
                     let (inner, set_inner) = signal(String::new());
+                    #[cfg(feature = "ssr")]
+                    {
+                        set_inner.set(html_escape::encode_text(&code).into_owned());
+                    };
+                    #[cfg(not(feature = "ssr"))]
                     {
                         let result = crate::hljs::highlight(code.to_owned(), lang.to_owned());
                         Effect::new(move |_| {

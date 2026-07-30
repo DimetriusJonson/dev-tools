@@ -11,11 +11,10 @@ pub fn RequestPopupMenu(
             {move || 
                 items().into_iter()
                   .map(|item| {
-                    let item_cloned = item.clone();
                     view! {
                         <div class="hover:bg-sky-500/50 cursor-pointer rounded-xl p-2 w-full"
                             on:click=move |_| {
-                                on_selected.run(item_cloned.clone());
+                                on_selected.run(item);
                             }>
                             {item.1}
                         </div>

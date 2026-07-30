@@ -23,7 +23,7 @@ pub fn DragSplitter(
     let (dragging, set_dragging) = signal(false);
     let dragbar_ref = NodeRef::<Div>::new();
 
-    let screen_width = get_browser_width().unwrap() as f64;
+    let screen_width = get_browser_width().unwrap();
 
     let (width, set_width) = signal(screen_width * default_scr_ration);
 
@@ -35,11 +35,10 @@ pub fn DragSplitter(
         .parse::<f64>()
         .unwrap();
 
-        if !is_mobile() || allow_mobile {
-            if let Some(target_elem) = target_ref.get() {
+        if (!is_mobile() || allow_mobile)
+            && let Some(target_elem) = target_ref.get() {
                 (*target_elem).style().set_property("width", &format!("{}px", init_width)).unwrap();
             }
-        }
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
@@ -78,8 +77,8 @@ pub fn DragSplitter(
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
-        if let Some(dragging) = dragging.try_get_untracked() {
-            if dragging
+        if let Some(dragging) = dragging.try_get_untracked()
+            && dragging
                 && let Some(Some(target_elem)) = target_ref.try_get()
                 && (!is_mobile() || allow_mobile)
                 && let Ok(screen_width) = get_browser_width()
@@ -99,7 +98,6 @@ pub fn DragSplitter(
                     set_local_store_value(local_store_prop_name, new_width.to_string());
                 }
             }
-        }
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mouseup, move |_ev| {

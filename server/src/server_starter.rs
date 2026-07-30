@@ -1,6 +1,7 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::SocketAddr;
 use std::thread;
 
+use leptos::prelude::*;
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
@@ -11,7 +12,6 @@ pub async fn start_axum_server(
     custom_addr: Option<SocketAddr>,
     remote_server_url: Option<String>,
     database_url: Option<String>,
-    dist_dir: String,
 ) -> anyhow::Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_ansi(true)
@@ -28,19 +28,21 @@ pub async fn start_axum_server(
         Err(e) => error!("Error getting parallelism: {}", e),
     }
 
-    info!("dist_dir={}", dist_dir);
-
+    let mut conf = get_configuration(None)?;
     let addr = match custom_addr {
         Some(custom_addr) => custom_addr,
-        None => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3000),
+        None => conf.leptos_options.site_addr,
     };
+    conf.leptos_options.site_addr = addr;
+
+    info!("conf={:?}", conf);
 
     let pool = match database_url {
         Some(database_url) => Some(create_pool(database_url).await),
         None => None,
     };
 
-    let app = build_app_router(addr, pool, remote_server_url, dist_dir).await?;
+    let app = build_app_router(conf, pool, remote_server_url).await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await.unwrap();

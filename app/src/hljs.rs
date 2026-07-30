@@ -1,3 +1,4 @@
+#[cfg(not(feature = "ssr"))]
 mod csr {
     use gloo_utils::format::JsValueSerdeExt;
     use js_sys::{
@@ -40,4 +41,19 @@ mod csr {
     }
 }
 
+#[cfg(feature = "ssr")]
+mod ssr {
+    // noop under ssr
+    pub fn highlight_all() {}
+
+    // TODO see if there is a Rust-based solution that will enable isomorphic rendering for this feature.
+    // the current (disabled) implementation simply calls html_escape.
+    // pub fn highlight(code: String, _lang: String) -> Option<String> {
+    //     Some(html_escape::encode_text(&code).into_owned())
+    // }
+}
+
+#[cfg(not(feature = "ssr"))]
 pub use csr::*;
+#[cfg(feature = "ssr")]
+pub use ssr::*;

@@ -1,9 +1,91 @@
 [workspace]
 resolver = "2"
-members = ["app", "model", "server"]
-default-members = ["server"]
+members = ["app", "server"]
 
 [workspace.dependencies]
+
+anyhow = "1"
+axum = { version = "0.8", features = ["macros"] }
+axum-macros = "0.4"
+console_error_panic_hook = "0.1"
+#leptos = { version = "0.8", features = ["nightly"] }
+leptos = { version = "0.8"}
+leptos_axum = { version = "0.8", default-features = false, features = ["default"] }
+leptos_meta = "0.8"
+#leptos_router = { version = "0.8", features = ["nightly"] }
+leptos_router = { version = "0.8"}
+tokio = { version = "1", features = ["rt-multi-thread"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "trace", "compression-gzip"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Window", "Navigator", "Clipboard", "HtmlInputElement", "FileList", "File", "Blob",
+  "BlobPropertyBag",
+  "Url",
+  "HtmlAnchorElement",
+  "Document",
+  "DataTransfer",
+  "DomRect",
+  "Window", 
+  "CssStyleDeclaration",
+  "HtmlElement",
+  ]}
+tw_merge = { version = "0.1", features = ["variant", "debug"]}
+quick-xml = { version = "0.40.1", features = ["async-tokio"]}
+futures-util = "0.3.32"
+bytes = "1.12.0"
+gloo-net = { version="0.6", features=["http"] }
+gloo-storage = "0.3"
+async-stream = "0.3"
+gloo-utils = "0.2.0"
+js-sys = "0.3.102"
+html-escape = "0.2.13"
+urlencoding = "2.1"
+uuid = { version = "1.23", features = ["v4", "fast-rng", "js"] }
+dotenvy = { version = "0.15" }
+tokio-util = "0.7.18"
+json-escape = "0.3.1"
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "time", "macros", "tls-rustls"] }
+http = "1"
+nanoid = "0.4"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "webp"] }
+reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls", "json", "cookies"] }
+flate2 = "1.0"
+getifs = "0.6"
+difference = "2.0"
+leptos_i18n = { version = "0.6", features = ["plurals"] }
+leptos_i18n_macro = { version = "0.2" }
+leptos_i18n_build = {version = "0.6", features = ["pretty_print"] }
+clap = { version = "4.6.2", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+serde_urlencoded = "0.7.1"
+
+[[workspace.metadata.leptos]]
+# The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
+output-name = "dev_tools"
+
+name = "dev_tools"
+
+bin-package = "server"
+lib-package = "app"
+site-root = "site"
+assets-dir = "public"
+site-pkg-dir = "pkg"
+
+tailwind-input-file = "style/tailwind.css"
+#style-file = "style/main.scss"
+
+site-addr = "0.0.0.0:3000"
+reload-port = 3001
+browserquery = "defaults"
+bin-features = []
+bin-default-features = true
+lib-features = ["hydrate"]
+lib-default-features = false
+lib-profile-release = "wasm-release"
+
 
 [profile.wasm-release]
 inherits = "release"

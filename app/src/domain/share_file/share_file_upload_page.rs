@@ -1,7 +1,6 @@
 use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
-use model::share_file::share_file_server::ShareFileServerDto;
 use web_sys::{File, HtmlInputElement};
 
 use crate::common::ui_utils::copy_to_clipboard;
@@ -11,6 +10,7 @@ use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::i18n::*;
+use crate::model::share_file::share_file_server::ShareFileServerDto;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
 
