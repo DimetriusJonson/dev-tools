@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use log::{LevelFilter, error, info};
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::TrayIconBuilder;
+use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_log::{Target, TargetKind};
@@ -149,6 +149,17 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     _ => {
                         //                        println!("menu item {:?} not handled", event.id);
                     }
+                })
+                .on_tray_icon_event(|tray, event| match event {
+                    TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } => {
+                        let app_handle = tray.app_handle();
+                        if let Some(window) = app_handle.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    _ => {}
                 })
                 .build(app)?;
 
