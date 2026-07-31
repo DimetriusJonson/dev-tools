@@ -69,7 +69,7 @@ pub fn CompareTextPage() -> impl IntoView {
                     <DragSplitter 
                         target_ref=text1_ref 
                         class_name="hidden md:block".to_owned()
-                        local_store_prop_name="compare_text1_width"
+                        local_store_prop_name=move || "compare_text1_width".to_owned()
                         min_scr_ration={1.0 / 6.0} 
                         max_scr_ration={3.0 / 4.0} 
                         default_scr_ration={1.0 / 2.0}/>

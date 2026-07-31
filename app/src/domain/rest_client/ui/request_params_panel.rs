@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
+use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::tabs::Tabs;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
-use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestParams};
+use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
@@ -23,6 +24,7 @@ use crate::components::ui::text_input::TextInput;
 
 #[component]
 pub fn RequestParamsPanel(
+    request_info: ReadSignal<RequestInfo>,
     body_tab_selected: ReadSignal<usize>,
     set_body_tab_selected: WriteSignal<usize>,
     params: ReadSignal<RequestParams>,
@@ -37,6 +39,7 @@ pub fn RequestParamsPanel(
 
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();
+    let headers_ref = NodeRef::<Div>::new();
 
     Effect::watch(
         move || body_tab_selected.get(),
@@ -141,7 +144,6 @@ pub fn RequestParamsPanel(
                 </div>
 
                 <Button node_ref=send_btn_node_ref
-                    class_name="max-w-16 sm:max-w-none".to_owned()
                     label=move || t!(i18n, rest_client_send_btn_label).to_html()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get()
@@ -152,31 +154,44 @@ pub fn RequestParamsPanel(
 
             </div>
 
-            <div class="flex flex-col overflow-y-auto max-h-[35dvh] gap-y-4">
-                <RequestHeadersPanel params />
-            </div>
-
             <div class="flex-1 flex flex-col">
-                <Tabs class_name="".to_owned()
-                    tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
-                    items=move || vec![
-                        ("Text", tab_body_text_ref),
-                        ("Form Encoded", tab_body_form_encoded_ref),
-                    ] />
-
-                <div node_ref=tab_body_text_ref class="flex-1 flex overflow-y-auto">
-                    <TextArea
-                        name="body".to_owned()
-                        class_name="w-full resize-none".to_owned()
-                        placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
-                        value=params.read_untracked().body
-                        set_value=params.read_untracked().set_body
-                        on_change=move |_| {}
-                    />
+                <div node_ref=headers_ref class="flex flex-col overflow-y-auto gap-y-4 ">
+                    <RequestHeadersPanel params />
                 </div>
 
-                <div node_ref=tab_body_form_encoded_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
-                    <RequestBodyFormPanel params/>
+                <DragSplitter 
+                    class_name="hidden md:block".to_owned()
+                    target_ref=headers_ref 
+                    horizontal=true
+                    local_store_prop_name=move || format!("{}-rc_headers_height", request_info.read().id)
+                    min_scr_ration={1.0 / 6.0} 
+                    max_scr_ration={2.0 / 3.0}
+                    default_scr_ration={1.0 / 6.0} 
+                    allow_mobile=true
+                />
+
+                <div class="flex-1 flex flex-col">
+                    <Tabs class_name="".to_owned()
+                        tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
+                        items=move || vec![
+                            ("Text", tab_body_text_ref),
+                            ("Form Encoded", tab_body_form_encoded_ref),
+                        ] />
+
+                    <div node_ref=tab_body_text_ref class="flex-1 flex overflow-y-auto">
+                        <TextArea
+                            name="body".to_owned()
+                            class_name="w-full resize-none".to_owned()
+                            placeholder=move || {t!(i18n, rest_client_body_placeholder).to_html()}
+                            value=params.read_untracked().body
+                            set_value=params.read_untracked().set_body
+                            on_change=move |_| {}
+                        />
+                    </div>
+
+                    <div node_ref=tab_body_form_encoded_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
+                        <RequestBodyFormPanel params/>
+                    </div>
                 </div>
             </div>
         </div>

@@ -197,13 +197,13 @@ pub fn RestClientExplorer(
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
                     class_name="w-full".to_owned()
-                    button_width=ButtonWidth::Lg
+                    button_width=ButtonWidth::Auto
                     loading=move || false
                     on_click=on_create_request
                     disabled=move || false
                 />
 
-                <div class="w-8dvh md:w-10 h-8dvh md:h-10 inline-flex items-center justify-center hover:bg-sky-500/30 dark:hover:bg-sky-300/30 cursor-pointer rounded-xl p-2 border border-gray-500"
+                <div class="w-10 h-8dvh md:h-10 inline-flex items-center justify-center hover:bg-sky-500/30 dark:hover:bg-sky-300/30 cursor-pointer rounded-xl p-2 border border-gray-500"
                     title=move || t_string!(i18n, rest_client_curl_import_title)
                     on:click=on_import_c_url
                 >

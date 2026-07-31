@@ -21,7 +21,7 @@ pub fn RestClientPage() -> impl IntoView {
             <DragSplitter 
                 class_name="hidden md:block".to_owned()
                 target_ref=explorer_ref 
-                local_store_prop_name="rc_explorer_width" 
+                local_store_prop_name=move || "rc_explorer_width".to_owned() 
                 min_scr_ration={1.0 / 10.0} 
                 max_scr_ration={1.0 / 2.0}
                 default_scr_ration={1.0 / 6.0} />

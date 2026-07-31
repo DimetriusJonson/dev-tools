@@ -125,3 +125,20 @@ pub fn get_browser_width() -> Result<f64, JsValue> {
         
     Ok(width)
 }
+
+#[cfg(feature = "ssr")]
+pub fn get_browser_height() -> Result<f64, JsValue> {
+    Ok(768.0)
+}
+
+#[cfg(not(feature = "ssr"))]
+pub fn get_browser_height() -> Result<f64, JsValue> {
+    let window = web_sys::window().ok_or_else(|| JsValue::from_str("No global window found"))?;
+    
+    let width = window
+        .inner_height()?
+        .as_f64()
+        .ok_or_else(|| JsValue::from_str("Could not convert inner_height to f64"))?;
+        
+    Ok(width)
+}

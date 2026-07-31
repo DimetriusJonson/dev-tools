@@ -208,7 +208,7 @@ pub fn XmlPage() -> impl IntoView {
             <DragSplitter 
                 target_ref=left_panel_ref 
                 class_name="hidden md:block".to_owned()
-                local_store_prop_name="xml_left_panel_width"
+                local_store_prop_name=move || "xml_left_panel_width".to_owned()
                 min_scr_ration={1.0 / 6.0} 
                 max_scr_ration={3.0 / 4.0} 
                 default_scr_ration={1.0 / 2.0}/>

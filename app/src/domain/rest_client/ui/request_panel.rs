@@ -90,6 +90,7 @@ pub fn RequestPanel(
         >
             <div class="flex-2 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
                 <RequestParamsPanel
+                    request_info
                     node_ref=params_ref
                     send_btn_node_ref
                     body_tab_selected
@@ -112,7 +113,7 @@ pub fn RequestPanel(
                 <DragSplitter
                     class_name="hidden md:block".to_owned()
                     target_ref=params_ref
-                    local_store_prop_name="rc_params_width"
+                    local_store_prop_name=move || "rc_params_width".to_owned()
                     min_scr_ration={1.0 / 6.0}
                     max_scr_ration={1.0 / 2.0}
                     default_scr_ration={1.0 / 6.0} />
