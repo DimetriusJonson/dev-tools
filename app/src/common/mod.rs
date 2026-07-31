@@ -5,3 +5,4 @@ pub mod text_comparator;
 pub mod constants;
 pub mod json_processor;
 pub mod json_formatter;
+pub mod curl_parser;

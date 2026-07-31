@@ -79,6 +79,8 @@
     "rest_client_info_4":"You can download the application using the following <a>link</a>.",
     
     "rest_client_param_name_placeholder": "Parameter name",
-    "rest_client_param_value_placeholder": "Parameter value"
+    "rest_client_param_value_placeholder": "Parameter value",
+    "rest_client_curl_import_title": "Import cUrl command from clipboard.",
+    "rest_client_insecure_title": "Disables SSL certificate validation."
         
 }

@@ -33,6 +33,7 @@ pub fn RequestPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (url, set_url) = signal("".to_owned());
+    let (insecure, set_insecure) = signal(false);
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
     let (body_type, set_body_type) = signal("text".to_owned());
@@ -41,6 +42,8 @@ pub fn RequestPanel(
     let (params, _set_params) = signal(RequestParams {
         url,
         set_url,
+        insecure,
+        set_insecure,
         method,
         set_method,
         body,
@@ -125,6 +128,11 @@ fn get_stored_value(name: &str, default: String, request_id: i32) -> String {
     get_local_store_value(&format!("{}-{}", request_id, name), default)
 }
 
+fn get_stored_value_as_bool(name: &str, default: bool, request_id: i32) -> bool {
+    let str = get_local_store_value(&format!("{}-{}", request_id, name), default.to_string());
+    str::parse(&str).unwrap_or_default()
+}
+
 fn create_req_watchers(
     params: ReadSignal<RequestParams>,
     request_info: ReadSignal<RequestInfo>,
@@ -158,6 +166,7 @@ fn create_req_watchers(
         false,
     );
 
+    create_watcher_bool(params.read_untracked().insecure, "rc_insecure", request_info);
     create_watcher(params.read_untracked().body, "rc_body", request_info);
     create_watcher(params.read_untracked().body_type, "rc_body_type", request_info);
 
@@ -209,6 +218,11 @@ fn create_request_info_watcher(
                 set_response.set(None);
                 params.read_untracked().set_url.set(value.url.to_owned());
                 params.read_untracked().set_method.set(value.method.to_owned());
+                params.read_untracked().set_insecure.set(get_stored_value_as_bool(
+                    "rc_insecure",
+                    false,
+                    id,
+                ));
                 params.read_untracked().set_body.set(get_stored_value(
                     "rc_body",
                     "".to_owned(),

@@ -5,18 +5,26 @@ use leptos::{
     html::{Div, Input},
     leptos_dom::{self},
     prelude::*,
+    task::spawn_local,
 };
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::{
-    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+    common::{curl_parser::parser::parse_curl_cmd, ui_utils::get_accept_language},
+    components::layout::message_banner::{Messages, show_error},
+    i18n::*,
+};
+use crate::{
+    common::{
+        local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+        ui_utils::paste_from_clipboard,
+    },
     components::ui::{
         button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth},
         text_input::TextInput,
     },
     domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
-use crate::{common::ui_utils::get_accept_language, i18n::*};
 
 #[component]
 pub fn RestClientExplorer(
@@ -25,6 +33,7 @@ pub fn RestClientExplorer(
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let i18n = use_i18n();
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (requests, set_requests) = signal(Vec::<RwSignal<RequestInfo>>::new());
     let (popup_menu_show, set_popup_menu_show) = signal(0);
@@ -60,6 +69,78 @@ pub fn RestClientExplorer(
         );
     };
 
+    let on_import_c_url = move |_| {
+        spawn_local(async move {
+            if let Some(curl_cmd) = paste_from_clipboard().await {
+                match parse_curl_cmd(&curl_cmd) {
+                    Ok(parsed_request) => {
+                        let request = RequestInfo::new(
+                            generate_request_id(),
+                            parsed_request.url.to_owned(),
+                            "".to_owned(),
+                            parsed_request.method.to_string(),
+                        );
+
+                        set_requests.write().push(RwSignal::new(request.clone()));
+                        set_menu_refs.write().insert(request.id, NodeRef::<Div>::new());
+
+                        set_current_request.set(request.clone());
+                        save_requests_ids(&requests.read_untracked());
+                        set_local_store_value(&format!("{}-rc_url", request.id), request.url);
+                        set_local_store_value(&format!("{}-rc_insecure", request.id), parsed_request.insecure.to_string());
+                        set_local_store_value(&format!("{}-rc_method", request.id), request.method);
+
+                        if let Some(content_type) = parsed_request
+                            .headers
+                            .iter()
+                            .find(|h| h.0.as_str().to_lowercase() == "content-type")
+                            .map(|h| h.1.to_str().ok())
+                            .unwrap_or(None)
+                            && content_type.to_lowercase() == "application/x-www-form-urlencoded"
+                        {
+                            if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
+                                &parsed_request.body.join("\n"),
+                            ) {
+                                if let Ok(json) = serde_json::to_string(
+                                    &map.into_iter().collect::<Vec<(String, String)>>(),
+                                ) {
+                                    set_local_store_value(
+                                        &format!("{}-rc_body_formencoded", request.id),
+                                        json,
+                                    );
+                                    set_local_store_value(
+                                        &format!("{}-rc_body_type", request.id),
+                                        "formencoded".to_owned(),
+                                    );
+                                }
+                            }
+                        } else {
+                            set_local_store_value(
+                                &format!("{}-rc_body", request.id),
+                                parsed_request.body.join("\n"),
+                            );
+                            set_local_store_value(
+                                &format!("{}-rc_body_type", request.id),
+                                "text".to_owned(),
+                            );
+                        }
+
+                        set_local_store_value(
+                            &format!("{}-rc_headers", request.id),
+                            parsed_request
+                                .headers
+                                .iter()
+                                .map(|h| format!("{}:{}", h.0, h.1.to_str().unwrap_or("")))
+                                .collect::<Vec<String>>()
+                                .join("\n"),
+                        );
+                    }
+                    Err(err) => show_error(format!("Error: {}", err), messages),
+                }
+            }
+        })
+    };
+
     let _ = Effect::new(move || {
         set_requests.set(load_requests());
         set_menu_refs.write().clear();
@@ -87,14 +168,14 @@ pub fn RestClientExplorer(
         {
             if let Some(menu_refs) = menu_refs.try_read_untracked()
                 && let Some(target_ref) = menu_refs.get(&popup_menu_show)
-                    && let Some(Some(target_element)) = target_ref.try_get()
-                    && let Some(clicked_target) = ev.target()
-                {
-                    let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
-                    if !target_element.contains(Some(clicked_node)) {
-                        set_popup_menu_show.set(0);
-                    }
+                && let Some(Some(target_element)) = target_ref.try_get()
+                && let Some(clicked_target) = ev.target()
+            {
+                let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
+                if !target_element.contains(Some(clicked_node)) {
+                    set_popup_menu_show.set(0);
                 }
+            }
             return;
         }
 
@@ -112,13 +193,22 @@ pub fn RestClientExplorer(
 
     view! {
         <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
-            <div class="p-2 md:p-4">
+            <div class="flex p-2 md:p-4 gap-4">
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
                     class_name="w-full".to_owned()
                     button_width=ButtonWidth::Lg
                     loading=move || false
                     on_click=on_create_request
+                    disabled=move || false
+                />
+                <Button
+                    label=move || "cURL".to_owned()
+                    attr:title=move || t_string!(i18n, rest_client_curl_import_title)
+                    class_name="w-full".to_owned()
+                    button_width=ButtonWidth::Auto
+                    loading=move || false
+                    on_click=on_import_c_url
                     disabled=move || false
                 />
             </div>

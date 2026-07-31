@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
 use crate::common::app_error::AppError;
-use axum::Json;
-use http::{HeaderMap, HeaderName, HeaderValue, Method};
 use app::model::restclient::{
     rest_client_request::RestClientRequest, rest_client_response::RestClientResponse,
 };
+use axum::Json;
+use http::{HeaderMap, HeaderName, HeaderValue, Method};
 use reqwest::Client;
 
 pub async fn rest_client_send_handler(
@@ -20,7 +20,10 @@ pub async fn rest_client_send_handler(
         );
     }
 
-    let rb = Client::new()
+    let rb = Client::builder()
+        .danger_accept_invalid_certs(request.insecure)
+        .build()
+        .map_err(AppError::system_error)?
         .request(method, request.url)
         .headers(headers)
         .body(reqwest::Body::from(request.body));

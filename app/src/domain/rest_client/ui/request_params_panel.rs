@@ -76,6 +76,7 @@ pub fn RequestParamsPanel(
                 url: params.url.get_untracked(),
                 headers,
                 body,
+                insecure: params.insecure.get_untracked()
             };
 
             match Request::post("/rest_client_send").json(&rc_request) {
@@ -102,7 +103,7 @@ pub fn RequestParamsPanel(
     view! {
 
         <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-2 md:gap-4">
-            <div class="flex flex-col sm:flex-row gap-2 md:gap-4">
+            <div class="flex flex-col sm:flex-row gap-2">
                 <SelectInput
                     name="method".to_owned()
                     label=move || "Method".to_owned()
@@ -132,6 +133,13 @@ pub fn RequestParamsPanel(
                     on_change=move |_| {}
                 />
 
+                <div class="px-0 flex items-center gap-0 cursor-pointer">
+                    <input title=move || t_string!(i18n, rest_client_insecure_title) type="checkbox" id="insecure" class="h-4 w-4" 
+                        bind:value=(params.read_untracked().insecure, params.read_untracked().set_insecure) prop:checked=params.read_untracked().insecure 
+                        on:change=move |_| {}/>
+                    <label for="insecure" class="dark:text-white">{"⚠️"}</label>
+                </div>
+
                 <Button node_ref=send_btn_node_ref
                     class_name="max-w-16 sm:max-w-none".to_owned()
                     label=move || t!(i18n, rest_client_send_btn_label).to_html()
@@ -144,7 +152,9 @@ pub fn RequestParamsPanel(
 
             </div>
 
-            <RequestHeadersPanel params />
+            <div class="flex flex-col overflow-y-auto max-h-[35dvh] gap-y-4">
+                <RequestHeadersPanel params />
+            </div>
 
             <div class="flex-1 flex flex-col">
                 <Tabs class_name="".to_owned()

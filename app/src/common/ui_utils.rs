@@ -12,6 +12,19 @@ pub fn copy_to_clipboard(_data: &str) {
     }
 }
 
+pub async fn paste_from_clipboard() -> Option<String> {
+    #[cfg(not(feature = "ssr"))]
+    if let Some(window) = web_sys::window() {
+        let navigator = window.navigator();
+        let clipboard = navigator.clipboard();
+        if let Ok(str) = clipboard.read_text().await {
+            return str.as_string();
+        }
+    }
+
+    None
+}
+
 pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Result<(), JsValue> {
     let js_array = js_sys::Array::new();
     let uint8_array = unsafe { js_sys::Uint8Array::view(&bytes) };

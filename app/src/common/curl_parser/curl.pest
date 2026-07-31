@@ -1,0 +1,44 @@
+// a curl cli parser
+ws = _{ " " | "\t" }
+newline = _{ "\r" | "\n" }
+slash = _{ "\\" ~ ws* ~ newline+ }
+
+comment = _{ "#" ~ (!newline ~ ANY)* ~ newline }
+
+single_quoted = _{ "'" ~ single_quoted_inner ~ "'" }
+single_quoted_inner = { (!"'" ~ ANY)* }
+double_quoted = _{ "\"" ~ double_quoted_inner ~ "\"" }
+double_quoted_inner = { (("\\" ~ ANY) | (!"\"" ~ ANY))* }
+
+none_ws = { (!ws ~ ANY)+ }
+url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
+url = { single_quoted | double_quoted | url_plain }
+option = _{ method_option | header_option | cookie_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option }
+
+method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
+method = @{ "GET" | "POST" | "PUT" | "DELETE" | "PATCH" }
+
+header_option = _{ ("-H" | "--header") ~ ws+ ~ header }
+header = { single_quoted | double_quoted | none_ws }
+
+cookie_option = _{ ("-b" | "--cookie") ~ ws+ ~ cookie }
+cookie = { single_quoted | double_quoted | none_ws }
+
+location_option = _{ ("-L" | "--location") ~ ws+ ~ location }
+location = { single_quoted | double_quoted | none_ws }
+
+body_option = _{ ("-d" | "--data") ~ ws+ ~ body }
+body = { single_quoted | double_quoted | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
+
+auth_option = _{ "-u" ~ ws+ ~ auth }
+auth = { single_quoted | double_quoted | none_ws }
+
+ssl_verify_option = { ("-k" | "--insecure") }
+
+compressed_option = { "--compressed" }
+
+wss = _{ ws* ~ slash* ~ ws* }
+
+input = _{
+    SOI ~ (comment | ws | newline)* ~ ws* ~ "curl" ~ wss ~ (option ~ wss )* ~ url? ~ (wss ~ option ~ wss)* ~ ws* ~ EOI
+}

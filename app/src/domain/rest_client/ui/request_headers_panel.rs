@@ -23,7 +23,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
 
     view! {
         <div class="flex flex-col gap-1 md:gap-4">
-            <div class="flex flex-row gap-1 md:gap-4">
+            <div class="flex flex-row gap-1 md:gap-2">
                 <AutocompleteInput
                     class_name="sm:min-w-36".to_owned()
                     placeholder=move || t_display!(i18n, rest_client_header_name).to_string()
@@ -78,7 +78,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
             key=|header| header.id
             children=move |header| {
                 view! {
-                    <div class="flex gap-1 md:gap-4">
+                    <div class="flex gap-1 md:gap-2">
                         <AutocompleteInput
                             class_name="sm:min-w-36".to_owned()
                             placeholder=move || t_display!(i18n, rest_client_header_name).to_string()

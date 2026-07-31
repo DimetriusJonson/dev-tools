@@ -78,6 +78,10 @@
     "rest_client_info_4":"Скачать приложение Вы можете по следующей <a>ссылке</a>.",
 
     "rest_client_param_name_placeholder": "Название параметра",
-    "rest_client_param_value_placeholder": "Значение параметра"
+    "rest_client_param_value_placeholder": "Значение параметра",
+    "rest_client_curl_import_title": "Импорт команды cUrl из буфера обмена.",
+
+    "rest_client_insecure_title": "Отключает валидацию SSL сертификатов."
+    
 
 }
