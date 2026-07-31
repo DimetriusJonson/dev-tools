@@ -68,7 +68,7 @@ pub fn RestClientExplorer(
             headers.iter().map(|h| format!("{}:{}", h.0, h.1)).collect::<Vec<String>>().join("\n"),
         );
     };
-
+ 
     let on_import_c_url = move |_| {
         spawn_local(async move {
             if let Some(curl_cmd) = paste_from_clipboard().await {
@@ -193,7 +193,7 @@ pub fn RestClientExplorer(
 
     view! {
         <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
-            <div class="flex p-2 md:p-4 gap-4">
+            <div class="flex p-2 md:p-4 gap-2">
                 <Button
                     label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
                     class_name="w-full".to_owned()
@@ -202,15 +202,25 @@ pub fn RestClientExplorer(
                     on_click=on_create_request
                     disabled=move || false
                 />
-                <Button
-                    label=move || "cURL".to_owned()
-                    attr:title=move || t_string!(i18n, rest_client_curl_import_title)
-                    class_name="w-full".to_owned()
-                    button_width=ButtonWidth::Auto
-                    loading=move || false
-                    on_click=on_import_c_url
-                    disabled=move || false
-                />
+
+                <div class="w-8dvh md:w-10 h-8dvh md:h-10 inline-flex items-center justify-center hover:bg-sky-500/50 cursor-pointer rounded-xl p-2"
+                    title=move || t_string!(i18n, rest_client_curl_import_title)
+                    on:click=on_import_c_url
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1021 854">
+                        <g fill="none" stroke="#fff" stroke-width="34" transform="translate(17 17)">
+                            <circle cx="58" cy="529" r="58"/>
+                            <circle cx="58" cy="263" r="58"/>
+                            <path stroke-width="100" d="M596 101 234 721"/>
+                            <circle cx="210" cy="762" r="58"/>
+                            <circle cx="621" cy="58" r="58"/>
+                            <path stroke-width="100" d="M904 101 542 721"/>
+                            <circle cx="929" cy="58" r="58"/>
+                            <circle cx="518" cy="762" r="58"/>
+                        </g>
+                    </svg>
+                </div>
+
             </div>
 
             { move || { requests.get().into_iter()
