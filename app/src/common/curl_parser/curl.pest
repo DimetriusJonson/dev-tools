@@ -5,6 +5,8 @@ slash = _{ "\\" ~ ws* ~ newline+ }
 
 comment = _{ "#" ~ (!newline ~ ANY)* ~ newline }
 
+single_quoted_dollar = _{ "$" ~ "'" ~ single_quoted_inner ~ "'" }
+
 single_quoted = _{ "'" ~ single_quoted_inner ~ "'" }
 single_quoted_inner = { (!"'" ~ ANY)* }
 double_quoted = _{ "\"" ~ double_quoted_inner ~ "\"" }
@@ -13,7 +15,7 @@ double_quoted_inner = { (("\\" ~ ANY) | (!"\"" ~ ANY))* }
 none_ws = { (!ws ~ ANY)+ }
 url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
 url = { single_quoted | double_quoted | url_plain }
-option = _{ method_option | header_option | cookie_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option }
+option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
 method = @{ "GET" | "POST" | "PUT" | "DELETE" | "PATCH" }
@@ -23,6 +25,9 @@ header = { single_quoted | double_quoted | none_ws }
 
 cookie_option = _{ ("-b" | "--cookie") ~ ws+ ~ cookie }
 cookie = { single_quoted | double_quoted | none_ws }
+
+data_raw_option = _{ "--data-raw" ~ ws+ ~ data_raw }
+data_raw = { single_quoted | double_quoted | single_quoted_dollar | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
 
 location_option = _{ ("-L" | "--location") ~ ws+ ~ location }
 location = { single_quoted | double_quoted | none_ws }

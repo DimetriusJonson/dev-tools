@@ -87,6 +87,10 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 let s = remove_quote(s);
                 parsed.body.push(s.into());
             }
+            Rule::data_raw => {
+                let data_raw_value = pair.into_inner().next().expect("data-raw string must be present").as_str();
+                parsed.body.push(data_raw_value.into());
+            }
             Rule::ssl_verify_option => {
                 parsed.insecure = true;
             }
