@@ -1,17 +1,21 @@
 use leptos::{html::Div, prelude::*};
 
 use crate::{
-    common::local_store::{get_local_store_value, set_local_store_value},
     components::ui::button::{Button, ButtonWidth},
-    domain::rest_client::ui::request_params::RequestInfo,
+    domain::rest_client::ui::{
+        request_helper::{
+            delete_request, generate_request_id, get_stored_value, load_requests_ids,
+            save_requests_ids, set_stored_value,
+        },
+        request_params::RequestInfo,
+    },
 };
 use crate::{
     common::ui_utils::get_accept_language,
     domain::rest_client::ui::{
-        build_rc_req_store_key, delete_request, generate_request_id, load_requests_ids,
         rest_client_curl_button::RestClientCUrlButton,
         rest_client_explorer_row::RestClientExplorerRow,
-        rest_client_project_selector::ProjectSelector, save_requests_ids,
+        rest_client_project_selector::ProjectSelector,
     },
     i18n::*,
 };
@@ -40,22 +44,18 @@ pub fn RestClientExplorer(
 
         set_current_request.set(request.clone());
         save_requests_ids(project, &requests.read_untracked());
-        set_local_store_value(
-            &build_rc_req_store_key(project.read_untracked().as_str(), request.id, "url"),
-            request.url,
-        );
-        set_local_store_value(
-            &build_rc_req_store_key(project.read_untracked().as_str(), request.id, "method"),
-            request.method,
-        );
+        set_stored_value(project, request.id, "url", request.url);
+        set_stored_value(project, request.id, "method", request.method);
 
         let headers = [
             ("Accept".to_owned(), "application/json".to_owned()),
             ("Accept-Language".to_owned(), get_accept_language()),
             ("User-Agent".to_owned(), "WebDevUsefulTools Client".to_owned()),
         ];
-        set_local_store_value(
-            &build_rc_req_store_key(project.read_untracked().as_str(), request.id, "headers"),
+        set_stored_value(
+            project,
+            request.id,
+            "headers",
             headers.iter().map(|h| format!("{}:{}", h.0, h.1)).collect::<Vec<String>>().join("\n"),
         );
     };
@@ -119,18 +119,9 @@ fn load_requests(project_id: &str) -> Vec<RwSignal<RequestInfo>> {
     load_requests_ids(project_id)
         .iter()
         .map(|id| {
-            let url = get_local_store_value(
-                &build_rc_req_store_key(project_id, *id, "url"),
-                "".to_owned(),
-            );
-            let name = get_local_store_value(
-                &build_rc_req_store_key(project_id, *id, "name"),
-                "".to_owned(),
-            );
-            let method = get_local_store_value(
-                &build_rc_req_store_key(project_id, *id, "method"),
-                "".to_owned(),
-            );
+            let url = get_stored_value("url", "".to_owned(), project_id, *id);
+            let name = get_stored_value("name", "".to_owned(), project_id, *id);
+            let method = get_stored_value("method", "".to_owned(), project_id, *id);
             RwSignal::new(RequestInfo::new(*id, url, name, method))
         })
         .collect()

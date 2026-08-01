@@ -2,17 +2,16 @@ use std::collections::HashMap;
 
 use leptos::{prelude::*, task::spawn_local};
 
-use crate::domain::rest_client::ui::generate_request_id;
+use crate::domain::rest_client::ui::request_helper::{
+    generate_request_id, save_requests_ids, set_stored_value,
+};
 use crate::i18n::*;
 use crate::{
     common::{
-        curl_parser::parser::parse_curl_cmd, local_store::set_local_store_value,
-        ui_utils::paste_from_clipboard,
+        curl_parser::parser::parse_curl_cmd, ui_utils::paste_from_clipboard,
     },
     components::layout::message_banner::{Messages, show_error},
-    domain::rest_client::ui::{
-        build_rc_req_store_key, request_params::RequestInfo, save_requests_ids,
-    },
+    domain::rest_client::ui::request_params::RequestInfo,
 };
 
 #[component]
@@ -41,30 +40,14 @@ pub fn RestClientCUrlButton(
 
                         set_current_request.set(request.clone());
                         save_requests_ids(project, &requests.read_untracked());
-                        set_local_store_value(
-                            &build_rc_req_store_key(
-                                project.read_untracked().as_str(),
-                                request.id,
-                                "url",
-                            ),
-                            request.url,
-                        );
-                        set_local_store_value(
-                            &build_rc_req_store_key(
-                                project.read_untracked().as_str(),
-                                request.id,
-                                "insecure",
-                            ),
+                        set_stored_value(project, request.id, "url", request.url);
+                        set_stored_value(
+                            project,
+                            request.id,
+                            "insecure",
                             parsed_request.insecure.to_string(),
                         );
-                        set_local_store_value(
-                            &build_rc_req_store_key(
-                                project.read_untracked().as_str(),
-                                request.id,
-                                "method",
-                            ),
-                            request.method,
-                        );
+                        set_stored_value(project, request.id, "method", request.method);
 
                         if let Some(content_type) = parsed_request
                             .headers
@@ -80,49 +63,29 @@ pub fn RestClientCUrlButton(
                                 if let Ok(json) = serde_json::to_string(
                                     &map.into_iter().collect::<Vec<(String, String)>>(),
                                 ) {
-                                    set_local_store_value(
-                                        &build_rc_req_store_key(
-                                            project.read_untracked().as_str(),
-                                            request.id,
-                                            "body_formencoded",
-                                        ),
-                                        json,
-                                    );
-                                    set_local_store_value(
-                                        &build_rc_req_store_key(
-                                            project.read_untracked().as_str(),
-                                            request.id,
-                                            "body_type",
-                                        ),
+                                    set_stored_value(project, request.id, "body_formencoded", json);
+                                    set_stored_value(
+                                        project,
+                                        request.id,
+                                        "body_type",
                                         "formencoded".to_owned(),
                                     );
                                 }
                             }
                         } else {
-                            set_local_store_value(
-                                &build_rc_req_store_key(
-                                    project.read_untracked().as_str(),
-                                    request.id,
-                                    "body",
-                                ),
+                            set_stored_value(
+                                project,
+                                request.id,
+                                "body",
                                 parsed_request.body.join("\n"),
                             );
-                            set_local_store_value(
-                                &build_rc_req_store_key(
-                                    project.read_untracked().as_str(),
-                                    request.id,
-                                    "body_type",
-                                ),
-                                "text".to_owned(),
-                            );
+                            set_stored_value(project, request.id, "body_type", "text".to_owned());
                         }
 
-                        set_local_store_value(
-                            &build_rc_req_store_key(
-                                project.read_untracked().as_str(),
-                                request.id,
-                                "headers",
-                            ),
+                        set_stored_value(
+                            project,
+                            request.id,
+                            "headers",
                             parsed_request
                                 .headers
                                 .iter()

@@ -6,17 +6,14 @@ use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::ui::{delete_request, save_requests_ids};
+use crate::domain::rest_client::ui::request_helper::{delete_request, save_requests_ids, set_stored_value};
 use crate::i18n::*;
 use crate::{
-    common::local_store::set_local_store_value,
     components::ui::{
         button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth},
         text_input::TextInput,
     },
-    domain::rest_client::ui::{
-        build_rc_req_store_key, request_params::RequestInfo, request_popup_menu::RequestPopupMenu,
-    },
+    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
 };
 
 #[component]
@@ -177,10 +174,7 @@ pub fn RestClientExplorerRow(
 
                             requests.read_untracked().iter().filter(|r|r.read_untracked().id == request.read_untracked().id).for_each(|r|{
                                 r.write().name = value.trim().to_owned();
-                                set_local_store_value(
-                                    &build_rc_req_store_key(project.read_untracked().as_str(), r.get_untracked().id, "name"),
-                                    value.to_owned(),
-                                );
+                                set_stored_value(project, r.get_untracked().id, "name", value.to_owned());
                             });
                             set_current_request.write_untracked().name = value.to_owned();
                             set_edit_name_mode.set(false);

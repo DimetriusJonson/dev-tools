@@ -1,11 +1,13 @@
 use crate::{
-    common::local_store::delete_local_store_value,
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
     },
     domain::rest_client::ui::{
-        build_rc_req_store_key, request_params::RequestBodyFormValue,
+        request_helper::{
+            delete_stored_value, get_stored_value, get_stored_value_as_bool, set_stored_value,
+        },
+        request_params::RequestBodyFormValue,
         request_result_panel::ReqResultData,
     },
     i18n::*,
@@ -16,13 +18,10 @@ use leptos::{
     prelude::*,
 };
 
-use crate::{
-    common::local_store::{get_local_store_value, set_local_store_value},
-    domain::rest_client::ui::{
-        request_params::{CustomHeader, RequestInfo, RequestParams},
-        request_params_panel::RequestParamsPanel,
-        request_result_panel::RequestResultPanel,
-    },
+use crate::domain::rest_client::ui::{
+    request_params::{CustomHeader, RequestInfo, RequestParams},
+    request_params_panel::RequestParamsPanel,
+    request_result_panel::RequestResultPanel,
 };
 
 #[component]
@@ -95,12 +94,9 @@ pub fn RequestPanel(
                     on_result=move|res: ReqResultData| {
                         if *save_response.read_untracked() {
                             let json_string = serde_json::to_string(&res).unwrap();
-                            set_local_store_value(
-                                &build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "save_response_data"),
-                                json_string,
-                            )
+                            set_stored_value(project, request_info.read_untracked().id, "save_response_data", json_string)
                         } else {
-                            delete_local_store_value(&build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "save_response_data"))
+                            delete_stored_value(project, request_info, "save_response_data")
                         }
                         set_response.set(Some(res));
                     }
@@ -121,17 +117,6 @@ pub fn RequestPanel(
     }
 }
 
-fn get_stored_value(name: &str, default: String, project_id: &str, request_id: i32) -> String {
-    let key = build_rc_req_store_key(project_id, request_id, name);
-    get_local_store_value(&key, default)
-}
-
-fn get_stored_value_as_bool(name: &str, default: bool, project_id: &str, request_id: i32) -> bool {
-    let key = build_rc_req_store_key(project_id, request_id, name);
-    let str = get_local_store_value(&key, default.to_string());
-    str::parse(&str).unwrap_or_default()
-}
-
 fn create_req_watchers(
     params: ReadSignal<RequestParams>,
     project: ReadSignal<String>,
@@ -142,14 +127,7 @@ fn create_req_watchers(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_local_store_value(
-                    &build_rc_req_store_key(
-                        project.read_untracked().as_str(),
-                        request_info.read_untracked().id,
-                        "url",
-                    ),
-                    value.to_string(),
-                );
+                set_stored_value(project, request_info.read_untracked().id, "url", value.to_string());
                 set_request_info.write().url = value.to_owned();
             }
         },
@@ -160,14 +138,7 @@ fn create_req_watchers(
         move || params.read_untracked().method.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_local_store_value(
-                    &build_rc_req_store_key(
-                        project.read_untracked().as_str(),
-                        request_info.read_untracked().id,
-                        "method",
-                    ),
-                    value.to_string(),
-                );
+                set_stored_value(project, request_info.read_untracked().id, "method", value.to_string());
                 set_request_info.write().method = value.to_owned();
             }
         },
@@ -181,14 +152,7 @@ fn create_req_watchers(
     Effect::watch(
         move || params.read_untracked().headers.get(),
         move |value, _prev, _| {
-            set_local_store_value(
-                &build_rc_req_store_key(
-                    project.read_untracked().as_str(),
-                    request_info.read_untracked().id,
-                    "headers",
-                ),
-                headers_to_string(value),
-            )
+            set_stored_value(project, request_info.read_untracked().id, "headers", headers_to_string(value))
         },
         false,
     );
@@ -196,14 +160,7 @@ fn create_req_watchers(
     Effect::watch(
         move || params.read_untracked().body_formencoded.get(),
         move |value, _prev, _| {
-            set_local_store_value(
-                &build_rc_req_store_key(
-                    project.read_untracked().as_str(),
-                    request_info.read_untracked().id,
-                    "body_formencoded",
-                ),
-                body_form_to_string(value),
-            )
+            set_stored_value(project, request_info.read_untracked().id, "body_formencoded", body_form_to_string(value))
         },
         false,
     );
@@ -268,25 +225,21 @@ fn create_request_info_watcher(
                     .set_body_formencoded
                     .set(load_body_formencoded(&project_id, id));
 
-                let save_response = get_local_store_value(
-                    &build_rc_req_store_key(
-                        project.read_untracked().as_str(),
-                        request_info.read_untracked().id,
-                        "save_response",
-                    ),
+                let save_response = get_stored_value(
+                    "save_response",
                     "false".to_owned(),
+                    project.read_untracked().as_str(),
+                    request_info.read_untracked().id,
                 )
                 .parse::<bool>()
                 .unwrap();
                 set_save_response.set(save_response);
                 if save_response {
-                    let data_str = get_local_store_value(
-                        &build_rc_req_store_key(
-                            project.read_untracked().as_str(),
-                            request_info.read_untracked().id,
-                            "save_response_data",
-                        ),
+                    let data_str = get_stored_value(
+                        "save_response_data",
                         "".to_owned(),
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
                     );
                     if !data_str.is_empty() {
                         match serde_json::from_str::<ReqResultData>(&data_str) {
@@ -312,14 +265,7 @@ fn create_watcher(
         move || value.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_local_store_value(
-                    &build_rc_req_store_key(
-                        project.read_untracked().as_str(),
-                        request_info.read_untracked().id,
-                        &name,
-                    ),
-                    value.to_string(),
-                )
+                set_stored_value(project, request_info.read_untracked().id, &name, value.to_string())
             }
         },
         false,
@@ -337,14 +283,7 @@ fn create_watcher_bool(
         move || value.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_local_store_value(
-                    &build_rc_req_store_key(
-                        project.read_untracked().as_str(),
-                        request_info.read_untracked().id,
-                        &name,
-                    ),
-                    value.to_string(),
-                )
+                set_stored_value(project, request_info.read_untracked().id, &name, value.to_string())
             }
         },
         false,
@@ -360,10 +299,7 @@ fn headers_to_string(headers: &[CustomHeader]) -> String {
 }
 
 fn load_headers(project_id: &str, request_id: i32) -> Vec<CustomHeader> {
-    let stored_value = get_local_store_value(
-        &build_rc_req_store_key(project_id, request_id, "headers"),
-        "".to_owned(),
-    );
+    let stored_value = get_stored_value("headers", "".to_owned(), project_id, request_id);
     if stored_value.is_empty() {
         return Vec::new();
     }
@@ -390,10 +326,7 @@ fn body_form_to_string(form_values: &[RequestBodyFormValue]) -> String {
 }
 
 fn load_body_formencoded(project_id: &str, request_id: i32) -> Vec<RequestBodyFormValue> {
-    let stored_value = get_local_store_value(
-        &build_rc_req_store_key(project_id, request_id, "body_formencoded"),
-        "".to_owned(),
-    );
+    let stored_value = get_stored_value("body_formencoded", "".to_owned(), project_id, request_id);
     if stored_value.is_empty() {
         return Vec::new();
     }
