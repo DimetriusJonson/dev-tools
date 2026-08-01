@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use leptos::html::{Div, Input};
-use leptos::prelude::*;
+use leptos::{ev, leptos_dom, prelude::*};
 use serde::{Deserialize, Serialize};
+use web_sys::wasm_bindgen::JsCast;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::components::ui::button::{
@@ -24,7 +25,7 @@ pub fn ProjectSelector(
     #[prop(optional)] class_name: String,
     project: ReadSignal<String>,
     set_project: WriteSignal<String>,
-    #[prop(into)] on_delete: Callback<()>
+    #[prop(into)] on_delete: Callback<()>,
 ) -> impl IntoView {
     let i18n = use_i18n();
 
@@ -56,6 +57,33 @@ pub fn ProjectSelector(
         move |value, _prev, _| set_local_store_value("rc_current_project", value.to_owned()),
         false,
     );
+
+    let _ = leptos_dom::helpers::window_event_listener(ev::click, move |ev| {
+        if let Some(popup_menu_show) = popup_menu_show.try_get()
+            && popup_menu_show
+        {
+            if let Some(target_element) = menu_ref.get()
+                && let Some(clicked_target) = ev.target()
+            {
+                let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
+                if !target_element.contains(Some(clicked_node)) {
+                    set_popup_menu_show.set(false);
+                }
+            }
+            return;
+        }
+
+        if let Some(edit_name_mode) = edit_name_mode.try_get_untracked()
+            && edit_name_mode
+            && let Some(Some(target_element)) = edit_name_ref.try_get()
+            && let Some(clicked_target) = ev.target()
+        {
+            let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
+            if !target_element.contains(Some(clicked_node)) {
+                set_edit_name_mode.set(false);
+            }
+        }
+    });
 
     view! {
         <div class={format!("flex justify-center items-center {}", class_name)}>
