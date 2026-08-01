@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
+use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{
     Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth,
 };
@@ -28,6 +29,7 @@ pub fn ProjectSelector(
     #[prop(into)] on_delete: Callback<()>,
 ) -> impl IntoView {
     let i18n = use_i18n();
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (old_project, set_old_project) = signal("".to_owned());
     let (projects, set_projects) = signal(Vec::new());
@@ -187,10 +189,23 @@ pub fn ProjectSelector(
                         value=edit_name
                         set_value=set_edit_name
                         on_change=move |value: String| {
+                            let val = value.trim().to_lowercase();
                             let project_id = project.get_untracked().parse::<i32>().unwrap_or(0);
+
+                            if val.is_empty() {
+                                show_error(t_string!(i18n, rest_client_empty_project_name).to_owned(), messages);
+                                return;
+                            }
+
+                            if projects.read_untracked().iter().filter(|p|p.id != project_id)
+                                .any(|p|p.name.to_lowercase() == val) {
+                                    show_error(t_string!(i18n, rest_client_already_exist_project).to_owned(), messages);
+                                return;
+                            }
+
                             if project_id == 0 {
                                 let project_id = generate_project_id();
-                                let project = RestClientProject { id: project_id, name: value.to_owned() };
+                                let project = RestClientProject { id: project_id, name: value.trim().to_owned() };
                                 set_projects.write().push(project);
 
                                 set_project.set(project_id.to_string());

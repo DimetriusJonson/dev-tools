@@ -5,6 +5,7 @@ use leptos::{ev, leptos_dom};
 use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
 
+use crate::components::layout::message_banner::{Messages, show_error};
 use crate::domain::rest_client::ui::{delete_request, save_requests_ids};
 use crate::i18n::*;
 use crate::{
@@ -28,6 +29,7 @@ pub fn RestClientExplorerRow(
     set_requests: WriteSignal<Vec<RwSignal<RequestInfo>>>,
 ) -> impl IntoView {
     let i18n = use_i18n();
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (popup_menu_show, set_popup_menu_show) = signal(0);
     let (edit_name_mode, set_edit_name_mode) = signal(false);
@@ -160,8 +162,21 @@ pub fn RestClientExplorerRow(
                         value=edit_name
                         set_value=set_edit_name
                         on_change=move |value: String| {
+                            let val = value.trim().to_lowercase();
+
+                            if val.is_empty() {
+                                show_error(t_string!(i18n, rest_client_empty_request_name).to_owned(), messages);
+                                return;
+                            }
+
+                            if requests.read_untracked().iter().filter(|r|r.read_untracked().id != request.read_untracked().id)
+                                .any(|r|r.read_untracked().name.to_lowercase() == val) {
+                                    show_error(t_string!(i18n, rest_client_already_exist_request).to_owned(), messages);
+                                return;
+                            }
+
                             requests.read_untracked().iter().filter(|r|r.read_untracked().id == request.read_untracked().id).for_each(|r|{
-                                r.write().name = value.to_owned();
+                                r.write().name = value.trim().to_owned();
                                 set_local_store_value(
                                     &build_rc_req_store_key(project.read_untracked().as_str(), r.get_untracked().id, "name"),
                                     value.to_owned(),
