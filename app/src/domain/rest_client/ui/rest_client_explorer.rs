@@ -1,32 +1,24 @@
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
 
-use leptos::{
-    ev,
-    html::{Div, Input},
-    leptos_dom::{self},
-    prelude::*,
-    task::spawn_local,
-};
-use web_sys::wasm_bindgen::JsCast;
+use leptos::{html::Div, prelude::*, task::spawn_local};
 
 use crate::{
     common::{curl_parser::parser::parse_curl_cmd, ui_utils::get_accept_language},
     components::layout::message_banner::{Messages, show_error},
     domain::rest_client::ui::{
-        build_rc_req_store_key, build_rc_store_key, rest_client_project_selector::ProjectSelector,
+        build_rc_req_store_key, build_rc_store_key, delete_request,
+        rest_client_explorer_row::RestClientExplorerRow,
+        rest_client_project_selector::ProjectSelector, save_requests_ids,
     },
     i18n::*,
 };
 use crate::{
     common::{
-        local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+        local_store::{get_local_store_value, set_local_store_value},
         ui_utils::paste_from_clipboard,
     },
-    components::ui::{
-        button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth},
-        text_input::TextInput,
-    },
-    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
+    components::ui::button::{Button, ButtonWidth},
+    domain::rest_client::ui::request_params::RequestInfo,
 };
 
 #[component]
@@ -41,11 +33,6 @@ pub fn RestClientExplorer(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (requests, set_requests) = signal(Vec::<RwSignal<RequestInfo>>::new());
-    let (popup_menu_show, set_popup_menu_show) = signal(0);
-    let (edit_name_mode, set_edit_name_mode) = signal(false);
-    let (edit_name, set_edit_name) = signal("".to_owned());
-    let (menu_refs, set_menu_refs) = signal(HashMap::<i32, NodeRef<Div>>::new());
-    let edit_name_ref = NodeRef::<Input>::new();
 
     let on_create_request = move |_| {
         let request = RequestInfo::new(
@@ -56,7 +43,6 @@ pub fn RestClientExplorer(
         );
 
         set_requests.write().push(RwSignal::new(request.clone()));
-        set_menu_refs.write().insert(request.id, NodeRef::<Div>::new());
 
         set_current_request.set(request.clone());
         save_requests_ids(project, &requests.read_untracked());
@@ -93,7 +79,6 @@ pub fn RestClientExplorer(
                         );
 
                         set_requests.write().push(RwSignal::new(request.clone()));
-                        set_menu_refs.write().insert(request.id, NodeRef::<Div>::new());
 
                         set_current_request.set(request.clone());
                         save_requests_ids(project, &requests.read_untracked());
@@ -193,16 +178,10 @@ pub fn RestClientExplorer(
         })
     };
 
-    //let _ = Effect::new(move || {});
-
     Effect::watch(
         move || project.get(),
         move |value, _prev, _| {
             set_requests.set(load_requests(value));
-            set_menu_refs.write().clear();
-            for request in requests.read_untracked().iter() {
-                set_menu_refs.write().insert(request.read_untracked().id, NodeRef::<Div>::new());
-            }
         },
         false,
     );
@@ -219,35 +198,6 @@ pub fn RestClientExplorer(
         },
         false,
     );
-
-    let _ = leptos_dom::helpers::window_event_listener(ev::click, move |ev| {
-        if let Some(popup_menu_show) = popup_menu_show.try_get()
-            && popup_menu_show > 0
-        {
-            if let Some(menu_refs) = menu_refs.try_read_untracked()
-                && let Some(target_ref) = menu_refs.get(&popup_menu_show)
-                && let Some(Some(target_element)) = target_ref.try_get()
-                && let Some(clicked_target) = ev.target()
-            {
-                let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
-                if !target_element.contains(Some(clicked_node)) {
-                    set_popup_menu_show.set(0);
-                }
-            }
-            return;
-        }
-
-        if let Some(edit_name_mode) = edit_name_mode.try_get_untracked()
-            && edit_name_mode
-            && let Some(Some(target_element)) = edit_name_ref.try_get()
-            && let Some(clicked_target) = ev.target()
-        {
-            let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
-            if !target_element.contains(Some(clicked_node)) {
-                set_edit_name_mode.set(false);
-            }
-        }
-    });
 
     view! {
         <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
@@ -292,138 +242,7 @@ pub fn RestClientExplorer(
 
             { move || { requests.get().into_iter()
                 .map(|request| {
-                    let request_cloned = request.get();
-
-                    view! {
-                        <div class="flex h-8 sm:h-10 items-center cursor-pointer p-1 sm:p-2 text-xs md:text-base"
-                            class=(["bg-sky-500/50"], move || request_cloned.id == current_request.read().id)
-                            class=(["hover:bg-gray-600/50"], move || request_cloned.id != current_request.read().id)
-                            on:click={
-                                let request_cloned = request.get();
-                                move |_| {
-                                    if current_request.read_untracked().id != request_cloned.id {
-                                        set_current_request.set(request_cloned.clone());
-                                        set_edit_name_mode.set(false);
-                                    }
-                                }
-                            }
-                            on:contextmenu={
-                                let request_cloned = request.get();
-                                move|e| {e.prevent_default();
-                                    if current_request.read_untracked().id != request_cloned.id {
-                                        set_current_request.set(request_cloned.clone());
-                                        set_edit_name_mode.set(false);
-                                        set_timeout(move || set_popup_menu_show.set(request_cloned.id), Duration::from_millis(250));
-                                    } else {
-                                        set_popup_menu_show.set(request_cloned.id);
-                                    }
-                                }}
-                            >
-
-                            <Show when=move || request_cloned.id == current_request.read().id && edit_name_mode.get()
-                                fallback={
-                                    let request_cloned = request.get();
-                                    move || view!{
-                                        <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(&request_cloned.method))}>{request_cloned.method.to_owned()}</span>
-                                        <span class="p-1 sm:p-2 w-full truncate">{request_cloned.display_name()}</span>
-
-                                        <Show when=move || request_cloned.id == current_request.read().id>
-                                            <div class="relative px-1 sm:px-2" node_ref={*menu_refs.read().get(&request_cloned.id).unwrap()}>
-                                                <Button
-                                                    label=move || "...".to_owned()
-                                                    class_name="hover:bg-sky-500/80 w-8 h-5 pb-6".to_owned()
-                                                    button_width=ButtonWidth::Custom
-                                                    button_height=ButtonHeight::Custom
-                                                    text_size=ButtonTextSize::Sm
-                                                    color=ButtonColor::Custom
-                                                    loading=move || false
-                                                    on_click={
-                                                        let request_cloned = request.get();
-                                                        move |_|{
-                                                            if current_request.read_untracked().id != request_cloned.id {
-                                                                set_current_request.set(request_cloned.clone());
-                                                                set_timeout(move || set_popup_menu_show.set(request_cloned.id), Duration::from_millis(250));
-                                                            } else {
-                                                                set_popup_menu_show.set(request_cloned.id);
-                                                            }
-                                                        }}
-                                                    disabled=move || false
-                                                />
-
-                                                <Show when=move || popup_menu_show.get() == request_cloned.id>
-                                                    <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
-                                                        items=move || {vec![
-                                                                ("run", t_string!(i18n, rest_client_explorer_run_request)),
-                                                                ("rename", t_string!(i18n, rest_client_explorer_rename_request)),
-                                                                ("delete", t_string!(i18n, rest_client_explorer_delete_request)),
-                                                                ]}
-                                                        on_selected={
-                                                            let request_cloned=request.get();
-                                                            move |val:(&'static str, &'static str)| {
-                                                                match val.0 {
-                                                                    "delete" => {
-                                                                        set_requests.write().retain(|r|r.read_untracked().id != request_cloned.id);
-                                                                        set_menu_refs.write().remove(&request_cloned.id);
-
-                                                                        set_current_request.set(RequestInfo::new_empty());
-                                                                        save_requests_ids(project, &requests.read_untracked());
-                                                                        delete_request(project.read_untracked().as_str(), request_cloned.id);
-                                                                        set_popup_menu_show.set(0);
-                                                                    },
-                                                                    "rename" => {
-                                                                        set_edit_name_mode.set(true);
-                                                                        set_edit_name.set(current_request.read_untracked().display_name());
-
-                                                                        set_timeout(move || {
-                                                                            if let Some(input) = edit_name_ref.get() {
-                                                                                input.focus().unwrap();
-                                                                                input.select();
-                                                                                set_popup_menu_show.set(0);
-                                                                            }
-                                                                        }, Duration::from_millis(250));
-                                                                    },
-                                                                    "run" => {
-                                                                        set_current_request.set(request_cloned.clone_and_run());
-                                                                    },
-                                                                    _ => ()
-                                                                }
-                                                            }
-                                                        }
-                                                    />
-                                                </Show>
-                                            </div>
-                                        </Show>
-                                    }}>
-                                {move || view! {
-                                    <TextInput
-                                        node_ref=edit_name_ref
-                                        name="request-name".to_owned()
-                                        class_name="w-full".to_owned()
-                                        placeholder=move || "Name".to_owned()
-                                        input_type="text".to_owned()
-                                        value=edit_name
-                                        set_value=set_edit_name
-                                        on_change=move |value: String| {
-                                            requests.read_untracked().iter().filter(|r|r.read_untracked().id == request_cloned.id).for_each(|r|{
-                                                r.write().name = value.to_owned();
-                                                set_local_store_value(
-                                                    &build_rc_req_store_key(project.read_untracked().as_str(), r.get_untracked().id, "name"),
-                                                    value.to_owned(),
-                                                );
-                                            });
-                                            set_current_request.write_untracked().name = value.to_owned();
-                                            set_edit_name_mode.set(false);
-                                        }
-                                        on_cancel_change=move |_| {
-                                            *set_edit_name.write_untracked() = current_request.read_untracked().name.to_owned();
-                                            set_edit_name_mode.set(false);
-                                        }
-                                        />
-                                }}
-                            </Show>
-
-                        </div>
-                    }
+                    view! {<RestClientExplorerRow project request current_request set_current_request requests set_requests/>}
                 }).collect_view()
             }}
         </div>
@@ -471,49 +290,4 @@ fn load_requests(project_id: &str) -> Vec<RwSignal<RequestInfo>> {
             RwSignal::new(RequestInfo::new(*id, url, name, method))
         })
         .collect()
-}
-
-fn save_requests_ids(project: ReadSignal<String>, requests: &[RwSignal<RequestInfo>]) {
-    let value = requests
-        .iter()
-        .map(|r| r.read_untracked().id.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
-    set_local_store_value(
-        &build_rc_store_key(project.read_untracked().as_str(), "requests_ids"),
-        value,
-    );
-}
-
-fn get_method_color(method: &str) -> String {
-    match method {
-        "GET" => "bg-sky-500/50".to_owned(),
-        "POST" => "bg-green-500/50".to_owned(),
-        "PUT" => "bg-green-400/50".to_owned(),
-        "DELETE" => "bg-red-500/50".to_owned(),
-        "PATCH" => "bg-green-400/50".to_owned(),
-        "HEAD" => "bg-gray-500/50".to_owned(),
-        "OPTIONS" => "bg-gray-500/50".to_owned(),
-        _ => "bg-sky-500".to_owned(),
-    }
-}
-
-fn delete_request(project_id: &str, request_id: i32) {
-    let keys = vec![
-        "url",
-        "name",
-        "method",
-        "body",
-        "headers",
-        "insecure",
-        "save_response",
-        "body_type",
-        "body_formencoded",
-        "formencoded",
-        "save_response_data",
-        "headers_height",
-    ];
-    for key in keys {
-        delete_local_store_value(&build_rc_req_store_key(project_id, request_id, key));
-    }
 }

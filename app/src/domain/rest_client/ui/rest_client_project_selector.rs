@@ -62,7 +62,7 @@ pub fn ProjectSelector(
         if let Some(popup_menu_show) = popup_menu_show.try_get()
             && popup_menu_show
         {
-            if let Some(target_element) = menu_ref.get()
+            if let Some(Some(target_element)) = menu_ref.try_get()
                 && let Some(clicked_target) = ev.target()
             {
                 let clicked_node: &web_sys::Node = clicked_target.unchecked_ref();
