@@ -7,6 +7,8 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::Tabs;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
+use crate::domain::rest_client::ui::build_rc_req_store_key;
+use crate::domain::rest_client::ui::request_params::RequestInfo;
 use crate::i18n::*;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -21,6 +23,8 @@ pub struct ReqResultData {
 
 #[component]
 pub fn RequestResultPanel(
+    project: ReadSignal<String>,
+    request_info: ReadSignal<RequestInfo>,
     save_response: ReadSignal<bool>,
     set_save_response: WriteSignal<bool>,
     data: ReadSignal<Option<ReqResultData>>,
@@ -29,7 +33,7 @@ pub fn RequestResultPanel(
     let i18n = use_i18n();
 
     let (formatting, set_formatting) =
-        signal(get_local_store_value("rc_formatting", "true".to_owned()).parse::<bool>().unwrap());
+        signal(get_local_store_value(&build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "formatting"), "true".to_owned()).parse::<bool>().unwrap());
 
     let on_copy_click = move |_| {
         if data.read_untracked().is_some() {
@@ -91,7 +95,7 @@ pub fn RequestResultPanel(
                                         <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
                                             on:change=move |e| {
                                                 let value = event_target_value(&e);
-                                                set_local_store_value("rc_formatting", value);
+                                                set_local_store_value(&build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "formatting"), value);
                                             }/>
                                         <label for="formatting" class="dark:text-white">Format</label>
                                     </div>

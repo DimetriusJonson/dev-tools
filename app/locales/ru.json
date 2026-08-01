@@ -81,7 +81,13 @@
     "rest_client_param_value_placeholder": "Значение параметра",
     "rest_client_curl_import_title": "Импорт команды cUrl из буфера обмена.",
 
-    "rest_client_insecure_title": "Отключает валидацию SSL сертификатов."
-    
+    "rest_client_insecure_title": "Отключает валидацию SSL сертификатов.",
+    "rest_client_project_select_label": "Проект",
+    "rest_client_project_not_selected": "Не выбран",
+
+    "rest_client_explorer_create_project":"Создать проект",
+    "rest_client_explorer_rename_project":"Переименовать проект",
+    "rest_client_explorer_delete_project":"Удалить проект"
+
 
 }

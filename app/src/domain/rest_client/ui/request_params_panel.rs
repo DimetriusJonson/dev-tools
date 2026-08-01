@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::tabs::Tabs;
+use crate::domain::rest_client::ui::build_rc_req_store_key;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestInfo, RequestParams};
@@ -24,6 +25,7 @@ use crate::components::ui::text_input::TextInput;
 
 #[component]
 pub fn RequestParamsPanel(
+    project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
     body_tab_selected: ReadSignal<usize>,
     set_body_tab_selected: WriteSignal<usize>,
@@ -163,7 +165,7 @@ pub fn RequestParamsPanel(
                     class_name="hidden md:block".to_owned()
                     target_ref=headers_ref 
                     horizontal=true
-                    local_store_prop_name=move || format!("{}-rc_headers_height", request_info.read().id)
+                    local_store_prop_name=move || build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "headers_height")
                     min_scr_ration={1.0 / 6.0} 
                     max_scr_ration={2.0 / 3.0}
                     default_scr_ration={1.0 / 6.0} 

@@ -5,7 +5,8 @@ use crate::{
         message_banner::{Messages, show_error},
     },
     domain::rest_client::ui::{
-        request_params::RequestBodyFormValue, request_result_panel::ReqResultData,
+        build_rc_req_store_key, request_params::RequestBodyFormValue,
+        request_result_panel::ReqResultData,
     },
     i18n::*,
 };
@@ -26,6 +27,7 @@ use crate::{
 
 #[component]
 pub fn RequestPanel(
+    project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
     set_request_info: WriteSignal<RequestInfo>,
 ) -> impl IntoView {
@@ -64,16 +66,9 @@ pub fn RequestPanel(
 
     let (response, set_response) = signal(None);
 
-    let _ = Effect::new(move || {
-        params.read_untracked().set_headers.set(load_headers(request_info.read_untracked().id));
-        params
-            .read_untracked()
-            .set_body_formencoded
-            .set(load_body_formencoded(request_info.read_untracked().id));
-    });
-
     create_request_info_watcher(
         params,
+        project,
         request_info,
         send_btn_node_ref,
         set_response,
@@ -81,8 +76,8 @@ pub fn RequestPanel(
         set_body_tab_selected,
         messages,
     );
-    create_req_watchers(params, request_info, set_request_info);
-    create_watcher_bool(save_response, "rc_save_response", request_info);
+    create_req_watchers(params, project, request_info, set_request_info);
+    create_watcher_bool(save_response, "save_response", project, request_info);
 
     view! {
         <Show when=move || { request_info.read().id > 0 }
@@ -90,6 +85,7 @@ pub fn RequestPanel(
         >
             <div class="flex-2 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
                 <RequestParamsPanel
+                    project
                     request_info
                     node_ref=params_ref
                     send_btn_node_ref
@@ -100,11 +96,11 @@ pub fn RequestPanel(
                         if *save_response.read_untracked() {
                             let json_string = serde_json::to_string(&res).unwrap();
                             set_local_store_value(
-                                &format!("{}-rc_save_response_data", request_info.read_untracked().id),
+                                &build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "save_response_data"),
                                 json_string,
                             )
                         } else {
-                            delete_local_store_value(&format!("{}-rc_save_response_data", request_info.read_untracked().id))
+                            delete_local_store_value(&build_rc_req_store_key(project.read_untracked().as_str(), request_info.read_untracked().id, "save_response_data"))
                         }
                         set_response.set(Some(res));
                     }
@@ -113,29 +109,32 @@ pub fn RequestPanel(
                 <DragSplitter
                     class_name="hidden md:block".to_owned()
                     target_ref=params_ref
-                    local_store_prop_name=move || "rc_params_width".to_owned()
+                    local_store_prop_name=move || "params_width".to_owned()
                     min_scr_ration={1.0 / 6.0}
                     max_scr_ration={1.0 / 2.0}
                     default_scr_ration={1.0 / 6.0} />
 
-                <RequestResultPanel save_response set_save_response data=response/>
+                <RequestResultPanel project request_info save_response set_save_response data=response/>
 
             </div>
         </Show>
     }
 }
 
-fn get_stored_value(name: &str, default: String, request_id: i32) -> String {
-    get_local_store_value(&format!("{}-{}", request_id, name), default)
+fn get_stored_value(name: &str, default: String, project_id: &str, request_id: i32) -> String {
+    let key = build_rc_req_store_key(project_id, request_id, name);
+    get_local_store_value(&key, default)
 }
 
-fn get_stored_value_as_bool(name: &str, default: bool, request_id: i32) -> bool {
-    let str = get_local_store_value(&format!("{}-{}", request_id, name), default.to_string());
+fn get_stored_value_as_bool(name: &str, default: bool, project_id: &str, request_id: i32) -> bool {
+    let key = build_rc_req_store_key(project_id, request_id, name);
+    let str = get_local_store_value(&key, default.to_string());
     str::parse(&str).unwrap_or_default()
 }
 
 fn create_req_watchers(
     params: ReadSignal<RequestParams>,
+    project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
     set_request_info: WriteSignal<RequestInfo>,
 ) {
@@ -144,7 +143,11 @@ fn create_req_watchers(
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_local_store_value(
-                    &format!("{}-{}", request_info.read_untracked().id, "rc_url"),
+                    &build_rc_req_store_key(
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
+                        "url",
+                    ),
                     value.to_string(),
                 );
                 set_request_info.write().url = value.to_owned();
@@ -158,7 +161,11 @@ fn create_req_watchers(
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_local_store_value(
-                    &format!("{}-{}", request_info.read_untracked().id, "rc_method"),
+                    &build_rc_req_store_key(
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
+                        "method",
+                    ),
                     value.to_string(),
                 );
                 set_request_info.write().method = value.to_owned();
@@ -167,15 +174,19 @@ fn create_req_watchers(
         false,
     );
 
-    create_watcher_bool(params.read_untracked().insecure, "rc_insecure", request_info);
-    create_watcher(params.read_untracked().body, "rc_body", request_info);
-    create_watcher(params.read_untracked().body_type, "rc_body_type", request_info);
+    create_watcher_bool(params.read_untracked().insecure, "insecure", project, request_info);
+    create_watcher(params.read_untracked().body, "body", project, request_info);
+    create_watcher(params.read_untracked().body_type, "body_type", project, request_info);
 
     Effect::watch(
         move || params.read_untracked().headers.get(),
         move |value, _prev, _| {
             set_local_store_value(
-                &format!("{}-rc_headers", request_info.read_untracked().id),
+                &build_rc_req_store_key(
+                    project.read_untracked().as_str(),
+                    request_info.read_untracked().id,
+                    "headers",
+                ),
                 headers_to_string(value),
             )
         },
@@ -186,7 +197,11 @@ fn create_req_watchers(
         move || params.read_untracked().body_formencoded.get(),
         move |value, _prev, _| {
             set_local_store_value(
-                &format!("{}-rc_body_formencoded", request_info.read_untracked().id),
+                &build_rc_req_store_key(
+                    project.read_untracked().as_str(),
+                    request_info.read_untracked().id,
+                    "body_formencoded",
+                ),
                 body_form_to_string(value),
             )
         },
@@ -196,6 +211,7 @@ fn create_req_watchers(
 
 fn create_request_info_watcher(
     params: ReadSignal<RequestParams>,
+    project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
     send_btn_ref: NodeRef<Button>,
     set_response: WriteSignal<Option<ReqResultData>>,
@@ -207,6 +223,7 @@ fn create_request_info_watcher(
         move || request_info.get(),
         move |value, prev, _| {
             let id = value.id;
+            let project_id = project.get_untracked();
 
             if value.autorun
                 && (prev.is_none() || !prev.unwrap().autorun)
@@ -220,18 +237,22 @@ fn create_request_info_watcher(
                 params.read_untracked().set_url.set(value.url.to_owned());
                 params.read_untracked().set_method.set(value.method.to_owned());
                 params.read_untracked().set_insecure.set(get_stored_value_as_bool(
-                    "rc_insecure",
+                    "insecure",
                     false,
+                    project.read_untracked().as_str(),
                     id,
                 ));
                 params.read_untracked().set_body.set(get_stored_value(
-                    "rc_body",
+                    "body",
                     "".to_owned(),
+                    project.read_untracked().as_str(),
                     id,
                 ));
+
                 params.read_untracked().set_body_type.set(get_stored_value(
-                    "rc_body_type",
+                    "body_type",
                     "".to_owned(),
+                    project.read_untracked().as_str(),
                     id,
                 ));
                 set_body_tab_selected.set(
@@ -240,11 +261,19 @@ fn create_request_info_watcher(
                         _ => 0,
                     },
                 );
-                params.read_untracked().set_headers.set(load_headers(id));
-                params.read_untracked().set_body_formencoded.set(load_body_formencoded(id));
+
+                params.read_untracked().set_headers.set(load_headers(&project_id, id));
+                params
+                    .read_untracked()
+                    .set_body_formencoded
+                    .set(load_body_formencoded(&project_id, id));
 
                 let save_response = get_local_store_value(
-                    &format!("{}-rc_save_response", request_info.read_untracked().id),
+                    &build_rc_req_store_key(
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
+                        "save_response",
+                    ),
                     "false".to_owned(),
                 )
                 .parse::<bool>()
@@ -252,7 +281,11 @@ fn create_request_info_watcher(
                 set_save_response.set(save_response);
                 if save_response {
                     let data_str = get_local_store_value(
-                        &format!("{}-rc_save_response_data", id),
+                        &build_rc_req_store_key(
+                            project.read_untracked().as_str(),
+                            request_info.read_untracked().id,
+                            "save_response_data",
+                        ),
                         "".to_owned(),
                     );
                     if !data_str.is_empty() {
@@ -268,14 +301,23 @@ fn create_request_info_watcher(
     );
 }
 
-fn create_watcher(value: ReadSignal<String>, name: &str, request_info: ReadSignal<RequestInfo>) {
+fn create_watcher(
+    value: ReadSignal<String>,
+    name: &str,
+    project: ReadSignal<String>,
+    request_info: ReadSignal<RequestInfo>,
+) {
     let name = name.to_owned();
     Effect::watch(
         move || value.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_local_store_value(
-                    &format!("{}-{}", request_info.read_untracked().id, name),
+                    &build_rc_req_store_key(
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
+                        &name,
+                    ),
                     value.to_string(),
                 )
             }
@@ -284,14 +326,23 @@ fn create_watcher(value: ReadSignal<String>, name: &str, request_info: ReadSigna
     );
 }
 
-fn create_watcher_bool(value: ReadSignal<bool>, name: &str, request_info: ReadSignal<RequestInfo>) {
+fn create_watcher_bool(
+    value: ReadSignal<bool>,
+    name: &str,
+    project: ReadSignal<String>,
+    request_info: ReadSignal<RequestInfo>,
+) {
     let name = name.to_owned();
     Effect::watch(
         move || value.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_local_store_value(
-                    &format!("{}-{}", request_info.read_untracked().id, name),
+                    &build_rc_req_store_key(
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
+                        &name,
+                    ),
                     value.to_string(),
                 )
             }
@@ -308,8 +359,11 @@ fn headers_to_string(headers: &[CustomHeader]) -> String {
         .join("\n")
 }
 
-fn load_headers(request_id: i32) -> Vec<CustomHeader> {
-    let stored_value = get_local_store_value(&format!("{}-rc_headers", request_id), "".to_owned());
+fn load_headers(project_id: &str, request_id: i32) -> Vec<CustomHeader> {
+    let stored_value = get_local_store_value(
+        &build_rc_req_store_key(project_id, request_id, "headers"),
+        "".to_owned(),
+    );
     if stored_value.is_empty() {
         return Vec::new();
     }
@@ -335,9 +389,11 @@ fn body_form_to_string(form_values: &[RequestBodyFormValue]) -> String {
     serde_json::to_string(&list).unwrap()
 }
 
-fn load_body_formencoded(request_id: i32) -> Vec<RequestBodyFormValue> {
-    let stored_value =
-        get_local_store_value(&format!("{}-rc_body_formencoded", request_id), "".to_owned());
+fn load_body_formencoded(project_id: &str, request_id: i32) -> Vec<RequestBodyFormValue> {
+    let stored_value = get_local_store_value(
+        &build_rc_req_store_key(project_id, request_id, "body_formencoded"),
+        "".to_owned(),
+    );
     if stored_value.is_empty() {
         return Vec::new();
     }

@@ -12,6 +12,9 @@ use web_sys::wasm_bindgen::JsCast;
 use crate::{
     common::{curl_parser::parser::parse_curl_cmd, ui_utils::get_accept_language},
     components::layout::message_banner::{Messages, show_error},
+    domain::rest_client::ui::{
+        build_rc_req_store_key, build_rc_store_key, rest_client_project_selector::ProjectSelector,
+    },
     i18n::*,
 };
 use crate::{
@@ -28,6 +31,8 @@ use crate::{
 
 #[component]
 pub fn RestClientExplorer(
+    project: ReadSignal<String>,
+    set_project: WriteSignal<String>,
     current_request: ReadSignal<RequestInfo>,
     set_current_request: WriteSignal<RequestInfo>,
     node_ref: NodeRef<Div>,
@@ -44,7 +49,7 @@ pub fn RestClientExplorer(
 
     let on_create_request = move |_| {
         let request = RequestInfo::new(
-            generate_request_id(),
+            generate_request_id(project),
             format!("http://{}/test_json", window().location().host().unwrap()),
             "".to_owned(),
             "GET".to_owned(),
@@ -54,9 +59,15 @@ pub fn RestClientExplorer(
         set_menu_refs.write().insert(request.id, NodeRef::<Div>::new());
 
         set_current_request.set(request.clone());
-        save_requests_ids(&requests.read_untracked());
-        set_local_store_value(&format!("{}-rc_url", request.id), request.url);
-        set_local_store_value(&format!("{}-rc_method", request.id), request.method);
+        save_requests_ids(project, &requests.read_untracked());
+        set_local_store_value(
+            &build_rc_req_store_key(project.read_untracked().as_str(), request.id, "url"),
+            request.url,
+        );
+        set_local_store_value(
+            &build_rc_req_store_key(project.read_untracked().as_str(), request.id, "method"),
+            request.method,
+        );
 
         let headers = [
             ("Accept".to_owned(), "application/json".to_owned()),
@@ -64,18 +75,18 @@ pub fn RestClientExplorer(
             ("User-Agent".to_owned(), "WebDevUsefulTools Client".to_owned()),
         ];
         set_local_store_value(
-            &format!("{}-rc_headers", request.id),
+            &build_rc_req_store_key(project.read_untracked().as_str(), request.id, "headers"),
             headers.iter().map(|h| format!("{}:{}", h.0, h.1)).collect::<Vec<String>>().join("\n"),
         );
     };
- 
+
     let on_import_c_url = move |_| {
         spawn_local(async move {
             if let Some(curl_cmd) = paste_from_clipboard().await {
                 match parse_curl_cmd(&curl_cmd) {
                     Ok(parsed_request) => {
                         let request = RequestInfo::new(
-                            generate_request_id(),
+                            generate_request_id(project),
                             parsed_request.url.to_owned(),
                             "".to_owned(),
                             parsed_request.method.to_string(),
@@ -85,10 +96,31 @@ pub fn RestClientExplorer(
                         set_menu_refs.write().insert(request.id, NodeRef::<Div>::new());
 
                         set_current_request.set(request.clone());
-                        save_requests_ids(&requests.read_untracked());
-                        set_local_store_value(&format!("{}-rc_url", request.id), request.url);
-                        set_local_store_value(&format!("{}-rc_insecure", request.id), parsed_request.insecure.to_string());
-                        set_local_store_value(&format!("{}-rc_method", request.id), request.method);
+                        save_requests_ids(project, &requests.read_untracked());
+                        set_local_store_value(
+                            &build_rc_req_store_key(
+                                project.read_untracked().as_str(),
+                                request.id,
+                                "url",
+                            ),
+                            request.url,
+                        );
+                        set_local_store_value(
+                            &build_rc_req_store_key(
+                                project.read_untracked().as_str(),
+                                request.id,
+                                "insecure",
+                            ),
+                            parsed_request.insecure.to_string(),
+                        );
+                        set_local_store_value(
+                            &build_rc_req_store_key(
+                                project.read_untracked().as_str(),
+                                request.id,
+                                "method",
+                            ),
+                            request.method,
+                        );
 
                         if let Some(content_type) = parsed_request
                             .headers
@@ -105,28 +137,48 @@ pub fn RestClientExplorer(
                                     &map.into_iter().collect::<Vec<(String, String)>>(),
                                 ) {
                                     set_local_store_value(
-                                        &format!("{}-rc_body_formencoded", request.id),
+                                        &build_rc_req_store_key(
+                                            project.read_untracked().as_str(),
+                                            request.id,
+                                            "body_formencoded",
+                                        ),
                                         json,
                                     );
                                     set_local_store_value(
-                                        &format!("{}-rc_body_type", request.id),
+                                        &build_rc_req_store_key(
+                                            project.read_untracked().as_str(),
+                                            request.id,
+                                            "body_type",
+                                        ),
                                         "formencoded".to_owned(),
                                     );
                                 }
                             }
                         } else {
                             set_local_store_value(
-                                &format!("{}-rc_body", request.id),
+                                &build_rc_req_store_key(
+                                    project.read_untracked().as_str(),
+                                    request.id,
+                                    "body",
+                                ),
                                 parsed_request.body.join("\n"),
                             );
                             set_local_store_value(
-                                &format!("{}-rc_body_type", request.id),
+                                &build_rc_req_store_key(
+                                    project.read_untracked().as_str(),
+                                    request.id,
+                                    "body_type",
+                                ),
                                 "text".to_owned(),
                             );
                         }
 
                         set_local_store_value(
-                            &format!("{}-rc_headers", request.id),
+                            &build_rc_req_store_key(
+                                project.read_untracked().as_str(),
+                                request.id,
+                                "headers",
+                            ),
                             parsed_request
                                 .headers
                                 .iter()
@@ -141,13 +193,19 @@ pub fn RestClientExplorer(
         })
     };
 
-    let _ = Effect::new(move || {
-        set_requests.set(load_requests());
-        set_menu_refs.write().clear();
-        for request in requests.read_untracked().iter() {
-            set_menu_refs.write().insert(request.read_untracked().id, NodeRef::<Div>::new());
-        }
-    });
+    //let _ = Effect::new(move || {});
+
+    Effect::watch(
+        move || project.get(),
+        move |value, _prev, _| {
+            set_requests.set(load_requests(value));
+            set_menu_refs.write().clear();
+            for request in requests.read_untracked().iter() {
+                set_menu_refs.write().insert(request.read_untracked().id, NodeRef::<Div>::new());
+            }
+        },
+        false,
+    );
 
     Effect::watch(
         move || current_request.get(),
@@ -193,32 +251,41 @@ pub fn RestClientExplorer(
 
     view! {
         <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
-            <div class="flex p-2 md:p-4 gap-2">
-                <Button
-                    label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
-                    class_name="w-full".to_owned()
-                    button_width=ButtonWidth::Auto
-                    loading=move || false
-                    on_click=on_create_request
-                    disabled=move || false
-                />
+            <div class="flex flex-col p-2 md:p-4 gap-y-2">
+                <ProjectSelector project set_project on_delete=move |_| {
+                    requests.read_untracked().iter().for_each(|r| {
+                        save_requests_ids(project, &requests.read_untracked());
+                        delete_request(project.read_untracked().as_str(),  r.read_untracked().id);
+                    });
+                }/>
 
-                <div class="w-10 h-8dvh md:h-10 inline-flex items-center justify-center hover:bg-sky-500/30 dark:hover:bg-sky-300/30 cursor-pointer rounded-xl p-2 border border-gray-500"
-                    title=move || t_string!(i18n, rest_client_curl_import_title)
-                    on:click=on_import_c_url
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1021 854" class="stroke-sky-500 dark:stroke-sky-300">
-                        <g fill="none" stroke-width="34" transform="translate(17 17)">
-                            <circle cx="58" cy="529" r="58"/>
-                            <circle cx="58" cy="263" r="58"/>
-                            <path stroke-width="100" d="M596 101 234 721"/>
-                            <circle cx="210" cy="762" r="58"/>
-                            <circle cx="621" cy="58" r="58"/>
-                            <path stroke-width="100" d="M904 101 542 721"/>
-                            <circle cx="929" cy="58" r="58"/>
-                            <circle cx="518" cy="762" r="58"/>
-                        </g>
-                    </svg>
+                <div class="flex gap-2">
+                    <Button
+                        label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
+                        class_name="w-full".to_owned()
+                        button_width=ButtonWidth::Auto
+                        loading=move || false
+                        on_click=on_create_request
+                        disabled=move || false
+                    />
+
+                    <div class="w-10 h-8dvh md:h-10 inline-flex items-center justify-center hover:bg-sky-500/30 dark:hover:bg-sky-300/30 cursor-pointer rounded-xl p-2 border border-gray-500"
+                        title=move || t_string!(i18n, rest_client_curl_import_title)
+                        on:click=on_import_c_url
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1021 854" class="stroke-sky-500 dark:stroke-sky-300">
+                            <g fill="none" stroke-width="34" transform="translate(17 17)">
+                                <circle cx="58" cy="529" r="58"/>
+                                <circle cx="58" cy="263" r="58"/>
+                                <path stroke-width="100" d="M596 101 234 721"/>
+                                <circle cx="210" cy="762" r="58"/>
+                                <circle cx="621" cy="58" r="58"/>
+                                <path stroke-width="100" d="M904 101 542 721"/>
+                                <circle cx="929" cy="58" r="58"/>
+                                <circle cx="518" cy="762" r="58"/>
+                            </g>
+                        </svg>
+                    </div>
                 </div>
 
             </div>
@@ -299,12 +366,8 @@ pub fn RestClientExplorer(
                                                                         set_menu_refs.write().remove(&request_cloned.id);
 
                                                                         set_current_request.set(RequestInfo::new_empty());
-                                                                        save_requests_ids(&requests.read_untracked());
-                                                                        delete_local_store_value(&format!("{}-rc_url", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_name", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_method", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_body", request_cloned.id));
-                                                                        delete_local_store_value(&format!("{}-rc_headers", request_cloned.id));
+                                                                        save_requests_ids(project, &requests.read_untracked());
+                                                                        delete_request(project.read_untracked().as_str(), request_cloned.id);
                                                                         set_popup_menu_show.set(0);
                                                                     },
                                                                     "rename" => {
@@ -344,7 +407,7 @@ pub fn RestClientExplorer(
                                             requests.read_untracked().iter().filter(|r|r.read_untracked().id == request_cloned.id).for_each(|r|{
                                                 r.write().name = value.to_owned();
                                                 set_local_store_value(
-                                                    &format!("{}-{}", r.get_untracked().id, "rc_name"),
+                                                    &build_rc_req_store_key(project.read_untracked().as_str(), r.get_untracked().id, "name"),
                                                     value.to_owned(),
                                                 );
                                             });
@@ -367,8 +430,8 @@ pub fn RestClientExplorer(
     }
 }
 
-fn generate_request_id() -> i32 {
-    let requests_ids = load_requests_ids();
+fn generate_request_id(project: ReadSignal<String>) -> i32 {
+    let requests_ids = load_requests_ids(project.read_untracked().as_str());
     if !requests_ids.is_empty()
         && let Some(id) = requests_ids.iter().max()
     {
@@ -378,8 +441,10 @@ fn generate_request_id() -> i32 {
     1
 }
 
-fn load_requests_ids() -> Vec<i32> {
-    let requests_ids = get_local_store_value("rc_requests_ids", "".to_owned());
+fn load_requests_ids(project_id: &str) -> Vec<i32> {
+    let requests_ids =
+        get_local_store_value(&build_rc_store_key(project_id, "requests_ids"), "".to_owned());
+
     if !requests_ids.is_empty() {
         requests_ids.split(",").map(|s| s.parse::<i32>().unwrap()).collect()
     } else {
@@ -387,25 +452,37 @@ fn load_requests_ids() -> Vec<i32> {
     }
 }
 
-fn load_requests() -> Vec<RwSignal<RequestInfo>> {
-    load_requests_ids()
+fn load_requests(project_id: &str) -> Vec<RwSignal<RequestInfo>> {
+    load_requests_ids(project_id)
         .iter()
         .map(|id| {
-            let url = get_local_store_value(&format!("{}-rc_url", id), "".to_owned());
-            let name = get_local_store_value(&format!("{}-rc_name", id), "".to_owned());
-            let method = get_local_store_value(&format!("{}-rc_method", id), "".to_owned());
+            let url = get_local_store_value(
+                &build_rc_req_store_key(project_id, *id, "url"),
+                "".to_owned(),
+            );
+            let name = get_local_store_value(
+                &build_rc_req_store_key(project_id, *id, "name"),
+                "".to_owned(),
+            );
+            let method = get_local_store_value(
+                &build_rc_req_store_key(project_id, *id, "method"),
+                "".to_owned(),
+            );
             RwSignal::new(RequestInfo::new(*id, url, name, method))
         })
         .collect()
 }
 
-fn save_requests_ids(requests: &[RwSignal<RequestInfo>]) {
+fn save_requests_ids(project: ReadSignal<String>, requests: &[RwSignal<RequestInfo>]) {
     let value = requests
         .iter()
         .map(|r| r.read_untracked().id.to_string())
         .collect::<Vec<String>>()
         .join(",");
-    set_local_store_value("rc_requests_ids", value);
+    set_local_store_value(
+        &build_rc_store_key(project.read_untracked().as_str(), "requests_ids"),
+        value,
+    );
 }
 
 fn get_method_color(method: &str) -> String {
@@ -418,5 +495,25 @@ fn get_method_color(method: &str) -> String {
         "HEAD" => "bg-gray-500/50".to_owned(),
         "OPTIONS" => "bg-gray-500/50".to_owned(),
         _ => "bg-sky-500".to_owned(),
+    }
+}
+
+fn delete_request(project_id: &str, request_id: i32) {
+    let keys = vec![
+        "url",
+        "name",
+        "method",
+        "body",
+        "headers",
+        "insecure",
+        "save_response",
+        "body_type",
+        "body_formencoded",
+        "formencoded",
+        "save_response_data",
+        "headers_height",
+    ];
+    for key in keys {
+        delete_local_store_value(&build_rc_req_store_key(project_id, request_id, key));
     }
 }
