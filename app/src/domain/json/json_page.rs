@@ -2,12 +2,14 @@ use std::borrow::Cow;
 
 use gloo_net::http::Request;
 use json_escape::unescape;
+use leptos::html::Div;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 
 use crate::common::json_processor::format_json;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
+use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
@@ -44,6 +46,7 @@ pub fn JsonPage() -> impl IntoView {
     let (in_progress, set_in_progress) = signal(InProgressType::None);
 
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
+    let left_panel_ref = NodeRef::<Div>::new();
 
     let on_format_click = move |_| {
         spawn_local(async move {
@@ -134,79 +137,88 @@ pub fn JsonPage() -> impl IntoView {
 
     view! {
         <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[29dvh] md:h-[90dvh]">
-                <TextArea
-                    name="json".to_owned()
-                    class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                    placeholder=move || {t!(i18n, json_page_src_placeholder).to_html()}
-                    value=json
-                    set_value=set_json
-                    on_change=move |_| {
-                        set_local_store_value("src_json", json.get_untracked());
-                    }
-                />
-                <div class="flex flex-row">
-                    <FileInput node_ref=file_input_ref />
-                    <Button
-                        label=move || t!(i18n, json_page_format_btn_label).to_html()
-                        button_width=ButtonWidth::Lg
-                        loading=move || in_progress.get() == InProgressType::FormatFile
-                        on_click=on_format_file_click
-                        disabled=move || in_progress.get().is_active()
-                    />
-                </div>
-
-            </div>
-
-            <div class="flex flex-col gap-4 items-center justify-center">
-                <div class="flex flex-row md:flex-col gap-4">
-                    <SelectInput
-                        name="ident".to_owned()
-                        label=move || t!(i18n, ident_label).to_html()
-                        not_selected_text=move || "".to_owned()
-                        options=move || {vec![
-                            (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()),
-                            (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()),
-                            (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
-                            ]}
-                        on_change=move |value| {
-                            set_local_store_value("json_ident", value);
+            // LEFT SIDE
+            <div node_ref=left_panel_ref class="sm:flex-none flex flex-col md:flex-row h-[29dvh] md:h-[90dvh] gap-4">
+                <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full">
+                    <TextArea
+                        name="json".to_owned()
+                        class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
+                        placeholder=move || {t!(i18n, json_page_src_placeholder).to_html()}
+                        value=json
+                        set_value=set_json
+                        on_change=move |_| {
+                            set_local_store_value("src_json", json.get_untracked());
                         }
-                        value=ident
-                        set_value=set_ident
                     />
-
-                    <Button
-                        label=move || t!(i18n, json_page_format_btn_label).to_html()
-                        button_width=ButtonWidth::Lg
-                        loading=move || in_progress.get() == InProgressType::Format
-                        on_click=on_format_click
-                        disabled=move || in_progress.get().is_active()
-                    />
-                </div>
-
-                <div class="flex flex-row md:flex-col gap-4 md:py-8">
-                    <Button
-                        label=move || t!(i18n, json_page_unescape_btn_label).to_html()
-                        button_width=ButtonWidth::Lg
-                        loading=move || in_progress.get() == InProgressType::Unescape
-                        on_click=on_unescape_click
-                        disabled=move || in_progress.get().is_active()
-                    />
-
-                    <Button
-                        label=move || t!(i18n, json_page_escape_btn_label).to_html()
-                        button_width=ButtonWidth::Lg
-                        loading=move || in_progress.get() == InProgressType::Escape
-                        on_click=on_escape_click
-                        disabled=move || in_progress.get().is_active()
-                    />
+                    <div class="flex flex-row">
+                        <FileInput node_ref=file_input_ref />
+                        <Button
+                            label=move || t!(i18n, json_page_format_btn_label).to_html()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::FormatFile
+                            on_click=on_format_file_click
+                            disabled=move || in_progress.get().is_active()
+                        />
+                    </div>
 
                 </div>
 
+                <div class="flex flex-col gap-4 items-center justify-center">
+                    <div class="flex flex-row md:flex-col gap-4">
+                        <SelectInput
+                            name="ident".to_owned()
+                            label=move || t!(i18n, ident_label).to_html()
+                            not_selected_text=move || "".to_owned()
+                            options=move || {vec![
+                                (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()),
+                                (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()),
+                                (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
+                                ]}
+                            on_change=move |value| {
+                                set_local_store_value("json_ident", value);
+                            }
+                            value=ident
+                            set_value=set_ident
+                        />
 
+                        <Button
+                            label=move || t!(i18n, json_page_format_btn_label).to_html()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::Format
+                            on_click=on_format_click
+                            disabled=move || in_progress.get().is_active()
+                        />
+                    </div>
+
+                    <div class="flex flex-row md:flex-col gap-4 md:py-8">
+                        <Button
+                            label=move || t!(i18n, json_page_unescape_btn_label).to_html()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::Unescape
+                            on_click=on_unescape_click
+                            disabled=move || in_progress.get().is_active()
+                        />
+
+                        <Button
+                            label=move || t!(i18n, json_page_escape_btn_label).to_html()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::Escape
+                            on_click=on_escape_click
+                            disabled=move || in_progress.get().is_active()
+                        />
+                    </div>
+                </div>
             </div>
 
+            <DragSplitter 
+                target_ref=left_panel_ref 
+                class_name="hidden md:block".to_owned()
+                local_store_prop_name=move || "json_left_panel_width".to_owned()
+                min_scr_ration={1.0 / 6.0} 
+                max_scr_ration={3.0 / 4.0} 
+                default_scr_ration={1.0 / 2.0}/>
+
+            // RIGHT SIDE
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
