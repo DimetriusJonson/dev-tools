@@ -2,24 +2,21 @@ use std::time::Duration;
 
 use leptos::html::{Div, Input};
 use leptos::{ev, leptos_dom, prelude::*};
-use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::JsCast;
 
-use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button::{
     Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth,
 };
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_input::TextInput;
+use crate::domain::rest_client::ui::request_params::RestClientProject;
 use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
+use crate::domain::rest_client::ui::request_store::{
+    get_stored_current_project, get_stored_projects, set_stored_current_project,
+    set_stored_projects,
+};
 use crate::i18n::*;
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct RestClientProject {
-    id: i32,
-    name: String,
-}
 
 #[component]
 pub fn ProjectSelector(
@@ -40,23 +37,21 @@ pub fn ProjectSelector(
     let menu_ref = NodeRef::<Div>::new();
 
     let _ = Effect::new(move || {
-        set_projects.set(load_projects());
-        set_project.set(get_local_store_value("rc_current_project", "".to_owned()));
+        set_projects.set(get_stored_projects());
+        set_project.set(get_stored_current_project());
     });
 
     Effect::watch(
         move || projects.get(),
         move |value, _prev, _| {
-            if let Ok(json) = serde_json::to_string(value) {
-                set_local_store_value("rc_projects", json)
-            }
+            set_stored_projects(value);
         },
         false,
     );
 
     Effect::watch(
         move || project.get(),
-        move |value, _prev, _| set_local_store_value("rc_current_project", value.to_owned()),
+        move |value, _prev, _| set_stored_current_project(value.to_owned()),
         false,
     );
 
@@ -98,7 +93,7 @@ pub fn ProjectSelector(
                         not_selected_text=move || t_string!(i18n, rest_client_project_not_selected).to_owned()
                         options=move || get_projects_options(projects.read().as_borrowed())
                         on_change=move |value| {
-                            set_local_store_value("rc_current_project", value);
+                            set_stored_current_project(value);
                         }
                         value=project
                         set_value=set_project
@@ -225,17 +220,12 @@ pub fn ProjectSelector(
     }
 }
 
-fn load_projects() -> Vec<RestClientProject> {
-    let projects_value = get_local_store_value("rc_projects", "".to_owned());
-    serde_json::from_str(&projects_value).unwrap_or(Vec::new())
-}
-
 fn get_projects_options(projects: &Vec<RestClientProject>) -> Vec<(Option<String>, String)> {
     projects.into_iter().map(|p| (Some(p.id.to_string()), p.name.to_owned())).collect()
 }
 
 fn generate_project_id() -> i32 {
-    let projects = load_projects();
+    let projects = get_stored_projects();
     if !projects.is_empty()
         && let Some(id) = projects.iter().map(|p| p.id).max()
     {

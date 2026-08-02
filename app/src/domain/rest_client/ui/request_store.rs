@@ -4,7 +4,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{
     common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
-    domain::rest_client::ui::request_params::RequestInfo,
+    domain::rest_client::ui::request_params::{RequestInfo, RestClientProject},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, EnumString, EnumIter, Display)]
@@ -74,7 +74,11 @@ pub fn set_stored_requests_ids(project: ReadSignal<String>, requests: &[RwSignal
 
 pub fn delete_stored_request(project_id: &str, request_id: i32) {
     for field in RequestFieldKind::iter() {
-        delete_local_store_value(&build_request_stored_key(project_id, request_id, &field.to_string()));
+        delete_local_store_value(&build_request_stored_key(
+            project_id,
+            request_id,
+            &field.to_string(),
+        ));
     }
 }
 
@@ -100,7 +104,31 @@ pub fn get_stored_requests_ids(project_id: &str) -> Vec<i32> {
     }
 }
 
-pub fn get_stored_value(field: RequestFieldKind, default: String, project_id: &str, request_id: i32) -> String {
+pub fn get_stored_projects() -> Vec<RestClientProject> {
+    let projects_value = get_local_store_value("rc_projects", "".to_owned());
+    serde_json::from_str(&projects_value).unwrap_or(Vec::new())
+}
+
+pub fn set_stored_projects(projects: &Vec<RestClientProject>) {
+    if let Ok(json) = serde_json::to_string(projects) {
+        set_local_store_value("rc_projects", json)
+    }
+}
+
+pub fn get_stored_current_project() -> String {
+    get_local_store_value("rc_current_project", "".to_owned())
+}
+
+pub fn set_stored_current_project(value: String) {
+    set_local_store_value("rc_current_project", value.to_owned())
+}
+
+pub fn get_stored_value(
+    field: RequestFieldKind,
+    default: String,
+    project_id: &str,
+    request_id: i32,
+) -> String {
     let key = build_request_stored_key(project_id, request_id, &field.to_string());
     get_local_store_value(&key, default)
 }
@@ -116,13 +144,22 @@ pub fn get_stored_value_as_bool(
     str::parse(&str).unwrap_or_default()
 }
 
-pub fn set_stored_value(project: ReadSignal<String>, request_id: i32, field: RequestFieldKind, value: String) {
+pub fn set_stored_value(
+    project: ReadSignal<String>,
+    request_id: i32,
+    field: RequestFieldKind,
+    value: String,
+) {
     if request_id == 0 {
         return;
     }
 
     set_local_store_value(
-        &build_request_stored_key(project.read_untracked().as_str(), request_id, &field.to_string()),
+        &build_request_stored_key(
+            project.read_untracked().as_str(),
+            request_id,
+            &field.to_string(),
+        ),
         value,
     )
 }

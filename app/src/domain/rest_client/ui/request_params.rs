@@ -1,4 +1,11 @@
 use leptos::prelude::{ReadSignal, WriteSignal};
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct RestClientProject {
+    pub id: i32,
+    pub name: String,
+}
 
 #[derive(Clone, Debug)]
 pub struct RequestParams {
