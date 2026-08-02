@@ -64,13 +64,16 @@ fn build_request(
             HeaderName::from_str(name).map_err(AppError::system_error)?,
             HeaderValue::from_str(value).map_err(AppError::system_error)?,
         );
-    }
+    };
 
-    let url = if let Some(dump_port) = dump_port {
-        build_to_dummp_receiver_url(request.url.to_owned(), dump_port)
-            .map_err(AppError::system_error)?
+    let url;
+    if let Some(dump_port) = dump_port {
+        let (new_url, old_host) = build_to_dump_receiver_url(request.url.to_owned(), dump_port)
+            .map_err(AppError::system_error)?;
+        url = new_url;
+        headers.insert(http::header::HOST, HeaderValue::from_str(&old_host).map_err(AppError::system_error)?);
     } else {
-        request.url.to_owned()
+        url = request.url.to_owned();
     };
 
     Ok(Client::builder()
@@ -82,12 +85,17 @@ fn build_request(
         .body(reqwest::Body::from(request.body.to_owned())))
 }
 
-fn build_to_dummp_receiver_url(url_str: String, dump_port: u16) -> Result<String, AppError> {
+fn build_to_dump_receiver_url(url_str: String, dump_port: u16) -> Result<(String, String), AppError> {
     let mut url = Url::parse(&url_str).map_err(AppError::system_error)?;
+    let old_port = match url.port() {
+        Some(port) => format!(":{}", port),
+        None => "".to_owned(),
+    };
+    let old_host = format!("{}{}", url.host_str().unwrap().to_owned(), old_port);
 
     url.set_scheme("http").unwrap();
-    url.set_host(Some("127.0.0.1")).unwrap();
+    url.set_host(Some("127.0.0.1")).map_err(AppError::system_error)?;
     url.set_port(Some(dump_port)).unwrap();
 
-    Ok(url.to_string())
+    Ok((url.to_string(), old_host))
 }
