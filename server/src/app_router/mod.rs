@@ -15,6 +15,7 @@ pub mod xml_format_router;
 
 pub mod rest_client_router;
 pub mod test_json_router;
+pub mod dump_receiver;
 
 pub async fn proxy_request_to_remote(
     remote_server_url: String,

@@ -6,6 +6,7 @@ use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::app_router::build_app_router::build_app_router;
+use crate::app_router::dump_receiver::start_dump_receiver;
 use crate::db::create_pool;
 
 pub async fn start_axum_server(
@@ -42,7 +43,9 @@ pub async fn start_axum_server(
         None => None,
     };
 
-    let app = build_app_router(conf, pool, remote_server_url).await?;
+    let (_, dump_port) = start_dump_receiver().await.unwrap();
+
+    let app = build_app_router(conf, pool, remote_server_url, dump_port).await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await.unwrap();

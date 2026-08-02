@@ -3,10 +3,10 @@ use crate::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
     }, domain::rest_client::ui::{
-        request_store::{
+        request_params::RequestBodyFormValue, request_store::{
             RequestFieldKind, delete_stored_value, get_stored_value, get_stored_value_as_bool, set_stored_value,
-        }, request_params::RequestBodyFormValue, request_result_panel::ReqResultData,
-    }, i18n::*,
+        },
+    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{
     html::{Button, Div},
@@ -87,7 +87,7 @@ pub fn RequestPanel(
                     body_tab_selected
                     set_body_tab_selected
                     params
-                    on_result=move|res: ReqResultData| {
+                    on_result=move|res: RestClientResponse| {
                         if *save_response.read_untracked() {
                             let json_string = serde_json::to_string(&res).unwrap();
                             set_stored_value(project, request_info.read_untracked().id, RequestFieldKind::SaveResponseData, json_string)
@@ -167,7 +167,7 @@ fn create_request_info_watcher(
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
     send_btn_ref: NodeRef<Button>,
-    set_response: WriteSignal<Option<ReqResultData>>,
+    set_response: WriteSignal<Option<RestClientResponse>>,
     set_save_response: WriteSignal<bool>,
     set_body_tab_selected: WriteSignal<usize>,
     messages: Messages,
@@ -238,7 +238,7 @@ fn create_request_info_watcher(
                         request_info.read_untracked().id,
                     );
                     if !data_str.is_empty() {
-                        match serde_json::from_str::<ReqResultData>(&data_str) {
+                        match serde_json::from_str::<RestClientResponse>(&data_str) {
                             Ok(data) => set_response.set(Some(data)),
                             Err(err) => show_error(err.to_string(), messages),
                         }

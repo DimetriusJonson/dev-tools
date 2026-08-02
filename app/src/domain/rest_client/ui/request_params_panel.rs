@@ -7,7 +7,6 @@ use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPane
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_store::build_request_stored_key;
 use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestInfo, RequestParams};
-use crate::domain::rest_client::ui::request_result_panel::ReqResultData;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
@@ -30,7 +29,7 @@ pub fn RequestParamsPanel(
     body_tab_selected: ReadSignal<usize>,
     set_body_tab_selected: WriteSignal<usize>,
     params: ReadSignal<RequestParams>,
-    #[prop(into)] on_result: Callback<ReqResultData>,
+    #[prop(into)] on_result: Callback<RestClientResponse>,
     send_btn_node_ref: NodeRef<leptos::html::Button>,
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
@@ -88,11 +87,7 @@ pub fn RequestParamsPanel(
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.json::<RestClientResponse>().await {
                         Ok(resp) => {
-                            on_result.run(ReqResultData {
-                                status_code: resp.status_code,
-                                headers: resp.headers,
-                                body: resp.body,
-                            });
+                            on_result.run(resp);
                         }
                         Err(err) => show_error(format!("Cant get response: {}", err), messages),
                     },

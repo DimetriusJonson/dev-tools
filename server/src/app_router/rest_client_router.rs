@@ -1,16 +1,62 @@
 use std::str::FromStr;
 
-use crate::common::app_error::AppError;
+use crate::{
+    app_router::dump_receiver::DUMP_REQUEST,
+    common::{app_error::AppError, app_state::AppState},
+};
 use app::model::restclient::{
     rest_client_request::RestClientRequest, rest_client_response::RestClientResponse,
 };
-use axum::Json;
+use axum::{Json, extract::State};
 use http::{HeaderMap, HeaderName, HeaderValue, Method};
-use reqwest::Client;
+use reqwest::{Client, RequestBuilder, Url};
 
 pub async fn rest_client_send_handler(
+    State(app_state): State<AppState>,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Json<RestClientResponse>, AppError> {
+    build_request(&request, Some(app_state.dump_port))?
+        .send()
+        .await
+        .map_err(AppError::system_error)?;
+
+    match build_request(&request, None)?.send().await {
+        Ok(response) => {
+            let status_code = response.status().as_u16();
+
+            let headers: Vec<(String, String)> = response
+                .headers()
+                .iter()
+                .filter_map(|(key, value)| {
+                    let key_str = key.as_str().to_string();
+                    let val_str = value.to_str().ok()?.to_string();
+                    Some((key_str, val_str))
+                })
+                .collect();
+            let body = response.text().await.map_err(AppError::system_error)?;
+
+            Ok(Json(RestClientResponse {
+                status_code,
+                headers,
+                body,
+                request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+                error: None,
+            }))
+        }
+        Err(err) => Ok(Json(RestClientResponse {
+            status_code: 0,
+            headers: Vec::new(),
+            body: "".to_owned(),
+            request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+            error: Some(err.to_string()),
+        })),
+    }
+}
+
+fn build_request(
+    request: &RestClientRequest,
+    dump_port: Option<u16>,
+) -> Result<RequestBuilder, AppError> {
     let method = Method::from_str(&request.method).map_err(AppError::system_error)?;
     let mut headers = HeaderMap::new();
     for (name, value) in &request.headers {
@@ -20,28 +66,28 @@ pub async fn rest_client_send_handler(
         );
     }
 
-    let rb = Client::builder()
+    let url = if let Some(dump_port) = dump_port {
+        build_to_dummp_receiver_url(request.url.to_owned(), dump_port)
+            .map_err(AppError::system_error)?
+    } else {
+        request.url.to_owned()
+    };
+
+    Ok(Client::builder()
         .danger_accept_invalid_certs(request.insecure)
         .build()
         .map_err(AppError::system_error)?
-        .request(method, request.url)
+        .request(method, url)
         .headers(headers)
-        .body(reqwest::Body::from(request.body));
+        .body(reqwest::Body::from(request.body.to_owned())))
+}
 
-    let response = rb.send().await.map_err(AppError::system_error)?;
+fn build_to_dummp_receiver_url(url_str: String, dump_port: u16) -> Result<String, AppError> {
+    let mut url = Url::parse(&url_str).map_err(AppError::system_error)?;
 
-    let status_code = response.status().as_u16();
+    url.set_scheme("http").unwrap();
+    url.set_host(Some("127.0.0.1")).unwrap();
+    url.set_port(Some(dump_port)).unwrap();
 
-    let headers: Vec<(String, String)> = response
-        .headers()
-        .iter()
-        .filter_map(|(key, value)| {
-            let key_str = key.as_str().to_string();
-            let val_str = value.to_str().ok()?.to_string();
-            Some((key_str, val_str))
-        })
-        .collect();
-    let body = response.text().await.map_err(AppError::system_error)?;
-
-    Ok(Json(RestClientResponse { status_code, headers, body }))
+    Ok(url.to_string())
 }
