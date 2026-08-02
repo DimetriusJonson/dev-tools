@@ -64,6 +64,8 @@ serde_urlencoded = "0.7.1"
 pest = "2.8.8"
 pest_derive = "2.8.8"
 base64 = "0.23.0"
+strum = "0.28"
+strum_macros = "0.28"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

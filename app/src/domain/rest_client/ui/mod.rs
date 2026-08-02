@@ -9,5 +9,5 @@ pub mod rest_client_explorer;
 pub mod rest_client_project_selector;
 pub mod rest_client_explorer_row;
 pub mod rest_client_curl_button;
-pub mod request_helper;
+pub mod request_store;
 

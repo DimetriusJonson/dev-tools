@@ -6,7 +6,7 @@ use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::ui::request_helper::{delete_request, save_requests_ids, set_stored_value};
+use crate::domain::rest_client::ui::request_store::{RequestFieldKind, delete_stored_request, set_stored_requests_ids, set_stored_value};
 use crate::i18n::*;
 use crate::{
     components::ui::{
@@ -122,8 +122,8 @@ pub fn RestClientExplorerRow(
                                                     set_requests.write().retain(|r|r.read_untracked().id != request.read_untracked().id);
 
                                                     set_current_request.set(RequestInfo::new_empty());
-                                                    save_requests_ids(project, &requests.read_untracked());
-                                                    delete_request(project.read_untracked().as_str(), request.read_untracked().id);
+                                                    set_stored_requests_ids(project, &requests.read_untracked());
+                                                    delete_stored_request(project.read_untracked().as_str(), request.read_untracked().id);
                                                     set_popup_menu_show.set(0);
                                                 },
                                                 "rename" => {
@@ -174,7 +174,7 @@ pub fn RestClientExplorerRow(
 
                             requests.read_untracked().iter().filter(|r|r.read_untracked().id == request.read_untracked().id).for_each(|r|{
                                 r.write().name = value.trim().to_owned();
-                                set_stored_value(project, r.get_untracked().id, "name", value.to_owned());
+                                set_stored_value(project, r.get_untracked().id, RequestFieldKind::Name, value.to_owned());
                             });
                             set_current_request.write_untracked().name = value.to_owned();
                             set_edit_name_mode.set(false);

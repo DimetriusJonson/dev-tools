@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use leptos::{prelude::*, task::spawn_local};
 
-use crate::domain::rest_client::ui::request_helper::{
-    generate_request_id, save_requests_ids, set_stored_value,
+use crate::domain::rest_client::ui::request_store::{
+    RequestFieldKind, generate_request_id, set_stored_requests_ids, set_stored_value,
 };
 use crate::i18n::*;
 use crate::{
@@ -39,15 +39,15 @@ pub fn RestClientCUrlButton(
                         set_requests.write().push(RwSignal::new(request.clone()));
 
                         set_current_request.set(request.clone());
-                        save_requests_ids(project, &requests.read_untracked());
-                        set_stored_value(project, request.id, "url", request.url);
+                        set_stored_requests_ids(project, &requests.read_untracked());
+                        set_stored_value(project, request.id, RequestFieldKind::Url, request.url);
                         set_stored_value(
                             project,
                             request.id,
-                            "insecure",
+                            RequestFieldKind::Insecure,
                             parsed_request.insecure.to_string(),
                         );
-                        set_stored_value(project, request.id, "method", request.method);
+                        set_stored_value(project, request.id, RequestFieldKind::Method, request.method);
 
                         if let Some(content_type) = parsed_request
                             .headers
@@ -63,11 +63,11 @@ pub fn RestClientCUrlButton(
                                 if let Ok(json) = serde_json::to_string(
                                     &map.into_iter().collect::<Vec<(String, String)>>(),
                                 ) {
-                                    set_stored_value(project, request.id, "body_formencoded", json);
+                                    set_stored_value(project, request.id, RequestFieldKind::BodyFormencoded, json);
                                     set_stored_value(
                                         project,
                                         request.id,
-                                        "body_type",
+                                        RequestFieldKind::BodyType,
                                         "formencoded".to_owned(),
                                     );
                                 }
@@ -76,16 +76,16 @@ pub fn RestClientCUrlButton(
                             set_stored_value(
                                 project,
                                 request.id,
-                                "body",
+                                RequestFieldKind::Body,
                                 parsed_request.body.join("\n"),
                             );
-                            set_stored_value(project, request.id, "body_type", "text".to_owned());
+                            set_stored_value(project, request.id, RequestFieldKind::BodyType, "text".to_owned());
                         }
 
                         set_stored_value(
                             project,
                             request.id,
-                            "headers",
+                            RequestFieldKind::Headers,
                             parsed_request
                                 .headers
                                 .iter()

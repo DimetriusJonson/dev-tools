@@ -2,15 +2,11 @@ use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
-    },
-    domain::rest_client::ui::{
-        request_helper::{
-            delete_stored_value, get_stored_value, get_stored_value_as_bool, set_stored_value,
-        },
-        request_params::RequestBodyFormValue,
-        request_result_panel::ReqResultData,
-    },
-    i18n::*,
+    }, domain::rest_client::ui::{
+        request_store::{
+            RequestFieldKind, delete_stored_value, get_stored_value, get_stored_value_as_bool, set_stored_value,
+        }, request_params::RequestBodyFormValue, request_result_panel::ReqResultData,
+    }, i18n::*,
 };
 use leptos::{
     html::{Button, Div},
@@ -76,7 +72,7 @@ pub fn RequestPanel(
         messages,
     );
     create_req_watchers(params, project, request_info, set_request_info);
-    create_watcher_bool(save_response, "save_response", project, request_info);
+    create_watcher_bool(save_response, RequestFieldKind::SaveResponse, project, request_info);
 
     view! {
         <Show when=move || { request_info.read().id > 0 }
@@ -94,9 +90,9 @@ pub fn RequestPanel(
                     on_result=move|res: ReqResultData| {
                         if *save_response.read_untracked() {
                             let json_string = serde_json::to_string(&res).unwrap();
-                            set_stored_value(project, request_info.read_untracked().id, "save_response_data", json_string)
+                            set_stored_value(project, request_info.read_untracked().id, RequestFieldKind::SaveResponseData, json_string)
                         } else {
-                            delete_stored_value(project, request_info, "save_response_data")
+                            delete_stored_value(project, request_info, RequestFieldKind::SaveResponseData)
                         }
                         set_response.set(Some(res));
                     }
@@ -127,7 +123,7 @@ fn create_req_watchers(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(project, request_info.read_untracked().id, "url", value.to_string());
+                set_stored_value(project, request_info.read_untracked().id, RequestFieldKind::Url, value.to_string());
                 set_request_info.write().url = value.to_owned();
             }
         },
@@ -138,21 +134,21 @@ fn create_req_watchers(
         move || params.read_untracked().method.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(project, request_info.read_untracked().id, "method", value.to_string());
+                set_stored_value(project, request_info.read_untracked().id, RequestFieldKind::Method, value.to_string());
                 set_request_info.write().method = value.to_owned();
             }
         },
         false,
     );
 
-    create_watcher_bool(params.read_untracked().insecure, "insecure", project, request_info);
-    create_watcher(params.read_untracked().body, "body", project, request_info);
-    create_watcher(params.read_untracked().body_type, "body_type", project, request_info);
+    create_watcher_bool(params.read_untracked().insecure, RequestFieldKind::Insecure, project, request_info);
+    create_watcher(params.read_untracked().body, RequestFieldKind::Body, project, request_info);
+    create_watcher(params.read_untracked().body_type, RequestFieldKind::BodyType, project, request_info);
 
     Effect::watch(
         move || params.read_untracked().headers.get(),
         move |value, _prev, _| {
-            set_stored_value(project, request_info.read_untracked().id, "headers", headers_to_string(value))
+            set_stored_value(project, request_info.read_untracked().id, RequestFieldKind::Headers, headers_to_string(value))
         },
         false,
     );
@@ -160,7 +156,7 @@ fn create_req_watchers(
     Effect::watch(
         move || params.read_untracked().body_formencoded.get(),
         move |value, _prev, _| {
-            set_stored_value(project, request_info.read_untracked().id, "body_formencoded", body_form_to_string(value))
+            set_stored_value(project, request_info.read_untracked().id, RequestFieldKind::BodyFormencoded, body_form_to_string(value))
         },
         false,
     );
@@ -194,20 +190,20 @@ fn create_request_info_watcher(
                 params.read_untracked().set_url.set(value.url.to_owned());
                 params.read_untracked().set_method.set(value.method.to_owned());
                 params.read_untracked().set_insecure.set(get_stored_value_as_bool(
-                    "insecure",
+                    RequestFieldKind::Insecure,
                     false,
                     project.read_untracked().as_str(),
                     id,
                 ));
                 params.read_untracked().set_body.set(get_stored_value(
-                    "body",
+                    RequestFieldKind::Body,
                     "".to_owned(),
                     project.read_untracked().as_str(),
                     id,
                 ));
 
                 params.read_untracked().set_body_type.set(get_stored_value(
-                    "body_type",
+                    RequestFieldKind::BodyType,
                     "".to_owned(),
                     project.read_untracked().as_str(),
                     id,
@@ -226,7 +222,7 @@ fn create_request_info_watcher(
                     .set(load_body_formencoded(&project_id, id));
 
                 let save_response = get_stored_value(
-                    "save_response",
+                    RequestFieldKind::SaveResponse,
                     "false".to_owned(),
                     project.read_untracked().as_str(),
                     request_info.read_untracked().id,
@@ -236,7 +232,7 @@ fn create_request_info_watcher(
                 set_save_response.set(save_response);
                 if save_response {
                     let data_str = get_stored_value(
-                        "save_response_data",
+                        RequestFieldKind::SaveResponseData,
                         "".to_owned(),
                         project.read_untracked().as_str(),
                         request_info.read_untracked().id,
@@ -256,16 +252,15 @@ fn create_request_info_watcher(
 
 fn create_watcher(
     value: ReadSignal<String>,
-    name: &str,
+    field: RequestFieldKind,
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
 ) {
-    let name = name.to_owned();
     Effect::watch(
         move || value.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(project, request_info.read_untracked().id, &name, value.to_string())
+                set_stored_value(project, request_info.read_untracked().id, field, value.to_string())
             }
         },
         false,
@@ -274,16 +269,15 @@ fn create_watcher(
 
 fn create_watcher_bool(
     value: ReadSignal<bool>,
-    name: &str,
+    field: RequestFieldKind,
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
 ) {
-    let name = name.to_owned();
     Effect::watch(
         move || value.get(),
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(project, request_info.read_untracked().id, &name, value.to_string())
+                set_stored_value(project, request_info.read_untracked().id, field, value.to_string())
             }
         },
         false,
@@ -299,7 +293,7 @@ fn headers_to_string(headers: &[CustomHeader]) -> String {
 }
 
 fn load_headers(project_id: &str, request_id: i32) -> Vec<CustomHeader> {
-    let stored_value = get_stored_value("headers", "".to_owned(), project_id, request_id);
+    let stored_value = get_stored_value(RequestFieldKind::Headers, "".to_owned(), project_id, request_id);
     if stored_value.is_empty() {
         return Vec::new();
     }
@@ -326,7 +320,7 @@ fn body_form_to_string(form_values: &[RequestBodyFormValue]) -> String {
 }
 
 fn load_body_formencoded(project_id: &str, request_id: i32) -> Vec<RequestBodyFormValue> {
-    let stored_value = get_stored_value("body_formencoded", "".to_owned(), project_id, request_id);
+    let stored_value = get_stored_value(RequestFieldKind::BodyFormencoded, "".to_owned(), project_id, request_id);
     if stored_value.is_empty() {
         return Vec::new();
     }

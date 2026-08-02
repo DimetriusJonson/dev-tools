@@ -6,7 +6,7 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::Tabs;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
-use crate::domain::rest_client::ui::request_helper::get_stored_value;
+use crate::domain::rest_client::ui::request_store::{RequestFieldKind, get_stored_value};
 use crate::domain::rest_client::ui::request_params::RequestInfo;
 use crate::i18n::*;
 use leptos::html::Div;
@@ -32,7 +32,7 @@ pub fn RequestResultPanel(
     let i18n = use_i18n();
 
     let (formatting, set_formatting) =
-        signal(get_stored_value("formatting", "true".to_owned(), project.read_untracked().as_str(), request_info.read_untracked().id).parse::<bool>().unwrap());
+        signal(get_stored_value(RequestFieldKind::Formatting, "true".to_owned(), project.read_untracked().as_str(), request_info.read_untracked().id).parse::<bool>().unwrap());
 
     let on_copy_click = move |_| {
         if data.read_untracked().is_some() {
@@ -94,7 +94,7 @@ pub fn RequestResultPanel(
                                         <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
                                             on:change=move |e| {
                                                 let value = event_target_value(&e);
-                                                get_stored_value("formatting", value, project.read_untracked().as_str(), request_info.read_untracked().id);
+                                                get_stored_value(RequestFieldKind::Formatting, value, project.read_untracked().as_str(), request_info.read_untracked().id);
                                             }/>
                                         <label for="formatting" class="dark:text-white">Format</label>
                                     </div>

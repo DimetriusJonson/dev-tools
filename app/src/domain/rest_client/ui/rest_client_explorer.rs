@@ -1,13 +1,10 @@
 use leptos::{html::Div, prelude::*};
 
 use crate::{
-    components::ui::button::{Button, ButtonWidth},
-    domain::rest_client::ui::{
-        request_helper::{
-            delete_request, generate_request_id, get_stored_value, load_requests_ids,
-            save_requests_ids, set_stored_value,
-        },
-        request_params::RequestInfo,
+    components::ui::button::{Button, ButtonWidth}, domain::rest_client::ui::{
+        request_store::{
+            RequestFieldKind, delete_stored_request, generate_request_id, get_stored_value, get_stored_requests_ids, set_stored_requests_ids, set_stored_value,
+        }, request_params::RequestInfo,
     },
 };
 use crate::{
@@ -43,9 +40,9 @@ pub fn RestClientExplorer(
         set_requests.write().push(RwSignal::new(request.clone()));
 
         set_current_request.set(request.clone());
-        save_requests_ids(project, &requests.read_untracked());
-        set_stored_value(project, request.id, "url", request.url);
-        set_stored_value(project, request.id, "method", request.method);
+        set_stored_requests_ids(project, &requests.read_untracked());
+        set_stored_value(project, request.id, RequestFieldKind::Url, request.url);
+        set_stored_value(project, request.id, RequestFieldKind::Method, request.method);
 
         let headers = [
             ("Accept".to_owned(), "application/json".to_owned()),
@@ -55,7 +52,7 @@ pub fn RestClientExplorer(
         set_stored_value(
             project,
             request.id,
-            "headers",
+            RequestFieldKind::Headers,
             headers.iter().map(|h| format!("{}:{}", h.0, h.1)).collect::<Vec<String>>().join("\n"),
         );
     };
@@ -86,8 +83,8 @@ pub fn RestClientExplorer(
             <div class="flex flex-col p-2 md:p-4 gap-y-2">
                 <ProjectSelector project set_project on_delete=move |_| {
                     requests.read_untracked().iter().for_each(|r| {
-                        save_requests_ids(project, &requests.read_untracked());
-                        delete_request(project.read_untracked().as_str(),  r.read_untracked().id);
+                        set_stored_requests_ids(project, &requests.read_untracked());
+                        delete_stored_request(project.read_untracked().as_str(),  r.read_untracked().id);
                     });
                 }/>
 
@@ -116,12 +113,12 @@ pub fn RestClientExplorer(
 }
 
 fn load_requests(project_id: &str) -> Vec<RwSignal<RequestInfo>> {
-    load_requests_ids(project_id)
+    get_stored_requests_ids(project_id)
         .iter()
         .map(|id| {
-            let url = get_stored_value("url", "".to_owned(), project_id, *id);
-            let name = get_stored_value("name", "".to_owned(), project_id, *id);
-            let method = get_stored_value("method", "".to_owned(), project_id, *id);
+            let url = get_stored_value(RequestFieldKind::Url, "".to_owned(), project_id, *id);
+            let name = get_stored_value(RequestFieldKind::Name, "".to_owned(), project_id, *id);
+            let method = get_stored_value(RequestFieldKind::Method, "".to_owned(), project_id, *id);
             RwSignal::new(RequestInfo::new(*id, url, name, method))
         })
         .collect()
