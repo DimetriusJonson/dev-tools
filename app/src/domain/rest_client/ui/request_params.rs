@@ -11,8 +11,6 @@ pub struct RestClientProject {
 pub struct RequestParams {
     pub url: ReadSignal<String>,
     pub set_url: WriteSignal<String>,
-    pub insecure: ReadSignal<bool>,
-    pub set_insecure: WriteSignal<bool>,
     pub method: ReadSignal<String>,
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,

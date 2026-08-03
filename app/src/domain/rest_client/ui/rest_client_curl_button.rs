@@ -41,12 +41,6 @@ pub fn RestClientCUrlButton(
                         set_current_request.set(request.clone());
                         set_stored_requests_ids(project, &requests.read_untracked());
                         set_stored_value(project, request.id, RequestFieldKind::Url, request.url);
-                        set_stored_value(
-                            project,
-                            request.id,
-                            RequestFieldKind::Insecure,
-                            parsed_request.insecure.to_string(),
-                        );
                         set_stored_value(project, request.id, RequestFieldKind::Method, request.method);
 
                         if let Some(content_type) = parsed_request

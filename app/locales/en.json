@@ -82,7 +82,6 @@
     "rest_client_param_name_placeholder": "Parameter name",
     "rest_client_param_value_placeholder": "Parameter value",
     "rest_client_curl_import_title": "Import cUrl command from clipboard.",
-    "rest_client_insecure_title": "Disables SSL certificate validation.",
     "rest_client_project_select_label": "Project",
     "rest_client_project_not_selected": "Not selected",
 

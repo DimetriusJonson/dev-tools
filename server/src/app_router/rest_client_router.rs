@@ -82,7 +82,7 @@ fn build_request(
     };
 
     Ok(Client::builder()
-        .danger_accept_invalid_certs(request.insecure)
+        .danger_accept_invalid_certs(true)
         .build()
         .map_err(AppError::system_error)?
         .request(method, url)

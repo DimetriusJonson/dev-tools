@@ -19,8 +19,6 @@ pub enum RequestFieldKind {
     Body,
     #[strum(serialize = "headers")]
     Headers,
-    #[strum(serialize = "insecure")]
-    Insecure,
     #[strum(serialize = "save_response")]
     SaveResponse,
     #[strum(serialize = "body_type")]

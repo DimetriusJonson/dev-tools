@@ -6,5 +6,4 @@ pub struct RestClientRequest {
     pub url: String,
     pub headers: Vec<(String, String)>,
     pub body: String,
-    pub insecure: bool,
 }

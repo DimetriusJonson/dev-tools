@@ -80,7 +80,6 @@ pub fn RequestParamsPanel(
                 url: params.url.get_untracked(),
                 headers,
                 body,
-                insecure: params.insecure.get_untracked()
             };
 
             match Request::post("/rest_client_send").json(&rc_request) {
@@ -132,13 +131,6 @@ pub fn RequestParamsPanel(
                     set_value=params.read_untracked().set_url
                     on_change=move |_| {}
                 />
-
-                <div class="px-0 flex items-center gap-0 cursor-pointer">
-                    <input title=move || t_string!(i18n, rest_client_insecure_title) type="checkbox" id="insecure" class="h-4 w-4" 
-                        bind:value=(params.read_untracked().insecure, params.read_untracked().set_insecure) prop:checked=params.read_untracked().insecure 
-                        on:change=move |_| {}/>
-                    <label for="insecure" class="dark:text-white">{"⚠️"}</label>
-                </div>
 
                 <Button node_ref=send_btn_node_ref
                     label=move || t!(i18n, rest_client_send_btn_label).to_html()
