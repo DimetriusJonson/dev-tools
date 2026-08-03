@@ -14,6 +14,8 @@ Connection: close
 
 OK"#;
 
+const BREAK_LINE: &str = "\r\n\r\n";
+
 pub static DUMP_REQUEST: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 
 pub async fn start_dump_receiver() -> Result<(JoinHandle<()>, u16), Box<dyn Error>> {
@@ -40,29 +42,25 @@ pub async fn start_dump_receiver() -> Result<(JoinHandle<()>, u16), Box<dyn Erro
                                     break;
                                 }
                                 Ok(n) => {
-                                    //println!("received {}", String::from_utf8_lossy(&buf[0..n]));
-                                    //println!("received {:?}", &buf[0..n]);
-
                                     data.put_slice(&buf[0..n]);
-
-                                    //println!("data_len={} max_size={}", data.len(), max_size);
 
                                     if max_size != 0 && data.len() >= max_size {
                                         break;
                                     }
 
-                                    if max_size == 0 && let Some(pos_break) = find_break(&data) {
-                                        //println!("pos_break={}", pos_break);
+                                    if max_size == 0
+                                        && let Some(pos_break_line) =
+                                            find_pattern(&data, BREAK_LINE)
+                                    {
                                         if let Some(content_len) =
-                                            extract_content_length(&data, pos_break)
+                                            find_content_length(&data, pos_break_line)
                                         {
-                                            //println!("content_len={}", content_len);
-                                            max_size = pos_break + 4 + content_len;
+                                            max_size =
+                                                pos_break_line + BREAK_LINE.len() + content_len;
 
                                             if max_size != 0 && data.len() >= max_size {
                                                 break;
                                             }
-
                                         } else {
                                             break;
                                         }
@@ -92,7 +90,7 @@ pub async fn start_dump_receiver() -> Result<(JoinHandle<()>, u16), Box<dyn Erro
     Ok((handle, port))
 }
 
-fn find_str(data: &Vec<u8>, pattern: &str) -> Option<usize> {
+fn find_pattern(data: &Vec<u8>, pattern: &str) -> Option<usize> {
     let pattern = pattern.to_lowercase();
 
     let pattern_len = pattern.len();
@@ -106,14 +104,10 @@ fn find_str(data: &Vec<u8>, pattern: &str) -> Option<usize> {
     None
 }
 
-fn find_break(data: &Vec<u8>) -> Option<usize> {
-    find_str(data, "\r\n\r\n")
-}
-
-fn extract_content_length(data: &Vec<u8>, end_index: usize) -> Option<usize> {
+fn find_content_length(data: &Vec<u8>, end_index: usize) -> Option<usize> {
     let name = "\r\ncontent-length:";
 
-    if let Some(pos) = find_str(data, name) {
+    if let Some(pos) = find_pattern(data, name) {
         let len_str = String::from_utf8_lossy(&data[pos + name.len()..end_index]).to_string();
         let len = len_str.trim().parse::<usize>().unwrap();
         return Some(len);
