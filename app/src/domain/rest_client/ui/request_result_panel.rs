@@ -137,7 +137,7 @@ pub fn RequestResultPanel(
                             </div>
                         </div>
                         <div node_ref=tab_request_raw_ref class="flex text-xs md:text-base overflow-auto">
-                            <pre class="w-full whitespace-pre-wrap break-words">{request_raw}</pre>
+                            <pre class="w-full whitespace-pre-wrap break-all">{request_raw}</pre>
                         </div>
                     </div>
                 </div>
