@@ -123,8 +123,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 .build()
                 .expect("Failed to build dynamic window");
 
-            let quit_i = MenuItem::with_id(app, "quit", "Выход", true, None::<&str>)?;
-            let open_i = MenuItem::with_id(app, "open", "Открыть", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
+            let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
