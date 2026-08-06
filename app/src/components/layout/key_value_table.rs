@@ -1,0 +1,122 @@
+use crate::components::ui::button::{Button, ButtonColor, ButtonWidth};
+use leptos::prelude::*;
+
+use crate::components::ui::autocomplete_input::AutocompleteInput;
+
+pub trait KeyValueTableItem {
+    fn id(&self) -> usize;
+    fn name(&self) -> ReadSignal<String>;
+    fn set_name(&self) -> WriteSignal<String>;
+    fn value(&self) -> ReadSignal<String>;
+    fn set_value(&self) -> WriteSignal<String>;
+}
+
+#[component]
+pub fn KeyValueTable<E>(
+    key_label: impl Fn() -> String + Send + Sync + 'static,
+    value_label: impl Fn() -> String + Send + Sync + 'static,
+    items: impl Fn() -> Vec<E> + Send + Sync + 'static,
+    #[prop(into, optional)] key_options: Vec<&'static str>,
+    #[prop(into, optional)] value_options: Vec<&'static str>,
+    #[prop(into)] on_add: Callback<(String, String)>,
+    #[prop(into)] on_delete: Callback<usize>,
+    #[prop(into)] on_change_key: Callback<(usize, String)>,
+    #[prop(into)] on_change_value: Callback<(usize, String)>,
+) -> impl IntoView
+where
+    E: KeyValueTableItem + Send + Sync + Clone + 'static,
+{
+    let key_label_memo = Memo::new(move |_| key_label());
+    let value_label_memo = Memo::new(move |_| value_label());
+
+    let (key, set_key) = signal("".to_owned());
+    let (value, set_value) = signal("".to_owned());
+
+    view! {
+        <div class="flex flex-col gap-1 md:gap-4">
+            <div class="flex flex-row gap-1 md:gap-2">
+                <AutocompleteInput
+                    class_name="sm:min-w-36".to_owned()
+                    placeholder=move || key_label_memo.get()
+                    options={key_options.clone()}
+                    on_change=move |_| {}
+                    value=key
+                    set_value=set_key
+                />
+                <AutocompleteInput
+                    class_name="w-full".to_owned()
+                    placeholder=move || value_label_memo.get()
+                    options={value_options.clone()}
+                    on_change=move |_| {}
+                    value=value
+                    set_value=set_value
+                />
+                <Button
+                    label=move || "+".to_owned()
+                    class_name="text-bold".to_owned()
+                    button_width=ButtonWidth::OneSymbol
+                    color=ButtonColor::Success
+                    loading=move || false
+                    disabled=move || false
+                    on_click=move |_| {
+                        on_add.run((key.get_untracked(), value.get_untracked()));
+                        set_key.set("".to_owned());
+                        set_value.set("".to_owned());
+                    }
+                />
+            </div>
+        </div>
+
+        <For
+            each=move || items()
+            key=|key| key.id()
+            children=move |item| {
+                view! {
+                    <div class="flex gap-1 md:gap-2">
+                        <AutocompleteInput
+                            class_name="sm:min-w-36".to_owned()
+                            placeholder=move || key_label_memo.get()
+                            options={key_options.clone()}
+                            on_change={
+                                let id = item.id();
+                                move |value: String| {
+                                  on_change_key.run((id, value.to_owned()));
+                                }
+                            }
+                            value=item.name().clone()
+                            set_value=item.set_name()
+                        />
+                        <AutocompleteInput
+                            class_name="w-full".to_owned()
+                            placeholder=move || value_label_memo.get()
+                            options={value_options.clone()}
+                            on_change={
+                                let id = item.id();
+                                move |value: String| {
+                                    on_change_value.run((id, value));
+                                }
+                            }
+                            value=item.value()
+                            set_value=item.set_value()
+                        />
+                        <Button
+                            label=move || "-".to_owned()
+                            class_name="text-bold".to_owned()
+                            button_width=ButtonWidth::OneSymbol
+                            color=ButtonColor::Danger
+                            loading=move || false
+                            disabled=move || false
+                            on_click={
+                                let id = item.id();
+                                move |_| {
+                                    on_delete.run(id);
+                                }
+                            }
+                        />
+                    </div>
+                }
+            }
+        />
+
+    }
+}

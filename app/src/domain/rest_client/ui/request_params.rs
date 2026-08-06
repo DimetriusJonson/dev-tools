@@ -1,6 +1,8 @@
 use leptos::prelude::{ReadSignal, WriteSignal};
 use serde::{Deserialize, Serialize};
 
+use crate::components::layout::key_value_table::KeyValueTableItem;
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RestClientProject {
     pub id: i32,
@@ -32,6 +34,29 @@ pub struct RequestBodyFormValue {
     pub set_value: WriteSignal<String>,
 }
 
+impl KeyValueTableItem for RequestBodyFormValue {
+    fn id(&self) -> usize {
+        self.id
+    }
+
+    fn name(&self) -> ReadSignal<String> {
+        self.name
+    }
+
+    fn set_name(&self) -> WriteSignal<String> {
+        self.set_name
+    }
+
+    fn value(&self) -> ReadSignal<String> {
+        self.value
+    }
+
+    fn set_value(&self) -> WriteSignal<String> {
+        self.set_value
+    }
+}
+
+
 #[derive(Clone, Debug)]
 pub struct RequestInfo {
     pub id: i32,
@@ -48,6 +73,28 @@ pub struct CustomHeader {
     pub set_name: WriteSignal<String>,
     pub value: ReadSignal<String>,
     pub set_value: WriteSignal<String>,
+}
+
+impl KeyValueTableItem for CustomHeader {
+    fn id(&self) -> usize {
+        self.id
+    }
+
+    fn name(&self) -> ReadSignal<String> {
+        self.name
+    }
+
+    fn set_name(&self) -> WriteSignal<String> {
+        self.set_name
+    }
+
+    fn value(&self) -> ReadSignal<String> {
+        self.value
+    }
+
+    fn set_value(&self) -> WriteSignal<String> {
+        self.set_value
+    }
 }
 
 impl RequestInfo {

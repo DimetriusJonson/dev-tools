@@ -3,7 +3,7 @@ use web_sys::KeyboardEvent;
 
 #[component]
 pub fn AutocompleteInput(
-    #[prop(into)] options: Vec<&'static str>,
+    #[prop(into, optional)] options: Vec<&'static str>,
     #[prop(optional)] class_name: String,
     placeholder: impl Fn() -> String + Send + Sync + 'static,
     value: ReadSignal<String>,
