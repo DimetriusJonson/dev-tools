@@ -4,6 +4,7 @@ use crate::components::ui::text_area::TextArea;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_params::{RequestInfo, RequestParams};
+use crate::domain::rest_client::ui::request_query_panel::RequestQueryPanel;
 use crate::domain::rest_client::ui::request_store::build_request_stored_key;
 use crate::i18n::*;
 use leptos::html::Div;
@@ -21,7 +22,11 @@ pub fn RequestParamsPanel(
     let i18n = use_i18n();
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();
-    let headers_ref = NodeRef::<Div>::new();
+    let params_ref = NodeRef::<Div>::new();
+
+    let (params_tab_selected, set_params_tab_selected) = signal(0);
+    let tab_headers_ref = NodeRef::<Div>::new();
+    let tab_query_ref = NodeRef::<Div>::new();
 
     Effect::watch(
         move || body_tab_selected.get(),
@@ -36,13 +41,26 @@ pub fn RequestParamsPanel(
 
         <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-2 md:gap-4">
             <div class="flex-1 flex flex-col">
-                <div node_ref=headers_ref class="flex flex-col overflow-y-auto gap-y-2 ">
-                    <RequestHeadersPanel params />
+                <div node_ref=params_ref class="flex flex-col">
+                    <Tabs class_name="".to_owned()
+                        tab_selected=params_tab_selected set_tab_selected=set_params_tab_selected
+                        items=move || vec![
+                            ("Headers", tab_headers_ref),
+                            ("Query", tab_query_ref),
+                        ] />
+
+                    <div node_ref=tab_headers_ref class="flex-1 flex flex-col overflow-y-auto gap-y-2 pt-4">
+                        <RequestHeadersPanel params />
+                    </div>
+
+                    <div node_ref=tab_query_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
+                        <RequestQueryPanel params request_info />
+                    </div>
                 </div>
 
                 <DragSplitter
                     class_name="hidden md:block".to_owned()
-                    target_ref=headers_ref
+                    target_ref=params_ref
                     horizontal=true
                     local_store_prop_name=move || build_request_stored_key(project.read_untracked().as_str(), request_info.read_untracked().id, "headers_height")
                     min_scr_ration={1.0 / 10.0}

@@ -130,6 +130,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tw_merge",
+ "url",
  "urlencoding",
  "uuid",
  "wasm-bindgen",
