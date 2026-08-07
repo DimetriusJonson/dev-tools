@@ -98,7 +98,7 @@ pub fn RequestParamsPanel(
                     allow_mobile=true
                 />
 
-                <div class="flex-1 flex flex-col">
+                <div class="flex-1 flex flex-col pt-4">
                     <Tabs class_name="".to_owned()
                         tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
                         items=move || vec![
@@ -106,7 +106,7 @@ pub fn RequestParamsPanel(
                             ("Form Encoded", tab_body_form_encoded_ref),
                         ] />
 
-                    <div node_ref=tab_body_text_ref class="flex-1 flex overflow-y-auto">
+                    <div node_ref=tab_body_text_ref class="flex-1 flex overflow-y-auto pt-4">
                         <TextArea
                             name="body".to_owned()
                             class_name="w-full resize-none".to_owned()

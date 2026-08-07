@@ -110,10 +110,12 @@ pub fn RequestQueryPanel(
             items=move || items.get()
             on_add=move |v:(String, String)| {
                 let id = items.read_untracked().iter().map(|h|h.id).max().unwrap_or_default() + 1;
-                let (name, set_name) = signal(v.0);
-                let (value, set_value) = signal(v.1);
+                if !v.0.trim().is_empty() && !v.1.trim().is_empty() {
+                    let (name, set_name) = signal(v.0);
+                    let (value, set_value) = signal(v.1);
 
-                set_items.write().push(QueryItem{ id, name, set_name, value, set_value });
+                    set_items.write().push(QueryItem{ id, name, set_name, value, set_value });
+                }
             }
             on_delete=move |id| {
                 set_items.write().retain(|h| h.id != id);

@@ -31,7 +31,7 @@ pub fn Tabs(
         let tabs = items();
         let tabs2 = items();
         view! {
-             <div class={format!("flex border-b border-gray-200 text-sm font-medium text-center focus:outline-none {}", class_name)} role="tablist">
+             <nav class={format!("flex gap-x-1 {}", class_name)} aria-label="Tabs" role="tablist" aria-orientation="horizontal">
 
                  <ForEnumerate
                      each=move || tabs.clone()
@@ -39,10 +39,10 @@ pub fn Tabs(
                      let(idx, tab)
                  >
                      <button role="tab"
+                         class="p-2 inline-flex flex-auto justify-center items-center gap-x-2 text-sm font-medium text-center rounded-lg disabled:opacity-50 disabled:pointer-events-none focus:outline-hidden cursor-pointer"
                          aria-selected=move || tab_selected.get() == idx.get()
-                         class="flex-1 py-2.5 border-b-2 cursor-pointer"
-                         class=(["border-blue-600", "text-black", "dark:text-white"], move || tab_selected.get() == idx.get())
-                         class=(["text-gray-500"], move || tab_selected.get() != idx.get())
+                         class=(["bg-transparent ", "text-gray-500", "dark:text-neutral-400", "hover:text-white", "focus:text-sky-500/50", "hover:bg-gray-600/50"], move || tab_selected.get() != idx.get())
+                         class=(["bg-sky-500/50", "text-white", "hover:text-white", "focus:text-white", "dark:focus:text-white"], move || tab_selected.get() == idx.get())
                          on:click={
                              let tabs = tabs2.clone();
                              move |_event| {
@@ -55,7 +55,7 @@ pub fn Tabs(
                      </button>
                  </ ForEnumerate>
 
-             </div>
+             </nav>
         }
     }
 }
