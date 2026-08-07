@@ -118,5 +118,5 @@ pub fn DragSplitter(
 }
 
 fn is_mobile() -> bool {
-    get_browser_width().unwrap() < 768.0
+    get_browser_width().unwrap() < 640.0
 }

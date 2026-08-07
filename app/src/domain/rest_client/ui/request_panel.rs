@@ -2,15 +2,11 @@ use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
-    },
-    domain::rest_client::ui::{
-        request_params::RequestBodyFormValue,
-        request_store::{
+    }, domain::rest_client::ui::{
+        request_params::RequestBodyFormValue, request_params_url::RequestParamsUrl, request_store::{
             RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
         },
-    },
-    i18n::*,
-    model::restclient::rest_client_response::RestClientResponse,
+    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{
     html::{Button, Div},
@@ -79,14 +75,9 @@ pub fn RequestPanel(
         <Show when=move || { request_info.read().id > 0 }
             fallback=move || view! { <div class="flex-1 flex items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
-            <div class="flex-2 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                <RequestParamsPanel
-                    project
-                    request_info
-                    node_ref=params_ref
+            <div class="flex-2 flex flex-col gap-4 px-2 py-4 text-xs md:text-base">
+                <RequestParamsUrl
                     send_btn_node_ref
-                    body_tab_selected
-                    set_body_tab_selected
                     params
                     on_result=move|res: RestClientResponse| {
                         if *save_response.read_untracked() {
@@ -99,16 +90,27 @@ pub fn RequestPanel(
                     }
                 />
 
-                <DragSplitter
-                    class_name="hidden md:block".to_owned()
-                    target_ref=params_ref
-                    local_store_prop_name=move || "params_width".to_owned()
-                    min_scr_ration={1.0 / 6.0}
-                    max_scr_ration={1.0 / 2.0}
-                    default_scr_ration={1.0 / 6.0} />
+                <div class="flex-1 flex flex-col md:flex-row gap-4 text-xs md:text-base">
+                    <RequestParamsPanel
+                        project
+                        request_info
+                        node_ref=params_ref
+                        body_tab_selected
+                        set_body_tab_selected
+                        params
+                    />
 
-                <RequestResultPanel project request_info save_response set_save_response data=response/>
+                    <DragSplitter
+                        class_name="hidden md:block".to_owned()
+                        target_ref=params_ref
+                        local_store_prop_name=move || "params_width".to_owned()
+                        min_scr_ration={1.0 / 6.0}
+                        max_scr_ration={1.0 / 2.0}
+                        default_scr_ration={1.0 / 6.0} />
 
+                    <RequestResultPanel project request_info save_response set_save_response data=response/>
+
+                </div>
             </div>
         </Show>
     }
