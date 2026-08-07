@@ -1,5 +1,9 @@
-use crate::components::ui::{autocomplete_input::AutocompleteInputStyle, button::{Button, ButtonColor, ButtonWidth}};
+use crate::components::ui::{
+    autocomplete_input::AutocompleteInputStyle,
+    button::{Button, ButtonColor, ButtonWidth},
+};
 use leptos::prelude::*;
+use web_sys::MouseEvent;
 
 use crate::components::ui::autocomplete_input::AutocompleteInput;
 
@@ -32,6 +36,12 @@ where
     let (key, set_key) = signal("".to_owned());
     let (value, set_value) = signal("".to_owned());
 
+    let on_add_click = move |_: MouseEvent| {
+        on_add.run((key.get_untracked(), value.get_untracked()));
+        set_key.set("".to_owned());
+        set_value.set("".to_owned());
+    };
+
     view! {
         <div class="flex flex-col gap-x-1 md:gap-x-2 gap-y-2">
             <div class="flex flex-row gap-x-1 md:gap-x-2">
@@ -49,7 +59,9 @@ where
                     placeholder=move || value_label_memo.get()
                     input_style=AutocompleteInputStyle::Compact
                     options={value_options.clone()}
-                    on_change=move |_| {}
+                    on_press_enter=move |_| {
+                        on_add_click(MouseEvent::new("click").unwrap())
+                    }
                     value=value
                     set_value=set_value
                 />
@@ -60,11 +72,7 @@ where
                     color=ButtonColor::Success
                     loading=move || false
                     disabled=move || false
-                    on_click=move |_| {
-                        on_add.run((key.get_untracked(), value.get_untracked()));
-                        set_key.set("".to_owned());
-                        set_value.set("".to_owned());
-                    }
+                    on_click=on_add_click
                 />
             </div>
         </div>

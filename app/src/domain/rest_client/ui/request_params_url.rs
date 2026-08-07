@@ -104,7 +104,11 @@ pub fn RequestParamsUrl(
                 placeholder=move || {t!(i18n, rest_client_url_placeholder).to_html()}
                 value=params.read_untracked().url
                 set_value=params.read_untracked().set_url
-                on_change=move |_| {}
+                on_press_enter=move |_| {
+                    if let Some(send_btn) = send_btn_node_ref.get() {
+                        send_btn.click();
+                    }
+                }
             />
 
             <Button node_ref=send_btn_node_ref

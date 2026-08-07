@@ -16,7 +16,8 @@ pub fn AutocompleteInput(
     placeholder: impl Fn() -> String + Send + Sync + 'static,
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
-    #[prop(into)] on_change: Callback<String>,
+    #[prop(into, optional)] on_change: Option<Callback<String>>,
+    #[prop(into, optional)] on_press_enter: Option<Callback<()>>,
 ) -> impl IntoView {
     let (is_open, set_open) = signal(false);
     let (focused_idx, set_focused_idx) = signal::<Option<usize>>(None);
@@ -66,7 +67,13 @@ pub fn AutocompleteInput(
                 let val = filtered_options.get()[idx].to_string();
                 set_value.set(val.to_owned());
                 set_open.set(false);
-                on_change.run(val);
+                if let Some(on_change) = on_change {
+                    on_change.run(val);
+                }
+            }
+
+            if let Some(on_press_enter) = on_press_enter {
+                on_press_enter.run(());
             }
         } else if key == "Escape" {
             set_open.set(false);
@@ -117,7 +124,9 @@ pub fn AutocompleteInput(
                     set_value.set(val.to_owned());
                     set_open.set(true);
                     set_focused_idx.set(None);
-                    on_change.run(val);
+                    if let Some(on_change) = on_change {
+                        on_change.run(val);
+                    };
                 }
                 on:keydown=on_keydown
                 on:focus=move |_| set_open.set(true)
@@ -141,7 +150,9 @@ pub fn AutocompleteInput(
                                             on:click=move |_| {
                                                 set_value.set(opt_clone.to_owned());
                                                 set_open.set(false);
-                                                on_change.run(opt_clone.to_owned());
+                                                if let Some(on_change) = on_change {
+                                                    on_change.run(opt_clone.to_owned());
+                                                };
                                             }
                                         >
                                             {option}
