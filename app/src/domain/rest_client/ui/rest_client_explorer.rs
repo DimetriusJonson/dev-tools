@@ -32,6 +32,7 @@ pub fn RestClientExplorer(
     let on_create_request = move |_| {
         let request = RequestInfo::new(
             generate_request_id(project),
+            project.read_untracked().parse().unwrap(),
             format!("http://{}/test_json", window().location().host().unwrap()),
             "".to_owned(),
             "GET".to_owned(),
@@ -119,7 +120,7 @@ fn load_requests(project_id: &str) -> Vec<RwSignal<RequestInfo>> {
             let url = get_stored_value(RequestFieldKind::Url, "".to_owned(), project_id, *id);
             let name = get_stored_value(RequestFieldKind::Name, "".to_owned(), project_id, *id);
             let method = get_stored_value(RequestFieldKind::Method, "".to_owned(), project_id, *id);
-            RwSignal::new(RequestInfo::new(*id, url, name, method))
+            RwSignal::new(RequestInfo::new(*id, project_id.parse().unwrap(), url, name, method))
         })
         .collect()
 }

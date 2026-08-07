@@ -23,6 +23,8 @@ pub enum RequestFieldKind {
     SaveResponse,
     #[strum(serialize = "body_type")]
     BodyType,
+    #[strum(serialize = "params_tab")]
+    ParamsTab,
     #[strum(serialize = "body_formencoded")]
     BodyFormencoded,
     #[strum(serialize = "formencoded")]

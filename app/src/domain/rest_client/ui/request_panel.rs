@@ -212,7 +212,7 @@ fn create_request_info_watcher(
                 send_btn.click();
             }
 
-            if prev.is_none() || id != prev.unwrap().id {
+            if prev.is_none() || id != prev.unwrap().id || project_id.parse::<i32>().unwrap() != prev.unwrap().project_id {
                 set_response.set(None);
                 params.read_untracked().set_url.set(value.url.to_owned());
                 params.read_untracked().set_method.set(value.method.to_owned());

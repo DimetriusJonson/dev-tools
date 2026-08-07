@@ -5,7 +5,9 @@ use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPane
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_params::{RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_query_panel::RequestQueryPanel;
-use crate::domain::rest_client::ui::request_store::build_request_stored_key;
+use crate::domain::rest_client::ui::request_store::{
+    RequestFieldKind, build_request_stored_key, get_stored_value, set_stored_value,
+};
 use crate::i18n::*;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -27,6 +29,33 @@ pub fn RequestParamsPanel(
     let (params_tab_selected, set_params_tab_selected) = signal(0);
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_query_ref = NodeRef::<Div>::new();
+
+    Effect::watch(
+        move || params_tab_selected.get(),
+        move |value, _prev, _| {
+            set_stored_value(
+                project,
+                request_info.read_untracked().id,
+                RequestFieldKind::ParamsTab,
+                value.to_string(),
+            )
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || request_info.get(),
+        move |value, prev, _| {
+            let id = value.id;
+            let project_id = project.get_untracked();
+            if prev.is_none() || id != prev.unwrap().id || project_id.parse::<i32>().unwrap() != prev.unwrap().project_id {
+                let tab_index =
+                    get_stored_value(RequestFieldKind::ParamsTab, "0".to_owned(), &project_id, id);
+                set_params_tab_selected.set(tab_index.parse().unwrap());
+            }
+        },
+        false,
+    );
 
     Effect::watch(
         move || body_tab_selected.get(),
