@@ -41,7 +41,7 @@ pub fn Tabs(
                      <button role="tab"
                          class="p-2 inline-flex flex-auto justify-center items-center gap-x-2 text-sm font-medium text-center rounded-lg disabled:opacity-50 disabled:pointer-events-none focus:outline-hidden cursor-pointer"
                          aria-selected=move || tab_selected.get() == idx.get()
-                         class=(["bg-transparent ", "text-gray-500", "dark:text-neutral-400", "hover:text-white", "focus:text-sky-500/50", "hover:bg-gray-600/50"], move || tab_selected.get() != idx.get())
+                         class=(["bg-transparent", "text-gray-500", "dark:text-neutral-400", "hover:text-white", "focus:text-sky-500/50", "hover:bg-gray-600/50"], move || tab_selected.get() != idx.get())
                          class=(["bg-sky-500/50", "text-white", "hover:text-white", "focus:text-white", "dark:focus:text-white"], move || tab_selected.get() == idx.get())
                          on:click={
                              let tabs = tabs2.clone();

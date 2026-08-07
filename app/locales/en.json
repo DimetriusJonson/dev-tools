@@ -93,7 +93,9 @@
     "rest_client_already_exist_request": "A request with this name already exists.",
 
     "rest_client_empty_project_name": "Empty project name.",
-    "rest_client_already_exist_project": "A project with this name already exists."
+    "rest_client_already_exist_project": "A project with this name already exists.",
+
+    "delete_btn": "Delete"
 
     
 }

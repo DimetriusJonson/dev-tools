@@ -38,6 +38,7 @@ pub enum ButtonHeight {
 pub fn Button(
     #[prop(optional)] id: i32,
     label: impl Fn() -> String + Send + Sync + 'static,
+    #[prop(optional)] title: Option<String>,
     #[prop(optional)] class_name: String,
     #[prop(optional)] color: ButtonColor,
     #[prop(optional)] button_width: ButtonWidth,
@@ -91,6 +92,7 @@ pub fn Button(
         <button
             node_ref=button_element
             id={id}
+            title=title
             aria-label=move || label_memo.get()
             class=move || format!("{} {} {} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, button_height_classes, text_size_classes,
                 match loading_memo.get() {

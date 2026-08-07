@@ -1,8 +1,8 @@
-use crate::components::ui::{
-    autocomplete_input::AutocompleteInputStyle,
-    button::{Button, ButtonColor, ButtonWidth},
-};
+use crate::{components::ui::{
+    autocomplete_input::AutocompleteInputStyle, button::{Button, ButtonColor, ButtonHeight, ButtonWidth},
+}, i18n::use_i18n};
 use leptos::prelude::*;
+use leptos_i18n::t_string;
 use web_sys::MouseEvent;
 
 use crate::components::ui::autocomplete_input::AutocompleteInput;
@@ -30,6 +30,8 @@ pub fn PropertyEditor<E>(
 where
     E: KeyValueTableItem + Send + Sync + Clone + 'static,
 {
+    let i18n = use_i18n();
+
     let key_label_memo = Memo::new(move |_| key_label());
     let value_label_memo = Memo::new(move |_| value_label());
 
@@ -82,7 +84,7 @@ where
             key=|key| key.id()
             children=move |item| {
                 view! {
-                    <div class="flex gap-x-1 md:gap-x-2">
+                    <div class="group flex gap-x-1 md:gap-x-2">
                         <AutocompleteInput
                             class_name="sm:min-w-36".to_owned()
                             placeholder=move || key_label_memo.get()
@@ -112,10 +114,12 @@ where
                             set_value=item.set_value()
                         />
                         <Button
-                            label=move || "-".to_owned()
-                            class_name="text-bold".to_owned()
+                            label=move || "x".to_owned()
+                            title=t_string!(i18n, delete_btn).to_owned()
+                            class_name="hidden group-hover:block text-bold text-gray-500 hover:text-danger".to_owned()
                             button_width=ButtonWidth::OneSymbol
-                            color=ButtonColor::Danger
+                            button_height=ButtonHeight::Custom
+                            color=ButtonColor::Custom
                             loading=move || false
                             disabled=move || false
                             on_click={

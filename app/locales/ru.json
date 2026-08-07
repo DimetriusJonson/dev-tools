@@ -93,7 +93,10 @@
     "rest_client_already_exist_request": "Запрос с таким именем уже существует",
 
     "rest_client_empty_project_name": "Пустое имя проекта.",
-    "rest_client_already_exist_project": "Проект с таким именем уже существует"
+    "rest_client_already_exist_project": "Проект с таким именем уже существует",
+
+    "delete_btn": "Удалить"
+
 
 
 }
