@@ -28,7 +28,7 @@ pub fn DragSplitter(
 
     let (size, set_size) = signal(screen_size * default_scr_ration);
 
-    let _ = Effect::new(move || {
+    let _ = Effect::new(move |_prev| {
         let init_size = get_local_store_value(
             &local_store_prop_name_memo.get(),
             (screen_size * default_scr_ration).to_string(),

@@ -91,7 +91,7 @@ pub fn RequestParamsPanel(
                     class_name="hidden md:block".to_owned()
                     target_ref=params_ref
                     horizontal=true
-                    local_store_prop_name=move || build_request_stored_key(project.read_untracked().as_str(), request_info.read_untracked().id, "headers_height")
+                    local_store_prop_name=move || build_request_stored_key(project.read().as_str(), request_info.read().id, "headers_height")
                     min_scr_ration={1.0 / 10.0}
                     max_scr_ration={2.0 / 3.0}
                     default_scr_ration={1.0 / 6.0}
