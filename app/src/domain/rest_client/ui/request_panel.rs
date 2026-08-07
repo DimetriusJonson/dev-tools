@@ -75,7 +75,7 @@ pub fn RequestPanel(
         <Show when=move || { request_info.read().id > 0 }
             fallback=move || view! { <div class="flex-1 flex items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
         >
-            <div class="flex-2 flex flex-col gap-4 px-2 py-4 text-xs md:text-base">
+            <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base">
                 <RequestParamsUrl
                     send_btn_node_ref
                     params
@@ -90,7 +90,7 @@ pub fn RequestPanel(
                     }
                 />
 
-                <div class="flex-1 flex flex-col md:flex-row gap-4 text-xs md:text-base">
+                <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
                     <RequestParamsPanel
                         project
                         request_info

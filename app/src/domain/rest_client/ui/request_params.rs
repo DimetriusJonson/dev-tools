@@ -1,7 +1,7 @@
 use leptos::prelude::{ReadSignal, WriteSignal};
 use serde::{Deserialize, Serialize};
 
-use crate::components::layout::key_value_table::KeyValueTableItem;
+use crate::components::layout::property_editor::KeyValueTableItem;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RestClientProject {

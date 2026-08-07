@@ -36,7 +36,7 @@ pub fn RequestParamsPanel(
 
         <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-2 md:gap-4">
             <div class="flex-1 flex flex-col">
-                <div node_ref=headers_ref class="flex flex-col overflow-y-auto gap-y-4 ">
+                <div node_ref=headers_ref class="flex flex-col overflow-y-auto gap-y-2 ">
                     <RequestHeadersPanel params />
                 </div>
 

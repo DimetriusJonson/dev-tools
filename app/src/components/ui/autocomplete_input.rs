@@ -1,14 +1,22 @@
 use leptos::prelude::*;
 use web_sys::KeyboardEvent;
 
+#[derive(Default)]
+pub enum AutocompleteInputStyle {
+    #[default]
+    Normal,
+    Compact,
+}
+
 #[component]
 pub fn AutocompleteInput(
     #[prop(into, optional)] options: Vec<&'static str>,
     #[prop(optional)] class_name: String,
+    #[prop(optional)] input_style: AutocompleteInputStyle,
     placeholder: impl Fn() -> String + Send + Sync + 'static,
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
-    #[prop(into)] on_change: Callback<String>
+    #[prop(into)] on_change: Callback<String>,
 ) -> impl IntoView {
     let (is_open, set_open) = signal(false);
     let (focused_idx, set_focused_idx) = signal::<Option<usize>>(None);
@@ -65,21 +73,21 @@ pub fn AutocompleteInput(
         }
     };
 
+    let input_classes = match input_style {
+        AutocompleteInputStyle::Normal => "border rounded-lg p-1 md:p-2 h-8 md:h-10 focus:outline-4 focus:outline-blue-400/20 dark:focus:outline-blue-200/20".to_owned(),
+        AutocompleteInputStyle::Compact => "border-b-2 px-1 md:px-2 h-8 outline-none".to_owned(),
+    };
+
     view! {
         <div class={format!("relative dark:text-white {}", class_name)}>
             <input
                 type="text"
                 placeholder=placeholder_memo
                 title=placeholder_memo
-                class="w-full border rounded-lg p-1 md:p-2
-        focus:outline-4
-        h-8 md:h-10 text-xs md:text-base
-
+                class={format!("w-full {} text-xs md:text-base
         transition-[background-color,border-color,box-shadow,color]
         duration-294
-
-        focus:outline-blue-400/20
-        dark:focus:outline-blue-200/20
+        
         bg-white
         border-gray-300
         dark:bg-dark-bg
@@ -102,7 +110,7 @@ pub fn AutocompleteInput(
         disabled:bg-disabled-bg
         disabled:dark:border-bg-dark-bg
         disabled:border-bg-white
-        disabled:placeholder:text-gray-500/30"
+        disabled:placeholder:text-gray-500/30", input_classes)}
                 prop:value=value
                 on:input=move |ev| {
                     let val = event_target_value(&ev);

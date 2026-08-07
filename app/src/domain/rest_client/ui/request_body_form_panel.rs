@@ -1,4 +1,4 @@
-use crate::components::layout::key_value_table::KeyValueTable;
+use crate::components::layout::property_editor::PropertyEditor;
 use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestParams};
 use crate::i18n::*;
 use leptos::prelude::*;
@@ -7,7 +7,7 @@ use leptos::prelude::*;
 pub fn RequestBodyFormPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let i18n = use_i18n();
     view! {
-        <KeyValueTable
+        <PropertyEditor
             key_label=move || t_display!(i18n, rest_client_param_name_placeholder).to_string()
             value_label=move || t_display!(i18n, rest_client_param_value_placeholder).to_string()
             items=move || params.read_untracked().body_formencoded.get()

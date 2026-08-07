@@ -1,4 +1,4 @@
-use crate::components::ui::button::{Button, ButtonColor, ButtonWidth};
+use crate::components::ui::{autocomplete_input::AutocompleteInputStyle, button::{Button, ButtonColor, ButtonWidth}};
 use leptos::prelude::*;
 
 use crate::components::ui::autocomplete_input::AutocompleteInput;
@@ -12,7 +12,7 @@ pub trait KeyValueTableItem {
 }
 
 #[component]
-pub fn KeyValueTable<E>(
+pub fn PropertyEditor<E>(
     key_label: impl Fn() -> String + Send + Sync + 'static,
     value_label: impl Fn() -> String + Send + Sync + 'static,
     items: impl Fn() -> Vec<E> + Send + Sync + 'static,
@@ -33,11 +33,12 @@ where
     let (value, set_value) = signal("".to_owned());
 
     view! {
-        <div class="flex flex-col gap-1 md:gap-4">
-            <div class="flex flex-row gap-1 md:gap-2">
+        <div class="flex flex-col gap-x-1 md:gap-x-2 gap-y-2">
+            <div class="flex flex-row gap-x-1 md:gap-x-2">
                 <AutocompleteInput
                     class_name="sm:min-w-36".to_owned()
                     placeholder=move || key_label_memo.get()
+                    input_style=AutocompleteInputStyle::Compact
                     options={key_options.clone()}
                     on_change=move |_| {}
                     value=key
@@ -46,6 +47,7 @@ where
                 <AutocompleteInput
                     class_name="w-full".to_owned()
                     placeholder=move || value_label_memo.get()
+                    input_style=AutocompleteInputStyle::Compact
                     options={value_options.clone()}
                     on_change=move |_| {}
                     value=value
@@ -72,10 +74,11 @@ where
             key=|key| key.id()
             children=move |item| {
                 view! {
-                    <div class="flex gap-1 md:gap-2">
+                    <div class="flex gap-x-1 md:gap-x-2">
                         <AutocompleteInput
                             class_name="sm:min-w-36".to_owned()
                             placeholder=move || key_label_memo.get()
+                            input_style=AutocompleteInputStyle::Compact
                             options={key_options.clone()}
                             on_change={
                                 let id = item.id();
@@ -89,6 +92,7 @@ where
                         <AutocompleteInput
                             class_name="w-full".to_owned()
                             placeholder=move || value_label_memo.get()
+                            input_style=AutocompleteInputStyle::Compact
                             options={value_options.clone()}
                             on_change={
                                 let id = item.id();

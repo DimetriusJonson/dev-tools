@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
-use crate::components::layout::key_value_table::KeyValueTable;
+use crate::components::layout::property_editor::PropertyEditor;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::domain::rest_client::ui::request_params::{CustomHeader, RequestParams};
 use crate::i18n::*;
@@ -16,7 +16,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     view! {
-        <KeyValueTable
+        <PropertyEditor
             key_label=move || t_display!(i18n, rest_client_header_name).to_string()
             value_label=move || t_display!(i18n, rest_client_header_value).to_string()
             items=move || params.read_untracked().headers.get()
