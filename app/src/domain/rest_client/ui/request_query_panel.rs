@@ -1,14 +1,16 @@
 use std::str::FromStr;
+use std::time::Duration;
 
 use crate::components::layout::property_editor::{KeyValueTableItem, PropertyEditor};
 use crate::domain::rest_client::ui::request_params::{RequestInfo, RequestParams};
 use crate::i18n::*;
 use leptos::prelude::*;
 use url::Url;
+use uuid::Uuid;
 
 #[derive(Clone)]
 struct QueryItem {
-    pub id: usize,
+    pub id: String,
     pub name: ReadSignal<String>,
     pub set_name: WriteSignal<String>,
     pub value: ReadSignal<String>,
@@ -30,19 +32,28 @@ pub fn RequestQueryPanel(
             if !items_updating.get_untracked() {
                 if let Ok(url) = Url::parse(&value.url) {
                     let mut query_items = Vec::new();
-                    for (i, pair) in url.query_pairs().enumerate() {
+                    for pair in url.query_pairs() {
                         let (name, set_name) = signal(pair.0.to_string());
                         let (value, set_value) = signal(pair.1.to_string());
-                        query_items.push(QueryItem { id: i + 1, name, set_name, value, set_value });
+                        query_items.push(QueryItem {
+                            id: Uuid::new_v4().to_string(),
+                            name,
+                            set_name,
+                            value,
+                            set_value,
+                        });
                     }
 
                     set_items_updating.set(true);
                     set_timeout(
                         move || {
                             set_items.set(query_items);
-                            set_items_updating.set(false);
+                            set_timeout(
+                                move || set_items_updating.set(false),
+                                Duration::from_millis(1),
+                            );
                         },
-                        std::time::Duration::from_millis(150),
+                        std::time::Duration::from_millis(1),
                     );
                 }
             }
@@ -56,19 +67,28 @@ pub fn RequestQueryPanel(
             if !items_updating.get_untracked() && (prev.is_none() || value != prev.unwrap()) {
                 if let Ok(url) = Url::parse(value) {
                     let mut query_items = Vec::new();
-                    for (i, pair) in url.query_pairs().enumerate() {
+                    for pair in url.query_pairs() {
                         let (name, set_name) = signal(pair.0.to_string());
                         let (value, set_value) = signal(pair.1.to_string());
-                        query_items.push(QueryItem { id: i + 1, name, set_name, value, set_value });
+                        query_items.push(QueryItem {
+                            id: Uuid::new_v4().to_string(),
+                            name,
+                            set_name,
+                            value,
+                            set_value,
+                        });
                     }
 
                     set_items_updating.set(true);
                     set_timeout(
                         move || {
                             set_items.set(query_items);
-                            set_items_updating.set(false);
+                            set_timeout(
+                                move || set_items_updating.set(false),
+                                Duration::from_millis(1),
+                            );
                         },
-                        std::time::Duration::from_millis(150),
+                        Duration::from_millis(1),
                     );
                 }
             }
@@ -93,9 +113,12 @@ pub fn RequestQueryPanel(
                     set_timeout(
                         move || {
                             params.read_untracked().set_url.set(url_str);
-                            set_items_updating.set(false);
+                            set_timeout(
+                                move || set_items_updating.set(false),
+                                Duration::from_millis(1),
+                            );
                         },
-                        std::time::Duration::from_millis(150),
+                        std::time::Duration::from_millis(1),
                     );
                 }
             }
@@ -109,7 +132,7 @@ pub fn RequestQueryPanel(
             value_label=move || t_display!(i18n, rest_client_param_value_placeholder).to_string()
             items=move || items.get()
             on_add=move |v:(String, String)| {
-                let id = items.read_untracked().iter().map(|h|h.id).max().unwrap_or_default() + 1;
+                let id = Uuid::new_v4().to_string();
                 if !v.0.trim().is_empty() && !v.1.trim().is_empty() {
                     let (name, set_name) = signal(v.0);
                     let (value, set_value) = signal(v.1);
@@ -120,12 +143,12 @@ pub fn RequestQueryPanel(
             on_delete=move |id| {
                 set_items.write().retain(|h| h.id != id);
             }
-            on_change_key=move |v: (usize, String)| {
+            on_change_key=move |v: (String, String)| {
                 set_items.write().iter_mut()
                     .filter(|h|h.id == v.0)
                     .for_each(|h| {h.set_name.set(v.1.to_owned())});
             }
-            on_change_value=move |v: (usize, String)| {
+            on_change_value=move |v: (String, String)| {
                 set_items.write().iter_mut()
                     .filter(|h|h.id == v.0)
                     .for_each(|h| {h.set_value.set(v.1.to_owned())});
@@ -135,8 +158,8 @@ pub fn RequestQueryPanel(
 }
 
 impl KeyValueTableItem for QueryItem {
-    fn id(&self) -> usize {
-        self.id
+    fn id(&self) -> String {
+        self.id.to_owned()
     }
 
     fn name(&self) -> ReadSignal<String> {

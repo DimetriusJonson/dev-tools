@@ -42,24 +42,24 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     params.read_untracked().set_headers.write().push(CustomHeader{ id, name, set_name, value, set_value });
                 }
             }
-            on_delete=move |id| {
-                params.read_untracked().set_headers.write().retain(|h| h.id != id);
+            on_delete=move |id:String| {
+                params.read_untracked().set_headers.write().retain(|h| h.id != id.parse().unwrap_or(0));
             }
-            on_change_key=move |v: (usize, String)| {
+            on_change_key=move |v: (String, String)| {
                 if let Err(err) = HeaderName::from_str(&v.1) {
                     show_error(err.to_string(), messages);
                 } else {
                     params.read_untracked().set_headers.write().iter_mut()
-                        .filter(|h|h.id == v.0)
+                        .filter(|h|h.id == v.0.parse().unwrap_or(0))
                         .for_each(|h| {h.set_name.set(v.1.to_owned())});
                 }
             }
-            on_change_value=move |v: (usize, String)| {
+            on_change_value=move |v: (String, String)| {
                 if let Err(err) = HeaderValue::from_str(&v.1) {
                     show_error(err.to_string(), messages);
                 } else {
                     params.read_untracked().set_headers.write().iter_mut()
-                        .filter(|h|h.id == v.0)
+                        .filter(|h|h.id == v.0.parse().unwrap_or(0))
                         .for_each(|h| {h.set_value.set(v.1.to_owned())});
                 }
             }

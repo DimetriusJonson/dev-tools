@@ -8,7 +8,7 @@ use web_sys::MouseEvent;
 use crate::components::ui::autocomplete_input::AutocompleteInput;
 
 pub trait KeyValueTableItem {
-    fn id(&self) -> usize;
+    fn id(&self) -> String;
     fn name(&self) -> ReadSignal<String>;
     fn set_name(&self) -> WriteSignal<String>;
     fn value(&self) -> ReadSignal<String>;
@@ -23,9 +23,9 @@ pub fn PropertyEditor<E>(
     #[prop(into, optional)] key_options: Vec<&'static str>,
     #[prop(into, optional)] value_options: Vec<&'static str>,
     #[prop(into)] on_add: Callback<(String, String)>,
-    #[prop(into)] on_delete: Callback<usize>,
-    #[prop(into)] on_change_key: Callback<(usize, String)>,
-    #[prop(into)] on_change_value: Callback<(usize, String)>,
+    #[prop(into)] on_delete: Callback<String>,
+    #[prop(into)] on_change_key: Callback<(String, String)>,
+    #[prop(into)] on_change_value: Callback<(String, String)>,
 ) -> impl IntoView
 where
     E: KeyValueTableItem + Send + Sync + Clone + 'static,
@@ -93,7 +93,7 @@ where
                             on_change={
                                 let id = item.id();
                                 move |value: String| {
-                                  on_change_key.run((id, value.to_owned()));
+                                  on_change_key.run((id.to_owned(), value.to_owned()));
                                 }
                             }
                             value=item.name().clone()
@@ -107,7 +107,7 @@ where
                             on_change={
                                 let id = item.id();
                                 move |value: String| {
-                                    on_change_value.run((id, value));
+                                    on_change_value.run((id.to_owned(), value));
                                 }
                             }
                             value=item.value()
@@ -125,7 +125,7 @@ where
                             on_click={
                                 let id = item.id();
                                 move |_| {
-                                    on_delete.run(id);
+                                    on_delete.run(id.to_owned());
                                 }
                             }
                         />

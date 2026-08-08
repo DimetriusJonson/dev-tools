@@ -35,8 +35,8 @@ pub struct RequestBodyFormValue {
 }
 
 impl KeyValueTableItem for RequestBodyFormValue {
-    fn id(&self) -> usize {
-        self.id
+    fn id(&self) -> String {
+        self.id.to_string()
     }
 
     fn name(&self) -> ReadSignal<String> {
@@ -77,8 +77,8 @@ pub struct CustomHeader {
 }
 
 impl KeyValueTableItem for CustomHeader {
-    fn id(&self) -> usize {
-        self.id
+    fn id(&self) -> String {
+        self.id.to_string()
     }
 
     fn name(&self) -> ReadSignal<String> {

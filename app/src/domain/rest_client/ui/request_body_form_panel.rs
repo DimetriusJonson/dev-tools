@@ -22,17 +22,17 @@ pub fn RequestBodyFormPanel(params: ReadSignal<RequestParams>) -> impl IntoView 
                     params.read_untracked().set_body_formencoded.write().push(RequestBodyFormValue{ id, name, set_name, value, set_value });
                 }
             }
-            on_delete=move |id| {
-                params.read_untracked().set_body_formencoded.write().retain(|fv| fv.id != id);
+            on_delete=move |id:String| {
+                params.read_untracked().set_body_formencoded.write().retain(|fv| fv.id != id.parse().unwrap_or(0));
             }
-            on_change_key=move |v: (usize, String)| {
+            on_change_key=move |v: (String, String)| {
                 params.read_untracked().set_body_formencoded.write().iter_mut()
-                    .filter(|fv|fv.id == v.0)
+                    .filter(|fv|fv.id == v.0.parse().unwrap_or(0))
                     .for_each(|fv| {fv.set_name.set(v.1.to_owned())});
             }
-            on_change_value=move |v: (usize, String)| {
+            on_change_value=move |v: (String, String)| {
                 params.read_untracked().set_body_formencoded.write().iter_mut()
-                    .filter(|h|h.id == v.0)
+                    .filter(|h|h.id == v.0.parse().unwrap_or(0))
                     .for_each(|h| {h.set_value.set(v.1.to_owned())});
             }
         />
