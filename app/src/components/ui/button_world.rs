@@ -18,7 +18,7 @@ pub fn ButtonWorld(
         None => NodeRef::new(),
     };
 
-    let base_classes = "w-10 flex items-center pl-1 py-1 font-medium rounded-3xl transition-colors duration-300 bg-primary hover:bg-primary/80 text-black".to_owned();
+    let base_classes = "w-10 flex items-center pl-1 py-1 font-medium transition-colors duration-300 bg-transparent text-sky-500/50 hover:text-sky-500".to_owned();
 
     view! {
         <button
@@ -26,11 +26,7 @@ pub fn ButtonWorld(
             id={id}
             title={title.to_owned()}
             aria-label={title.to_owned()}
-            class=move || format!("{} {} {} {}", base_classes,
-                match loading_memo.get() {
-                    true => "".to_owned(),
-                    _ => "".to_owned()
-                }, 
+            class=move || format!("{} {} {}", base_classes,
                 match loading_memo.get() || disabled_memo.get() {
                     true => "cursor-not-allowed".to_owned(),
                     false => "cursor-pointer".to_owned(),
