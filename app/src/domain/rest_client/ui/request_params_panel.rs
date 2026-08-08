@@ -74,8 +74,8 @@ pub fn RequestParamsPanel(
                     <Tabs class_name="".to_owned()
                         tab_selected=params_tab_selected set_tab_selected=set_params_tab_selected
                         items=move || vec![
-                            ("Headers", tab_headers_ref),
-                            ("Query", tab_query_ref),
+                            (t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
+                            (t_string!(i18n, rest_client_query_tab), tab_query_ref),
                         ] />
 
                     <div node_ref=tab_headers_ref class="flex-1 flex flex-col overflow-y-auto gap-y-2 pt-4">

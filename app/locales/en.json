@@ -95,7 +95,9 @@
     "rest_client_empty_project_name": "Empty project name.",
     "rest_client_already_exist_project": "A project with this name already exists.",
 
-    "delete_btn": "Delete"
+    "delete_btn": "Delete",
+    "add_btn": "Add",
 
-    
+    "rest_client_headers_tab": "Headers",
+    "rest_client_query_tab": "Query"
 }

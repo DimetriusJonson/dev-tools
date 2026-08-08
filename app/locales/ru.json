@@ -95,8 +95,9 @@
     "rest_client_empty_project_name": "Пустое имя проекта.",
     "rest_client_already_exist_project": "Проект с таким именем уже существует",
 
-    "delete_btn": "Удалить"
-
-
+    "delete_btn": "Удалить",
+    "add_btn": "Добавить",
+    "rest_client_headers_tab": "Заголовки",
+    "rest_client_query_tab": "Запрос"
 
 }

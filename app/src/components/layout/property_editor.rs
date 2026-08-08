@@ -69,8 +69,10 @@ where
                 />
                 <Button
                     label=move || "+".to_owned()
-                    class_name="text-bold".to_owned()
-                    button_width=ButtonWidth::OneSymbol
+                    title={t_string!(i18n, add_btn).to_owned()}
+                    class_name="text-bold w-10 px-2".to_owned()
+                    button_width=ButtonWidth::Custom
+                    button_height=ButtonHeight::Custom
                     color=ButtonColor::Success
                     loading=move || false
                     disabled=move || false
