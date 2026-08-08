@@ -1,4 +1,4 @@
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 pub mod app_router;
 pub mod server_starter;
 pub mod common;
