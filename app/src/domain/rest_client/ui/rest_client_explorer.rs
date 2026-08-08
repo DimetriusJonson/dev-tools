@@ -62,6 +62,11 @@ pub fn RestClientExplorer(
         move || project.get(),
         move |value, _prev, _| {
             set_requests.set(load_requests(value));
+            if let Some(first) = requests.read_untracked().get(0) {
+                set_current_request.set(first.get_untracked());
+            } else {
+                set_current_request.set(RequestInfo::new_empty());
+            }
         },
         false,
     );
