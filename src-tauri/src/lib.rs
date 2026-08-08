@@ -114,9 +114,11 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 server_url = remote_server_url.to_owned();
             }
 
+            let app_title = format!("{} {}", app.config().product_name.as_ref().unwrap(), app.config().version.as_ref().unwrap());
+
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(target_url))
-                .title("Developer Tools")
+                .title(app_title.to_owned())
                 .inner_size(1500.0, 1000.0)
                 .enable_clipboard_access()
                 .disable_drag_drop_handler()
@@ -128,6 +130,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
+                .tooltip(app_title)
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
