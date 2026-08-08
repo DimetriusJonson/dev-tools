@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::ui::button_world::ButtonWorld;
 use crate::domain::rest_client::ui::request_params::{
     RequestBodyFormValue, RequestParams,
 };
@@ -12,7 +13,6 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use crate::common::ui_utils::single_select_option;
-use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::select_input::SelectInput;
 
 use crate::components::ui::text_input::TextInput;
@@ -111,9 +111,8 @@ pub fn RequestParamsUrl(
                 }
             />
 
-            <Button node_ref=send_btn_node_ref
-                label=move || t!(i18n, rest_client_send_btn_label).to_html()
-                button_width=ButtonWidth::Lg
+            <ButtonWorld node_ref=send_btn_node_ref
+                title=t_string!(i18n, rest_client_send_btn_label).to_owned()
                 loading=move || in_progress.get()
                 on_click=on_send_click
                 disabled=move || in_progress.get()
