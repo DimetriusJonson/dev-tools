@@ -48,7 +48,7 @@ pub fn RequestParamsPanel(
         move |value, prev, _| {
             let id = value.id;
             let project_id = project.get_untracked();
-            if prev.is_none() || id != prev.unwrap().id || project_id.parse::<i32>().unwrap() != prev.unwrap().project_id {
+            if prev.is_none() || id != prev.unwrap().id || project_id.parse::<i32>().unwrap_or(0) != prev.unwrap().project_id {
                 let tab_index =
                     get_stored_value(RequestFieldKind::ParamsTab, "0".to_owned(), &project_id, id);
                 set_params_tab_selected.set(tab_index.parse().unwrap_or(0));
