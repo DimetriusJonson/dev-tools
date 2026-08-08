@@ -31,7 +31,7 @@ pub fn RestClientCUrlButton(
                     Ok(parsed_request) => {
                         let request = RequestInfo::new(
                             generate_request_id(project),
-                            project.read_untracked().parse().unwrap(),
+                            project.read_untracked().parse().unwrap_or(0),
                             parsed_request.url.to_owned(),
                             "".to_owned(),
                             parsed_request.method.to_string(),
