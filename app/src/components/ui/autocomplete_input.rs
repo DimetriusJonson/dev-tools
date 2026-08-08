@@ -129,7 +129,6 @@ pub fn AutocompleteInput(
                     };
                 }
                 on:keydown=on_keydown
-                on:focus=move |_| set_open.set(true)
                 on:blur=move |_| {
                     set_timeout(move || set_open.set(false), std::time::Duration::from_millis(150));
                 }
