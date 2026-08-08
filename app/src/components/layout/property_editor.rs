@@ -46,7 +46,7 @@ where
 
     view! {
         <div class="flex flex-col gap-x-1 md:gap-x-2 gap-y-2">
-            <div class="flex flex-row gap-x-1 md:gap-x-2">
+            <div class="relative flex flex-row gap-x-1 md:gap-x-2">
                 <AutocompleteInput
                     class_name="sm:min-w-36".to_owned()
                     placeholder=move || key_label_memo.get()
@@ -70,7 +70,7 @@ where
                 <Button
                     label=move || "+".to_owned()
                     title={t_string!(i18n, add_btn).to_owned()}
-                    class_name="text-bold w-10 px-2".to_owned()
+                    class_name="absolute right-0 top-0 text-bold w-8 px-2".to_owned()
                     button_width=ButtonWidth::Custom
                     button_height=ButtonHeight::Custom
                     color=ButtonColor::Success
@@ -86,7 +86,7 @@ where
             key=|key| key.id()
             children=move |item| {
                 view! {
-                    <div class="group flex gap-x-1 md:gap-x-2">
+                    <div class="relative group flex gap-x-1 md:gap-x-2">
                         <AutocompleteInput
                             class_name="sm:min-w-36".to_owned()
                             placeholder=move || key_label_memo.get()
@@ -118,8 +118,8 @@ where
                         <Button
                             label=move || "x".to_owned()
                             title=t_string!(i18n, delete_btn).to_owned()
-                            class_name="hidden group-hover:block text-bold text-gray-500 hover:text-danger".to_owned()
-                            button_width=ButtonWidth::OneSymbol
+                            class_name="absolute right-0 top-0 hidden group-hover:block text-bold w-8 px-2 text-gray-500 hover:text-danger".to_owned()
+                            button_width=ButtonWidth::Custom
                             button_height=ButtonHeight::Custom
                             color=ButtonColor::Custom
                             loading=move || false
