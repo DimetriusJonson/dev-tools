@@ -73,6 +73,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
 
             <div class="flex flex-col gap-4 items-center justify-center">
                 <Button
+                    title=move || "".to_owned()
                     label=move || t!(i18n, url_page_encode_btn_label).to_html()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get() == InProgressType::Encode
@@ -80,6 +81,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                     disabled=move || in_progress.get().is_active()
                 />
                 <Button
+                    title=move || "".to_owned()
                     label=move || t!(i18n, url_page_decode_btn_label).to_html()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get() == InProgressType::Decode
@@ -97,6 +99,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 }
 
                 <Button
+                    title=move || "".to_owned()
                     label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                     button_width=ButtonWidth::Auto
                     loading=move || false

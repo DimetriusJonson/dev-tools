@@ -38,7 +38,7 @@ pub enum ButtonHeight {
 pub fn Button(
     #[prop(optional)] id: i32,
     label: impl Fn() -> String + Send + Sync + 'static,
-    #[prop(optional)] title: Option<String>,
+    title: impl Fn() -> String + Send + Sync + 'static,
     #[prop(optional)] class_name: String,
     #[prop(optional)] color: ButtonColor,
     #[prop(optional)] button_width: ButtonWidth,
@@ -50,6 +50,7 @@ pub fn Button(
     #[prop(optional)] node_ref: Option<NodeRef::<leptos::html::Button>>,
 ) -> impl IntoView {
     let label_memo = Memo::new(move |_| label());
+    let title_memo = Memo::new(move |_| title());
     let loading_memo = Memo::new(move |_| loading());
     let disabled_memo = Memo::new(move |_| disabled());
 
@@ -92,7 +93,7 @@ pub fn Button(
         <button
             node_ref=button_element
             id={id}
-            title=title
+            title=move || title_memo.get()
             aria-label=move || label_memo.get()
             class=move || format!("{} {} {} {} {} {} {} {}", base_classes, variant_classes, button_width_classes, button_height_classes, text_size_classes,
                 match loading_memo.get() {

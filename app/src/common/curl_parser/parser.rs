@@ -98,6 +98,8 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::compressed_option => {
                 parsed.compressed = true;
             }
+            Rule::url_option => {
+            }
             Rule::EOI => break,
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
         }

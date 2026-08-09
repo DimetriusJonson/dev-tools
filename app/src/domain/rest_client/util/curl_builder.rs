@@ -3,23 +3,35 @@ use leptos::prelude::{GetUntracked, ReadUntracked};
 use crate::domain::rest_client::{model::request_params::{RequestBodyKind, RequestParams}, util::rest_client_utils::formencoded_to_str};
 
 pub fn build_curl_bash_cmd(request_params: &RequestParams) -> String {
+    build_curl_cmd(request_params, "curl", "\'", "\\\r\n") 
+}
+
+pub fn build_curl_win_cmd(request_params: &RequestParams) -> String {
+    build_curl_cmd(request_params, "curl.exe", "^\"", "^\r\n") 
+}
+
+fn build_curl_cmd(request_params: &RequestParams, process_name: &str, quote: &str, new_line: &str) -> String {
     let mut result = String::new();
 
-    result.push_str("curl ");
+    result.push_str(&format!("{} ", process_name));
 
     // url
-    result.push_str(&format!("\'{}\'", request_params.url.read_untracked()));
+    result.push_str(&format!("{}{}{}", quote, request_params.url.read_untracked(), quote));
 
     //method
-    result.push_str(&format!(" \\\r\n-X {}", &request_params.method.read_untracked()));
+    if request_params.method.read_untracked() != "GET".to_owned() {
+        result.push_str(&format!(" {}-X {}", new_line, &request_params.method.read_untracked()));
+    }
 
     //headers
     for header in request_params.headers.read_untracked().iter() {
-        result.push_str(" \\\r\n");
+        result.push_str(&format!(" {}", new_line));
         result.push_str(&format!(
-            "-H \'{}: {}\'",
+            "-H {}{}: {}{}",
+            quote,
             &header.name.read_untracked(),
-            &header.value.read_untracked()
+            &header.value.read_untracked(),
+            quote
         ));
     }
 
@@ -35,8 +47,8 @@ pub fn build_curl_bash_cmd(request_params: &RequestParams) -> String {
     };
 
     if !body.is_empty() {
-        result.push_str(" \\\r\n");
-        result.push_str(&format!("--data-raw \'{}\'", body));
+        result.push_str(&format!(" {}", new_line));
+        result.push_str(&format!("--data-raw {}{}{}", quote, body, quote));
     }
 
     result

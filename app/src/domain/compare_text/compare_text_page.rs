@@ -87,6 +87,7 @@ pub fn CompareTextPage() -> impl IntoView {
 
                     <div class="flex flex-col gap-4 items-center justify-center">
                         <Button
+                            title=move || "".to_owned()
                             label=move || t_display!(i18n, compare_btn_label).to_string()
                             button_width=ButtonWidth::Md
                             loading=move || in_progress.get()
@@ -94,6 +95,7 @@ pub fn CompareTextPage() -> impl IntoView {
                             disabled=move || in_progress.get()
                         />
                         <Button
+                            title=move || "".to_owned()
                             label=move || "⇄".to_owned()
                             button_width=ButtonWidth::Md
                             loading=move || false

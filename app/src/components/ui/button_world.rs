@@ -3,7 +3,7 @@ use leptos::{ev::MouseEvent, html, prelude::*};
 #[component]
 pub fn ButtonWorld(
     #[prop(optional)] id: i32,
-    #[prop(optional)] title: Option<String>,
+    title: impl Fn() -> String + Send + Sync + 'static,
     #[prop(optional)] class_name: String,
     loading: impl Fn() -> bool + Send + Sync + 'static,
     disabled: impl Fn() -> bool + Send + Sync + 'static,
@@ -12,6 +12,7 @@ pub fn ButtonWorld(
 ) -> impl IntoView {
     let loading_memo = Memo::new(move |_| loading());
     let disabled_memo = Memo::new(move |_| disabled());
+    let title_memo = Memo::new(move |_| title());
 
     let button_element: NodeRef<html::Button> = match node_ref {
         Some(node_ref) => node_ref,
@@ -24,8 +25,8 @@ pub fn ButtonWorld(
         <button
             node_ref=button_element
             id={id}
-            title={title.to_owned()}
-            aria-label={title.to_owned()}
+            title=move || {title_memo.get()}
+            aria-label=move || {title_memo.get()}
             class=move || format!("{} {} {}", base_classes,
                 match loading_memo.get() || disabled_memo.get() {
                     true => "cursor-not-allowed".to_owned(),

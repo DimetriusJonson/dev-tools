@@ -123,6 +123,7 @@ pub fn RequestResultPanel(
                             </div>
                             <div class="flex">
                                 <Button
+                                    title=move || "".to_owned()
                                     label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                                     class_name="w-full".to_owned()
                                     button_width=ButtonWidth::Auto

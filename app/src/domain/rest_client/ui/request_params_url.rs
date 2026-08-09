@@ -109,7 +109,7 @@ pub fn RequestParamsUrl(
             />
 
             <ButtonWorld node_ref=send_btn_node_ref
-                title=t_string!(i18n, rest_client_send_btn_label).to_owned()
+                title=move || t_string!(i18n, rest_client_send_btn_label).to_owned()
                 loading=move || in_progress.get()
                 on_click=on_send_click
                 disabled=move || in_progress.get()

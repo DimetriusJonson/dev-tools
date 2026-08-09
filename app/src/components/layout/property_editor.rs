@@ -69,7 +69,7 @@ where
                 />
                 <Button
                     label=move || "+".to_owned()
-                    title={t_string!(i18n, add_btn).to_owned()}
+                    title=move || {t_string!(i18n, add_btn).to_owned()}
                     class_name="absolute right-0 top-0 text-bold w-8 px-2".to_owned()
                     button_width=ButtonWidth::Custom
                     button_height=ButtonHeight::Custom
@@ -117,7 +117,7 @@ where
                         />
                         <Button
                             label=move || "x".to_owned()
-                            title=t_string!(i18n, delete_btn).to_owned()
+                            title=move || t_string!(i18n, delete_btn).to_owned()
                             class_name="absolute right-0 top-0 hidden group-hover:block text-bold w-8 px-2 text-gray-500 hover:text-danger".to_owned()
                             button_width=ButtonWidth::Custom
                             button_height=ButtonHeight::Custom

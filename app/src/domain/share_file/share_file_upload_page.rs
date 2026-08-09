@@ -94,6 +94,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     }
                 }/>
                 <Button
+                    title=move || "".to_owned()
                     label=move || t!(i18n, share_file_upload_page_upload_btn_label).to_html()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
@@ -136,6 +137,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     </div>
 
                     <Button
+                        title=move || "".to_owned()
                         label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                         button_width=ButtonWidth::Auto
                         loading=move || in_progress.get()

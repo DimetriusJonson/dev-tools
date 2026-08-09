@@ -16,8 +16,8 @@ double_quoted_inner_win = { (!("^" ~ "\"") ~ ANY)* }
 
 none_ws = { (!ws ~ ANY)+ }
 url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
-url = { single_quoted | double_quoted | double_quoted_win |url_plain }
-option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option }
+url = { single_quoted | double_quoted | double_quoted_win | url_plain}
+option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
 method = @{ "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" }
@@ -43,6 +43,8 @@ auth = { single_quoted | double_quoted | double_quoted_win | none_ws }
 ssl_verify_option = { ("-k" | "--insecure") }
 
 compressed_option = { "--compressed" }
+
+url_option = { "--url" }
 
 wss = _{ ws* ~ slash* ~ ws* }
 

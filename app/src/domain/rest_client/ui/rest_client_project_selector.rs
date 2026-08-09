@@ -101,6 +101,7 @@ pub fn ProjectSelector(
 
                     <div class="relative px-1 sm:px-2" node_ref=menu_ref>
                         <Button
+                            title=move || "".to_owned()
                             label=move || "...".to_owned()
                             class_name="hover:bg-sky-500/80 w-8 h-5 pb-6".to_owned()
                             button_width=ButtonWidth::Custom

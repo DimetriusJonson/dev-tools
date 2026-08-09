@@ -99,6 +99,7 @@ pub fn RestClientExplorer(
 
                 <div class="flex gap-2">
                     <Button
+                        title=move || "".to_owned()
                         label=move || t_display!(i18n, rest_client_explorer_create_request).to_string()
                         class_name="w-full".to_owned()
                         button_width=ButtonWidth::Auto

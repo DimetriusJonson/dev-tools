@@ -149,6 +149,7 @@ pub fn XmlPage() -> impl IntoView {
                     <div class="flex flex-row">
                         <FileInput node_ref=file_input_ref />
                         <Button
+                            title=move || "".to_owned()
                             label=move || t!(i18n, xml_page_format_btn_label).to_html()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::FormatFile
@@ -177,6 +178,7 @@ pub fn XmlPage() -> impl IntoView {
                         />
 
                         <Button
+                            title=move || "".to_owned()
                             label=move || t!(i18n, xml_page_format_btn_label).to_html()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Format
@@ -187,6 +189,7 @@ pub fn XmlPage() -> impl IntoView {
 
                     <div class="flex flex-row md:flex-col gap-4 md:py-8">
                         <Button
+                            title=move || "".to_owned()
                             label=move || t!(i18n, xml_page_unescape_btn_label).to_html()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Unescape
@@ -195,6 +198,7 @@ pub fn XmlPage() -> impl IntoView {
                         />
 
                         <Button
+                            title=move || "".to_owned()
                             label=move || t!(i18n, xml_page_escape_btn_label).to_html()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Escape
@@ -223,6 +227,7 @@ pub fn XmlPage() -> impl IntoView {
                 }
 
                 <Button
+                    title=move || "".to_owned()
                     label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
                     button_width=ButtonWidth::Auto
                     loading=move || false
