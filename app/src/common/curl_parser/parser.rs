@@ -14,6 +14,8 @@ use crate::common::curl_parser::parsed_request::ParsedRequest;
 pub struct CurlParser;
 
 pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
+    let input = &input.replace("^\\^\"", "\"");
+
     let pairs = CurlParser::parse(Rule::input, input)?;
     let mut parsed = ParsedRequest::default();
     for pair in pairs {
@@ -36,19 +38,19 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     full_url
                 };
 
-                parsed.url = url;
+                parsed.url = win_cmd_unescape(&url);
             }
             Rule::location => {
                 let s = pair.into_inner().next().expect("location string must be present").as_str();
                 let location = s.to_string();
-                parsed.url = location;
+                parsed.url = win_cmd_unescape(&location);
             }
             Rule::header => {
                 let s = pair.into_inner().next().expect("header string must be present").as_str();
 
                 // Use split_once for better performance
                 if let Some((name, value)) = s.split_once(':') {
-                    let header_value = unescape_string(value.trim());
+                    let header_value = unescape_string(&win_cmd_unescape(value.trim()));
                     parsed.headers.insert(
                         HeaderName::from_str(name.trim())?,
                         HeaderValue::from_str(&header_value)?,
@@ -58,7 +60,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     let mut kv = s.splitn(2, ':');
                     let name = kv.next().expect("key must present").trim();
                     let value = kv.next().expect("value must present").trim();
-                    let header_value = unescape_string(value);
+                    let header_value = unescape_string(&win_cmd_unescape(value));
                     parsed
                         .headers
                         .insert(HeaderName::from_str(name)?, HeaderValue::from_str(&header_value)?);
@@ -67,7 +69,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::cookie => {
                 let cookie_value = pair.into_inner().next().expect("cookie string must be present").as_str();
 
-                let header_value = unescape_string(cookie_value.trim());
+                let header_value = unescape_string(&win_cmd_unescape(cookie_value.trim()));
                 parsed.headers.insert(
                     HeaderName::from_str("Cookie")?,
                     HeaderValue::from_str(&header_value)?,
@@ -161,4 +163,31 @@ fn unescape_string(s: &str) -> String {
     }
 
     result
+}
+
+fn win_cmd_unescape(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut chars = s.chars();
+
+    while let Some(ch) = chars.next() {
+        if ch == '^' {
+            if let Some(next_ch) = chars.next() {
+                match next_ch {
+                    '&' | '|' | '<' | '>' | '^' | '\\' => result.push(next_ch),
+                    _ => {
+                        // If it's not a recognized escape sequence, keep both characters
+                        result.push(ch);
+                        result.push(next_ch);
+                    }
+                }
+            } else {
+                result.push(ch);
+            }
+        } else {
+            result.push(ch);
+        }
+    }
+
+    result
+
 }
