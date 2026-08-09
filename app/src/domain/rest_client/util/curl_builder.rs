@@ -1,16 +1,24 @@
 use leptos::prelude::{GetUntracked, ReadUntracked};
 
-use crate::domain::rest_client::{model::request_params::{RequestBodyKind, RequestParams}, util::rest_client_utils::formencoded_to_str};
+use crate::domain::rest_client::{
+    model::request_params::{RequestBodyKind, RequestParams},
+    util::rest_client_utils::formencoded_to_str,
+};
 
 pub fn build_curl_bash_cmd(request_params: &RequestParams) -> String {
-    build_curl_cmd(request_params, "curl", "\'", "\\\r\n") 
+    build_curl_cmd(request_params, "curl", "\'", "\\\r\n")
 }
 
 pub fn build_curl_win_cmd(request_params: &RequestParams) -> String {
-    build_curl_cmd(request_params, "curl.exe", "^\"", "^\r\n") 
+    win_cmd_escape(&build_curl_cmd(request_params, "curl.exe", "\"", "^\r\n"))
 }
 
-fn build_curl_cmd(request_params: &RequestParams, process_name: &str, quote: &str, new_line: &str) -> String {
+fn build_curl_cmd(
+    request_params: &RequestParams,
+    process_name: &str,
+    quote: &str,
+    new_line: &str,
+) -> String {
     let mut result = String::new();
 
     result.push_str(&format!("{} ", process_name));
@@ -30,7 +38,7 @@ fn build_curl_cmd(request_params: &RequestParams, process_name: &str, quote: &st
             "-H {}{}: {}{}",
             quote,
             &header.name.read_untracked(),
-            &header.value.read_untracked(),
+            &escape_string(&header.value.read_untracked()),
             quote
         ));
     }
@@ -41,7 +49,7 @@ fn build_curl_cmd(request_params: &RequestParams, process_name: &str, quote: &st
         RequestBodyKind::Formencoded => {
             match formencoded_to_str(request_params.body_formencoded.get_untracked()) {
                 Ok(url) => url,
-                Err(_err) => "".to_owned()
+                Err(_err) => "".to_owned(),
             }
         }
     };
@@ -49,6 +57,58 @@ fn build_curl_cmd(request_params: &RequestParams, process_name: &str, quote: &st
     if !body.is_empty() {
         result.push_str(&format!(" {}", new_line));
         result.push_str(&format!("--data-raw {}{}{}", quote, body, quote));
+    }
+
+    result
+}
+
+fn win_cmd_escape(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+
+    let chars1 = s.chars();
+    let chars2 = s.chars().skip(1);
+
+    // Zip them together to pair adjacent items
+    for (ch, next_ch) in chars1.zip(chars2) {
+        match ch {
+            '&' | '|' | '<' | '>' | '\\' | '"' => result.push('^'),
+            '^' => {
+                if next_ch != '\r' {
+                    result.push('^');
+                }
+            }
+            _ => (),
+        }
+        result.push(ch);
+    }
+
+    result
+}
+
+fn escape_string(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut chars = s.chars();
+
+    while let Some(ch) = chars.next() {
+        match ch {
+            '"' | '\\' | '/' => {
+                result.push('\\');
+                result.push(ch);
+            }
+            '\n' => {
+                result.push('\\');
+                result.push('n');
+            }
+            '\r' => {
+                result.push('\\');
+                result.push('r');
+            }
+            '\t' => {
+                result.push('\\');
+                result.push('t');
+            }
+            _ => result.push(ch),
+        }
     }
 
     result
