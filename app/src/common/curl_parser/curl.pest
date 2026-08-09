@@ -11,34 +11,32 @@ single_quoted = _{ "'" ~ single_quoted_inner ~ "'" }
 single_quoted_inner = { (!"'" ~ ANY)* }
 double_quoted = _{ "\"" ~ double_quoted_inner ~ "\"" }
 double_quoted_inner = { (("\\" ~ ANY) | (!"\"" ~ ANY))* }
-double_quoted_win = _{ "^" ~ "\"" ~ double_quoted_inner_win ~ "^" ~ "\"" }
-double_quoted_inner_win = { (!("^" ~ "\"") ~ ANY)* }
 
 none_ws = { (!ws ~ ANY)+ }
 url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
-url = { single_quoted | double_quoted | double_quoted_win | url_plain}
+url = { single_quoted | double_quoted | url_plain}
 option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
 method = @{ "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" }
 
 header_option = _{ ("-H" | "--header") ~ ws+ ~ header }
-header = { single_quoted | double_quoted | double_quoted_win | none_ws }
+header = { single_quoted | double_quoted | none_ws }
 
 cookie_option = _{ ("-b" | "--cookie") ~ ws+ ~ cookie }
-cookie = { single_quoted | double_quoted | double_quoted_win | none_ws }
+cookie = { single_quoted | double_quoted | none_ws }
 
 data_raw_option = _{ "--data-raw" ~ ws+ ~ data_raw }
-data_raw = { single_quoted | double_quoted | double_quoted_win | single_quoted_dollar | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
+data_raw = { single_quoted | double_quoted | single_quoted_dollar | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
 
 location_option = _{ ("-L" | "--location") ~ ws+ ~ location }
-location = { single_quoted | double_quoted | double_quoted_win | none_ws }
+location = { single_quoted | double_quoted | none_ws }
 
 body_option = _{ ("-d" | "--data") ~ ws+ ~ body }
-body = { single_quoted | double_quoted | double_quoted_win | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
+body = { single_quoted | double_quoted | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
 
 auth_option = _{ "-u" ~ ws+ ~ auth }
-auth = { single_quoted | double_quoted | double_quoted_win | none_ws }
+auth = { single_quoted | double_quoted | none_ws }
 
 ssl_verify_option = { ("-k" | "--insecure") }
 
