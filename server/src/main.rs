@@ -11,7 +11,7 @@ use server::server_starter::start_axum_server;
 
 #[derive(Parser)]
 #[command(name = "Dev Tools Server")]
-#[command(version = "0.5.1")]
+#[command(version = "0.5.2")]
 #[command(about = "WebDev Useful Tools Server", long_about = None)]
 struct Cli {
     #[arg(long, value_name = "ADDR", help="Server socket addr. Example \"--ADDR 0.0.0.0:3005\"")]
