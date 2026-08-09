@@ -1,10 +1,14 @@
+use std::str::FromStr;
+
 use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
     },
     domain::rest_client::{
-        model::request_params::{CustomHeader, RequestBodyFormValue, RequestInfo, RequestParams},
+        model::request_params::{
+            CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestInfo, RequestParams,
+        },
         ui::request_params_url::RequestParamsUrl,
         util::request_store::{
             RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
@@ -35,7 +39,7 @@ pub fn RequestPanel(
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
-    let (body_type, set_body_type) = signal("text".to_owned());
+    let (body_type, set_body_type) = signal(RequestBodyKind::Text);
     let (body_formencoded, set_body_formencoded) = signal(Vec::new());
     let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
     let (params, _set_params) = signal(RequestParams {
@@ -111,7 +115,7 @@ pub fn RequestPanel(
                         max_scr_ration={1.0 / 2.0}
                         default_scr_ration={1.0 / 6.0} />
 
-                    <RequestResultPanel project request_info save_response set_save_response data=response/>
+                    <RequestResultPanel project request_info save_response set_save_response data=response params/>
 
                 </div>
             </div>
@@ -158,11 +162,20 @@ fn create_req_watchers(
     );
 
     create_watcher(params.read_untracked().body, RequestFieldKind::Body, project, request_info);
-    create_watcher(
-        params.read_untracked().body_type,
-        RequestFieldKind::BodyType,
-        project,
-        request_info,
+
+    Effect::watch(
+        move || params.read_untracked().body_type,
+        move |value, prev, _| {
+            if prev.is_none() || value != prev.unwrap() {
+                set_stored_value(
+                    project,
+                    request_info.read_untracked().id,
+                    RequestFieldKind::BodyType,
+                    value.read_untracked().to_string(),
+                )
+            }
+        },
+        false,
     );
 
     Effect::watch(
@@ -229,16 +242,19 @@ fn create_request_info_watcher(
                     id,
                 ));
 
-                params.read_untracked().set_body_type.set(get_stored_value(
-                    RequestFieldKind::BodyType,
-                    "".to_owned(),
-                    project.read_untracked().as_str(),
-                    id,
-                ));
+                params.read_untracked().set_body_type.set(
+                    RequestBodyKind::from_str(&get_stored_value(
+                        RequestFieldKind::BodyType,
+                        "".to_owned(),
+                        project.read_untracked().as_str(),
+                        id,
+                    ))
+                    .unwrap_or_default(),
+                );
                 set_body_tab_selected.set(
-                    match params.read_untracked().body_type.read_untracked().as_str() {
-                        "formencoded" => 1,
-                        _ => 0,
+                    match params.read_untracked().body_type.get_untracked() {
+                        RequestBodyKind::Formencoded => 1,
+                        RequestBodyKind::Text => 0,
                     },
                 );
 

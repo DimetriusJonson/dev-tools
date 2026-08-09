@@ -99,5 +99,10 @@
     "add_btn": "Add",
 
     "rest_client_headers_tab": "Headers",
-    "rest_client_query_tab": "Query"
+    "rest_client_query_tab": "Query",
+
+    "rest_client_curl_copied": "The cURL command has been copied to the clipboard.",
+    "rest_client_curl_build_btn_title": "Copy the cURL command to the clipboard."
+
+
 }

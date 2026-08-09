@@ -1,3 +1,5 @@
+use std::{convert::Infallible, fmt::Display, str::FromStr};
+
 use leptos::prelude::{ReadSignal, WriteSignal};
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +11,13 @@ pub struct RestClientProject {
     pub name: String,
 }
 
+#[derive(PartialEq, Eq, Clone, Default)]
+pub enum RequestBodyKind {
+    #[default]
+    Text,
+    Formencoded,
+}
+
 #[derive(Clone, Debug)]
 pub struct RequestParams {
     pub url: ReadSignal<String>,
@@ -17,8 +26,8 @@ pub struct RequestParams {
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,
     pub set_body: WriteSignal<String>,
-    pub body_type: ReadSignal<String>,
-    pub set_body_type: WriteSignal<String>,
+    pub body_type: ReadSignal<RequestBodyKind>,
+    pub set_body_type: WriteSignal<RequestBodyKind>,
     pub body_formencoded: ReadSignal<Vec<RequestBodyFormValue>>,
     pub set_body_formencoded: WriteSignal<Vec<RequestBodyFormValue>>,
     pub headers: ReadSignal<Vec<CustomHeader>>,
@@ -55,7 +64,6 @@ impl KeyValueTableItem for RequestBodyFormValue {
         self.set_value
     }
 }
-
 
 #[derive(Clone, Debug)]
 pub struct RequestInfo {
@@ -122,5 +130,26 @@ impl RequestInfo {
 
     pub fn display_name(&self) -> String {
         if !self.name.is_empty() { self.name.to_owned() } else { self.url.to_owned() }
+    }
+}
+
+impl Display for RequestBodyKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RequestBodyKind::Text => write!(f, "text"),
+            RequestBodyKind::Formencoded => write!(f, "formencoded"),
+        }
+    }
+}
+
+impl FromStr for RequestBodyKind {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "formencoded" {
+            Ok(RequestBodyKind::Formencoded)
+        } else {
+            Ok(RequestBodyKind::Text)
+        }
     }
 }

@@ -1,10 +1,7 @@
-use std::collections::HashMap;
-
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button_world::ButtonWorld;
-use crate::domain::rest_client::model::request_params::{
-    RequestBodyFormValue, RequestParams,
-};
+use crate::domain::rest_client::model::request_params::{RequestBodyKind, RequestParams};
+use crate::domain::rest_client::util::rest_client_utils::formencoded_to_str;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
@@ -39,8 +36,8 @@ pub fn RequestParamsUrl(
                 headers.push((header.name.get_untracked(), header.value.get_untracked()));
             }
 
-            let body = match params.body_type.read_untracked().as_str() {
-                "formencoded" => {
+            let body = match params.body_type.get_untracked() {
+                RequestBodyKind::Formencoded => {
                     match formencoded_to_str(params.body_formencoded.get_untracked()) {
                         Ok(url) => url,
                         Err(err) => {
@@ -49,7 +46,7 @@ pub fn RequestParamsUrl(
                         }
                     }
                 }
-                _ => params.body.get_untracked(),
+                RequestBodyKind::Text => params.body.get_untracked(),
             };
 
             let rc_request = RestClientRequest {
@@ -120,13 +117,4 @@ pub fn RequestParamsUrl(
 
         </div>
     }
-}
-
-fn formencoded_to_str(form_values: Vec<RequestBodyFormValue>) -> Result<String, Error> {
-    let map: HashMap<String, String> = form_values
-        .into_iter()
-        .map(|fv| (fv.name.get_untracked(), fv.value.get_untracked()))
-        .collect();
-
-    Ok(serde_urlencoded::to_string(&map)?)
 }

@@ -6,7 +6,8 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::Tabs;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
-use crate::domain::rest_client::model::request_params::RequestInfo;
+use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
+use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
@@ -17,6 +18,7 @@ use leptos::prelude::*;
 pub fn RequestResultPanel(
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
+    params: ReadSignal<RequestParams>,
     save_response: ReadSignal<bool>,
     set_save_response: WriteSignal<bool>,
     data: ReadSignal<Option<RestClientResponse>>,
@@ -136,9 +138,8 @@ pub fn RequestResultPanel(
                                 <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={render_headers(response_headers)}/>
                             </div>
                         </div>
-                        <div node_ref=tab_request_raw_ref class="flex text-xs md:text-base overflow-auto">
-                            <pre class="w-full whitespace-pre-wrap break-all">{request_raw}</pre>
-                        </div>
+
+                        <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params/>
                     </div>
                 </div>
             }
