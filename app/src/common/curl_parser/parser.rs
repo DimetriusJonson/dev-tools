@@ -14,7 +14,7 @@ use crate::common::curl_parser::parsed_request::ParsedRequest;
 pub struct CurlParser;
 
 pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
-    let input = &input.replace("^\\^\"", "\"");
+    let input = &input.replace("^\\^\"", "\""); // win cmd double quote unescape 
 
     let pairs = CurlParser::parse(Rule::input, input)?;
     let mut parsed = ParsedRequest::default();
