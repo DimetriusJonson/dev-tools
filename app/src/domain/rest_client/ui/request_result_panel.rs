@@ -6,8 +6,8 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::Tabs;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
-use crate::domain::rest_client::ui::request_params::RequestInfo;
-use crate::domain::rest_client::ui::request_store::{RequestFieldKind, get_stored_value};
+use crate::domain::rest_client::model::request_params::RequestInfo;
+use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
 use leptos::html::Div;

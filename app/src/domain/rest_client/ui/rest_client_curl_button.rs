@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use leptos::{prelude::*, task::spawn_local};
 
-use crate::domain::rest_client::ui::request_store::{
+use crate::domain::rest_client::util::request_store::{
     RequestFieldKind, generate_request_id, set_stored_requests_ids, set_stored_value,
 };
 use crate::i18n::*;
@@ -11,7 +11,7 @@ use crate::{
         curl_parser::parser::parse_curl_cmd, ui_utils::paste_from_clipboard,
     },
     components::layout::message_banner::{Messages, show_error},
-    domain::rest_client::ui::request_params::RequestInfo,
+    domain::rest_client::model::request_params::RequestInfo,
 };
 
 #[component]

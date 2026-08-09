@@ -1,13 +1,6 @@
 use leptos::{html::Div, prelude::*};
 
 use crate::{
-    components::ui::button::{Button, ButtonWidth}, domain::rest_client::ui::{
-        request_store::{
-            RequestFieldKind, delete_stored_request, generate_request_id, get_stored_value, get_stored_requests_ids, set_stored_requests_ids, set_stored_value,
-        }, request_params::RequestInfo,
-    },
-};
-use crate::{
     common::ui_utils::get_accept_language,
     domain::rest_client::ui::{
         rest_client_curl_button::RestClientCUrlButton,
@@ -15,6 +8,16 @@ use crate::{
         rest_client_project_selector::ProjectSelector,
     },
     i18n::*,
+};
+use crate::{
+    components::ui::button::{Button, ButtonWidth},
+    domain::rest_client::{
+        model::request_params::RequestInfo,
+        util::request_store::{
+            RequestFieldKind, delete_stored_request, generate_request_id, get_stored_requests_ids,
+            get_stored_value, set_stored_requests_ids, set_stored_value,
+        },
+    },
 };
 
 #[component]

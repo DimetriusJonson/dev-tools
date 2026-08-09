@@ -6,14 +6,17 @@ use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::ui::request_store::{RequestFieldKind, delete_stored_request, set_stored_requests_ids, set_stored_value};
+use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
+use crate::domain::rest_client::util::request_store::{
+    RequestFieldKind, delete_stored_request, set_stored_requests_ids, set_stored_value,
+};
 use crate::i18n::*;
 use crate::{
     components::ui::{
         button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth},
         text_input::TextInput,
     },
-    domain::rest_client::ui::{request_params::RequestInfo, request_popup_menu::RequestPopupMenu},
+    domain::rest_client::model::request_params::RequestInfo,
 };
 
 #[component]

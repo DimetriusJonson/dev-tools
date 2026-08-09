@@ -2,11 +2,16 @@ use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
-    }, domain::rest_client::ui::{
-        request_params::RequestBodyFormValue, request_params_url::RequestParamsUrl, request_store::{
+    },
+    domain::rest_client::{
+        model::request_params::{CustomHeader, RequestBodyFormValue, RequestInfo, RequestParams},
+        ui::request_params_url::RequestParamsUrl,
+        util::request_store::{
             RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
         },
-    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
+    },
+    i18n::*,
+    model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{
     html::{Button, Div},
@@ -15,9 +20,7 @@ use leptos::{
 };
 
 use crate::domain::rest_client::ui::{
-    request_params::{CustomHeader, RequestInfo, RequestParams},
-    request_params_panel::RequestParamsPanel,
-    request_result_panel::RequestResultPanel,
+    request_params_panel::RequestParamsPanel, request_result_panel::RequestResultPanel,
 };
 
 #[component]
@@ -212,7 +215,10 @@ fn create_request_info_watcher(
                 send_btn.click();
             }
 
-            if prev.is_none() || id != prev.unwrap().id || project_id.parse::<i32>().unwrap_or(0) != prev.unwrap().project_id {
+            if prev.is_none()
+                || id != prev.unwrap().id
+                || project_id.parse::<i32>().unwrap_or(0) != prev.unwrap().project_id
+            {
                 set_response.set(None);
                 params.read_untracked().set_url.set(value.url.to_owned());
                 params.read_untracked().set_method.set(value.method.to_owned());

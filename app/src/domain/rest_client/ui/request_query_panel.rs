@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use crate::components::layout::property_editor::{KeyValueTableItem, PropertyEditor};
-use crate::domain::rest_client::ui::request_params::{RequestInfo, RequestParams};
+use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
 use crate::i18n::*;
 use leptos::prelude::*;
 use url::Url;

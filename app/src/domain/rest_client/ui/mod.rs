@@ -1,7 +1,6 @@
 pub mod request_body_form_panel;
 pub mod request_headers_panel;
 pub mod request_panel;
-pub mod request_params;
 pub mod request_params_panel;
 pub mod request_popup_menu;
 pub mod request_result_panel;
@@ -9,6 +8,5 @@ pub mod rest_client_explorer;
 pub mod rest_client_project_selector;
 pub mod rest_client_explorer_row;
 pub mod rest_client_curl_button;
-pub mod request_store;
 pub mod request_params_url;
 pub mod request_query_panel;

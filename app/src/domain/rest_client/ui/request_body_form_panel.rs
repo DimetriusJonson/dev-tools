@@ -1,5 +1,5 @@
 use crate::components::layout::property_editor::PropertyEditor;
-use crate::domain::rest_client::ui::request_params::{RequestBodyFormValue, RequestParams};
+use crate::domain::rest_client::model::request_params::{RequestBodyFormValue, RequestParams};
 use crate::i18n::*;
 use leptos::prelude::*;
 

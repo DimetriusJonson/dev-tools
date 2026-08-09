@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button_world::ButtonWorld;
-use crate::domain::rest_client::ui::request_params::{
+use crate::domain::rest_client::model::request_params::{
     RequestBodyFormValue, RequestParams,
 };
 use crate::i18n::*;

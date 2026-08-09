@@ -4,7 +4,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{
     common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
-    domain::rest_client::ui::request_params::{RequestInfo, RestClientProject},
+    domain::rest_client::model::request_params::{RequestInfo, RestClientProject},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, EnumString, EnumIter, Display)]

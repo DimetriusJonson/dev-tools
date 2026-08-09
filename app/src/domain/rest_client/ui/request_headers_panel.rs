@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::property_editor::PropertyEditor;
-use crate::domain::rest_client::ui::request_params::{CustomHeader, RequestParams};
+use crate::domain::rest_client::model::request_params::{CustomHeader, RequestParams};
 use crate::i18n::*;
 use http::{HeaderName, HeaderValue};
 use leptos::prelude::*;

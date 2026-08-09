@@ -3,9 +3,9 @@ use crate::components::layout::tabs::Tabs;
 use crate::components::ui::text_area::TextArea;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
-use crate::domain::rest_client::ui::request_params::{RequestInfo, RequestParams};
+use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_query_panel::RequestQueryPanel;
-use crate::domain::rest_client::ui::request_store::{
+use crate::domain::rest_client::util::request_store::{
     RequestFieldKind, build_request_stored_key, get_stored_value, set_stored_value,
 };
 use crate::i18n::*;

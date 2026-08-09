@@ -10,9 +10,9 @@ use crate::components::ui::button::{
 };
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_input::TextInput;
-use crate::domain::rest_client::ui::request_params::RestClientProject;
+use crate::domain::rest_client::model::request_params::RestClientProject;
 use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
-use crate::domain::rest_client::ui::request_store::{
+use crate::domain::rest_client::util::request_store::{
     get_stored_current_project, get_stored_projects, set_stored_current_project,
     set_stored_projects,
 };
