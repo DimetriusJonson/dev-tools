@@ -28,6 +28,11 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <HydrationScripts options/>
                 <MetaTags/>
                 <link rel="manifest" href="/manifest.json"/>
+
+                <link rel="stylesheet" href="https://unpkg.com/codemirror@5.65.17/lib/codemirror.css" />
+
+                <script src="/codemirror.bundle.js"></script>
+
             </head>
             <body>
                 <App/>

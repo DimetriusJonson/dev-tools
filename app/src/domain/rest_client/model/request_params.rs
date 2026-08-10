@@ -15,6 +15,7 @@ pub struct RestClientProject {
 pub enum RequestBodyKind {
     #[default]
     Text,
+    Json,
     Formencoded,
 }
 
@@ -26,6 +27,8 @@ pub struct RequestParams {
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,
     pub set_body: WriteSignal<String>,
+    pub body_json: ReadSignal<String>,
+    pub set_body_json: WriteSignal<String>,
     pub body_type: ReadSignal<RequestBodyKind>,
     pub set_body_type: WriteSignal<RequestBodyKind>,
     pub body_formencoded: ReadSignal<Vec<RequestBodyFormValue>>,
@@ -36,7 +39,7 @@ pub struct RequestParams {
 
 #[derive(Clone, Debug)]
 pub struct RequestBodyFormValue {
-    pub id: usize,
+    pub id: String,
     pub name: ReadSignal<String>,
     pub set_name: WriteSignal<String>,
     pub value: ReadSignal<String>,
@@ -77,7 +80,7 @@ pub struct RequestInfo {
 
 #[derive(Clone, Debug)]
 pub struct CustomHeader {
-    pub id: usize,
+    pub id: String,
     pub name: ReadSignal<String>,
     pub set_name: WriteSignal<String>,
     pub value: ReadSignal<String>,
@@ -138,6 +141,7 @@ impl Display for RequestBodyKind {
         match self {
             RequestBodyKind::Text => write!(f, "text"),
             RequestBodyKind::Formencoded => write!(f, "formencoded"),
+            RequestBodyKind::Json => write!(f, "json"),
         }
     }
 }
@@ -148,6 +152,8 @@ impl FromStr for RequestBodyKind {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s == "formencoded" {
             Ok(RequestBodyKind::Formencoded)
+        } else if s == "json" {
+            Ok(RequestBodyKind::Json)
         } else {
             Ok(RequestBodyKind::Text)
         }

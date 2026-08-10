@@ -5,6 +5,7 @@ pub mod domain;
 pub mod hljs;
 pub mod common;
 pub mod model;
+pub mod code_mirror;
 
 include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
 

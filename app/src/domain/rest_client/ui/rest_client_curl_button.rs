@@ -44,14 +44,14 @@ pub fn RestClientCUrlButton(
                         set_stored_value(project, request.id, RequestFieldKind::Url, request.url);
                         set_stored_value(project, request.id, RequestFieldKind::Method, request.method);
 
-                        if let Some(content_type) = parsed_request
+                        let content_type = parsed_request
                             .headers
                             .iter()
                             .find(|h| h.0.as_str().to_lowercase() == "content-type")
                             .map(|h| h.1.to_str().ok())
-                            .unwrap_or(None)
-                            && content_type.to_lowercase() == "application/x-www-form-urlencoded"
-                        {
+                            .unwrap_or(None);
+
+                        if let Some(content_type) = content_type && content_type.to_lowercase() == "application/x-www-form-urlencoded" {
                             if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
                                 &parsed_request.body.join("\n"),
                             ) {
@@ -67,6 +67,14 @@ pub fn RestClientCUrlButton(
                                     );
                                 }
                             }
+                        } else if let Some(content_type) = content_type && content_type.to_lowercase().contains("json") { 
+                            set_stored_value(
+                                project,
+                                request.id,
+                                RequestFieldKind::BodyJson,
+                                parsed_request.body.join("\n"),
+                            );
+                            set_stored_value(project, request.id, RequestFieldKind::BodyType, "text".to_owned());
                         } else {
                             set_stored_value(
                                 project,

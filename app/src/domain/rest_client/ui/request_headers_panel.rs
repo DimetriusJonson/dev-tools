@@ -7,6 +7,7 @@ use crate::domain::rest_client::model::request_params::{CustomHeader, RequestPar
 use crate::i18n::*;
 use http::{HeaderName, HeaderValue};
 use leptos::prelude::*;
+use uuid::Uuid;
 
 use crate::common::constants::MEDIA_TYPES_AUTOCOMPLETE;
 
@@ -35,7 +36,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                         return;
                     }
 
-                    let id = params.read_untracked().headers.read_untracked().iter().map(|h|h.id).max().unwrap_or_default() + 1;
+                    let id = Uuid::new_v4().to_string();
                     let (name, set_name) = signal(v.0);
                     let (value, set_value) = signal(v.1);
 
@@ -43,14 +44,14 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 }
             }
             on_delete=move |id:String| {
-                params.read_untracked().set_headers.write().retain(|h| h.id != id.parse().unwrap_or(0));
+                params.read_untracked().set_headers.write().retain(|h| h.id != id);
             }
             on_change_key=move |v: (String, String)| {
                 if let Err(err) = HeaderName::from_str(&v.1) {
                     show_error(err.to_string(), messages);
                 } else {
                     params.read_untracked().set_headers.write().iter_mut()
-                        .filter(|h|h.id == v.0.parse().unwrap_or(0))
+                        .filter(|h|h.id == v.0)
                         .for_each(|h| {h.set_name.set(v.1.to_owned())});
                 }
             }
@@ -59,7 +60,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     show_error(err.to_string(), messages);
                 } else {
                     params.read_untracked().set_headers.write().iter_mut()
-                        .filter(|h|h.id == v.0.parse().unwrap_or(0))
+                        .filter(|h|h.id == v.0)
                         .for_each(|h| {h.set_value.set(v.1.to_owned())});
                 }
             }

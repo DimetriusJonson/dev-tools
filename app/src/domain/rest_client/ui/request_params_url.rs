@@ -47,6 +47,7 @@ pub fn RequestParamsUrl(
                     }
                 }
                 RequestBodyKind::Text => params.body.get_untracked(),
+                RequestBodyKind::Json => params.body_json.get_untracked(),
             };
 
             let rc_request = RestClientRequest {
