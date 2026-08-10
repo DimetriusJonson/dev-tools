@@ -42,6 +42,6 @@ pub fn RequestJsonEditor(
     );
 
     view! {
-        <div id="request-json-editor" class="w-full text-white border"></div>
+        <div id="request-json-editor" class="w-full dark:text-white border"></div>
     }
 }
