@@ -1,12 +1,12 @@
 use leptos::html::Div;
-use leptos::{prelude::*, task::spawn_local};
+use leptos::prelude::*;
 
 use crate::common::ui_utils::copy_to_clipboard;
+use crate::components::layout::message_banner::{Messages, show_info};
 use crate::components::ui::button::{Button, ButtonHeight, ButtonWidth};
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::util::curl_builder::{build_curl_bash_cmd, build_curl_win_cmd};
 use crate::i18n::*;
-use crate::components::layout::message_banner::{Messages, show_info};
 
 #[component]
 pub fn RequestRawPanel(
@@ -17,19 +17,19 @@ pub fn RequestRawPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
 
-    let on_build_c_url = move |_| spawn_local(async move { 
+    let on_build_c_url = move |_| {
         let cmd = build_curl_bash_cmd(&params.read_untracked());
 
         copy_to_clipboard(&cmd);
         show_info(t_string!(i18n, rest_client_curl_copied).to_owned(), messages);
-    });
+    };
 
-    let on_build_c_url_win = move |_| spawn_local(async move { 
+    let on_build_c_url_win = move |_| {
         let cmd = build_curl_win_cmd(&params.read_untracked());
 
         copy_to_clipboard(&cmd);
         show_info(t_string!(i18n, rest_client_curl_copied).to_owned(), messages);
-    });
+    };
 
     view! {
         <div class="flex flex-col text-xs md:text-base overflow-auto gap-4" node_ref=node_ref>

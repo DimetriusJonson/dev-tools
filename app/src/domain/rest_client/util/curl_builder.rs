@@ -65,21 +65,26 @@ fn build_curl_cmd(
 fn win_cmd_escape(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
 
-    let chars1 = s.chars();
-    let chars2 = s.chars().skip(1);
-
-    // Zip them together to pair adjacent items
-    for (ch, next_ch) in chars1.zip(chars2) {
-        match ch {
+    let mut chars = s.chars();
+    let mut ch = chars.next();
+    while ch.is_some() {
+        let current_ch = ch.unwrap();
+        match current_ch {
             '&' | '|' | '<' | '>' | '\\' | '"' => result.push('^'),
             '^' => {
-                if next_ch != '\r' {
-                    result.push('^');
+                if let Some(next_ch) = chars.next() {
+                    if next_ch != '\r' {
+                        result.push('^');
+                    }
+                    result.push(current_ch);
+                    ch = Some(next_ch);
+                    continue;
                 }
             }
             _ => (),
         }
-        result.push(ch);
+        result.push(current_ch);
+        ch = chars.next();
     }
 
     result
@@ -91,7 +96,7 @@ fn escape_string(s: &str) -> String {
 
     while let Some(ch) = chars.next() {
         match ch {
-            '"' | '\\' | '/' => {
+            '"' | '\\' => {
                 result.push('\\');
                 result.push(ch);
             }
