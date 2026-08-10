@@ -29,10 +29,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <MetaTags/>
                 <link rel="manifest" href="/manifest.json"/>
 
-                <link rel="stylesheet" href="https://unpkg.com/codemirror@5.65.17/lib/codemirror.css" />
-
-                <script src="/codemirror.bundle.js"></script>
-
+                <script src="/codemirror.min.js"></script>
             </head>
             <body>
                 <App/>
