@@ -65,26 +65,20 @@ fn build_curl_cmd(
 fn win_cmd_escape(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
 
-    let mut chars = s.chars();
-    let mut ch = chars.next();
-    while ch.is_some() {
-        let current_ch = ch.unwrap();
-        match current_ch {
+    let mut chars = s.chars().peekable();
+    while let Some(ch) = chars.next() {
+        match ch {
             '&' | '|' | '<' | '>' | '\\' | '"' => result.push('^'),
             '^' => {
-                if let Some(next_ch) = chars.next() {
-                    if next_ch != '\r' {
-                        result.push('^');
-                    }
-                    result.push(current_ch);
-                    ch = Some(next_ch);
-                    continue;
+                if let Some(&next_ch) = chars.peek()
+                    && next_ch != '\r'
+                {
+                    result.push('^');
                 }
             }
             _ => (),
         }
-        result.push(current_ch);
-        ch = chars.next();
+        result.push(ch);
     }
 
     result
