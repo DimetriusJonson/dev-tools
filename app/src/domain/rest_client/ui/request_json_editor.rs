@@ -42,6 +42,10 @@ pub fn RequestJsonEditor(
     );
 
     view! {
-        <div id="request-json-editor" class="w-full dark:text-white border"></div>
+        <div id="request-json-editor" class="w-full px-1 md:px-4 py-2 rounded-md shadow-inner border
+        text-gray-700 dark:text-gray-50
+        bg-white dark:bg-dark-bg
+        border-gray-300 dark:border-gray-700
+        "></div>
     }
 }
