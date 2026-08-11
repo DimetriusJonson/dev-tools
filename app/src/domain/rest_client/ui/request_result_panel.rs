@@ -3,7 +3,7 @@ use crate::common::json_processor::format_json;
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
-use crate::components::layout::tabs::Tabs;
+use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_inner::CodeInner;
 use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
@@ -93,9 +93,9 @@ pub fn RequestResultPanel(
                 <div class="flex-1 overflow-y-auto flex flex-col gap-4">
 
                     <Tabs tab_selected set_tab_selected items=move || vec![
-                            (t_string!(i18n, rest_client_response_body_tab), tab_body_ref),
-                            (t_string!(i18n, rest_client_response_headers_tab), tab_headers_ref),
-                            (t_string!(i18n, rest_client_response_request_raw_tab), tab_request_raw_ref)
+                            TabItem::new_simple(t_string!(i18n, rest_client_response_body_tab), tab_body_ref),
+                            TabItem::new_simple(t_string!(i18n, rest_client_response_headers_tab), tab_headers_ref),
+                            TabItem::new_simple(t_string!(i18n, rest_client_response_request_raw_tab), tab_request_raw_ref)
                         ] />
 
                     //Tab Content Panels

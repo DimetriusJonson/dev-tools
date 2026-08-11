@@ -1,6 +1,6 @@
 use crate::common::text_comparator::compare_text;
 use crate::components::layout::drag_splitter::DragSplitter;
-use crate::components::layout::tabs::Tabs;
+use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::i18n::*;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -45,8 +45,8 @@ pub fn CompareTextPage() -> impl IntoView {
 
         <div class="flex-1 px-2 ">
             <Tabs tab_selected set_tab_selected items=move || vec![
-                    (t_string!(i18n, compare_page_source_tab), tab_source_ref), 
-                    (t_string!(i18n, compare_page_result_tab), tab_result_ref)
+                    TabItem::new_simple(t_string!(i18n, compare_page_source_tab), tab_source_ref), 
+                    TabItem::new_simple(t_string!(i18n, compare_page_result_tab), tab_result_ref)
                 ] />
 
             //Tab Content Panels

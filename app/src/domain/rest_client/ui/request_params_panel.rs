@@ -2,7 +2,7 @@ use crate::common::json_processor::format_json;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::components::layout::tabs::Tabs;
+use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::{
@@ -73,10 +73,10 @@ pub fn RequestParamsPanel(
         move || body_tab_selected.get(),
         move |value, _prev, _| {
             let body_type = match value {
-                1 => RequestBodyKind::Json,
-                2 => RequestBodyKind::Xml,
+                1 => RequestBodyKind::Xml,
+                2 => RequestBodyKind::Text,
                 3 => RequestBodyKind::Formencoded,
-                _ => RequestBodyKind::Text,
+                _ => RequestBodyKind::Json,
             };
 
             match body_type {
@@ -120,8 +120,8 @@ pub fn RequestParamsPanel(
                     <Tabs class_name="".to_owned()
                         tab_selected=params_tab_selected set_tab_selected=set_params_tab_selected
                         items=move || vec![
-                            (t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
-                            (t_string!(i18n, rest_client_query_tab), tab_query_ref),
+                            TabItem::new_simple(t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
+                            TabItem::new_simple(t_string!(i18n, rest_client_query_tab), tab_query_ref),
                         ] />
 
                     <div node_ref=tab_headers_ref class="flex-1 flex flex-col overflow-y-auto gap-y-2 pt-4">
@@ -148,10 +148,10 @@ pub fn RequestParamsPanel(
                     <Tabs class_name="".to_owned()
                         tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
                         items=move || vec![
-                            ("Text", tab_body_text_ref),
-                            ("Json", tab_body_text_ref),
-                            ("Xml", tab_body_text_ref),
-                            ("Form Encoded", tab_body_form_encoded_ref),
+                            TabItem::new("JSON", "application/json", tab_body_text_ref),
+                            TabItem::new("XML", "application/xml", tab_body_text_ref),
+                            TabItem::new("Text", "text/plain", tab_body_text_ref),
+                            TabItem::new("Form-encode", "application/x-www-form-urlencoded", tab_body_form_encoded_ref),
                         ] />
 
                     <div id="code_editor" node_ref=tab_body_text_ref class="group relative flex-1 flex overflow-y-auto pt-4">

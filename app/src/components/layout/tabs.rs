@@ -1,9 +1,16 @@
 use leptos::{html::Div, prelude::*};
 
+#[derive(Clone, Debug)]
+pub struct TabItem {
+    pub name: String,
+    pub title: String,
+    pub node_ref: NodeRef<Div>,
+}
+
 #[component]
 pub fn Tabs(
     #[prop(optional)] class_name: String,
-    items: impl Fn() -> Vec<(&'static str, NodeRef<Div>)> + Send + Sync + 'static,
+    items: impl Fn() -> Vec<TabItem> + Send + Sync + 'static,
     tab_selected: ReadSignal<usize>,
     set_tab_selected: WriteSignal<usize>,
 ) -> impl IntoView {
@@ -35,10 +42,11 @@ pub fn Tabs(
 
                  <ForEnumerate
                      each=move || tabs.clone()
-                     key=|tab| tab.0.to_owned()
+                     key=|tab| tab.name.to_owned()
                      let(idx, tab)
                  >
                      <button role="tab"
+                         title=tab.title
                          class="p-2 inline-flex flex-auto justify-center items-center gap-x-2 text-sm font-medium text-center rounded-lg disabled:opacity-50 disabled:pointer-events-none focus:outline-hidden cursor-pointer"
                          aria-selected=move || tab_selected.get() == idx.get()
                          class=(["bg-transparent", "text-neutral-800", "dark:text-neutral-400", "hover:bg-gray-600/20"], move || tab_selected.get() != idx.get())
@@ -50,7 +58,7 @@ pub fn Tabs(
                             }
                         }
                      >
-                     {tab.0}
+                     {tab.name}
                      </button>
                  </ ForEnumerate>
 
@@ -59,9 +67,9 @@ pub fn Tabs(
     }
 }
 
-fn update_selected(tabs: &Vec<(&'static str, NodeRef<Div>)>, tab_selected: usize) {
+fn update_selected(tabs: &Vec<TabItem>, tab_selected: usize) {
     for tab in tabs.iter() {
-        if let Some(tab_elem) = tab.1.get_untracked() {
+        if let Some(tab_elem) = tab.node_ref.get_untracked() {
             tab_elem.class_list().add_1("hidden").unwrap();
             tab_elem.class_list().remove_1("block").unwrap();
         }
@@ -71,12 +79,22 @@ fn update_selected(tabs: &Vec<(&'static str, NodeRef<Div>)>, tab_selected: usize
         .iter()
         .enumerate()
         .filter(|(idx, _tab)| *idx == tab_selected)
-        .map(|(_idx, tab)| tab.1)
+        .map(|(_idx, tab)| tab.node_ref)
         .nth(0)
     {
         if let Some(tab_elem) = tab_node.get_untracked() {
             tab_elem.class_list().add_1("block").unwrap();
             tab_elem.class_list().remove_1("hidden").unwrap();
         }
+    }
+}
+
+impl TabItem {
+    pub fn new(name: &str, title: &str, node_ref: NodeRef<Div>) -> Self {
+        Self {name: name.to_owned(), title: title.to_owned(), node_ref}
+    }
+
+    pub fn new_simple(name: &str, node_ref: NodeRef<Div>) -> Self {
+        Self {name: name.to_owned(), title: "".to_owned(), node_ref}
     }
 }
