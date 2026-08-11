@@ -6,17 +6,13 @@ use web_sys::wasm_bindgen::prelude::Closure;
 use crate::code_mirror::{code_editor_change_lang, init_code_editor, set_code_editor_value};
 
 #[component]
-pub fn CodeMirrorEditor<M>(
+pub fn CodeMirrorEditor(
     element_id: String,
     #[prop(optional)] class_name: String,
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
-    value_monitor: ReadSignal<M>,
     lang: ReadSignal<String>,
-) -> impl IntoView
-where
-    M: Clone + Send + Sync + 'static,
-{
+) -> impl IntoView {
     let (value_updating, set_value_updating) = signal(false);
 
     let on_change = Closure::wrap(Box::new(move |new_val: String| {
@@ -35,28 +31,6 @@ where
     Effect::watch(
         move || value.get(),
         move |_value, _prev, _| {
-            if !value_updating.get_untracked() {
-                set_value_updating.set(true);
-                set_timeout(
-                    {
-                        move || {
-                            set_code_editor_value(&value.read_untracked());
-                            set_timeout(
-                                move || set_value_updating.set(false),
-                                Duration::from_millis(1),
-                            );
-                        }
-                    },
-                    std::time::Duration::from_millis(1),
-                );
-            }
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || value_monitor.get(),
-        move |_request_info, _prev, _| {
             if !value_updating.get_untracked() {
                 set_value_updating.set(true);
                 set_timeout(
