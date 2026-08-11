@@ -40,7 +40,6 @@ pub fn RequestPanel(
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
-    let (body_json, set_body_json) = signal("".to_owned());
     let (body_type, set_body_type) = signal(RequestBodyKind::Text);
     let (body_formencoded, set_body_formencoded) = signal(Vec::new());
     let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
@@ -51,8 +50,6 @@ pub fn RequestPanel(
         set_method,
         body,
         set_body,
-        body_json,
-        set_body_json,
         body_type,
         set_body_type,
         body_formencoded,
@@ -166,7 +163,6 @@ fn create_req_watchers(
     );
 
     create_watcher(params.read_untracked().body, RequestFieldKind::Body, project, request_info);
-    create_watcher(params.read_untracked().body_json, RequestFieldKind::BodyJson, project, request_info);
 
     Effect::watch(
         move || params.read_untracked().body_type.get(),
@@ -246,12 +242,6 @@ fn create_request_info_watcher(
                     project.read_untracked().as_str(),
                     id,
                 ));
-                params.read_untracked().set_body_json.set(get_stored_value(
-                    RequestFieldKind::BodyJson,
-                    "".to_owned(),
-                    project.read_untracked().as_str(),
-                    id,
-                ));
 
                 params.read_untracked().set_body_type.set(
                     RequestBodyKind::from_str(&get_stored_value(
@@ -266,7 +256,8 @@ fn create_request_info_watcher(
                     match params.read_untracked().body_type.get_untracked() {
                         RequestBodyKind::Text => 0,
                         RequestBodyKind::Json => 1,
-                        RequestBodyKind::Formencoded => 2,
+                        RequestBodyKind::Xml => 2,
+                        RequestBodyKind::Formencoded => 3,
                     },
                 );
 
@@ -365,7 +356,7 @@ fn load_headers(project_id: &str, request_id: i32) -> Vec<CustomHeader> {
     }
 
     let mut result = Vec::new();
-    for (i, line) in stored_value.lines().enumerate() {
+    for line in stored_value.lines() {
         if let Some(index) = line.find(":") {
             let (name, set_name) = signal(line[..index].to_owned());
             let (value, set_value) = signal(line[index + 1..].to_owned());

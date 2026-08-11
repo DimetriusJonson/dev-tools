@@ -71,7 +71,7 @@ pub fn RestClientCUrlButton(
                             set_stored_value(
                                 project,
                                 request.id,
-                                RequestFieldKind::BodyJson,
+                                RequestFieldKind::Body,
                                 parsed_request.body.join("\n"),
                             );
                             set_stored_value(project, request.id, RequestFieldKind::BodyType, "text".to_owned());

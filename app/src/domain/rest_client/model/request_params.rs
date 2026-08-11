@@ -16,6 +16,7 @@ pub enum RequestBodyKind {
     #[default]
     Text,
     Json,
+    Xml,
     Formencoded,
 }
 
@@ -27,8 +28,6 @@ pub struct RequestParams {
     pub set_method: WriteSignal<String>,
     pub body: ReadSignal<String>,
     pub set_body: WriteSignal<String>,
-    pub body_json: ReadSignal<String>,
-    pub set_body_json: WriteSignal<String>,
     pub body_type: ReadSignal<RequestBodyKind>,
     pub set_body_type: WriteSignal<RequestBodyKind>,
     pub body_formencoded: ReadSignal<Vec<RequestBodyFormValue>>,
@@ -142,6 +141,7 @@ impl Display for RequestBodyKind {
             RequestBodyKind::Text => write!(f, "text"),
             RequestBodyKind::Formencoded => write!(f, "formencoded"),
             RequestBodyKind::Json => write!(f, "json"),
+            RequestBodyKind::Xml => write!(f, "xml"),
         }
     }
 }
@@ -154,6 +154,8 @@ impl FromStr for RequestBodyKind {
             Ok(RequestBodyKind::Formencoded)
         } else if s == "json" {
             Ok(RequestBodyKind::Json)
+        } else if s == "xml" {
+            Ok(RequestBodyKind::Xml)
         } else {
             Ok(RequestBodyKind::Text)
         }

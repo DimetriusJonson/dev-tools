@@ -17,8 +17,6 @@ pub enum RequestFieldKind {
     Method,
     #[strum(serialize = "body")]
     Body,
-    #[strum(serialize = "body_json")]
-    BodyJson,
     #[strum(serialize = "headers")]
     Headers,
     #[strum(serialize = "save_response")]

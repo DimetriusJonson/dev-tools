@@ -45,8 +45,7 @@ fn build_curl_cmd(
 
     // body
     let body = match request_params.body_type.get_untracked() {
-        RequestBodyKind::Text => request_params.body.get_untracked(),
-        RequestBodyKind::Json => request_params.body_json.get_untracked(),
+        RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => request_params.body.get_untracked(),
         RequestBodyKind::Formencoded => {
             match formencoded_to_str(request_params.body_formencoded.get_untracked()) {
                 Ok(url) => url,
