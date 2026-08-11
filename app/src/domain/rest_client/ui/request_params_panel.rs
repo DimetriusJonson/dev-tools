@@ -1,5 +1,9 @@
+use crate::common::json_processor::format_json;
+use crate::common::xml_processor::format_xml;
 use crate::components::layout::drag_splitter::DragSplitter;
+use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::tabs::Tabs;
+use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::{
     RequestBodyKind, RequestInfo, RequestParams,
@@ -24,6 +28,8 @@ pub fn RequestParamsPanel(
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let i18n = use_i18n();
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
+
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();
     let params_ref = NodeRef::<Div>::new();
@@ -85,6 +91,27 @@ pub fn RequestParamsPanel(
         false,
     );
 
+    let on_format_body = move |_| match params.read_untracked().body_type.get_untracked() {
+        RequestBodyKind::Json => {
+            let formatted =
+                format_json(params.read_untracked().body.read_untracked().as_borrowed(), 4);
+            params.read_untracked().set_body.set(formatted);
+        }
+        RequestBodyKind::Xml => {
+            let formatted =
+                match format_xml(params.read_untracked().body.read_untracked().as_borrowed(), 4) {
+                    Ok(formatted_xml) => formatted_xml,
+                    Err(err) => {
+                        show_error(err.to_string(), messages);
+                        return;
+                    }
+                };
+            params.read_untracked().set_body.set(formatted);
+        }
+        RequestBodyKind::Text => (),
+        RequestBodyKind::Formencoded => (),
+    };
+
     view! {
 
         <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-2 md:gap-4">
@@ -127,7 +154,7 @@ pub fn RequestParamsPanel(
                             ("Form Encoded", tab_body_form_encoded_ref),
                         ] />
 
-                    <div id="code_editor" node_ref=tab_body_text_ref class="flex-1 flex overflow-y-auto pt-4">
+                    <div id="code_editor" node_ref=tab_body_text_ref class="group relative flex-1 flex overflow-y-auto pt-4">
                         <CodeMirrorEditor
                             element_id="request-body-code-editor".to_owned()
                             value_monitor=request_info
@@ -135,6 +162,19 @@ pub fn RequestParamsPanel(
                             value=params.read_untracked().body
                             set_value=params.read_untracked().set_body
                          />
+
+                        <Button
+                            label=move || "¶".to_owned()
+                            title=move || "Format".to_owned()
+                            class_name="absolute right-1 top-1 hidden group-hover:block text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-1000".to_owned()
+                            button_width=ButtonWidth::Custom
+                            button_height=ButtonHeight::Custom
+                            color=ButtonColor::Custom
+                            loading=move || false
+                            disabled=move || false
+                            on_click=on_format_body
+                        />
+
                     </div>
 
                     <div node_ref=tab_body_form_encoded_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
