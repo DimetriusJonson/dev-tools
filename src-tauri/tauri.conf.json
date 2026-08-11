@@ -26,7 +26,8 @@
       "icons/128x128@2x.png"
     ],
     "resources": [
-      "../site/pkg/"
+      "../site/pkg/",
+      "../site/codemirror.min.js"
     ],
     "externalBin": [
       "binaries/webdev_useful_tools_server"
