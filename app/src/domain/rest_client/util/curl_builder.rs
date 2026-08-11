@@ -31,8 +31,13 @@ fn build_curl_cmd(
         result.push_str(&format!(" {}-X {}", new_line, &request_params.method.read_untracked()));
     }
 
+    let method = request_params.method.get_untracked();
+
     //headers
-    if request_params.content_type().is_none() {
+    if (&method == "POST" || &method == "PUT")
+        && !request_params.body.read_untracked().is_empty()
+        && request_params.content_type().is_none()
+    {
         add_header_param(
             &mut result,
             "Content-Type",

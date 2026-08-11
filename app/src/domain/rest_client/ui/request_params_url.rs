@@ -30,11 +30,18 @@ pub fn RequestParamsUrl(
             set_in_progress.set(true);
 
             let params = params.read_untracked();
+            let method = params.method.get_untracked();
 
             let mut headers = Vec::new();
 
-            if params.content_type().is_none() {
-                headers.push(("Content-Type".to_owned(), params.body_type.read_untracked().content_type().to_owned()));
+            if (&method == "POST" || &method == "PUT")
+                && !params.body.read_untracked().is_empty()
+                && params.content_type().is_none()
+            {
+                headers.push((
+                    "Content-Type".to_owned(),
+                    params.body_type.read_untracked().content_type().to_owned(),
+                ));
             }
 
             for header in params.headers.get_untracked() {
@@ -51,7 +58,9 @@ pub fn RequestParamsUrl(
                         }
                     }
                 }
-                RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => params.body.get_untracked(),
+                RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => {
+                    params.body.get_untracked()
+                }
             };
 
             let rc_request = RestClientRequest {
