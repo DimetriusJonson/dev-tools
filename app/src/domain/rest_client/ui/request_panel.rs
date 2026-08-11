@@ -254,9 +254,9 @@ fn create_request_info_watcher(
                 );
                 set_body_tab_selected.set(
                     match params.read_untracked().body_type.get_untracked() {
-                        RequestBodyKind::Text => 0,
-                        RequestBodyKind::Json => 1,
-                        RequestBodyKind::Xml => 2,
+                        RequestBodyKind::Json => 0,
+                        RequestBodyKind::Xml => 1,
+                        RequestBodyKind::Text => 2,
                         RequestBodyKind::Formencoded => 3,
                     },
                 );
