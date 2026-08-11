@@ -102,7 +102,8 @@
     "rest_client_query_tab": "Query",
 
     "rest_client_curl_copied": "The cURL command has been copied to the clipboard.",
-    "rest_client_curl_build_btn_title": "Copy the cURL command to the clipboard."
+    "rest_client_curl_build_btn_title": "Copy the cURL command to the clipboard.",
+    "rest_client_req_body_format_title": "Format"
 
 
 }
