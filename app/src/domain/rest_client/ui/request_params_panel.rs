@@ -148,10 +148,10 @@ pub fn RequestParamsPanel(
                     <Tabs class_name="".to_owned()
                         tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
                         items=move || vec![
-                            TabItem::new("JSON", "application/json", tab_body_text_ref),
-                            TabItem::new("XML", "application/xml", tab_body_text_ref),
-                            TabItem::new("Text", "text/plain", tab_body_text_ref),
-                            TabItem::new("Form-encode", "application/x-www-form-urlencoded", tab_body_form_encoded_ref),
+                            TabItem::new("JSON", RequestBodyKind::Json.content_type(), tab_body_text_ref),
+                            TabItem::new("XML", RequestBodyKind::Xml.content_type(), tab_body_text_ref),
+                            TabItem::new("Text", RequestBodyKind::Text.content_type(), tab_body_text_ref),
+                            TabItem::new("Form-encode", RequestBodyKind::Formencoded.content_type(), tab_body_form_encoded_ref),
                         ] />
 
                     <div id="code_editor" node_ref=tab_body_text_ref class="group relative flex-1 flex overflow-y-auto pt-4">

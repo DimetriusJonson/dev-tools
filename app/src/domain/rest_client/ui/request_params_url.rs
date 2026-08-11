@@ -32,6 +32,11 @@ pub fn RequestParamsUrl(
             let params = params.read_untracked();
 
             let mut headers = Vec::new();
+
+            if params.content_type().is_none() {
+                headers.push(("Content-Type".to_owned(), params.body_type.read_untracked().content_type().to_owned()));
+            }
+
             for header in params.headers.get_untracked() {
                 headers.push((header.name.get_untracked(), header.value.get_untracked()));
             }

@@ -1,6 +1,6 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use leptos::prelude::{ReadSignal, WriteSignal};
+use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, WriteSignal};
 use serde::{Deserialize, Serialize};
 
 use crate::components::layout::property_editor::KeyValueTableItem;
@@ -108,6 +108,16 @@ impl KeyValueTableItem for CustomHeader {
     }
 }
 
+impl RequestParams {
+    pub fn content_type(&self) -> Option<String> {
+        self.headers
+            .read_untracked()
+            .iter()
+            .find(|h| h.name.read_untracked().as_str().to_lowercase() == "content-type")
+            .map(|h| h.value.get_untracked())
+    }
+}
+
 impl RequestInfo {
     pub fn new(id: i32, project_id: i32, url: String, name: String, method: String) -> Self {
         Self { id, project_id, url, method, name, autorun: false }
@@ -132,6 +142,17 @@ impl RequestInfo {
 
     pub fn display_name(&self) -> String {
         if !self.name.is_empty() { self.name.to_owned() } else { self.url.to_owned() }
+    }
+}
+
+impl RequestBodyKind {
+    pub fn content_type(&self) -> &str {
+        match self {
+            RequestBodyKind::Text => "text/plain",
+            RequestBodyKind::Json => "application/json",
+            RequestBodyKind::Xml => "application/xml",
+            RequestBodyKind::Formencoded => "application/x-www-form-urlencoded",
+        }
     }
 }
 

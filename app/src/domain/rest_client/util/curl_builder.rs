@@ -32,20 +32,31 @@ fn build_curl_cmd(
     }
 
     //headers
-    for header in request_params.headers.read_untracked().iter() {
-        result.push_str(&format!(" {}", new_line));
-        result.push_str(&format!(
-            "-H {}{}: {}{}",
+    if request_params.content_type().is_none() {
+        add_header_param(
+            &mut result,
+            "Content-Type",
+            request_params.body_type.get_untracked().content_type(),
             quote,
+            new_line,
+        );
+    }
+
+    for header in request_params.headers.read_untracked().iter() {
+        add_header_param(
+            &mut result,
             &header.name.read_untracked(),
-            &escape_string(&header.value.read_untracked()),
-            quote
-        ));
+            &header.value.read_untracked(),
+            quote,
+            new_line,
+        );
     }
 
     // body
     let body = match request_params.body_type.get_untracked() {
-        RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => request_params.body.get_untracked(),
+        RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => {
+            request_params.body.get_untracked()
+        }
         RequestBodyKind::Formencoded => {
             match formencoded_to_str(request_params.body_formencoded.get_untracked()) {
                 Ok(url) => url,
@@ -60,6 +71,11 @@ fn build_curl_cmd(
     }
 
     result
+}
+
+fn add_header_param(result: &mut String, name: &str, value: &str, quote: &str, new_line: &str) {
+    result.push_str(&format!(" {}", new_line));
+    result.push_str(&format!("-H {}{}: {}{}", quote, name, &escape_string(value), quote));
 }
 
 fn win_cmd_escape(s: &str) -> String {
