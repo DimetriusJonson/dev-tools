@@ -170,7 +170,10 @@ pub fn RequestResultPanel(
                         <Show when=move || { show_preview_html.get() }>
                             <div class="h-0 px-1 md:px-4 py-2"
                                 inner_html=move || {
-                                    let cleaner = HtmlCleaner::with_options(CleaningOptions {tags_to_remove: vec!["script".into(), "style".into(), "link".into()], ..Default::default()});
+                                    let cleaner = HtmlCleaner::with_options(CleaningOptions {
+                                        tags_to_remove: vec!["script".into(), "style".into(), "link".into()], 
+                                        tags_to_strip: vec!["a".into()], 
+                                        ..Default::default()});
                                     let doc = Document::from(response_body.get_untracked());
                                     cleaner.clean(&doc);
                                     doc.inner_html().to_string()
@@ -180,7 +183,7 @@ pub fn RequestResultPanel(
 
                         <Button
                             label=move || "👁".to_owned()
-                            title=move || "Preview".to_owned()
+                            title=move || t_string!(i18n, rest_client_response_html_preview).to_owned()
                             class_name="absolute right-4 top-2 text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-50".to_owned()
                             class:hidden=move || response_lang.read().as_str() != "html"
                             button_width=ButtonWidth::Custom
