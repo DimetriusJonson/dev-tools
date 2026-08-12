@@ -1,11 +1,19 @@
 import { EditorView, basicSetup } from "codemirror";
-import { EditorState, StateEffect } from "@codemirror/state"
+import { EditorState, StateEffect, Compartment  } from "@codemirror/state"
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import { xml } from "@codemirror/lang-xml";
 import { syntaxTree } from "@codemirror/language";
+import { markdown } from '@codemirror/lang-markdown'
+import { vsCodeDark } from '@fsegurai/codemirror-theme-vscode-dark'
+import { vsCodeLight } from '@fsegurai/codemirror-theme-vscode-light'
 
 var codeEditorView = null;
+const themeCompartment = new Compartment();
+
+function getSystemTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? vsCodeDark : vsCodeLight;
+}
 
 window.initCodeEditor = (elementId, initialValue, onDocChange) => {
     const parentElement = document.getElementById(elementId);
@@ -72,6 +80,8 @@ window.codeEditorChangeLang = (lang, onDocChange) => {
             codeEditorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
+                    markdown(),
+                    themeCompartment.of(getSystemTheme()),
                     xml(),
                     xmlLinter,
                     EditorView.updateListener.of((update) => {
@@ -85,6 +95,7 @@ window.codeEditorChangeLang = (lang, onDocChange) => {
             codeEditorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
+                    themeCompartment.of(getSystemTheme()),
                     json(),
                     linter(jsonParseLinter()),
                     EditorView.updateListener.of((update) => {
@@ -98,6 +109,7 @@ window.codeEditorChangeLang = (lang, onDocChange) => {
             codeEditorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
+                    themeCompartment.of(getSystemTheme()),
                     EditorView.updateListener.of((update) => {
                         if (update.docChanged) {
                             onDocChange(update.state.doc.toString());
@@ -108,3 +120,5 @@ window.codeEditorChangeLang = (lang, onDocChange) => {
         }
     }
 };
+
+
