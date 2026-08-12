@@ -11,6 +11,7 @@ use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
+use html_cleaning::{CleaningOptions, Document, HtmlCleaner};
 use leptos::html::Div;
 use leptos::prelude::*;
 
@@ -54,6 +55,7 @@ pub fn RequestResultPanel(
     let (response_lang, set_response_lang) = signal("".to_owned());
     let (response_headers, set_response_headers) = signal(Vec::new());
     let (request_raw, set_request_raw) = signal("".to_owned());
+    let (show_preview_html, set_show_preview_html) = signal(false);
 
     Effect::new(move || {
         set_tab_selected.set(0);
@@ -63,6 +65,7 @@ pub fn RequestResultPanel(
         move || data.get(),
         move |value, _prev, _| {
             set_tab_selected.set(0);
+            set_show_preview_html.set(false);
             match value {
                 Some(response) => {
                     if let Some(error) = &response.error {
@@ -153,7 +156,7 @@ pub fn RequestResultPanel(
 
                         </div>
                     </div>
-                    <div class="flex-1 flex overflow-auto w-full min-w-0"
+                    <div class="flex-1 relative flex overflow-auto w-full min-w-0"
                         class:hidden=move || response_body.read().is_empty() >
                         <CodeMirrorEditor
                             element_id="response-body-code-editor".to_owned()
@@ -161,7 +164,33 @@ pub fn RequestResultPanel(
                             value=response_body
                             set_value=set_response_body
                             read_only=true
+                            hidden=Box::new(move || show_preview_html.get())
                         />
+
+                        <Show when=move || { show_preview_html.get() }>
+                            <div class="h-0 px-1 md:px-4 py-2"
+                                inner_html=move || {
+                                    let cleaner = HtmlCleaner::with_options(CleaningOptions {tags_to_remove: vec!["script".into(), "style".into(), "link".into()], ..Default::default()});
+                                    let doc = Document::from(response_body.get_untracked());
+                                    cleaner.clean(&doc);
+                                    doc.inner_html().to_string()
+                                }>
+                            </div>
+                        </Show>
+
+                        <Button
+                            label=move || "👁".to_owned()
+                            title=move || "Preview".to_owned()
+                            class_name="absolute right-4 top-2 text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-50".to_owned()
+                            class:hidden=move || response_lang.read().as_str() != "html"
+                            button_width=ButtonWidth::Custom
+                            button_height=ButtonHeight::Custom
+                            color=ButtonColor::Custom
+                            loading=move || false
+                            disabled=move || false
+                            on_click=move |_| {set_show_preview_html.set(!show_preview_html.get_untracked())}
+                        />
+
                     </div>
                 </div>
 

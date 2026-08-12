@@ -12,6 +12,7 @@ pub fn CodeMirrorEditor(
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
     lang: ReadSignal<String>,
+    #[prop(optional)] hidden: Option<Box<dyn Fn() -> bool + Send + Sync + 'static>>,
     #[prop(optional)] read_only: bool,
 ) -> impl IntoView {
     let (value_updating, set_value_updating) = signal(false);
@@ -80,7 +81,9 @@ pub fn CodeMirrorEditor(
     );
 
     view! {
-        <div id={element_id.to_owned()} class={format!("w-full h-0 px-1 md:px-4 py-2 bg-white dark:bg-dark-bg {}", class_name)}>
+        <div id={element_id.to_owned()} class={format!("w-full h-0 px-1 md:px-4 py-2 bg-white dark:bg-dark-bg {}", class_name)}
+            class:hidden={ move || hidden.as_ref().map(|v| v()).unwrap_or_default()}
+        >
         </div>
     }
 }
