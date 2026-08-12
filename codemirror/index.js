@@ -14,13 +14,15 @@ function getSystemTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? vsCodeDark : vsCodeLight;
 }
 
-window.initCodeEditor = (elementId, initialValue, onDocChange) => {
+window.initCodeEditor = (elementId, initialValue, readOnly, onDocChange) => {
     const parentElement = document.getElementById(elementId);
 
     let startState = EditorState.create({
         doc: initialValue,
         extensions: [
             basicSetup,
+            EditorView.lineWrapping,
+            EditorState.readOnly.of(readOnly),
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     onDocChange(update.state.doc.toString());
@@ -73,12 +75,14 @@ const xmlLinter = linter((view) => {
 
 // RECONFIGURE
 
-window.codeEditorChangeLang = (editorView, lang, onDocChange) => {
+window.codeEditorChangeLang = (editorView, lang, readOnly, onDocChange) => {
     if (editorView) {
         if (lang == "xml") {
             editorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
+                    EditorView.lineWrapping,
+                    EditorState.readOnly.of(readOnly),
                     markdown(),
                     themeCompartment.of(getSystemTheme()),
                     xml(),
@@ -94,6 +98,8 @@ window.codeEditorChangeLang = (editorView, lang, onDocChange) => {
             editorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
+                    EditorView.lineWrapping,
+                    EditorState.readOnly.of(readOnly),
                     themeCompartment.of(getSystemTheme()),
                     json(),
                     linter(jsonParseLinter()),
@@ -108,6 +114,8 @@ window.codeEditorChangeLang = (editorView, lang, onDocChange) => {
             editorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
+                    EditorView.lineWrapping,
+                    EditorState.readOnly.of(readOnly),
                     themeCompartment.of(getSystemTheme()),
                     EditorView.updateListener.of((update) => {
                         if (update.docChanged) {

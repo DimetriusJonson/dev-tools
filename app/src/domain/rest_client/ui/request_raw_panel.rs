@@ -10,7 +10,7 @@ use crate::i18n::*;
 
 #[component]
 pub fn RequestRawPanel(
-    request_raw: String,
+    request_raw: ReadSignal<String>,
     node_ref: NodeRef<Div>,
     params: ReadSignal<RequestParams>,
 ) -> impl IntoView {

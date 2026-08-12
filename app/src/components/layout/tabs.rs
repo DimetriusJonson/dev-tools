@@ -91,10 +91,10 @@ fn update_selected(tabs: &Vec<TabItem>, tab_selected: usize) {
 
 impl TabItem {
     pub fn new(name: &str, title: &str, node_ref: NodeRef<Div>) -> Self {
-        Self {name: name.to_owned(), title: title.to_owned(), node_ref}
+        Self { name: name.to_owned(), title: title.to_owned(), node_ref }
     }
 
     pub fn new_simple(name: &str, node_ref: NodeRef<Div>) -> Self {
-        Self {name: name.to_owned(), title: "".to_owned(), node_ref}
+        Self { name: name.to_owned(), title: "".to_owned(), node_ref }
     }
 }

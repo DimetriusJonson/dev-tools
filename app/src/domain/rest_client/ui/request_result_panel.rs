@@ -5,7 +5,7 @@ use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonWidth};
-use crate::components::ui::code_inner::CodeInner;
+use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
@@ -49,102 +49,129 @@ pub fn RequestResultPanel(
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_request_raw_ref = NodeRef::<Div>::new();
 
-    {
-        move || {
-            set_tab_selected.set(0);
-            let (response_status, mut response_text, response_headers, resp_code_lang, request_raw) =
-                match data.get() {
-                    Some(response) => {
-                        if let Some(error) = response.error {
-                            show_error(error, messages);
-                        };
+    let (response_status_code, set_response_status_code) = signal("".to_owned());
+    let (response_body, set_response_body) = signal("".to_owned());
+    let (response_lang, set_response_lang) = signal("".to_owned());
+    let (response_headers, set_response_headers) = signal(Vec::new());
+    let (request_raw, set_request_raw) = signal("".to_owned());
 
-                        (
-                            response.status_code.to_string(),
-                            response.body.to_owned(),
-                            response.headers.clone(),
-                            response
-                                .headers
-                                .iter()
-                                .filter(|v| v.0.to_lowercase() == "content-type")
-                                .filter_map(|v| get_media_type_code(&v.1))
-                                .next()
-                                .unwrap_or("html".to_owned()),
-                            response.request_raw,
-                        )
-                    }
-                    None => {
-                        ("".to_owned(), "".to_owned(), Vec::new(), "html".to_owned(), "".to_owned())
-                    }
-                };
+    Effect::new(move || {
+        set_tab_selected.set(0);
+    });
+
+    Effect::watch(
+        move || data.get(),
+        move |value, _prev, _| {
+            set_tab_selected.set(0);
+            match value {
+                Some(response) => {
+                    if let Some(error) = &response.error {
+                        show_error(error.to_owned(), messages);
+                    };
+
+                    set_response_status_code.set(response.status_code.to_string());
+                    set_response_body.set(response.body.to_owned());
+                    set_response_lang.set(
+                        response
+                            .headers
+                            .iter()
+                            .filter(|v| v.0.to_lowercase() == "content-type")
+                            .filter_map(|v| get_media_type_code(&v.1))
+                            .next()
+                            .unwrap_or("html".to_owned()),
+                    );
+                    set_response_headers.set(response.headers.clone());
+                    set_request_raw.set(response.request_raw.to_owned());
+                }
+                None => {
+                    set_response_status_code.set("".to_owned());
+                    set_response_body.set("".to_owned());
+                    set_response_lang.set("".to_owned());
+                    set_response_headers.set(Vec::new());
+                    set_request_raw.set("".to_owned());
+                }
+            };
 
             if formatting.get_untracked() {
-                if resp_code_lang == "xml" {
-                    match format_xml(&response_text, 4) {
-                        Ok(formatted_text) => response_text = formatted_text,
-                        Err(err) => show_error(format!("Cant format xml: {}", err), messages),
-                    }
-                } else if resp_code_lang == "json" {
-                    response_text = format_json(&response_text, 4);
+                if response_lang.get_untracked() == "xml".to_owned() {
+                    let formatted_xml = match format_xml(&response_body.read_untracked(), 4) {
+                        Ok(formatted_text) => formatted_text,
+                        Err(err) => {
+                            show_error(format!("Cant format xml: {}", err), messages);
+                            return;
+                        }
+                    };
+                    set_response_body.set(formatted_xml);
+                } else if response_lang.get_untracked() == "json".to_owned() {
+                    let formatted_json = format_json(&response_body.read_untracked(), 4);
+                    set_response_body.set(formatted_json);
                 }
             }
+        },
+        false,
+    );
 
-            view! {
-                <div class="flex-1 overflow-y-auto flex flex-col gap-4">
+    view! {
+        <div class="flex-1 overflow-y-auto flex flex-col gap-4">
 
-                    <Tabs tab_selected set_tab_selected items=move || vec![
-                            TabItem::new_simple(t_string!(i18n, rest_client_response_body_tab), tab_body_ref),
-                            TabItem::new_simple(t_string!(i18n, rest_client_response_headers_tab), tab_headers_ref),
-                            TabItem::new_simple(t_string!(i18n, rest_client_response_request_raw_tab), tab_request_raw_ref)
-                        ] />
+            <Tabs tab_selected set_tab_selected items=move || vec![
+                    TabItem::new_simple(t_string!(i18n, rest_client_response_body_tab), tab_body_ref),
+                    TabItem::new_simple(t_string!(i18n, rest_client_response_headers_tab), tab_headers_ref),
+                    TabItem::new_simple(t_string!(i18n, rest_client_response_request_raw_tab), tab_request_raw_ref)
+                ] />
 
-                    //Tab Content Panels
-                    <div class="flex-1 overflow-y-auto flex">
-                        <div node_ref=tab_body_ref class="flex flex-col gap-4 w-full">
-                            <div class="flex justify-between">
-                                <span class="dark:text-white">{format!("Status: {}", response_status)}</span>
-                                <div class="flex">
-                                    <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
-                                            on:change=move |e| {
-                                                let value = event_target_value(&e);
-                                                get_stored_value(RequestFieldKind::Formatting, value, project.read_untracked().as_str(), request_info.read_untracked().id);
-                                            }/>
-                                        <label for="formatting" class="dark:text-white">Format</label>
-                                    </div>
-                                    <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
-                                        <label for="save-response" class="dark:text-white">Save</label>
-                                    </div>
-                                </div>
+            //Tab Content Panels
+            <div class="flex-1 overflow-y-auto flex">
+                <div node_ref=tab_body_ref class="flex flex-col gap-4 w-full">
+                    <div class="flex justify-between">
+                        <span class="dark:text-white">{move || format!("Status: {}", response_status_code.get())}</span>
+                        <div class="flex">
+                            <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
+                                    on:change=move |e| {
+                                        let value = event_target_value(&e);
+                                        get_stored_value(RequestFieldKind::Formatting, value, project.read_untracked().as_str(), request_info.read_untracked().id);
+                                    }/>
+                                <label for="formatting" class="dark:text-white">Format</label>
                             </div>
-                            <div class="flex-1 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
-                                <CodeInner code={response_text} lang={move || resp_code_lang.to_owned()}/>
-                            </div>
-                            <div class="flex">
-                                <Button
-                                    title=move || "".to_owned()
-                                    label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
-                                    class_name="w-full".to_owned()
-                                    button_width=ButtonWidth::Auto
-                                    loading=move || false
-                                    on_click=on_copy_click
-                                    disabled=move || false
-                                />
+                            <div class="px-4 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
+                                <label for="save-response" class="dark:text-white">Save</label>
                             </div>
                         </div>
-
-                        <div node_ref=tab_headers_ref class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full">
-                            <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
-                                <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={render_headers(response_headers)}/>
-                            </div>
-                        </div>
-
-                        <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params/>
+                    </div>
+                    <div class="flex-1 flex overflow-auto w-full min-w-0 text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
+                        <CodeMirrorEditor
+                            class_name=move || {if response_body.read().is_empty() {"hidden".to_owned()} else {"".to_owned()}}
+                            element_id="response-body-code-editor".to_owned()
+                            lang=response_lang
+                            value=response_body
+                            set_value=set_response_body
+                            read_only=true
+                        />
+                    </div>
+                    <div class="flex">
+                        <Button
+                            title=move || "".to_owned()
+                            label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                            class_name="w-full".to_owned()
+                            button_width=ButtonWidth::Auto
+                            loading=move || false
+                            on_click=on_copy_click
+                            disabled=move || false
+                        />
                     </div>
                 </div>
-            }
-        }
+
+                <div node_ref=tab_headers_ref class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full">
+                    <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
+                        <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={move || render_headers(response_headers.get())}/>
+                    </div>
+                </div>
+
+                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params/>
+            </div>
+        </div>
     }
 }
 
