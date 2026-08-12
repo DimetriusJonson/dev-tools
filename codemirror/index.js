@@ -5,6 +5,7 @@ import { linter } from "@codemirror/lint";
 import { xml } from "@codemirror/lang-xml";
 import { syntaxTree } from "@codemirror/language";
 import { markdown } from '@codemirror/lang-markdown'
+import { html } from "@codemirror/lang-html";
 import { vsCodeDark } from '@fsegurai/codemirror-theme-vscode-dark'
 import { vsCodeLight } from '@fsegurai/codemirror-theme-vscode-light'
 
@@ -77,54 +78,30 @@ const xmlLinter = linter((view) => {
 
 window.codeEditorChangeLang = (editorView, lang, readOnly, onDocChange) => {
     if (editorView) {
+        let extensions = [
+            basicSetup,
+            EditorView.lineWrapping,
+            EditorState.readOnly.of(readOnly),
+            themeCompartment.of(getSystemTheme()),
+            EditorView.updateListener.of((update) => {
+                if (update.docChanged) {
+                    onDocChange(update.state.doc.toString());
+                }
+            })
+        ];
+
         if (lang == "xml") {
-            editorView.dispatch({
-                effects: StateEffect.reconfigure.of([
-                    basicSetup,
-                    EditorView.lineWrapping,
-                    EditorState.readOnly.of(readOnly),
-                    markdown(),
-                    themeCompartment.of(getSystemTheme()),
-                    xml(),
-                    xmlLinter,
-                    EditorView.updateListener.of((update) => {
-                        if (update.docChanged) {
-                            onDocChange(update.state.doc.toString());
-                        }
-                    })
-                ])
-            });
+            extensions.push(markdown(), xml(), xmlLinter);
         } else if (lang == "json") {
-            editorView.dispatch({
-                effects: StateEffect.reconfigure.of([
-                    basicSetup,
-                    EditorView.lineWrapping,
-                    EditorState.readOnly.of(readOnly),
-                    themeCompartment.of(getSystemTheme()),
-                    json(),
-                    linter(jsonParseLinter()),
-                    EditorView.updateListener.of((update) => {
-                        if (update.docChanged) {
-                            onDocChange(update.state.doc.toString());
-                        }
-                    })
-                ])
-            });
-        } else {
-            editorView.dispatch({
-                effects: StateEffect.reconfigure.of([
-                    basicSetup,
-                    EditorView.lineWrapping,
-                    EditorState.readOnly.of(readOnly),
-                    themeCompartment.of(getSystemTheme()),
-                    EditorView.updateListener.of((update) => {
-                        if (update.docChanged) {
-                            onDocChange(update.state.doc.toString());
-                        }
-                    })
-                ])
-            });
+            extensions.push(json(), linter(jsonParseLinter()));
+        } else if (lang == "html") {
+            extensions.push(html());
         }
+
+        editorView.dispatch({
+            effects: StateEffect.reconfigure.of(extensions)
+        });
+
     }
 };
 
