@@ -8,11 +8,10 @@ use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWid
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::dom_helper::make_absolute_head_links;
+use crate::domain::rest_client::util::html_utils::{make_absolute_links};
 use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
-use html_cleaning::{Document, links};
 use leptos::html::Div;
 use leptos::prelude::*;
 
@@ -116,17 +115,10 @@ pub fn RequestResultPanel(
     );
 
     let get_preview_src_doc = move || {
-        let doc = Document::from(response_body.get_untracked());
-        if let Some(head) = doc.head() {
-            let base_elem = doc.tree.new_element("base");
-            base_elem.set_attr("href", &request_info.read_untracked().url);
-            head.append_child(&base_elem);
-        }
 
-        links::make_absolute(&doc, &request_info.read_untracked().url);
-        make_absolute_head_links(&doc, &request_info.read_untracked().url);
-
-        doc.html().to_string()
+        let mut html = response_body.get_untracked();
+        make_absolute_links(&mut html, &request_info.read_untracked().url);
+        html
     };
 
     view! {
