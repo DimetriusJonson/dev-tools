@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use leptos::prelude::*;
-use web_sys::wasm_bindgen::prelude::Closure;
+use web_sys::wasm_bindgen::{JsValue, prelude::Closure};
 
 use crate::code_mirror::{code_editor_change_lang, init_code_editor, set_code_editor_value};
 
@@ -14,6 +14,7 @@ pub fn CodeMirrorEditor(
     lang: ReadSignal<String>,
 ) -> impl IntoView {
     let (value_updating, set_value_updating) = signal(false);
+    let (editor_view, set_editor_view) = signal(JsValue::null());
 
     let on_change = Closure::wrap(Box::new(move |new_val: String| {
         if !value_updating.get_untracked() {
@@ -24,7 +25,8 @@ pub fn CodeMirrorEditor(
     Effect::new({
         let element_id = element_id.to_owned();
         move |_| {
-            init_code_editor(&element_id.to_owned(), &value.get_untracked(), on_change.as_ref());
+            let view = init_code_editor(&element_id.to_owned(), &value.get_untracked(), on_change.as_ref());
+            set_editor_view.set(view);
         }
     });
 
@@ -36,7 +38,7 @@ pub fn CodeMirrorEditor(
                 set_timeout(
                     {
                         move || {
-                            set_code_editor_value(&value.read_untracked());
+                            set_code_editor_value(&editor_view.read_untracked(), &value.read_untracked());
                             set_timeout(
                                 move || set_value_updating.set(false),
                                 Duration::from_millis(1),
@@ -71,7 +73,7 @@ pub fn CodeMirrorEditor(
     Effect::watch(
         move || lang.get(),
         move |lang, _prev, _| {
-            code_editor_change_lang(lang, on_change.as_ref());
+            code_editor_change_lang(&editor_view.read_untracked(), lang, on_change.as_ref());
         },
         false,
     );

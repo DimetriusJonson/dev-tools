@@ -8,7 +8,6 @@ import { markdown } from '@codemirror/lang-markdown'
 import { vsCodeDark } from '@fsegurai/codemirror-theme-vscode-dark'
 import { vsCodeLight } from '@fsegurai/codemirror-theme-vscode-light'
 
-var codeEditorView = null;
 const themeCompartment = new Compartment();
 
 function getSystemTheme() {
@@ -30,18 +29,18 @@ window.initCodeEditor = (elementId, initialValue, onDocChange) => {
         ]
     })
 
-    codeEditorView = new EditorView({
+    return new EditorView({
         state: startState,
         parent: parentElement
-    })
+    });
 };
 
-window.setCodeEditorValue = (newValue) => {
-    if (codeEditorView) {
-        codeEditorView.dispatch({
+window.setCodeEditorValue = (editorView, newValue) => {
+    if (editorView) {
+        editorView.dispatch({
             changes: {
                 from: 0,
-                to: codeEditorView.state.doc.length,
+                to: editorView.state.doc.length,
                 insert: newValue
             }
         });
@@ -74,10 +73,10 @@ const xmlLinter = linter((view) => {
 
 // RECONFIGURE
 
-window.codeEditorChangeLang = (lang, onDocChange) => {
-    if (codeEditorView) {
+window.codeEditorChangeLang = (editorView, lang, onDocChange) => {
+    if (editorView) {
         if (lang == "xml") {
-            codeEditorView.dispatch({
+            editorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
                     markdown(),
@@ -92,7 +91,7 @@ window.codeEditorChangeLang = (lang, onDocChange) => {
                 ])
             });
         } else if (lang == "json") {
-            codeEditorView.dispatch({
+            editorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
                     themeCompartment.of(getSystemTheme()),
@@ -106,7 +105,7 @@ window.codeEditorChangeLang = (lang, onDocChange) => {
                 ])
             });
         } else {
-            codeEditorView.dispatch({
+            editorView.dispatch({
                 effects: StateEffect.reconfigure.of([
                     basicSetup,
                     themeCompartment.of(getSystemTheme()),
