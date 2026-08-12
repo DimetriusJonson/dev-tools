@@ -104,7 +104,7 @@
     "rest_client_curl_copied": "The cURL command has been copied to the clipboard.",
     "rest_client_curl_build_btn_title": "Copy the cURL command to the clipboard.",
     "rest_client_req_body_format_title": "Format",
-    "rest_client_response_html_preview": "Предпросмотр HTML (очищенный)"
+    "rest_client_response_html_preview": "Preview"
 
 
 }

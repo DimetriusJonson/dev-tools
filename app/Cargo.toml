@@ -38,6 +38,7 @@ strum.workspace = true
 strum_macros.workspace = true
 url.workspace = true
 html-cleaning.workspace=true
+dom_query.workspace=true
 
 tracing = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }

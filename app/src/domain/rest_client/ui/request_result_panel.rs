@@ -8,10 +8,11 @@ use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWid
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
+use crate::domain::rest_client::util::dom_helper::make_absolute_head_links;
 use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
-use html_cleaning::{CleaningOptions, Document, HtmlCleaner};
+use html_cleaning::{Document, links};
 use leptos::html::Div;
 use leptos::prelude::*;
 
@@ -114,6 +115,14 @@ pub fn RequestResultPanel(
         false,
     );
 
+    let get_preview_src_doc = move || {
+        let doc = Document::from(response_body.get_untracked());
+        links::make_absolute(&doc, &request_info.read_untracked().url);
+        make_absolute_head_links(&doc, &request_info.read_untracked().url);
+
+        doc.html().to_string()
+    };
+
     view! {
         <div class="flex-1 overflow-y-auto flex flex-col gap-4">
 
@@ -168,17 +177,9 @@ pub fn RequestResultPanel(
                         />
 
                         <Show when=move || { show_preview_html.get() }>
-                            <div class="h-0 px-1 md:px-4 py-2"
-                                inner_html=move || {
-                                    let cleaner = HtmlCleaner::with_options(CleaningOptions {
-                                        tags_to_remove: vec!["script".into(), "style".into(), "link".into()], 
-                                        tags_to_strip: vec!["a".into()], 
-                                        ..Default::default()});
-                                    let doc = Document::from(response_body.get_untracked());
-                                    cleaner.clean(&doc);
-                                    doc.inner_html().to_string()
-                                }>
-                            </div>
+                            <iframe class="w-full px-1 md:px-4 py-2"
+                                srcdoc=get_preview_src_doc >
+                            </iframe>
                         </Show>
 
                         <Button

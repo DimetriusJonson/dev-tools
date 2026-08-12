@@ -103,6 +103,6 @@
     "rest_client_curl_copied": "Команда cURL скопирована в буфер обмена.",
     "rest_client_curl_build_btn_title": "Скопировать в буфер обмена cURL команду.",
     "rest_client_req_body_format_title": "Форматировать",
-    "rest_client_response_html_preview": "HTML Preview (Cleaned)"
+    "rest_client_response_html_preview": "Предпросмотр"
 
 }

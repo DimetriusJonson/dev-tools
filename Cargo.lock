@@ -101,6 +101,7 @@ dependencies = [
  "bytes",
  "console_error_panic_hook",
  "difference",
+ "dom_query",
  "gloo-net",
  "gloo-storage",
  "gloo-utils",
@@ -1582,6 +1583,7 @@ checksum = "c7cfa21711b17b9dc0d4e3e094bdc5883a47a5ea552b4d808d879f9343786f75"
 dependencies = [
  "dom_query",
  "thiserror 2.0.19",
+ "url",
 ]
 
 [[package]]

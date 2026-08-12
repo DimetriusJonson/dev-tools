@@ -68,7 +68,8 @@ base64 = "0.23.0"
 strum = "0.28"
 strum_macros = "0.28"
 url = "2.5.8"
-html-cleaning = "0.3.0"
+html-cleaning = { version = "0.3.0", features = ["url"] }
+dom_query = "0.24.0"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
