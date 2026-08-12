@@ -117,6 +117,12 @@ pub fn RequestResultPanel(
 
     let get_preview_src_doc = move || {
         let doc = Document::from(response_body.get_untracked());
+        if let Some(head) = doc.head() {
+            let base_elem = doc.tree.new_element("base");
+            base_elem.set_attr("href", &request_info.read_untracked().url);
+            head.append_child(&base_elem);
+        }
+
         links::make_absolute(&doc, &request_info.read_untracked().url);
         make_absolute_head_links(&doc, &request_info.read_untracked().url);
 
@@ -178,14 +184,15 @@ pub fn RequestResultPanel(
 
                         <Show when=move || { show_preview_html.get() }>
                             <iframe class="w-full px-1 md:px-4 py-2"
-                                srcdoc=get_preview_src_doc >
+                                srcdoc=get_preview_src_doc
+                            >
                             </iframe>
                         </Show>
 
                         <Button
                             label=move || "👁".to_owned()
                             title=move || t_string!(i18n, rest_client_response_html_preview).to_owned()
-                            class_name="absolute right-4 top-2 text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-50".to_owned()
+                            class_name="absolute right-8 top-2 text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-50".to_owned()
                             class:hidden=move || response_lang.read().as_str() != "html"
                             button_width=ButtonWidth::Custom
                             button_height=ButtonHeight::Custom
