@@ -4,7 +4,7 @@ use crate::common::ui_utils::copy_to_clipboard;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
-use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
@@ -138,6 +138,19 @@ pub fn RequestResultPanel(
                                 <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
                                 <label for="save-response" class="dark:text-white">Save</label>
                             </div>
+
+                            <Button
+                                label=move || "⧉".to_owned()
+                                title=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                                class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                                button_width=ButtonWidth::Custom
+                                button_height=ButtonHeight::Custom
+                                color=ButtonColor::Custom
+                                loading=move || false
+                                on_click=on_copy_click
+                                disabled=move || false
+                        />
+
                         </div>
                     </div>
                     <div class="flex-1 flex overflow-auto w-full min-w-0 text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
@@ -148,17 +161,6 @@ pub fn RequestResultPanel(
                             value=response_body
                             set_value=set_response_body
                             read_only=true
-                        />
-                    </div>
-                    <div class="flex">
-                        <Button
-                            title=move || "".to_owned()
-                            label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
-                            class_name="w-full".to_owned()
-                            button_width=ButtonWidth::Auto
-                            loading=move || false
-                            on_click=on_copy_click
-                            disabled=move || false
                         />
                     </div>
                 </div>
