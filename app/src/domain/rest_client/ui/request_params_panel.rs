@@ -156,7 +156,6 @@ pub fn RequestParamsPanel(
 
                     <div id="code_editor" node_ref=tab_body_text_ref class="group relative flex-1 flex overflow-y-auto pt-4">
                         <CodeMirrorEditor
-                            class_name=move || "".to_owned()
                             element_id="request-body-code-editor".to_owned()
                             lang=body_lang
                             value=params.read_untracked().body

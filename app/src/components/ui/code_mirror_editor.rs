@@ -8,7 +8,7 @@ use crate::code_mirror::{code_editor_change_lang, init_code_editor, set_code_edi
 #[component]
 pub fn CodeMirrorEditor(
     element_id: String,
-    class_name: impl Fn() -> String + Send + Sync + 'static,
+    #[prop(optional)] class_name: String,
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
     lang: ReadSignal<String>,
@@ -80,7 +80,7 @@ pub fn CodeMirrorEditor(
     );
 
     view! {
-        <div id={element_id.to_owned()} class=move || {format!("w-full h-0 px-1 md:px-4 py-2 bg-white dark:bg-dark-bg {}", class_name())}>
+        <div id={element_id.to_owned()} class={format!("w-full h-0 px-1 md:px-4 py-2 bg-white dark:bg-dark-bg {}", class_name)}>
         </div>
     }
 }

@@ -153,9 +153,9 @@ pub fn RequestResultPanel(
 
                         </div>
                     </div>
-                    <div class="flex-1 flex overflow-auto w-full min-w-0 text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
+                    <div class="flex-1 flex overflow-auto w-full min-w-0"
+                        class:hidden=move || response_body.read().is_empty() >
                         <CodeMirrorEditor
-                            class_name=move || {if response_body.read().is_empty() {"hidden".to_owned()} else {"".to_owned()}}
                             element_id="response-body-code-editor".to_owned()
                             lang=response_lang
                             value=response_body
