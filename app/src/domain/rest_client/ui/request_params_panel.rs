@@ -24,13 +24,13 @@ use leptos::prelude::*;
 pub fn RequestParamsPanel(
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
-    body_tab_selected: ReadSignal<usize>,
-    set_body_tab_selected: WriteSignal<usize>,
     params: ReadSignal<RequestParams>,
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
+
+    let (body_tab_selected, set_body_tab_selected) = signal(0);
 
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();

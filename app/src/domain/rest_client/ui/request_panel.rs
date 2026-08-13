@@ -43,12 +43,9 @@ pub fn RequestPanel(
         set_headers,
     });
     let (save_response, set_save_response) = signal(false);
-
-    let (body_tab_selected, set_body_tab_selected) = signal(0);
+    let (response, set_response) = signal(None);
 
     let params_ref = NodeRef::<Div>::new();
-
-    let (response, set_response) = signal(None);
 
     create_req_watchers(params, project, request_info, set_request_info);
     create_watcher_bool(save_response, RequestFieldKind::SaveResponse, project, request_info);
@@ -79,8 +76,6 @@ pub fn RequestPanel(
                         project
                         request_info
                         node_ref=params_ref
-                        body_tab_selected
-                        set_body_tab_selected
                         params
                     />
 
