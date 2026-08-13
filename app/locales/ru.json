@@ -73,6 +73,8 @@
     "rest_client_explorer_rename_request":"Переименовать",
     "rest_client_explorer_dublicate_request":"Дублировать",
     "rest_client_explorer_delete_request":"Удалить",
+    "rest_client_explorer_copy_curl": "Копировать как cURL (Posix)",
+    "rest_client_explorer_copy_curlwin": "Копировать как cURL (Windows)",
 
     "rest_client_info_1":"К сожалению, Rest client недоступен в Web версии приложения.",
     "rest_client_info_2":"Данная функция доступна только в <b>бесплатном</b> автономном приложении.",

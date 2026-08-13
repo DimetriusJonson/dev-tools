@@ -4,18 +4,13 @@ use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
-    },
-    domain::rest_client::{
+    }, domain::rest_client::{
         model::request_params::{
-            CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestInfo, RequestParams,
-        },
-        ui::request_params_url::RequestParamsUrl,
-        util::request_store::{
+            CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestCommand, RequestInfo, RequestParams,
+        }, ui::request_params_url::RequestParamsUrl, util::request_store::{
             RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
         },
-    },
-    i18n::*,
-    model::restclient::rest_client_response::RestClientResponse,
+    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{
     html::{Button, Div},
@@ -70,6 +65,7 @@ pub fn RequestPanel(
         params,
         project,
         request_info,
+        set_request_info,
         send_btn_node_ref,
         set_response,
         set_save_response,
@@ -116,7 +112,7 @@ pub fn RequestPanel(
                         max_scr_ration={1.0 / 2.0}
                         default_scr_ration={1.0 / 6.0} />
 
-                    <RequestResultPanel project request_info save_response set_save_response data=response params/>
+                    <RequestResultPanel project request_info set_request_info save_response set_save_response data=response params/>
 
                 </div>
             </div>
@@ -210,6 +206,7 @@ fn create_request_info_watcher(
     params: ReadSignal<RequestParams>,
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
+    set_request_info: WriteSignal<RequestInfo>,
     send_btn_ref: NodeRef<Button>,
     set_response: WriteSignal<Option<RestClientResponse>>,
     set_save_response: WriteSignal<bool>,
@@ -222,10 +219,10 @@ fn create_request_info_watcher(
             let id = value.id;
             let project_id = project.get_untracked();
 
-            if value.autorun
-                && (prev.is_none() || !prev.unwrap().autorun)
+            if value.command == RequestCommand::Run
                 && let Some(send_btn) = send_btn_ref.get_untracked()
             {
+                set_request_info.write_untracked().command = RequestCommand::None;
                 send_btn.click();
             }
 

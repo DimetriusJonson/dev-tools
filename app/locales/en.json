@@ -74,7 +74,9 @@
     "rest_client_explorer_rename_request":"Rename",
     "rest_client_explorer_dublicate_request":"Dublicate",
     "rest_client_explorer_delete_request":"Delete",
- 
+    "rest_client_explorer_copy_curl": "Copy as cURL (Posix)",
+    "rest_client_explorer_copy_curlwin": "Copy as cURL (Windows)",
+
     "rest_client_info_1":"Unfortunately, the Rest client is not available in the Web version of the application.",
     "rest_client_info_2":"This feature is only available in the <b>free</b> standalone app.",
     "rest_client_info_3":"The standalone application runs on operating systems: Windows, Linux and Mac OS.",

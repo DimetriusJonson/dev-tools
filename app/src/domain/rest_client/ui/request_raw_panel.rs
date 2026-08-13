@@ -1,15 +1,20 @@
 use leptos::html::Div;
 use leptos::prelude::*;
+use web_sys::MouseEvent;
 
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_info};
 use crate::components::ui::button::{Button, ButtonHeight, ButtonWidth};
-use crate::domain::rest_client::model::request_params::RequestParams;
+use crate::domain::rest_client::model::request_params::{
+    RequestCommand, RequestInfo, RequestParams,
+};
 use crate::domain::rest_client::util::curl_builder::{build_curl_bash_cmd, build_curl_win_cmd};
 use crate::i18n::*;
 
 #[component]
 pub fn RequestRawPanel(
+    request_info: ReadSignal<RequestInfo>,
+    set_request_info: WriteSignal<RequestInfo>,
     request_raw: ReadSignal<String>,
     node_ref: NodeRef<Div>,
     params: ReadSignal<RequestParams>,
@@ -30,6 +35,19 @@ pub fn RequestRawPanel(
         copy_to_clipboard(&cmd);
         show_info(t_string!(i18n, rest_client_curl_copied).to_owned(), messages);
     };
+
+    Effect::watch(
+        move || request_info.get(),
+        move |value, _prev, _| {
+            match value.command {
+                RequestCommand::CopyCUrl => on_build_c_url(MouseEvent::new("click").unwrap()),
+                RequestCommand::CopyCUrlWin => on_build_c_url_win(MouseEvent::new("click").unwrap()),
+                _ => ()
+            }
+            set_request_info.write_untracked().command = RequestCommand::None;
+        },
+        false,
+    );
 
     view! {
         <div class="flex flex-col text-xs md:text-base overflow-auto gap-4" node_ref=node_ref>

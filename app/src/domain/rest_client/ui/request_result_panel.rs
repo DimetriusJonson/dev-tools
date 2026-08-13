@@ -19,6 +19,7 @@ use leptos::prelude::*;
 pub fn RequestResultPanel(
     project: ReadSignal<String>,
     request_info: ReadSignal<RequestInfo>,
+    set_request_info: WriteSignal<RequestInfo>,
     params: ReadSignal<RequestParams>,
     save_response: ReadSignal<bool>,
     set_save_response: WriteSignal<bool>,
@@ -203,7 +204,7 @@ pub fn RequestResultPanel(
                     </div>
                 </div>
 
-                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params/>
+                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params request_info set_request_info />
             </div>
         </div>
     }

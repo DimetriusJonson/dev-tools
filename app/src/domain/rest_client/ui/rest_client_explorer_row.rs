@@ -6,6 +6,7 @@ use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::components::layout::message_banner::{Messages, show_error};
+use crate::domain::rest_client::model::request_params::RequestCommand;
 use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
 use crate::domain::rest_client::util::request_store::{
     RequestFieldKind, copy_stored_request, delete_stored_request, generate_request_id,
@@ -118,6 +119,8 @@ pub fn RestClientExplorerRow(
                                     <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
                                         items=move || {vec![
                                                 ("run", t_string!(i18n, rest_client_explorer_run_request)),
+                                                ("copyCUrl", t_string!(i18n, rest_client_explorer_copy_curl)),
+                                                ("copyCUrlWin", t_string!(i18n, rest_client_explorer_copy_curlwin)),
                                                 ("rename", t_string!(i18n, rest_client_explorer_rename_request)),
                                                 ("dublicate", t_string!(i18n, rest_client_explorer_dublicate_request)),
                                                 ("delete", t_string!(i18n, rest_client_explorer_delete_request)),
@@ -168,7 +171,13 @@ pub fn RestClientExplorerRow(
                                                     }
                                                 },
                                                 "run" => {
-                                                    set_current_request.set(request.read_untracked().clone_and_run());
+                                                    set_current_request.write().command = RequestCommand::Run;
+                                                },
+                                                "copyCUrl" => {
+                                                    set_current_request.write().command = RequestCommand::CopyCUrl;
+                                                },
+                                                "copyCUrlWin" => {
+                                                    set_current_request.write().command = RequestCommand::CopyCUrlWin;
                                                 },
                                                 _ => ()
                                             }

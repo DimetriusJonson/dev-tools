@@ -3,7 +3,7 @@ use std::{convert::Infallible, fmt::Display, str::FromStr};
 use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, WriteSignal};
 use serde::{Deserialize, Serialize};
 
-use crate::components::layout::property_editor::KeyValueTableItem;
+use crate::{components::layout::property_editor::KeyValueTableItem, domain::rest_client::model::request_params::RequestCommand::None};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RestClientProject {
@@ -67,6 +67,11 @@ impl KeyValueTableItem for RequestBodyFormValue {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum RequestCommand {
+    None, Run, CopyCUrl, CopyCUrlWin,
+}
+
 #[derive(Clone, Debug)]
 pub struct RequestInfo {
     pub id: i32,
@@ -74,7 +79,7 @@ pub struct RequestInfo {
     pub url: String,
     pub name: String,
     pub method: String,
-    pub autorun: bool,
+    pub command: RequestCommand,
 }
 
 #[derive(Clone, Debug)]
@@ -120,13 +125,7 @@ impl RequestParams {
 
 impl RequestInfo {
     pub fn new(id: i32, project_id: i32, url: String, name: String, method: String) -> Self {
-        Self { id, project_id, url, method, name, autorun: false }
-    }
-
-    pub fn clone_and_run(&self) -> Self {
-        let mut info = self.clone();
-        info.autorun = true;
-        info
+        Self { id, project_id, url, method, name, command: None }
     }
 
     pub fn new_empty() -> Self {
@@ -136,7 +135,7 @@ impl RequestInfo {
             url: "".to_owned(),
             method: "".to_owned(),
             name: "".to_owned(),
-            autorun: false,
+            command: None,
         }
     }
 
