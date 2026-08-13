@@ -147,6 +147,7 @@ pub fn get_stored_value(
     get_local_store_value(&key, default)
 }
 
+/*
 pub fn get_stored_value_as_bool(
     field: RequestFieldKind,
     default: bool,
@@ -157,6 +158,7 @@ pub fn get_stored_value_as_bool(
     let str = get_local_store_value(&key, default.to_string());
     str::parse(&str).unwrap_or_default()
 }
+ */
 
 pub fn set_stored_value(
     project: ReadSignal<String>,

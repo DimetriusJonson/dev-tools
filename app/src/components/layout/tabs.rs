@@ -67,7 +67,7 @@ pub fn Tabs(
     }
 }
 
-fn update_selected(tabs: &Vec<TabItem>, tab_selected: usize) {
+fn update_selected(tabs: &[TabItem], tab_selected: usize) {
     for tab in tabs.iter() {
         if let Some(tab_elem) = tab.node_ref.get_untracked() {
             tab_elem.class_list().add_1("hidden").unwrap();
@@ -80,12 +80,11 @@ fn update_selected(tabs: &Vec<TabItem>, tab_selected: usize) {
         .enumerate()
         .filter(|(idx, _tab)| *idx == tab_selected)
         .map(|(_idx, tab)| tab.node_ref)
-        .nth(0)
+        .next()
+        && let Some(tab_elem) = tab_node.get_untracked()
     {
-        if let Some(tab_elem) = tab_node.get_untracked() {
-            tab_elem.class_list().add_1("block").unwrap();
-            tab_elem.class_list().remove_1("hidden").unwrap();
-        }
+        tab_elem.class_list().add_1("block").unwrap();
+        tab_elem.class_list().remove_1("hidden").unwrap();
     }
 }
 

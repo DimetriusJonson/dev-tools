@@ -28,7 +28,7 @@ fn build_curl_cmd(
 
     //method
     if request_params.method.read_untracked() != "GET".to_owned() {
-        result.push_str(&format!(" {}-X {}", new_line, &request_params.method.read_untracked()));
+        result.push_str(&format!(" {}-X {}", new_line, request_params.method.read_untracked()));
     }
 
     let method = request_params.method.get_untracked();
@@ -80,7 +80,7 @@ fn build_curl_cmd(
 
 fn add_header_param(result: &mut String, name: &str, value: &str, quote: &str, new_line: &str) {
     result.push_str(&format!(" {}", new_line));
-    result.push_str(&format!("-H {}{}: {}{}", quote, name, &escape_string(value), quote));
+    result.push_str(&format!("-H {}{}: {}{}", quote, name, escape_string(value), quote));
 }
 
 fn win_cmd_escape(s: &str) -> String {
@@ -107,9 +107,9 @@ fn win_cmd_escape(s: &str) -> String {
 
 fn escape_string(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
-    let mut chars = s.chars();
+    let chars = s.chars();
 
-    while let Some(ch) = chars.next() {
+    for ch in chars {
         match ch {
             '"' | '\\' => {
                 result.push('\\');

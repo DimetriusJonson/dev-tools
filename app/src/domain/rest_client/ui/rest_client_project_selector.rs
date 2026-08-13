@@ -140,8 +140,8 @@ pub fn ProjectSelector(
                                                 }, Duration::from_millis(250));
                                             },
                                             "rename" => {
-                                                if let Ok(project_id) = project.get_untracked().parse::<i32>() {
-                                                    if let Some(project_name) = projects.read_untracked().iter().filter(|p|p.id == project_id).map(|p|p.name.to_owned()).last() {
+                                                if let Ok(project_id) = project.get_untracked().parse::<i32>()
+                                                    && let Some(project_name) = projects.read_untracked().iter().filter(|p|p.id == project_id).map(|p|p.name.to_owned()).next_back() {
                                                         set_edit_name_mode.set(true);
                                                         set_edit_name.set(project_name);
                                                         set_old_project.set(project.get());
@@ -153,14 +153,13 @@ pub fn ProjectSelector(
                                                             }
                                                         }, Duration::from_millis(250));
                                                     }
-                                                }
                                             },
                                             "delete" => {
                                                 if let Ok(project_id) = project.get_untracked().parse::<i32>() {
                                                     on_delete.run(());
 
                                                     set_projects.write().retain(|p|p.id != project_id);
-                                                    if let Some(prj) = projects.read_untracked().iter().nth(0) {
+                                                    if let Some(prj) = projects.read_untracked().first() {
                                                         set_project.set(prj.id.to_string());
                                                     } else {
                                                         set_project.set("".to_owned());
@@ -221,8 +220,8 @@ pub fn ProjectSelector(
     }
 }
 
-fn get_projects_options(projects: &Vec<RestClientProject>) -> Vec<(Option<String>, String)> {
-    projects.into_iter().map(|p| (Some(p.id.to_string()), p.name.to_owned())).collect()
+fn get_projects_options(projects: &[RestClientProject]) -> Vec<(Option<String>, String)> {
+    projects.iter().map(|p| (Some(p.id.to_string()), p.name.to_owned())).collect()
 }
 
 fn generate_project_id() -> i32 {

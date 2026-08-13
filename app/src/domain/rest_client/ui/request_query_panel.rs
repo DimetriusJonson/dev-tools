@@ -29,33 +29,33 @@ pub fn RequestQueryPanel(
     Effect::watch(
         move || request_info.get(),
         move |value, _prev, _| {
-            if !items_updating.get_untracked() {
-                if let Ok(url) = Url::parse(&value.url) {
-                    let mut query_items = Vec::new();
-                    for pair in url.query_pairs() {
-                        let (name, set_name) = signal(pair.0.to_string());
-                        let (value, set_value) = signal(pair.1.to_string());
-                        query_items.push(QueryItem {
-                            id: Uuid::new_v4().to_string(),
-                            name,
-                            set_name,
-                            value,
-                            set_value,
-                        });
-                    }
-
-                    set_items_updating.set(true);
-                    set_timeout(
-                        move || {
-                            set_items.set(query_items);
-                            set_timeout(
-                                move || set_items_updating.set(false),
-                                Duration::from_millis(1),
-                            );
-                        },
-                        std::time::Duration::from_millis(1),
-                    );
+            if !items_updating.get_untracked()
+                && let Ok(url) = Url::parse(&value.url)
+            {
+                let mut query_items = Vec::new();
+                for pair in url.query_pairs() {
+                    let (name, set_name) = signal(pair.0.to_string());
+                    let (value, set_value) = signal(pair.1.to_string());
+                    query_items.push(QueryItem {
+                        id: Uuid::new_v4().to_string(),
+                        name,
+                        set_name,
+                        value,
+                        set_value,
+                    });
                 }
+
+                set_items_updating.set(true);
+                set_timeout(
+                    move || {
+                        set_items.set(query_items);
+                        set_timeout(
+                            move || set_items_updating.set(false),
+                            Duration::from_millis(1),
+                        );
+                    },
+                    std::time::Duration::from_millis(1),
+                );
             }
         },
         false,
@@ -64,33 +64,34 @@ pub fn RequestQueryPanel(
     Effect::watch(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
-            if !items_updating.get_untracked() && (prev.is_none() || value != prev.unwrap()) {
-                if let Ok(url) = Url::parse(value) {
-                    let mut query_items = Vec::new();
-                    for pair in url.query_pairs() {
-                        let (name, set_name) = signal(pair.0.to_string());
-                        let (value, set_value) = signal(pair.1.to_string());
-                        query_items.push(QueryItem {
-                            id: Uuid::new_v4().to_string(),
-                            name,
-                            set_name,
-                            value,
-                            set_value,
-                        });
-                    }
-
-                    set_items_updating.set(true);
-                    set_timeout(
-                        move || {
-                            set_items.set(query_items);
-                            set_timeout(
-                                move || set_items_updating.set(false),
-                                Duration::from_millis(1),
-                            );
-                        },
-                        Duration::from_millis(1),
-                    );
+            if !items_updating.get_untracked()
+                && (prev.is_none() || value != prev.unwrap())
+                && let Ok(url) = Url::parse(value)
+            {
+                let mut query_items = Vec::new();
+                for pair in url.query_pairs() {
+                    let (name, set_name) = signal(pair.0.to_string());
+                    let (value, set_value) = signal(pair.1.to_string());
+                    query_items.push(QueryItem {
+                        id: Uuid::new_v4().to_string(),
+                        name,
+                        set_name,
+                        value,
+                        set_value,
+                    });
                 }
+
+                set_items_updating.set(true);
+                set_timeout(
+                    move || {
+                        set_items.set(query_items);
+                        set_timeout(
+                            move || set_items_updating.set(false),
+                            Duration::from_millis(1),
+                        );
+                    },
+                    Duration::from_millis(1),
+                );
             }
         },
         false,

@@ -12,15 +12,13 @@ fn make_absolute_links_by_attr(html: &mut String, base_url: &str, attr_name: &st
     let mut offset = 0;
     for i in indexes {
         let start_index = i + attr_part.len() + offset;
-        if let Some(end_index) = find_from_byte_index(html, start_index, "\"") {
-            if let Some(href) = html.get(start_index..end_index) {
-                if !is_absolute_url(&href) {
-                    if let Some(absolute) = resolve_absolute(&href, base_url) {
-                        html.replace_range(start_index..end_index, &absolute);
-                        offset += absolute.len() - (end_index - start_index)
-                    }
-                }
-            }
+        if let Some(end_index) = find_from_byte_index(html, start_index, "\"")
+            && let Some(href) = html.get(start_index..end_index)
+            && !is_absolute_url(href)
+            && let Some(absolute) = resolve_absolute(href, base_url)
+        {
+            html.replace_range(start_index..end_index, &absolute);
+            offset += absolute.len() - (end_index - start_index)
         }
     }
 }

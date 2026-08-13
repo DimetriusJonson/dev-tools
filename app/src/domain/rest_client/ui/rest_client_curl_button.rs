@@ -8,9 +8,7 @@ use crate::domain::rest_client::util::request_store::{
 };
 use crate::i18n::*;
 use crate::{
-    common::{
-        curl_parser::parser::parse_curl_cmd, ui_utils::paste_from_clipboard,
-    },
+    common::{curl_parser::parser::parse_curl_cmd, ui_utils::paste_from_clipboard},
     components::layout::message_banner::{Messages, show_error},
     domain::rest_client::model::request_params::RequestInfo,
 };
@@ -43,7 +41,12 @@ pub fn RestClientCUrlButton(
                         set_current_request.set(request.clone());
                         set_stored_requests_ids(project, &requests.read_untracked());
                         set_stored_value(project, request.id, RequestFieldKind::Url, request.url);
-                        set_stored_value(project, request.id, RequestFieldKind::Method, request.method);
+                        set_stored_value(
+                            project,
+                            request.id,
+                            RequestFieldKind::Method,
+                            request.method,
+                        );
 
                         let content_type = parsed_request
                             .headers
@@ -52,31 +55,43 @@ pub fn RestClientCUrlButton(
                             .map(|h| h.1.to_str().ok())
                             .unwrap_or(None);
 
-                        if let Some(content_type) = content_type && content_type.to_lowercase() == "application/x-www-form-urlencoded" {
+                        if let Some(content_type) = content_type
+                            && content_type.to_lowercase() == "application/x-www-form-urlencoded"
+                        {
                             if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
                                 &parsed_request.body.join("\n"),
+                            ) && let Ok(json) = serde_json::to_string(
+                                &map.into_iter().collect::<Vec<(String, String)>>(),
                             ) {
-                                if let Ok(json) = serde_json::to_string(
-                                    &map.into_iter().collect::<Vec<(String, String)>>(),
-                                ) {
-                                    set_stored_value(project, request.id, RequestFieldKind::BodyFormencoded, json);
-                                    set_stored_value(
-                                        project,
-                                        request.id,
-                                        RequestFieldKind::BodyType,
-                                        "formencoded".to_owned(),
-                                    );
-                                }
+                                set_stored_value(
+                                    project,
+                                    request.id,
+                                    RequestFieldKind::BodyFormencoded,
+                                    json,
+                                );
+                                set_stored_value(
+                                    project,
+                                    request.id,
+                                    RequestFieldKind::BodyType,
+                                    "formencoded".to_owned(),
+                                );
                             }
-                        } else { 
+                        } else {
                             set_stored_value(
                                 project,
                                 request.id,
                                 RequestFieldKind::Body,
                                 parsed_request.body.join("\n"),
                             );
-                            let body_type = RequestBodyKind::from_content_type(content_type.unwrap_or_default());
-                            set_stored_value(project, request.id, RequestFieldKind::BodyType, body_type.to_string());
+                            let body_type = RequestBodyKind::from_content_type(
+                                content_type.unwrap_or_default(),
+                            );
+                            set_stored_value(
+                                project,
+                                request.id,
+                                RequestFieldKind::BodyType,
+                                body_type.to_string(),
+                            );
                         }
 
                         set_stored_value(

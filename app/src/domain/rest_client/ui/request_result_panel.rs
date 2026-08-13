@@ -23,7 +23,8 @@ pub fn RequestResultPanel(
     params: ReadSignal<RequestParams>,
     save_response: ReadSignal<bool>,
     set_save_response: WriteSignal<bool>,
-    data: ReadSignal<Option<RestClientResponse>>,
+    response: ReadSignal<Option<RestClientResponse>>,
+    set_response: WriteSignal<Option<RestClientResponse>>,
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
@@ -40,8 +41,8 @@ pub fn RequestResultPanel(
     );
 
     let on_copy_click = move |_| {
-        if data.read_untracked().is_some() {
-            copy_to_clipboard(&data.get_untracked().unwrap().body);
+        if response.read_untracked().is_some() {
+            copy_to_clipboard(&response.get_untracked().unwrap().body);
             show_info(t!(i18n, rest_client_response_copied_to_clipboard_msg).to_html(), messages);
         }
     };
@@ -63,7 +64,47 @@ pub fn RequestResultPanel(
     });
 
     Effect::watch(
-        move || data.get(),
+        move || request_info.get(),
+        move |value, prev, _| {
+            let id = value.id;
+            let project_id = project.get_untracked();
+
+            if prev.is_none()
+                || id != prev.unwrap().id
+                || project_id.parse::<i32>().unwrap_or(0) != prev.unwrap().project_id
+            {
+                set_response.set(None);
+
+                let save_response = get_stored_value(
+                    RequestFieldKind::SaveResponse,
+                    "false".to_owned(),
+                    project.read_untracked().as_str(),
+                    request_info.read_untracked().id,
+                )
+                .parse::<bool>()
+                .unwrap_or_default();
+                set_save_response.set(save_response);
+                if save_response {
+                    let data_str = get_stored_value(
+                        RequestFieldKind::SaveResponseData,
+                        "".to_owned(),
+                        project.read_untracked().as_str(),
+                        request_info.read_untracked().id,
+                    );
+                    if !data_str.is_empty() {
+                        match serde_json::from_str::<RestClientResponse>(&data_str) {
+                            Ok(data) => set_response.set(Some(data)),
+                            Err(err) => show_error(err.to_string(), messages),
+                        }
+                    }
+                }
+            }
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || response.get(),
         move |value, _prev, _| {
             set_tab_selected.set(0);
             set_show_preview_html.set(false);
@@ -97,7 +138,7 @@ pub fn RequestResultPanel(
             };
 
             if formatting.get_untracked() {
-                if response_lang.get_untracked() == "xml".to_owned() {
+                if response_lang.get_untracked() == "xml" {
                     let formatted_xml = match format_xml(&response_body.read_untracked(), 4) {
                         Ok(formatted_text) => formatted_text,
                         Err(err) => {
@@ -106,7 +147,7 @@ pub fn RequestResultPanel(
                         }
                     };
                     set_response_body.set(formatted_xml);
-                } else if response_lang.get_untracked() == "json".to_owned() {
+                } else if response_lang.get_untracked() == "json" {
                     let formatted_json = format_json(&response_body.read_untracked(), 4);
                     set_response_body.set(formatted_json);
                 }

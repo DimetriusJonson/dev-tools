@@ -98,7 +98,7 @@ where
                                   on_change_key.run((id.to_owned(), value.to_owned()));
                                 }
                             }
-                            value=item.name().clone()
+                            value=item.name()
                             set_value=item.set_name()
                         />
                         <AutocompleteInput

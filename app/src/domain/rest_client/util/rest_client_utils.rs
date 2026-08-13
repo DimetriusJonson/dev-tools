@@ -12,5 +12,5 @@ pub fn formencoded_to_str(
         .map(|fv| (fv.name.get_untracked(), fv.value.get_untracked()))
         .collect();
 
-    Ok(serde_urlencoded::to_string(&map)?)
+    serde_urlencoded::to_string(&map)
 }

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::common::json_processor::format_json;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::drag_splitter::DragSplitter;
@@ -64,6 +66,31 @@ pub fn RequestParamsPanel(
                 let tab_index =
                     get_stored_value(RequestFieldKind::ParamsTab, "0".to_owned(), &project_id, id);
                 set_params_tab_selected.set(tab_index.parse().unwrap_or(0));
+
+                params.read_untracked().set_body.set(get_stored_value(
+                    RequestFieldKind::Body,
+                    "".to_owned(),
+                    project.read_untracked().as_str(),
+                    id,
+                ));
+
+                params.read_untracked().set_body_type.set(
+                    RequestBodyKind::from_str(&get_stored_value(
+                        RequestFieldKind::BodyType,
+                        "".to_owned(),
+                        project.read_untracked().as_str(),
+                        id,
+                    ))
+                    .unwrap_or_default(),
+                );
+                set_body_tab_selected.set(
+                    match params.read_untracked().body_type.get_untracked() {
+                        RequestBodyKind::Json => 0,
+                        RequestBodyKind::Xml => 1,
+                        RequestBodyKind::Text => 2,
+                        RequestBodyKind::Formencoded => 3,
+                    },
+                );
             }
         },
         false,
@@ -125,7 +152,7 @@ pub fn RequestParamsPanel(
                         ] />
 
                     <div node_ref=tab_headers_ref class="flex-1 flex flex-col overflow-y-auto gap-y-2 pt-4">
-                        <RequestHeadersPanel params />
+                        <RequestHeadersPanel params project request_info />
                     </div>
 
                     <div node_ref=tab_query_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
@@ -179,7 +206,7 @@ pub fn RequestParamsPanel(
                     </div>
 
                     <div node_ref=tab_body_form_encoded_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
-                        <RequestBodyFormPanel params/>
+                        <RequestBodyFormPanel params project request_info />
                     </div>
                 </div>
             </div>
