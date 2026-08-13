@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use leptos::html::Div;
-use leptos::leptos_dom::logging::console_log;
 use leptos::{ev, leptos_dom};
 use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
@@ -159,7 +158,7 @@ pub fn RestClientExplorerRow(
 
                                                         set_timeout(move || {
                                                             set_requests.write().push(RwSignal::new(request.clone()));
-                                                            
+
                                                             copy_stored_request(project.read_untracked().as_str(), orig_request_id, project.read_untracked().as_str(), request.id);
                                                             set_stored_requests_ids(project, &requests.read_untracked());
 

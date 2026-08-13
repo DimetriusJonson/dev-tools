@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use leptos::{prelude::*, task::spawn_local};
 
+use crate::domain::rest_client::model::request_params::RequestBodyKind;
 use crate::domain::rest_client::util::request_store::{
     RequestFieldKind, generate_request_id, set_stored_requests_ids, set_stored_value,
 };
@@ -67,22 +68,15 @@ pub fn RestClientCUrlButton(
                                     );
                                 }
                             }
-                        } else if let Some(content_type) = content_type && content_type.to_lowercase().contains("json") { 
+                        } else { 
                             set_stored_value(
                                 project,
                                 request.id,
                                 RequestFieldKind::Body,
                                 parsed_request.body.join("\n"),
                             );
-                            set_stored_value(project, request.id, RequestFieldKind::BodyType, "text".to_owned());
-                        } else {
-                            set_stored_value(
-                                project,
-                                request.id,
-                                RequestFieldKind::Body,
-                                parsed_request.body.join("\n"),
-                            );
-                            set_stored_value(project, request.id, RequestFieldKind::BodyType, "text".to_owned());
+                            let body_type = RequestBodyKind::from_content_type(content_type.unwrap_or_default());
+                            set_stored_value(project, request.id, RequestFieldKind::BodyType, body_type.to_string());
                         }
 
                         set_stored_value(

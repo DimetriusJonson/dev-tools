@@ -188,6 +188,6 @@ fn win_cmd_unescape(s: &str) -> String {
         }
     }
 
-    result
+    result.replace("^%^", "%")
 
 }

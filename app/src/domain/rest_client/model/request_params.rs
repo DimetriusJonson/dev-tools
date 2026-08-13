@@ -154,6 +154,15 @@ impl RequestBodyKind {
             RequestBodyKind::Formencoded => "application/x-www-form-urlencoded",
         }
     }
+
+    pub fn from_content_type(content_type: &str) -> Self {
+        match content_type.to_lowercase().trim() {
+            "text/plain" => RequestBodyKind::Text,
+            "application/xml" => RequestBodyKind::Xml,
+            "application/x-www-form-urlencoded" => RequestBodyKind::Formencoded,
+            _ => RequestBodyKind::Json
+        }
+    }
 }
 
 impl Display for RequestBodyKind {
