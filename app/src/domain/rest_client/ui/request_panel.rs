@@ -274,7 +274,7 @@ fn create_request_info_watcher(
                     request_info.read_untracked().id,
                 )
                 .parse::<bool>()
-                .unwrap();
+                .unwrap_or_default();
                 set_save_response.set(save_response);
                 if save_response {
                     let data_str = get_stored_value(

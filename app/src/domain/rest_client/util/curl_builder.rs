@@ -102,7 +102,7 @@ fn win_cmd_escape(s: &str) -> String {
         result.push(ch);
     }
 
-    result
+    result.replace("%", "^%^")
 }
 
 fn escape_string(s: &str) -> String {
