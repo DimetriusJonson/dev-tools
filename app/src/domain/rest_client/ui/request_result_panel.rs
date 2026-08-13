@@ -6,9 +6,10 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
-use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
+use crate::domain::rest_client::model::request_params::RequestParams;
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::html_utils::{make_absolute_links};
+use crate::domain::rest_client::util::html_utils::make_absolute_links;
 use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
@@ -17,9 +18,6 @@ use leptos::prelude::*;
 
 #[component]
 pub fn RequestResultPanel(
-    project: ReadSignal<String>,
-    request_info: ReadSignal<RequestInfo>,
-    set_request_info: WriteSignal<RequestInfo>,
     params: ReadSignal<RequestParams>,
     save_response: ReadSignal<bool>,
     set_save_response: WriteSignal<bool>,
@@ -28,13 +26,14 @@ pub fn RequestResultPanel(
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
+    let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (formatting, set_formatting) = signal(
         get_stored_value(
             RequestFieldKind::Formatting,
             "true".to_owned(),
-            project.read_untracked().as_str(),
-            request_info.read_untracked().id,
+            rc_context.project.read_untracked().as_str(),
+            rc_context.request.read_untracked().id,
         )
         .parse::<bool>()
         .unwrap(),
@@ -63,41 +62,19 @@ pub fn RequestResultPanel(
         set_tab_selected.set(0);
     });
 
+    Effect::new({
+        let rc_context = rc_context.clone();
+        move || {
+            update_state(&rc_context, set_response, set_save_response, &messages);
+        }
+    });
+
     Effect::watch(
-        move || request_info.get(),
-        move |value, prev, _| {
-            let id = value.id;
-            let project_id = project.get_untracked();
-
-            if prev.is_none()
-                || id != prev.unwrap().id
-                || project_id.parse::<i32>().unwrap_or(0) != prev.unwrap().project_id
-            {
-                set_response.set(None);
-
-                let save_response = get_stored_value(
-                    RequestFieldKind::SaveResponse,
-                    "false".to_owned(),
-                    project.read_untracked().as_str(),
-                    request_info.read_untracked().id,
-                )
-                .parse::<bool>()
-                .unwrap_or_default();
-                set_save_response.set(save_response);
-                if save_response {
-                    let data_str = get_stored_value(
-                        RequestFieldKind::SaveResponseData,
-                        "".to_owned(),
-                        project.read_untracked().as_str(),
-                        request_info.read_untracked().id,
-                    );
-                    if !data_str.is_empty() {
-                        match serde_json::from_str::<RestClientResponse>(&data_str) {
-                            Ok(data) => set_response.set(Some(data)),
-                            Err(err) => show_error(err.to_string(), messages),
-                        }
-                    }
-                }
+        move || rc_context.request.get(),
+        {
+            let rc_context = rc_context.clone();
+            move |_value, _prev, _| {
+                update_state(&rc_context, set_response, set_save_response, &messages);
             }
         },
         false,
@@ -157,9 +134,8 @@ pub fn RequestResultPanel(
     );
 
     let get_preview_src_doc = move || {
-
         let mut html = response_body.get_untracked();
-        make_absolute_links(&mut html, &request_info.read_untracked().url);
+        make_absolute_links(&mut html, &rc_context.request.read_untracked().url);
         html
     };
 
@@ -182,7 +158,7 @@ pub fn RequestResultPanel(
                                 <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
                                     on:change=move |e| {
                                         let value = event_target_value(&e);
-                                        get_stored_value(RequestFieldKind::Formatting, value, project.read_untracked().as_str(), request_info.read_untracked().id);
+                                        get_stored_value(RequestFieldKind::Formatting, value, rc_context.project.read_untracked().as_str(), rc_context.request.read_untracked().id);
                                     }/>
                                 <label for="formatting" class="dark:text-white">Format</label>
                             </div>
@@ -245,7 +221,7 @@ pub fn RequestResultPanel(
                     </div>
                 </div>
 
-                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params request_info set_request_info />
+                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params />
             </div>
         </div>
     }
@@ -263,4 +239,37 @@ fn render_headers(headers: Vec<(String, String)>) -> String {
     let list: Vec<String> =
         headers.iter().map(|h| format!("<div>{}</div><div>{}</div>", h.0, h.1)).collect();
     list.join("\n")
+}
+
+fn update_state(
+    rc_context: &RestClientContext,
+    set_response: WriteSignal<Option<RestClientResponse>>,
+    set_save_response: WriteSignal<bool>,
+    messages: &Messages,
+) {
+    set_response.set(None);
+
+    let save_response = get_stored_value(
+        RequestFieldKind::SaveResponse,
+        "false".to_owned(),
+        rc_context.project.read_untracked().as_str(),
+        rc_context.request.read_untracked().id,
+    )
+    .parse::<bool>()
+    .unwrap_or_default();
+    set_save_response.set(save_response);
+    if save_response {
+        let data_str = get_stored_value(
+            RequestFieldKind::SaveResponseData,
+            "".to_owned(),
+            rc_context.project.read_untracked().as_str(),
+            rc_context.request.read_untracked().id,
+        );
+        if !data_str.is_empty() {
+            match serde_json::from_str::<RestClientResponse>(&data_str) {
+                Ok(data) => set_response.set(Some(data)),
+                Err(err) => show_error(err.to_string(), *messages),
+            }
+        }
+    }
 }

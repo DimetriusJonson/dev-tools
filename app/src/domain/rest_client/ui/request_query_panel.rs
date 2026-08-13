@@ -2,7 +2,8 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use crate::components::layout::property_editor::{KeyValueTableItem, PropertyEditor};
-use crate::domain::rest_client::model::request_params::{RequestInfo, RequestParams};
+use crate::domain::rest_client::model::request_params::RequestParams;
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
 use leptos::prelude::*;
 use url::Url;
@@ -18,16 +19,15 @@ struct QueryItem {
 }
 
 #[component]
-pub fn RequestQueryPanel(
-    request_info: ReadSignal<RequestInfo>,
-    params: ReadSignal<RequestParams>,
-) -> impl IntoView {
+pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let i18n = use_i18n();
+    let rc_context = use_context::<RestClientContext>().unwrap();
+
     let (items, set_items) = signal(Vec::<QueryItem>::new());
     let (items_updating, set_items_updating) = signal(false);
 
     Effect::watch(
-        move || request_info.get(),
+        move || rc_context.request.get(),
         move |value, _prev, _| {
             if !items_updating.get_untracked()
                 && let Ok(url) = Url::parse(&value.url)

@@ -1,6 +1,9 @@
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button_world::ButtonWorld;
-use crate::domain::rest_client::model::request_params::{RequestBodyKind, RequestCommand, RequestInfo, RequestParams};
+use crate::domain::rest_client::model::request_params::{
+    RequestBodyKind, RequestCommand, RequestParams,
+};
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::util::rest_client_utils::formencoded_to_str;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
@@ -17,35 +20,25 @@ use crate::components::ui::text_input::TextInput;
 
 #[component]
 pub fn RequestParamsUrl(
-    project: ReadSignal<String>,
     params: ReadSignal<RequestParams>,
-    request_info: ReadSignal<RequestInfo>,
-    set_request_info: WriteSignal<RequestInfo>,
     #[prop(into)] on_result: Callback<RestClientResponse>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
+    let rc_context = use_context::<RestClientContext>().unwrap();
 
     let send_btn_node_ref = NodeRef::<Button>::new();
 
     let (in_progress, set_in_progress) = signal(false);
 
     Effect::watch(
-        move || request_info.get(),
-        move |value, prev, _| {
+        move || rc_context.request.get(),
+        move |value, _prev, _| {
             if value.command == RequestCommand::Run
                 && let Some(send_btn) = send_btn_node_ref.get_untracked()
             {
-                set_request_info.write_untracked().command = RequestCommand::None;
+                rc_context.set_request.write_untracked().command = RequestCommand::None;
                 send_btn.click();
-            }
-
-            if prev.is_none()
-                || value.id != prev.unwrap().id
-                || project.read_untracked().parse::<i32>().unwrap_or(0) != prev.unwrap().project_id
-            {
-                params.read_untracked().set_url.set(value.url.to_owned());
-                params.read_untracked().set_method.set(value.method.to_owned());
             }
         },
         false,

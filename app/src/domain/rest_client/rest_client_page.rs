@@ -1,23 +1,24 @@
 use leptos::{html::Div, prelude::*};
 
 use crate::{
-    components::layout::drag_splitter::DragSplitter,
-    domain::rest_client::{
-        model::request_params::RequestInfo,
-        ui::{request_panel::RequestPanel, rest_client_explorer::RestClientExplorer},
+    components::layout::drag_splitter::DragSplitter, domain::rest_client::{
+        model::{request_params::RequestInfo, rest_client_context::RestClientContext}, ui::{request_panel::RequestPanel, rest_client_explorer::RestClientExplorer},
     },
 };
 
 #[component]
 pub fn RestClientPage() -> impl IntoView {
-    let (current_request, set_current_request) = signal(RequestInfo::new_empty());
+    let (request, set_request) = signal(RequestInfo::new_empty());
     let (project, set_project) = signal("".to_owned());
+
+    let rest_client_context = RestClientContext { project, request, set_request };
+    provide_context(rest_client_context);
 
     let explorer_ref = NodeRef::<Div>::new();
 
     view! {
         <div class="flex flex-row dark:text-white h-screen md:h-[95dvh] text-xs md:text-base">
-            <RestClientExplorer node_ref=explorer_ref current_request set_current_request project set_project/>
+            <RestClientExplorer node_ref=explorer_ref set_project/>
 
             <DragSplitter
                 class_name="hidden md:block".to_owned()
@@ -27,7 +28,7 @@ pub fn RestClientPage() -> impl IntoView {
                 max_scr_ration={1.0 / 2.0}
                 default_scr_ration={1.0 / 6.0} />
 
-            <RequestPanel project request_info=current_request set_request_info=set_current_request/>
+            <RequestPanel />
         </div>
     }
 }

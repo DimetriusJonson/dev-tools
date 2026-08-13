@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use leptos::{prelude::*, task::spawn_local};
 
 use crate::domain::rest_client::model::request_params::RequestBodyKind;
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::util::request_store::{
     RequestFieldKind, generate_request_id, set_stored_requests_ids, set_stored_value,
 };
@@ -15,8 +16,6 @@ use crate::{
 
 #[component]
 pub fn RestClientCUrlButton(
-    project: ReadSignal<String>,
-    set_current_request: WriteSignal<RequestInfo>,
     requests: ReadSignal<Vec<RwSignal<RequestInfo>>>,
     set_requests: WriteSignal<Vec<RwSignal<RequestInfo>>>,
 ) -> impl IntoView {
@@ -24,13 +23,14 @@ pub fn RestClientCUrlButton(
     let i18n = use_i18n();
 
     let on_import_c_url = move |_| {
+        let rc_context = use_context::<RestClientContext>().unwrap();
         spawn_local(async move {
             if let Some(curl_cmd) = paste_from_clipboard().await {
                 match parse_curl_cmd(&curl_cmd) {
                     Ok(parsed_request) => {
                         let request = RequestInfo::new(
-                            generate_request_id(project),
-                            project.read_untracked().parse().unwrap_or(0),
+                            generate_request_id(rc_context.project),
+                            rc_context.project_id(),
                             parsed_request.url.to_owned(),
                             "".to_owned(),
                             parsed_request.method.to_string(),
@@ -38,11 +38,11 @@ pub fn RestClientCUrlButton(
 
                         set_requests.write().push(RwSignal::new(request.clone()));
 
-                        set_current_request.set(request.clone());
-                        set_stored_requests_ids(project, &requests.read_untracked());
-                        set_stored_value(project, request.id, RequestFieldKind::Url, request.url);
+                        rc_context.set_request.set(request.clone());
+                        set_stored_requests_ids(rc_context.project, &requests.read_untracked());
+                        set_stored_value(rc_context.project, request.id, RequestFieldKind::Url, request.url);
                         set_stored_value(
-                            project,
+                            rc_context.project,
                             request.id,
                             RequestFieldKind::Method,
                             request.method,
@@ -64,13 +64,13 @@ pub fn RestClientCUrlButton(
                                 &map.into_iter().collect::<Vec<(String, String)>>(),
                             ) {
                                 set_stored_value(
-                                    project,
+                                    rc_context.project,
                                     request.id,
                                     RequestFieldKind::BodyFormencoded,
                                     json,
                                 );
                                 set_stored_value(
-                                    project,
+                                    rc_context.project,
                                     request.id,
                                     RequestFieldKind::BodyType,
                                     "formencoded".to_owned(),
@@ -78,7 +78,7 @@ pub fn RestClientCUrlButton(
                             }
                         } else {
                             set_stored_value(
-                                project,
+                                rc_context.project,
                                 request.id,
                                 RequestFieldKind::Body,
                                 parsed_request.body.join("\n"),
@@ -87,7 +87,7 @@ pub fn RestClientCUrlButton(
                                 content_type.unwrap_or_default(),
                             );
                             set_stored_value(
-                                project,
+                                rc_context.project,
                                 request.id,
                                 RequestFieldKind::BodyType,
                                 body_type.to_string(),
@@ -95,7 +95,7 @@ pub fn RestClientCUrlButton(
                         }
 
                         set_stored_value(
-                            project,
+                            rc_context.project,
                             request.id,
                             RequestFieldKind::Headers,
                             parsed_request

@@ -14,3 +14,12 @@ pub fn formencoded_to_str(
 
     serde_urlencoded::to_string(&map)
 }
+
+pub fn body_form_to_string(form_values: &[RequestBodyFormValue]) -> String {
+    let list: KeyValueVector =
+        form_values.iter().map(|h| (h.name.get_untracked(), h.value.get_untracked())).collect();
+
+    serde_json::to_string(&list).unwrap()
+}
+
+pub type KeyValueVector = Vec<(String, String)>;

@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::common::json_processor::format_json;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::drag_splitter::DragSplitter;
@@ -7,9 +5,8 @@ use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
-use crate::domain::rest_client::model::request_params::{
-    RequestBodyKind, RequestInfo, RequestParams,
-};
+use crate::domain::rest_client::model::request_params::{RequestBodyKind, RequestParams};
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_query_panel::RequestQueryPanel;
@@ -22,13 +19,12 @@ use leptos::prelude::*;
 
 #[component]
 pub fn RequestParamsPanel(
-    project: ReadSignal<String>,
-    request_info: ReadSignal<RequestInfo>,
     params: ReadSignal<RequestParams>,
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
+    let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (body_tab_selected, set_body_tab_selected) = signal(0);
 
@@ -45,8 +41,8 @@ pub fn RequestParamsPanel(
         move || params_tab_selected.get(),
         move |value, _prev, _| {
             set_stored_value(
-                project,
-                request_info.read_untracked().id,
+                rc_context.project,
+                rc_context.request.read_untracked().id,
                 RequestFieldKind::ParamsTab,
                 value.to_string(),
             )
@@ -54,43 +50,19 @@ pub fn RequestParamsPanel(
         false,
     );
 
+    Effect::new({
+        let rc_context = rc_context.clone();
+        move || {
+            update_tabs(&rc_context, params, set_params_tab_selected, set_body_tab_selected);
+        }
+    });
+
     Effect::watch(
-        move || request_info.get(),
-        move |value, prev, _| {
-            let id = value.id;
-            let project_id = project.get_untracked();
-            if prev.is_none()
-                || id != prev.unwrap().id
-                || project_id.parse::<i32>().unwrap_or(0) != prev.unwrap().project_id
-            {
-                let tab_index =
-                    get_stored_value(RequestFieldKind::ParamsTab, "0".to_owned(), &project_id, id);
-                set_params_tab_selected.set(tab_index.parse().unwrap_or(0));
-
-                params.read_untracked().set_body.set(get_stored_value(
-                    RequestFieldKind::Body,
-                    "".to_owned(),
-                    project.read_untracked().as_str(),
-                    id,
-                ));
-
-                params.read_untracked().set_body_type.set(
-                    RequestBodyKind::from_str(&get_stored_value(
-                        RequestFieldKind::BodyType,
-                        "".to_owned(),
-                        project.read_untracked().as_str(),
-                        id,
-                    ))
-                    .unwrap_or_default(),
-                );
-                set_body_tab_selected.set(
-                    match params.read_untracked().body_type.get_untracked() {
-                        RequestBodyKind::Json => 0,
-                        RequestBodyKind::Xml => 1,
-                        RequestBodyKind::Text => 2,
-                        RequestBodyKind::Formencoded => 3,
-                    },
-                );
+        move || rc_context.request.get(),
+        {
+            let rc_context = rc_context.clone();
+            move |_value, _prev, _| {
+                update_tabs(&rc_context, params, set_params_tab_selected, set_body_tab_selected);
             }
         },
         false,
@@ -152,11 +124,11 @@ pub fn RequestParamsPanel(
                         ] />
 
                     <div node_ref=tab_headers_ref class="flex-1 flex flex-col overflow-y-auto gap-y-2 pt-4">
-                        <RequestHeadersPanel params project request_info />
+                        <RequestHeadersPanel params />
                     </div>
 
                     <div node_ref=tab_query_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
-                        <RequestQueryPanel params request_info />
+                        <RequestQueryPanel params />
                     </div>
                 </div>
 
@@ -164,7 +136,7 @@ pub fn RequestParamsPanel(
                     class_name="hidden md:block".to_owned()
                     target_ref=params_ref
                     horizontal=true
-                    local_store_prop_name=move || build_request_stored_key(project.read().as_str(), request_info.read().id, "headers_height")
+                    local_store_prop_name=move || build_request_stored_key(rc_context.project.read().as_str(), rc_context.request.read().id, "headers_height")
                     min_scr_ration={1.0 / 10.0}
                     max_scr_ration={2.0 / 3.0}
                     default_scr_ration={1.0 / 6.0}
@@ -206,11 +178,33 @@ pub fn RequestParamsPanel(
                     </div>
 
                     <div node_ref=tab_body_form_encoded_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
-                        <RequestBodyFormPanel params project request_info />
+                        <RequestBodyFormPanel params />
                     </div>
                 </div>
             </div>
         </div>
 
     }
+}
+
+fn update_tabs(
+    rc_context: &RestClientContext,
+    params: ReadSignal<RequestParams>,
+    set_params_tab_selected: WriteSignal<usize>,
+    set_body_tab_selected: WriteSignal<usize>,
+) {
+    let tab_index = get_stored_value(
+        RequestFieldKind::ParamsTab,
+        "0".to_owned(),
+        &rc_context.project.read_untracked(),
+        rc_context.request.read_untracked().id,
+    );
+    set_params_tab_selected.set(tab_index.parse().unwrap_or(0));
+
+    set_body_tab_selected.set(match params.read_untracked().body_type.get_untracked() {
+        RequestBodyKind::Json => 0,
+        RequestBodyKind::Xml => 1,
+        RequestBodyKind::Text => 2,
+        RequestBodyKind::Formencoded => 3,
+    });
 }
