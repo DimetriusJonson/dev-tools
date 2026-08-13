@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use leptos::html::Div;
+use leptos::leptos_dom::logging::console_log;
 use leptos::{ev, leptos_dom};
 use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
@@ -8,7 +9,8 @@ use web_sys::wasm_bindgen::JsCast;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
 use crate::domain::rest_client::util::request_store::{
-    RequestFieldKind, delete_stored_request, set_stored_requests_ids, set_stored_value,
+    RequestFieldKind, copy_stored_request, delete_stored_request, generate_request_id,
+    set_stored_requests_ids, set_stored_value,
 };
 use crate::i18n::*;
 use crate::{
@@ -118,6 +120,7 @@ pub fn RestClientExplorerRow(
                                         items=move || {vec![
                                                 ("run", t_string!(i18n, rest_client_explorer_run_request)),
                                                 ("rename", t_string!(i18n, rest_client_explorer_rename_request)),
+                                                ("dublicate", t_string!(i18n, rest_client_explorer_dublicate_request)),
                                                 ("delete", t_string!(i18n, rest_client_explorer_delete_request)),
                                                 ]}
                                         on_selected=move |val:(&'static str, &'static str)| {
@@ -141,6 +144,29 @@ pub fn RestClientExplorerRow(
                                                             set_popup_menu_show.set(0);
                                                         }
                                                     }, Duration::from_millis(250));
+                                                },
+                                                "dublicate" => {
+                                                    if let Some(orig_request) = requests.read_untracked().iter().find(|r|r.read_untracked().id == request.read_untracked().id) {
+                                                        let orig_request = orig_request.get_untracked();
+                                                        let request = RequestInfo::new(
+                                                            generate_request_id(project),
+                                                            orig_request.project_id,
+                                                            orig_request.url.to_owned(),
+                                                            orig_request.name.to_owned(),
+                                                            orig_request.method.to_owned(),
+                                                        );
+                                                        let orig_request_id = orig_request.id;
+
+                                                        set_timeout(move || {
+                                                            set_requests.write().push(RwSignal::new(request.clone()));
+                                                            
+                                                            copy_stored_request(project.read_untracked().as_str(), orig_request_id, project.read_untracked().as_str(), request.id);
+                                                            set_stored_requests_ids(project, &requests.read_untracked());
+
+                                                            set_current_request.set(request.clone());
+                                                            set_popup_menu_show.set(0);
+                                                        }, Duration::from_millis(250));
+                                                    }
                                                 },
                                                 "run" => {
                                                     set_current_request.set(request.read_untracked().clone_and_run());

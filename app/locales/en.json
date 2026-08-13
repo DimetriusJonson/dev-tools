@@ -72,6 +72,7 @@
     "rest_client_explorer_create_request":"Create",
     "rest_client_explorer_run_request":"Run request",
     "rest_client_explorer_rename_request":"Rename",
+    "rest_client_explorer_dublicate_request":"Dublicate",
     "rest_client_explorer_delete_request":"Delete",
  
     "rest_client_info_1":"Unfortunately, the Rest client is not available in the Web version of the application.",

@@ -82,6 +82,20 @@ pub fn delete_stored_request(project_id: &str, request_id: i32) {
     }
 }
 
+pub fn copy_stored_request(src_project_id: &str, src_request_id: i32, dst_project_id: &str, dst_request_id: i32) {
+    for field in RequestFieldKind::iter() {
+        let value = get_stored_value(field, "".to_owned(), src_project_id, src_request_id);
+        set_local_store_value(
+            &build_request_stored_key(
+                dst_project_id,
+                dst_request_id,
+                &field.to_string(),
+            ),
+            value,
+        );
+    }
+}
+
 pub fn generate_request_id(project: ReadSignal<String>) -> i32 {
     let requests_ids = get_stored_requests_ids(project.read_untracked().as_str());
     if !requests_ids.is_empty()
