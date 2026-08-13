@@ -118,9 +118,9 @@ pub fn ProjectSelector(
                         <Show when=move || popup_menu_show.get()>
                             <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
                                 items=move || {vec![
-                                        ("create", t_string!(i18n, rest_client_explorer_create_project)),
-                                        ("rename", t_string!(i18n, rest_client_explorer_rename_project)),
-                                        ("delete", t_string!(i18n, rest_client_explorer_delete_project)),
+                                        ("create", t_string!(i18n, rest_client_explorer_create_project), false),
+                                        ("rename", t_string!(i18n, rest_client_explorer_rename_project), true),
+                                        ("delete", t_string!(i18n, rest_client_explorer_delete_project), false),
                                         ]}
                                 on_selected=move |val:(&'static str, &'static str)| {
                                         match val.0 {

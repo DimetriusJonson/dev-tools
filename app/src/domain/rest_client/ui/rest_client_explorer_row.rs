@@ -118,12 +118,12 @@ pub fn RestClientExplorerRow(
                                 <Show when=move || popup_menu_show.get() == request.read().id>
                                     <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
                                         items=move || {vec![
-                                                ("run", t_string!(i18n, rest_client_explorer_run_request)),
-                                                ("copyCUrl", t_string!(i18n, rest_client_explorer_copy_curl)),
-                                                ("copyCUrlWin", t_string!(i18n, rest_client_explorer_copy_curlwin)),
-                                                ("rename", t_string!(i18n, rest_client_explorer_rename_request)),
-                                                ("dublicate", t_string!(i18n, rest_client_explorer_dublicate_request)),
-                                                ("delete", t_string!(i18n, rest_client_explorer_delete_request)),
+                                                ("run", t_string!(i18n, rest_client_explorer_run_request), true),
+                                                ("copyCUrl", t_string!(i18n, rest_client_explorer_copy_curl), false),
+                                                ("copyCUrlWin", t_string!(i18n, rest_client_explorer_copy_curlwin), true),
+                                                ("rename", t_string!(i18n, rest_client_explorer_rename_request), false),
+                                                ("dublicate", t_string!(i18n, rest_client_explorer_dublicate_request), true),
+                                                ("delete", t_string!(i18n, rest_client_explorer_delete_request), false),
                                                 ]}
                                         on_selected=move |val:(&'static str, &'static str)| {
                                             match val.0 {
