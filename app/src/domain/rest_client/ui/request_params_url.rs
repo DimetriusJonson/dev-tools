@@ -21,7 +21,7 @@ use crate::components::ui::text_input::TextInput;
 #[component]
 pub fn RequestParamsUrl(
     params: ReadSignal<RequestParams>,
-    #[prop(into)] on_result: Callback<RestClientResponse>,
+    set_response: WriteSignal<Option<RestClientResponse>>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
@@ -93,7 +93,7 @@ pub fn RequestParamsUrl(
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.json::<RestClientResponse>().await {
                         Ok(resp) => {
-                            on_result.run(resp);
+                            set_response.set(Some(resp));
                         }
                         Err(err) => show_error(format!("Cant get response: {}", err), messages),
                     },

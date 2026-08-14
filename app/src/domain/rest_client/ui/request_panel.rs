@@ -103,18 +103,10 @@ pub fn RequestPanel() -> impl IntoView {
         <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
             class:hidden=move || { rc_context.request.read().id == 0 }
             >
-            <RequestParamsUrl
-                params
-                on_result=move|res: RestClientResponse| {
-                    set_response.set(Some(res));
-                }
-            />
+            <RequestParamsUrl params set_response />
 
             <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
-                <RequestParamsPanel
-                    node_ref=params_ref
-                    params
-                />
+                <RequestParamsPanel node_ref=params_ref params />
 
                 <DragSplitter
                     class_name="hidden md:block".to_owned()
