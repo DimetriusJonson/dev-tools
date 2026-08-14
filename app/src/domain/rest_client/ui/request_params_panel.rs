@@ -1,4 +1,5 @@
 use crate::common::json_processor::format_json;
+use crate::common::ui_utils::safe_updating_ui_value;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error};
@@ -10,9 +11,7 @@ use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_query_panel::RequestQueryPanel;
-use crate::domain::rest_client::util::request_store::{
-    RequestFieldKind, build_request_stored_key, get_stored_value, set_stored_value,
-};
+use crate::domain::rest_client::util::request_store::build_request_stored_key;
 use crate::i18n::*;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -26,44 +25,31 @@ pub fn RequestParamsPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let rc_context = use_context::<RestClientContext>().unwrap();
 
+    let update_lock = RwSignal::new(false);
     let (body_tab_selected, set_body_tab_selected) = signal(0);
 
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();
     let params_ref = NodeRef::<Div>::new();
 
-    let (params_tab_selected, set_params_tab_selected) = signal(0);
     let (body_lang, set_body_lang) = signal("text".to_owned());
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_query_ref = NodeRef::<Div>::new();
 
     Effect::watch(
-        move || params_tab_selected.get(),
+        move || params.read_untracked().body_type.get(),
         move |value, _prev, _| {
-            set_stored_value(
-                rc_context.project,
-                rc_context.request.read_untracked().id,
-                RequestFieldKind::ParamsTab,
-                value.to_string(),
-            )
-        },
-        false,
-    );
-
-    Effect::new({
-        let rc_context = rc_context.clone();
-        move || {
-            update_tabs(&rc_context, params, set_params_tab_selected, set_body_tab_selected);
-        }
-    });
-
-    Effect::watch(
-        move || rc_context.request.get(),
-        {
-            let rc_context = rc_context.clone();
-            move |_value, _prev, _| {
-                update_tabs(&rc_context, params, set_params_tab_selected, set_body_tab_selected);
-            }
+            safe_updating_ui_value(update_lock, {
+                let body_type = value.clone();
+                move || {
+                    set_body_tab_selected.set(match body_type {
+                        RequestBodyKind::Json => 0,
+                        RequestBodyKind::Xml => 1,
+                        RequestBodyKind::Text => 2,
+                        RequestBodyKind::Formencoded => 3,
+                    });
+                }
+            });
         },
         false,
     );
@@ -71,21 +57,23 @@ pub fn RequestParamsPanel(
     Effect::watch(
         move || body_tab_selected.get(),
         move |value, _prev, _| {
-            let body_type = match value {
-                1 => RequestBodyKind::Xml,
-                2 => RequestBodyKind::Text,
-                3 => RequestBodyKind::Formencoded,
-                _ => RequestBodyKind::Json,
-            };
+            safe_updating_ui_value(update_lock, {
+                let body_tab_selected = *value;
+                move || {
+                    params.read_untracked().set_body_type.set(match body_tab_selected {
+                        1 => RequestBodyKind::Xml,
+                        2 => RequestBodyKind::Text,
+                        3 => RequestBodyKind::Formencoded,
+                        _ => RequestBodyKind::Json,
+                    });
 
-            match body_type {
-                RequestBodyKind::Text => set_body_lang.set("text".to_owned()),
-                RequestBodyKind::Json => set_body_lang.set("json".to_owned()),
-                RequestBodyKind::Xml => set_body_lang.set("xml".to_owned()),
-                _ => (),
-            };
-
-            params.read_untracked().set_body_type.set(body_type);
+                    set_body_lang.set(match params.read_untracked().body_type.get_untracked() {
+                        RequestBodyKind::Text => "text".to_owned(),
+                        RequestBodyKind::Xml => "xml".to_owned(),
+                        _ => "json".to_owned(),
+                    });
+                }
+            });
         },
         false,
     );
@@ -117,7 +105,7 @@ pub fn RequestParamsPanel(
             <div class="flex-1 flex flex-col">
                 <div node_ref=params_ref class="flex flex-col">
                     <Tabs class_name="".to_owned()
-                        tab_selected=params_tab_selected set_tab_selected=set_params_tab_selected
+                        tab_selected=params.read_untracked().params_tab_selected set_tab_selected=params.read_untracked().set_params_tab_selected
                         items=move || vec![
                             TabItem::new_simple(t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
                             TabItem::new_simple(t_string!(i18n, rest_client_query_tab), tab_query_ref),
@@ -185,26 +173,4 @@ pub fn RequestParamsPanel(
         </div>
 
     }
-}
-
-fn update_tabs(
-    rc_context: &RestClientContext,
-    params: ReadSignal<RequestParams>,
-    set_params_tab_selected: WriteSignal<usize>,
-    set_body_tab_selected: WriteSignal<usize>,
-) {
-    let tab_index = get_stored_value(
-        RequestFieldKind::ParamsTab,
-        "0".to_owned(),
-        &rc_context.project.read_untracked(),
-        rc_context.request.read_untracked().id,
-    );
-    set_params_tab_selected.set(tab_index.parse().unwrap_or(0));
-
-    set_body_tab_selected.set(match params.read_untracked().body_type.get_untracked() {
-        RequestBodyKind::Json => 0,
-        RequestBodyKind::Xml => 1,
-        RequestBodyKind::Text => 2,
-        RequestBodyKind::Formencoded => 3,
-    });
 }

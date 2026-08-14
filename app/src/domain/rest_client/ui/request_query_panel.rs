@@ -1,6 +1,6 @@
 use std::str::FromStr;
-use std::time::Duration;
 
+use crate::common::ui_utils::safe_updating_ui_value;
 use crate::components::layout::property_editor::{KeyValueTableItem, PropertyEditor};
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
@@ -24,38 +24,27 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (items, set_items) = signal(Vec::<QueryItem>::new());
-    let (items_updating, set_items_updating) = signal(false);
+    let update_lock = RwSignal::new(false);
 
     Effect::watch(
         move || rc_context.request.get(),
         move |value, _prev, _| {
-            if !items_updating.get_untracked()
-                && let Ok(url) = Url::parse(&value.url)
-            {
-                let mut query_items = Vec::new();
-                for pair in url.query_pairs() {
-                    let (name, set_name) = signal(pair.0.to_string());
-                    let (value, set_value) = signal(pair.1.to_string());
-                    query_items.push(QueryItem {
-                        id: Uuid::new_v4().to_string(),
-                        name,
-                        set_name,
-                        value,
-                        set_value,
-                    });
-                }
-
-                set_items_updating.set(true);
-                set_timeout(
-                    move || {
-                        set_items.set(query_items);
-                        set_timeout(
-                            move || set_items_updating.set(false),
-                            Duration::from_millis(1),
-                        );
-                    },
-                    std::time::Duration::from_millis(1),
-                );
+            if let Ok(url) = Url::parse(&value.url) {
+                safe_updating_ui_value(update_lock, move || {
+                    let mut query_items = Vec::new();
+                    for pair in url.query_pairs() {
+                        let (name, set_name) = signal(pair.0.to_string());
+                        let (value, set_value) = signal(pair.1.to_string());
+                        query_items.push(QueryItem {
+                            id: Uuid::new_v4().to_string(),
+                            name,
+                            set_name,
+                            value,
+                            set_value,
+                        });
+                    }
+                    set_items.set(query_items)
+                });
             }
         },
         false,
@@ -64,34 +53,24 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     Effect::watch(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
-            if !items_updating.get_untracked()
-                && (prev.is_none() || value != prev.unwrap())
+            if (prev.is_none() || value != prev.unwrap())
                 && let Ok(url) = Url::parse(value)
             {
-                let mut query_items = Vec::new();
-                for pair in url.query_pairs() {
-                    let (name, set_name) = signal(pair.0.to_string());
-                    let (value, set_value) = signal(pair.1.to_string());
-                    query_items.push(QueryItem {
-                        id: Uuid::new_v4().to_string(),
-                        name,
-                        set_name,
-                        value,
-                        set_value,
-                    });
-                }
-
-                set_items_updating.set(true);
-                set_timeout(
-                    move || {
-                        set_items.set(query_items);
-                        set_timeout(
-                            move || set_items_updating.set(false),
-                            Duration::from_millis(1),
-                        );
-                    },
-                    Duration::from_millis(1),
-                );
+                safe_updating_ui_value(update_lock, move || {
+                    let mut query_items = Vec::new();
+                    for pair in url.query_pairs() {
+                        let (name, set_name) = signal(pair.0.to_string());
+                        let (value, set_value) = signal(pair.1.to_string());
+                        query_items.push(QueryItem {
+                            id: Uuid::new_v4().to_string(),
+                            name,
+                            set_name,
+                            value,
+                            set_value,
+                        });
+                    }
+                    set_items.set(query_items)
+                });
             }
         },
         false,
@@ -100,7 +79,7 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     Effect::watch(
         move || items.get(),
         move |value, _prev, _| {
-            if !items_updating.get_untracked()
+            if !update_lock.get_untracked()
                 && let Ok(mut url) = Url::from_str(&params.get_untracked().url.read_untracked())
             {
                 url.query_pairs_mut().clear();
@@ -108,19 +87,12 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     url.query_pairs_mut()
                         .append_pair(&item.name.read_untracked(), &item.value.read_untracked());
                 }
+
                 let url_str = url.to_string();
                 if params.read_untracked().url.read_untracked() != url_str {
-                    set_items_updating.set(true);
-                    set_timeout(
-                        move || {
-                            params.read_untracked().set_url.set(url_str);
-                            set_timeout(
-                                move || set_items_updating.set(false),
-                                Duration::from_millis(1),
-                            );
-                        },
-                        std::time::Duration::from_millis(1),
-                    );
+                    safe_updating_ui_value(update_lock, move || {
+                        params.read_untracked().set_url.set(url_str.to_owned())
+                    });
                 }
             }
         },

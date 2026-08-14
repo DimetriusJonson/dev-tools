@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use leptos::prelude::{GetUntracked, RwSignal, Set, set_timeout};
 use web_sys::{
     Blob, BlobPropertyBag, HtmlAnchorElement, Url, js_sys,
     wasm_bindgen::{JsCast, JsValue},
@@ -117,12 +120,12 @@ pub fn get_browser_width() -> Result<f64, JsValue> {
 #[cfg(not(feature = "ssr"))]
 pub fn get_browser_width() -> Result<f64, JsValue> {
     let window = web_sys::window().ok_or_else(|| JsValue::from_str("No global window found"))?;
-    
+
     let width = window
         .inner_width()?
         .as_f64()
         .ok_or_else(|| JsValue::from_str("Could not convert inner_width to f64"))?;
-        
+
     Ok(width)
 }
 
@@ -134,11 +137,27 @@ pub fn get_browser_height() -> Result<f64, JsValue> {
 #[cfg(not(feature = "ssr"))]
 pub fn get_browser_height() -> Result<f64, JsValue> {
     let window = web_sys::window().ok_or_else(|| JsValue::from_str("No global window found"))?;
-    
+
     let width = window
         .inner_height()?
         .as_f64()
         .ok_or_else(|| JsValue::from_str("Could not convert inner_height to f64"))?;
-        
+
     Ok(width)
+}
+
+pub fn safe_updating_ui_value(
+    update_lock: RwSignal<bool>,
+    update_fn: impl Fn() -> () + Send + Sync + 'static,
+) {
+    if !update_lock.get_untracked() {
+        update_lock.set(true);
+        set_timeout(
+            move || {
+                update_fn();
+                set_timeout(move || update_lock.set(false), Duration::from_millis(1));
+            },
+            Duration::from_millis(1),
+        );
+    }
 }

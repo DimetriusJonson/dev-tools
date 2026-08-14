@@ -1,11 +1,22 @@
 use std::str::FromStr;
 
 use crate::{
-    components::layout::drag_splitter::DragSplitter, domain::rest_client::{
+    components::layout::drag_splitter::DragSplitter,
+    domain::rest_client::{
         model::{
-            request_params::{CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestParams}, rest_client_context::RestClientContext,
-        }, ui::request_params_url::RequestParamsUrl, util::{request_store::{RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value}, rest_client_utils::KeyValueVector},
-    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
+            request_params::{CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestParams},
+            rest_client_context::RestClientContext,
+        },
+        ui::request_params_url::RequestParamsUrl,
+        util::{
+            request_store::{
+                RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
+            },
+            rest_client_utils::KeyValueVector,
+        },
+    },
+    i18n::*,
+    model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{html::Div, leptos_dom::logging::console_log, prelude::*};
 use uuid::Uuid;
@@ -22,6 +33,7 @@ pub fn RequestPanel() -> impl IntoView {
     let (url, set_url) = signal("".to_owned());
     let (method, set_method) = signal("".to_owned());
     let (body, set_body) = signal("".to_owned());
+    let (params_tab_selected, set_params_tab_selected) = signal(0);
     let (body_type, set_body_type) = signal(RequestBodyKind::Text);
     let (body_formencoded, set_body_formencoded) = signal(Vec::new());
     let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
@@ -30,6 +42,8 @@ pub fn RequestPanel() -> impl IntoView {
         set_url,
         method,
         set_method,
+        params_tab_selected,
+        set_params_tab_selected,
         body,
         set_body,
         body_type,
@@ -58,6 +72,18 @@ pub fn RequestPanel() -> impl IntoView {
                     .read_untracked()
                     .set_headers
                     .set(load_headers(&rc_context.project.read_untracked(), value.id));
+
+                params.read_untracked().set_params_tab_selected.set(
+                    get_stored_value(
+                        RequestFieldKind::ParamsTab,
+                        "0".to_owned(),
+                        &rc_context.project.read_untracked(),
+                        rc_context.request.read_untracked().id,
+                    )
+                    .parse()
+                    .unwrap_or(0),
+                );
+
                 params
                     .read_untracked()
                     .set_body_formencoded
@@ -153,6 +179,21 @@ fn create_req_watchers(params: ReadSignal<RequestParams>, rc_context: RestClient
                     value.to_string(),
                 );
                 rc_context.set_request.write().method = value.to_owned();
+            }
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || params.read_untracked().params_tab_selected.get(),
+        move |value, prev, _| {
+            if prev.is_none() || value != prev.unwrap() {
+                set_stored_value(
+                    rc_context.project,
+                    rc_context.request.read_untracked().id,
+                    RequestFieldKind::ParamsTab,
+                    value.to_string(),
+                )
             }
         },
         false,

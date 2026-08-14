@@ -26,6 +26,8 @@ pub struct RequestParams {
     pub set_url: WriteSignal<String>,
     pub method: ReadSignal<String>,
     pub set_method: WriteSignal<String>,
+    pub params_tab_selected: ReadSignal<usize>,
+    pub set_params_tab_selected: WriteSignal<usize>,
     pub body: ReadSignal<String>,
     pub set_body: WriteSignal<String>,
     pub body_type: ReadSignal<RequestBodyKind>,
