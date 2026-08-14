@@ -18,31 +18,32 @@ pub fn CodeMirrorEditor(
     let update_lock = RwSignal::new(false);
     let (editor_view, set_editor_view) = signal(JsValue::null());
 
-    Effect::new({
-        let element_id = element_id.to_owned();
-        move |_| {
-            let on_change = Closure::wrap(Box::new(move |new_val: String| {
-                safe_updating_ui_value(update_lock, move || set_value.set(new_val.to_owned()));
-            }) as Box<dyn FnMut(String)>);
-
-            let view = init_code_editor(
-                &element_id.to_owned(),
-                &value.get_untracked(),
-                read_only,
-                on_change.as_ref(),
-            );
-            set_editor_view.set(view);
-            
-            on_change.forget();
-        }
-    });
-
     Effect::watch(
         move || value.get(),
-        move |_value, _prev, _| {
-            safe_updating_ui_value(update_lock, move || {
-                set_code_editor_value(&editor_view.read_untracked(), &value.read_untracked())
-            });
+        {
+            let element_id = element_id.to_owned();
+            move |_value, _prev, _| {
+                if editor_view.read_untracked().is_null() {
+                    let on_change = Closure::wrap(Box::new(move |new_val: String| {
+                        safe_updating_ui_value(update_lock, move || {
+                            set_value.set(new_val.to_owned())
+                        });
+                    }) as Box<dyn FnMut(String)>);
+
+                    set_editor_view.set(init_code_editor(
+                        &element_id.to_owned(),
+                        &value.get_untracked(),
+                        read_only,
+                        on_change.as_ref(),
+                    ));
+
+                    on_change.forget();
+                }
+
+                safe_updating_ui_value(update_lock, move || {
+                    set_code_editor_value(&editor_view.read_untracked(), &value.read_untracked());
+                });
+            }
         },
         false,
     );
@@ -50,18 +51,20 @@ pub fn CodeMirrorEditor(
     Effect::watch(
         move || lang.get(),
         move |lang, _prev, _| {
-            let on_change = Closure::wrap(Box::new(move |new_val: String| {
-                safe_updating_ui_value(update_lock, move || set_value.set(new_val.to_owned()));
-            }) as Box<dyn FnMut(String)>);
+            if !editor_view.read_untracked().is_null() {
+                let on_change = Closure::wrap(Box::new(move |new_val: String| {
+                    safe_updating_ui_value(update_lock, move || set_value.set(new_val.to_owned()));
+                }) as Box<dyn FnMut(String)>);
 
-            code_editor_change_lang(
-                &editor_view.read_untracked(),
-                lang,
-                read_only,
-                on_change.as_ref(),
-            );
+                code_editor_change_lang(
+                    &editor_view.read_untracked(),
+                    lang,
+                    read_only,
+                    on_change.as_ref(),
+                );
 
-            on_change.forget();
+                on_change.forget();
+            }
         },
         false,
     );
