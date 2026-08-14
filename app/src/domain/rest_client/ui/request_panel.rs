@@ -147,42 +147,45 @@ pub fn RequestPanel() -> impl IntoView {
     create_watcher_bool(save_response, RequestFieldKind::SaveResponse, rc_context.clone());
 
     view! {
-        <Show when=move || { rc_context.request.read().id > 0 }
-            fallback=move || view! { <div class="flex-1 flex items-center justify-center">{t!(i18n, rest_client_request_not_selected_msg)}</div> }
-        >
-            <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base">
-                <RequestParamsUrl
-                    params
-                    on_result=move|res: RestClientResponse| {
-                        if *save_response.read_untracked() {
-                            let json_string = serde_json::to_string(&res).unwrap();
-                            set_stored_value(rc_context.project, rc_context.request.read_untracked().id, RequestFieldKind::SaveResponseData, json_string)
-                        } else {
-                            delete_stored_value(rc_context.project, rc_context.request, RequestFieldKind::SaveResponseData)
-                        }
-                        set_response.set(Some(res));
+        <div class="flex-1 flex items-center justify-center"
+            class:hidden=move || { rc_context.request.read().id > 0 }>
+            {t!(i18n, rest_client_request_not_selected_msg)}
+        </div>
+
+        <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
+            class:hidden=move || { rc_context.request.read().id == 0 }
+            >
+            <RequestParamsUrl
+                params
+                on_result=move|res: RestClientResponse| {
+                    if *save_response.read_untracked() {
+                        let json_string = serde_json::to_string(&res).unwrap();
+                        set_stored_value(rc_context.project, rc_context.request.read_untracked().id, RequestFieldKind::SaveResponseData, json_string)
+                    } else {
+                        delete_stored_value(rc_context.project, rc_context.request, RequestFieldKind::SaveResponseData)
                     }
+                    set_response.set(Some(res));
+                }
+            />
+
+            <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
+                <RequestParamsPanel
+                    node_ref=params_ref
+                    params
                 />
 
-                <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
-                    <RequestParamsPanel
-                        node_ref=params_ref
-                        params
-                    />
+                <DragSplitter
+                    class_name="hidden md:block".to_owned()
+                    target_ref=params_ref
+                    local_store_prop_name=move || "params_width".to_owned()
+                    min_scr_ration={1.0 / 6.0}
+                    max_scr_ration={1.0 / 2.0}
+                    default_scr_ration={1.0 / 6.0} />
 
-                    <DragSplitter
-                        class_name="hidden md:block".to_owned()
-                        target_ref=params_ref
-                        local_store_prop_name=move || "params_width".to_owned()
-                        min_scr_ration={1.0 / 6.0}
-                        max_scr_ration={1.0 / 2.0}
-                        default_scr_ration={1.0 / 6.0} />
+                <RequestResultPanel response params/>
 
-                    <RequestResultPanel response params/>
-
-                </div>
             </div>
-        </Show>
+        </div>
     }
 }
 

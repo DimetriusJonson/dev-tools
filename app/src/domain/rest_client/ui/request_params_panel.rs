@@ -48,6 +48,7 @@ pub fn RequestParamsPanel(
                         RequestBodyKind::Text => 2,
                         RequestBodyKind::Formencoded => 3,
                     });
+                    set_body_lang.set(body_type.to_string());
                 }
             });
         },
@@ -60,18 +61,14 @@ pub fn RequestParamsPanel(
             safe_updating_ui_value(update_lock, {
                 let body_tab_selected = *value;
                 move || {
-                    params.read_untracked().set_body_type.set(match body_tab_selected {
+                    let body_type = match body_tab_selected {
                         1 => RequestBodyKind::Xml,
                         2 => RequestBodyKind::Text,
                         3 => RequestBodyKind::Formencoded,
                         _ => RequestBodyKind::Json,
-                    });
-
-                    set_body_lang.set(match params.read_untracked().body_type.get_untracked() {
-                        RequestBodyKind::Text => "text".to_owned(),
-                        RequestBodyKind::Xml => "xml".to_owned(),
-                        _ => "json".to_owned(),
-                    });
+                    };
+                    set_body_lang.set(body_type.to_string());
+                    params.read_untracked().set_body_type.set(body_type);
                 }
             });
         },
