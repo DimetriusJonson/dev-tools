@@ -69,8 +69,6 @@ pub fn RequestPanel() -> impl IntoView {
 
     create_request_watcher(params, rc_context.clone(), set_response, messages);
     create_params_watchers(params, rc_context.clone());
-    create_watcher_bool(save_response, RequestFieldKind::SaveResponse, rc_context.clone());
-    create_watcher_bool(formatting, RequestFieldKind::Formatting, rc_context.clone());
 
     view! {
         <div class="flex-1 flex items-center justify-center"
@@ -290,6 +288,10 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         },
         false,
     );
+
+    create_watcher_bool(params.read_untracked().save_response, RequestFieldKind::SaveResponse, rc_context.clone());
+    create_watcher_bool(params.read_untracked().formatting, RequestFieldKind::Formatting, rc_context.clone());
+
 }
 
 fn create_watcher(
