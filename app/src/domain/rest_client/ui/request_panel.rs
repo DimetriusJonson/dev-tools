@@ -272,12 +272,10 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
     Effect::watch(
         move || params.read_untracked().headers.get(),
         move |value, _prev, _| {
-            set_stored_value(
+            value.write_to_store(
                 rc_context.project.read_only(),
                 rc_context.request.read_untracked().id,
-                RequestFieldKind::Headers,
-                value.to_string(),
-            )
+            );
         },
         false,
     );

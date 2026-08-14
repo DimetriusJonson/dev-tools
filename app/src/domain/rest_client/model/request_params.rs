@@ -1,11 +1,20 @@
-use std::{convert::Infallible, fmt::Display, slice::{Iter, IterMut}, str::FromStr};
+use std::{
+    convert::Infallible,
+    fmt::Display,
+    slice::{Iter, IterMut},
+    str::FromStr,
+};
 
 use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, RwSignal, WriteSignal, signal};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    components::layout::property_editor::KeyValueTableItem, domain::rest_client::{model::request_params::RequestCommand::None, util::request_store::{RequestFieldKind, get_stored_value}},
+    components::layout::property_editor::KeyValueTableItem,
+    domain::rest_client::{
+        model::request_params::RequestCommand::None,
+        util::request_store::{RequestFieldKind, get_stored_value, set_stored_value},
+    },
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -131,12 +140,15 @@ impl CustomHeaders {
         self.inner.clone()
     }
 
-    pub fn to_string(&self) -> String {
-        self.inner
+    pub fn write_to_store(&self, project: ReadSignal<String>, request_id: i32) {
+        let s = self
+            .inner
             .iter()
             .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
             .collect::<Vec<String>>()
-            .join("\n")
+            .join("\n");
+
+        set_stored_value(project, request_id, RequestFieldKind::Headers, s);
     }
 
     pub fn read_from_store(project_id: &str, request_id: i32) -> Self {
