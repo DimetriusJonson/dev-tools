@@ -73,7 +73,7 @@ pub fn RequestRawPanel(
                     disabled=move || false
                 />
             </div>
-            <pre class="w-full whitespace-pre-wrap break-all">{request_raw}</pre>
+            <pre class="h-0 w-full whitespace-pre-wrap break-all">{request_raw}</pre>
         </div>
     }
 }
