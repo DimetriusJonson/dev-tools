@@ -34,35 +34,7 @@ pub fn RequestPanel() -> impl IntoView {
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
 
-    let (url, set_url) = signal("".to_owned());
-    let (method, set_method) = signal("".to_owned());
-    let (body, set_body) = signal("".to_owned());
-    let (params_tab_selected, set_params_tab_selected) = signal(0);
-    let (body_type, set_body_type) = signal(RequestBodyKind::Text);
-    let (body_formencoded, set_body_formencoded) = signal(Vec::new());
-    let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
-    let (save_response, set_save_response) = signal(false);
-    let (formatting, set_formatting) = signal(false);
-    let (params, _set_params) = signal(RequestParams {
-        url,
-        set_url,
-        method,
-        set_method,
-        params_tab_selected,
-        set_params_tab_selected,
-        body,
-        set_body,
-        body_type,
-        set_body_type,
-        body_formencoded,
-        set_body_formencoded,
-        headers,
-        set_headers,
-        save_response,
-        set_save_response,
-        formatting,
-        set_formatting,
-    });
+    let (params, _set_params) = signal(RequestParams::new());
     let (response, set_response) = signal(None);
 
     let params_ref = NodeRef::<Div>::new();
@@ -144,14 +116,14 @@ fn create_request_watcher(
                 || rc_context.project.read_untracked().parse::<i32>().unwrap_or(0)
                     != prev.unwrap().project_id
             {
-                params.read_untracked().set_url.set(value.url.to_owned());
-                params.read_untracked().set_method.set(value.method.to_owned());
+                params.read_untracked().url.set(value.url.to_owned());
+                params.read_untracked().method.set(value.method.to_owned());
                 params
                     .read_untracked()
-                    .set_headers
+                    .headers
                     .set(load_headers(&rc_context.project.read_untracked(), value.id));
 
-                params.read_untracked().set_params_tab_selected.set(
+                params.read_untracked().params_tab_selected.set(
                     get_stored_value(
                         RequestFieldKind::ParamsTab,
                         "0".to_owned(),
@@ -164,15 +136,15 @@ fn create_request_watcher(
 
                 params
                     .read_untracked()
-                    .set_body_formencoded
+                    .body_formencoded
                     .set(load_body_formencoded(&rc_context.project.read_untracked(), value.id));
-                params.read_untracked().set_body.set(get_stored_value(
+                params.read_untracked().body.set(get_stored_value(
                     RequestFieldKind::Body,
                     "".to_owned(),
                     rc_context.project.read_untracked().as_str(),
                     value.id,
                 ));
-                params.read_untracked().set_body_type.set(
+                params.read_untracked().body_type.set(
                     RequestBodyKind::from_str(&get_stored_value(
                         RequestFieldKind::BodyType,
                         "".to_owned(),
@@ -191,7 +163,7 @@ fn create_request_watcher(
                 .parse::<bool>()
                 .unwrap_or_default();
 
-                params.read_untracked().set_save_response.set(save_response);
+                params.read_untracked().save_response.set(save_response);
                 if save_response {
                     let data_str = get_stored_value(
                         RequestFieldKind::SaveResponseData,
@@ -212,7 +184,7 @@ fn create_request_watcher(
                     set_response.set(None);
                 }
 
-                params.read_untracked().set_formatting.set(
+                params.read_untracked().formatting.set(
                     get_stored_value(
                         RequestFieldKind::Formatting,
                         "true".to_owned(),
@@ -276,7 +248,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         false,
     );
 
-    create_watcher(params.read_untracked().body, RequestFieldKind::Body, rc_context.clone());
+    create_watcher(params.read_untracked().body.read_only(), RequestFieldKind::Body, rc_context.clone());
 
     Effect::watch(
         move || params.read_untracked().body_type.get(),
@@ -307,12 +279,12 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
     );
 
     create_watcher_bool(
-        params.read_untracked().save_response,
+        params.read_untracked().save_response.read_only(),
         RequestFieldKind::SaveResponse,
         rc_context.clone(),
     );
     create_watcher_bool(
-        params.read_untracked().formatting,
+        params.read_untracked().formatting.read_only(),
         RequestFieldKind::Formatting,
         rc_context.clone(),
     );

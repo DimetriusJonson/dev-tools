@@ -119,14 +119,14 @@ pub fn RequestResultPanel(
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"
-                                    bind:value=(params.read_untracked().formatting, params.read_untracked().set_formatting)
+                                    bind:value=(params.read_untracked().formatting, params.read_untracked().formatting)
                                     prop:checked=params.read_untracked().formatting
                                     />
                                 <label for="formatting" class="dark:text-white">Format</label>
                             </div>
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="save-response" class="h-4 w-4"
-                                    bind:value=(params.read_untracked().save_response, params.read_untracked().set_save_response)
+                                    bind:value=(params.read_untracked().save_response, params.read_untracked().save_response)
                                     prop:checked=params.read_untracked().save_response
                                     />
                                 <label for="save-response" class="dark:text-white">Save</label>

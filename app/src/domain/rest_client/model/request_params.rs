@@ -1,9 +1,12 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, WriteSignal};
+use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, RwSignal, WriteSignal};
 use serde::{Deserialize, Serialize};
 
-use crate::{components::layout::property_editor::KeyValueTableItem, domain::rest_client::model::request_params::RequestCommand::None};
+use crate::{
+    components::layout::property_editor::KeyValueTableItem,
+    domain::rest_client::model::request_params::RequestCommand::None,
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RestClientProject {
@@ -22,24 +25,15 @@ pub enum RequestBodyKind {
 
 #[derive(Clone, Debug)]
 pub struct RequestParams {
-    pub url: ReadSignal<String>,
-    pub set_url: WriteSignal<String>,
-    pub method: ReadSignal<String>,
-    pub set_method: WriteSignal<String>,
-    pub params_tab_selected: ReadSignal<usize>,
-    pub set_params_tab_selected: WriteSignal<usize>,
-    pub body: ReadSignal<String>,
-    pub set_body: WriteSignal<String>,
-    pub body_type: ReadSignal<RequestBodyKind>,
-    pub set_body_type: WriteSignal<RequestBodyKind>,
-    pub body_formencoded: ReadSignal<Vec<RequestBodyFormValue>>,
-    pub set_body_formencoded: WriteSignal<Vec<RequestBodyFormValue>>,
-    pub headers: ReadSignal<Vec<CustomHeader>>,
-    pub set_headers: WriteSignal<Vec<CustomHeader>>,
-    pub save_response: ReadSignal<bool>,
-    pub set_save_response: WriteSignal<bool>,
-    pub formatting: ReadSignal<bool>,
-    pub set_formatting: WriteSignal<bool>,
+    pub url: RwSignal<String>,
+    pub method: RwSignal<String>,
+    pub params_tab_selected: RwSignal<usize>,
+    pub body: RwSignal<String>,
+    pub body_type: RwSignal<RequestBodyKind>,
+    pub body_formencoded: RwSignal<Vec<RequestBodyFormValue>>,
+    pub headers: RwSignal<Vec<CustomHeader>>,
+    pub save_response: RwSignal<bool>,
+    pub formatting: RwSignal<bool>,
 }
 
 #[derive(Clone, Debug)]
@@ -49,6 +43,22 @@ pub struct RequestBodyFormValue {
     pub set_name: WriteSignal<String>,
     pub value: ReadSignal<String>,
     pub set_value: WriteSignal<String>,
+}
+
+impl RequestParams {
+    pub fn new() -> Self {
+        Self {
+            url: RwSignal::new("".to_owned()),
+            method: RwSignal::new("".to_owned()),
+            params_tab_selected: RwSignal::new(0),
+            body: RwSignal::new("".to_owned()),
+            body_type: RwSignal::new(RequestBodyKind::Text),
+            body_formencoded: RwSignal::new(Vec::new()),
+            headers: RwSignal::new(Vec::<CustomHeader>::new()),
+            save_response: RwSignal::new(false),
+            formatting: RwSignal::new(false),
+        }
+    }
 }
 
 impl KeyValueTableItem for RequestBodyFormValue {
@@ -75,7 +85,10 @@ impl KeyValueTableItem for RequestBodyFormValue {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum RequestCommand {
-    None, Run, CopyCUrl, CopyCUrlWin,
+    None,
+    Run,
+    CopyCUrl,
+    CopyCUrlWin,
 }
 
 #[derive(Clone, Debug)]
@@ -165,7 +178,7 @@ impl RequestBodyKind {
             "text/plain" => RequestBodyKind::Text,
             "application/xml" => RequestBodyKind::Xml,
             "application/x-www-form-urlencoded" => RequestBodyKind::Formencoded,
-            _ => RequestBodyKind::Json
+            _ => RequestBodyKind::Json,
         }
     }
 }

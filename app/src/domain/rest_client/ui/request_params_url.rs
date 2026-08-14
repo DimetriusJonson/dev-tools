@@ -123,8 +123,8 @@ pub fn RequestParamsUrl(
                     single_select_option("OPTIONS"),
                     ]}
                 on_change=move |_| {}
-                value=params.read_untracked().method
-                set_value=params.read_untracked().set_method
+                value=params.read_untracked().method.read_only()
+                set_value=params.read_untracked().method.write_only()
             />
 
             <TextInput
@@ -132,8 +132,8 @@ pub fn RequestParamsUrl(
                 input_type="text".to_owned()
                 class_name="w-full".to_owned()
                 placeholder=move || {t!(i18n, rest_client_url_placeholder).to_html()}
-                value=params.read_untracked().url
-                set_value=params.read_untracked().set_url
+                value=params.read_untracked().url.read_only()
+                set_value=params.read_untracked().url.write_only()
                 on_press_enter=move |_| {
                     if let Some(send_btn) = send_btn_node_ref.get() {
                         send_btn.click();

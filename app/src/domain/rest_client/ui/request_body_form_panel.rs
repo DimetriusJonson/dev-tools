@@ -38,19 +38,19 @@ pub fn RequestBodyFormPanel(params: ReadSignal<RequestParams>) -> impl IntoView 
                     let (name, set_name) = signal(v.0);
                     let (value, set_value) = signal(v.1);
 
-                    params.read_untracked().set_body_formencoded.write().push(RequestBodyFormValue{ id, name, set_name, value, set_value });
+                    params.read_untracked().body_formencoded.write().push(RequestBodyFormValue{ id, name, set_name, value, set_value });
                 }
             }
             on_delete=move |id:String| {
-                params.read_untracked().set_body_formencoded.write().retain(|fv| fv.id != id);
+                params.read_untracked().body_formencoded.write().retain(|fv| fv.id != id);
             }
             on_change_key=move |v: (String, String)| {
-                params.read_untracked().set_body_formencoded.write().iter_mut()
+                params.read_untracked().body_formencoded.write().iter_mut()
                     .filter(|fv|fv.id == v.0)
                     .for_each(|fv| {fv.set_name.set(v.1.to_owned())});
             }
             on_change_value=move |v: (String, String)| {
-                params.read_untracked().set_body_formencoded.write().iter_mut()
+                params.read_untracked().body_formencoded.write().iter_mut()
                     .filter(|h|h.id == v.0)
                     .for_each(|h| {h.set_value.set(v.1.to_owned())});
             }

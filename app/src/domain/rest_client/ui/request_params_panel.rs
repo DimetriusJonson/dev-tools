@@ -68,7 +68,7 @@ pub fn RequestParamsPanel(
                         _ => RequestBodyKind::Json,
                     };
                     set_body_lang.set(body_type.to_string());
-                    params.read_untracked().set_body_type.set(body_type);
+                    params.read_untracked().body_type.set(body_type);
                 }
             });
         },
@@ -79,7 +79,7 @@ pub fn RequestParamsPanel(
         RequestBodyKind::Json => {
             let formatted =
                 format_json(params.read_untracked().body.read_untracked().as_borrowed(), 4);
-            params.read_untracked().set_body.set(formatted);
+            params.read_untracked().body.set(formatted);
         }
         RequestBodyKind::Xml => {
             let formatted =
@@ -90,7 +90,7 @@ pub fn RequestParamsPanel(
                         return;
                     }
                 };
-            params.read_untracked().set_body.set(formatted);
+            params.read_untracked().body.set(formatted);
         }
         RequestBodyKind::Text => (),
         RequestBodyKind::Formencoded => (),
@@ -102,7 +102,7 @@ pub fn RequestParamsPanel(
             <div class="flex-1 flex flex-col">
                 <div node_ref=params_ref class="flex flex-col">
                     <Tabs class_name="".to_owned()
-                        tab_selected=params.read_untracked().params_tab_selected set_tab_selected=params.read_untracked().set_params_tab_selected
+                        tab_selected=params.read_untracked().params_tab_selected.read_only() set_tab_selected=params.read_untracked().params_tab_selected.write_only()
                         items=move || vec![
                             TabItem::new_simple(t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
                             TabItem::new_simple(t_string!(i18n, rest_client_query_tab), tab_query_ref),
@@ -142,8 +142,8 @@ pub fn RequestParamsPanel(
                         <CodeMirrorEditor
                             element_id="request-body-code-editor".to_owned()
                             lang=body_lang
-                            value=params.read_untracked().body
-                            set_value=params.read_untracked().set_body
+                            value=params.read_untracked().body.read_only()
+                            set_value=params.read_untracked().body.write_only()
                          />
 
                         <Show when=move || params.read_untracked().body_type.get() != RequestBodyKind::Text>

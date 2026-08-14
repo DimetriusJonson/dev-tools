@@ -91,7 +91,7 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 let url_str = url.to_string();
                 if params.read_untracked().url.read_untracked() != url_str {
                     safe_updating_ui_value(update_lock, move || {
-                        params.read_untracked().set_url.set(url_str.to_owned())
+                        params.read_untracked().url.set(url_str.to_owned())
                     });
                 }
             }
