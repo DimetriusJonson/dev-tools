@@ -33,7 +33,7 @@ pub fn RequestResultPanel(
             rc_context.request.read_untracked().id,
         )
         .parse::<bool>()
-        .unwrap(),
+        .unwrap_or(false),
     );
 
     let on_copy_click = move |_| {
