@@ -42,6 +42,7 @@ pub fn RequestPanel() -> impl IntoView {
     let (body_formencoded, set_body_formencoded) = signal(Vec::new());
     let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
     let (save_response, set_save_response) = signal(false);
+    let (formatting, set_formatting) = signal(false);
     let (params, _set_params) = signal(RequestParams {
         url,
         set_url,
@@ -59,6 +60,8 @@ pub fn RequestPanel() -> impl IntoView {
         set_headers,
         save_response,
         set_save_response,
+        formatting,
+        set_formatting,
     });
     let (response, set_response) = signal(None);
 
@@ -118,6 +121,7 @@ pub fn RequestPanel() -> impl IntoView {
                 )
                 .parse::<bool>()
                 .unwrap_or_default();
+
                 params.read_untracked().set_save_response.set(save_response);
                 if save_response {
                     let data_str = get_stored_value(
@@ -138,6 +142,17 @@ pub fn RequestPanel() -> impl IntoView {
                 } else {
                     set_response.set(None);
                 }
+
+                params.read_untracked().set_formatting.set(
+                    get_stored_value(
+                        RequestFieldKind::Formatting,
+                        "true".to_owned(),
+                        rc_context.project.read_untracked().as_str(),
+                        rc_context.request.read_untracked().id,
+                    )
+                    .parse::<bool>()
+                    .unwrap_or(false),
+                );
             }
         },
         false,
@@ -145,6 +160,7 @@ pub fn RequestPanel() -> impl IntoView {
 
     create_req_watchers(params, rc_context.clone());
     create_watcher_bool(save_response, RequestFieldKind::SaveResponse, rc_context.clone());
+    create_watcher_bool(formatting, RequestFieldKind::Formatting, rc_context.clone());
 
     view! {
         <div class="flex-1 flex items-center justify-center"

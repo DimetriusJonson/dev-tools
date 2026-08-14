@@ -10,7 +10,6 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_utils::make_absolute_links;
-use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
 use leptos::html::Div;
@@ -24,17 +23,6 @@ pub fn RequestResultPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
-
-    let (formatting, set_formatting) = signal(
-        get_stored_value(
-            RequestFieldKind::Formatting,
-            "true".to_owned(),
-            rc_context.project.read_untracked().as_str(),
-            rc_context.request.read_untracked().id,
-        )
-        .parse::<bool>()
-        .unwrap_or(false),
-    );
 
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
@@ -89,7 +77,7 @@ pub fn RequestResultPanel(
                 }
             };
 
-            if formatting.get_untracked() {
+            if params.read_untracked().formatting.get_untracked() {
                 if response_lang.get_untracked() == "xml" {
                     let formatted_xml = match format_xml(&response_body.read_untracked(), 4) {
                         Ok(formatted_text) => formatted_text,
@@ -130,18 +118,17 @@ pub fn RequestResultPanel(
                         <span class="dark:text-white">{move || format!("Status: {}", response_status_code.get())}</span>
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="formatting" class="h-4 w-4" bind:value=(formatting, set_formatting) prop:checked=formatting
-                                    on:change=move |e| {
-                                        let value = event_target_value(&e);
-                                        get_stored_value(RequestFieldKind::Formatting, value, rc_context.project.read_untracked().as_str(), rc_context.request.read_untracked().id);
-                                    }/>
+                                <input type="checkbox" id="formatting" class="h-4 w-4"
+                                    bind:value=(params.read_untracked().formatting, params.read_untracked().set_formatting)
+                                    prop:checked=params.read_untracked().formatting
+                                    />
                                 <label for="formatting" class="dark:text-white">Format</label>
                             </div>
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="save-response" class="h-4 w-4"
                                     bind:value=(params.read_untracked().save_response, params.read_untracked().set_save_response)
                                     prop:checked=params.read_untracked().save_response
-                                    on:change=move |_| {}/>
+                                    />
                                 <label for="save-response" class="dark:text-white">Save</label>
                             </div>
 

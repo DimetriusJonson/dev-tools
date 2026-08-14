@@ -38,6 +38,8 @@ pub struct RequestParams {
     pub set_headers: WriteSignal<Vec<CustomHeader>>,
     pub save_response: ReadSignal<bool>,
     pub set_save_response: WriteSignal<bool>,
+    pub formatting: ReadSignal<bool>,
+    pub set_formatting: WriteSignal<bool>,
 }
 
 #[derive(Clone, Debug)]
