@@ -11,6 +11,7 @@ use crate::components::ui::button::{
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_input::TextInput;
 use crate::domain::rest_client::model::request_params::RestClientProject;
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
 use crate::domain::rest_client::util::request_store::{
     get_stored_current_project, get_stored_projects, set_stored_current_project,
@@ -21,11 +22,11 @@ use crate::i18n::*;
 #[component]
 pub fn ProjectSelector(
     #[prop(optional)] class_name: String,
-    project: RwSignal<String>,
     #[prop(into)] on_delete: Callback<()>,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
+    let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (old_project, set_old_project) = signal("".to_owned());
     let (projects, set_projects) = signal(Vec::new());
@@ -37,7 +38,7 @@ pub fn ProjectSelector(
 
     let _ = Effect::new(move || {
         set_projects.set(get_stored_projects());
-        project.set(get_stored_current_project());
+        rc_context.project.set(get_stored_current_project());
     });
 
     Effect::watch(
@@ -49,7 +50,7 @@ pub fn ProjectSelector(
     );
 
     Effect::watch(
-        move || project.get(),
+        move || rc_context.project.get(),
         move |value, _prev, _| set_stored_current_project(value.to_owned()),
         false,
     );
@@ -94,8 +95,8 @@ pub fn ProjectSelector(
                         on_change=move |value| {
                             set_stored_current_project(value);
                         }
-                        value=project.read_only()
-                        set_value=project.write_only()
+                        value=rc_context.project.read_only()
+                        set_value=rc_context.project.write_only()
                     />
 
                     <div class="relative px-1 sm:px-2" node_ref=menu_ref>
@@ -127,8 +128,8 @@ pub fn ProjectSelector(
                                                 set_edit_name_mode.set(true);
                                                 set_edit_name.set("".to_owned());
 
-                                                set_old_project.set(project.get());
-                                                project.set("".to_owned());
+                                                set_old_project.set(rc_context.project.get());
+                                                rc_context.project.set("".to_owned());
 
                                                 set_timeout(move || {
                                                     if let Some(input) = edit_name_ref.get() {
@@ -139,11 +140,11 @@ pub fn ProjectSelector(
                                                 }, Duration::from_millis(250));
                                             },
                                             "rename" => {
-                                                if let Ok(project_id) = project.get_untracked().parse::<i32>()
+                                                if let Ok(project_id) = rc_context.project.get_untracked().parse::<i32>()
                                                     && let Some(project_name) = projects.read_untracked().iter().filter(|p|p.id == project_id).map(|p|p.name.to_owned()).next_back() {
                                                         set_edit_name_mode.set(true);
                                                         set_edit_name.set(project_name);
-                                                        set_old_project.set(project.get());
+                                                        set_old_project.set(rc_context.project.get());
                                                         set_timeout(move || {
                                                             if let Some(input) = edit_name_ref.get() {
                                                                 input.focus().unwrap();
@@ -154,14 +155,14 @@ pub fn ProjectSelector(
                                                     }
                                             },
                                             "delete" => {
-                                                if let Ok(project_id) = project.get_untracked().parse::<i32>() {
+                                                if let Ok(project_id) = rc_context.project.get_untracked().parse::<i32>() {
                                                     on_delete.run(());
 
                                                     set_projects.write().retain(|p|p.id != project_id);
                                                     if let Some(prj) = projects.read_untracked().first() {
-                                                        project.set(prj.id.to_string());
+                                                        rc_context.project.set(prj.id.to_string());
                                                     } else {
-                                                        project.set("".to_owned());
+                                                        rc_context.project.set("".to_owned());
                                                     }
 
                                                     set_popup_menu_show.set(false);
@@ -184,7 +185,7 @@ pub fn ProjectSelector(
                         set_value=set_edit_name
                         on_change=move |value: String| {
                             let val = value.trim().to_lowercase();
-                            let project_id = project.get_untracked().parse::<i32>().unwrap_or(0);
+                            let project_id = rc_context.project.get_untracked().parse::<i32>().unwrap_or(0);
 
                             if val.is_empty() {
                                 show_error(t_string!(i18n, rest_client_empty_project_name).to_owned(), messages);
@@ -201,7 +202,7 @@ pub fn ProjectSelector(
                                 let project_id = generate_project_id();
                                 set_projects.write().push(RestClientProject { id: project_id, name: value.trim().to_owned() });
 
-                                project.set(project_id.to_string());
+                                rc_context.project.set(project_id.to_string());
                             } else {
                                 set_projects.write().iter_mut().filter(|p|p.id == project_id).for_each(|p| p.name = value.to_owned());
                             }
@@ -209,7 +210,7 @@ pub fn ProjectSelector(
                         }
                         on_cancel_change=move |_| {
                             let old_project_id = old_project.get_untracked();
-                            project.set(old_project_id);
+                            rc_context.project.set(old_project_id);
                             set_edit_name_mode.set(false);
                         }
                     />

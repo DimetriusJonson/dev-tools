@@ -24,9 +24,7 @@ use crate::{
 };
 
 #[component]
-pub fn RestClientExplorer(
-    node_ref: NodeRef<Div>,
-) -> impl IntoView {
+pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
 
@@ -47,7 +45,12 @@ pub fn RestClientExplorer(
 
             rc_context.request.set(request.clone());
             set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
-            set_stored_value(rc_context.project.read_only(), request.id, RequestFieldKind::Url, request.url);
+            set_stored_value(
+                rc_context.project.read_only(),
+                request.id,
+                RequestFieldKind::Url,
+                request.url,
+            );
             set_stored_value(
                 rc_context.project.read_only(),
                 request.id,
@@ -102,7 +105,7 @@ pub fn RestClientExplorer(
     view! {
         <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
             <div class="flex flex-col p-2 md:p-4 gap-y-2">
-                <ProjectSelector project=rc_context.project on_delete=move |_| {
+                <ProjectSelector on_delete=move |_| {
                     requests.read_untracked().iter().for_each(|r| {
                         set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
                         delete_stored_request(rc_context.project.read_untracked().as_str(),  r.read_untracked().id);
