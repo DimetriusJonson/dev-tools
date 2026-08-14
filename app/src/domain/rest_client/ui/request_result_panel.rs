@@ -14,15 +14,13 @@ use crate::domain::rest_client::util::request_store::{RequestFieldKind, get_stor
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
 use leptos::html::Div;
+use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 
 #[component]
 pub fn RequestResultPanel(
     params: ReadSignal<RequestParams>,
-    save_response: ReadSignal<bool>,
-    set_save_response: WriteSignal<bool>,
     response: ReadSignal<Option<RestClientResponse>>,
-    set_response: WriteSignal<Option<RestClientResponse>>,
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
@@ -62,27 +60,10 @@ pub fn RequestResultPanel(
         set_tab_selected.set(0);
     });
 
-    Effect::new({
-        let rc_context = rc_context.clone();
-        move || {
-            update_state(&rc_context, set_response, set_save_response, &messages);
-        }
-    });
-
-    Effect::watch(
-        move || rc_context.request.get(),
-        {
-            let rc_context = rc_context.clone();
-            move |_value, _prev, _| {
-                update_state(&rc_context, set_response, set_save_response, &messages);
-            }
-        },
-        false,
-    );
-
     Effect::watch(
         move || response.get(),
         move |value, _prev, _| {
+            console_log("response ");
             set_tab_selected.set(0);
             set_show_preview_html.set(false);
             match value {
@@ -163,7 +144,10 @@ pub fn RequestResultPanel(
                                 <label for="formatting" class="dark:text-white">Format</label>
                             </div>
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="save-response" class="h-4 w-4" bind:value=(save_response, set_save_response) prop:checked=save_response on:change=move |_| {}/>
+                                <input type="checkbox" id="save-response" class="h-4 w-4"
+                                    bind:value=(params.read_untracked().save_response, params.read_untracked().set_save_response)
+                                    prop:checked=params.read_untracked().save_response
+                                    on:change=move |_| {}/>
                                 <label for="save-response" class="dark:text-white">Save</label>
                             </div>
 
@@ -239,37 +223,4 @@ fn render_headers(headers: Vec<(String, String)>) -> String {
     let list: Vec<String> =
         headers.iter().map(|h| format!("<div>{}</div><div>{}</div>", h.0, h.1)).collect();
     list.join("\n")
-}
-
-fn update_state(
-    rc_context: &RestClientContext,
-    set_response: WriteSignal<Option<RestClientResponse>>,
-    set_save_response: WriteSignal<bool>,
-    messages: &Messages,
-) {
-    set_response.set(None);
-
-    let save_response = get_stored_value(
-        RequestFieldKind::SaveResponse,
-        "false".to_owned(),
-        rc_context.project.read_untracked().as_str(),
-        rc_context.request.read_untracked().id,
-    )
-    .parse::<bool>()
-    .unwrap_or_default();
-    set_save_response.set(save_response);
-    if save_response {
-        let data_str = get_stored_value(
-            RequestFieldKind::SaveResponseData,
-            "".to_owned(),
-            rc_context.project.read_untracked().as_str(),
-            rc_context.request.read_untracked().id,
-        );
-        if !data_str.is_empty() {
-            match serde_json::from_str::<RestClientResponse>(&data_str) {
-                Ok(data) => set_response.set(Some(data)),
-                Err(err) => show_error(err.to_string(), *messages),
-            }
-        }
-    }
 }

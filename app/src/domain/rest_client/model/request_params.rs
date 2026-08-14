@@ -36,6 +36,8 @@ pub struct RequestParams {
     pub set_body_formencoded: WriteSignal<Vec<RequestBodyFormValue>>,
     pub headers: ReadSignal<Vec<CustomHeader>>,
     pub set_headers: WriteSignal<Vec<CustomHeader>>,
+    pub save_response: ReadSignal<bool>,
+    pub set_save_response: WriteSignal<bool>,
 }
 
 #[derive(Clone, Debug)]

@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
 use crate::{
-    components::layout::drag_splitter::DragSplitter,
+    components::layout::{
+        drag_splitter::DragSplitter,
+        message_banner::{Messages, show_error},
+    },
     domain::rest_client::{
         model::{
             request_params::{CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestParams},
@@ -27,6 +30,7 @@ use crate::domain::rest_client::ui::{
 
 #[component]
 pub fn RequestPanel() -> impl IntoView {
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
 
@@ -37,6 +41,7 @@ pub fn RequestPanel() -> impl IntoView {
     let (body_type, set_body_type) = signal(RequestBodyKind::Text);
     let (body_formencoded, set_body_formencoded) = signal(Vec::new());
     let (headers, set_headers) = signal(Vec::<CustomHeader>::new());
+    let (save_response, set_save_response) = signal(false);
     let (params, _set_params) = signal(RequestParams {
         url,
         set_url,
@@ -52,8 +57,9 @@ pub fn RequestPanel() -> impl IntoView {
         set_body_formencoded,
         headers,
         set_headers,
+        save_response,
+        set_save_response,
     });
-    let (save_response, set_save_response) = signal(false);
     let (response, set_response) = signal(None);
 
     let params_ref = NodeRef::<Div>::new();
@@ -103,6 +109,35 @@ pub fn RequestPanel() -> impl IntoView {
                     ))
                     .unwrap_or_default(),
                 );
+
+                let save_response = get_stored_value(
+                    RequestFieldKind::SaveResponse,
+                    "false".to_owned(),
+                    rc_context.project.read_untracked().as_str(),
+                    rc_context.request.read_untracked().id,
+                )
+                .parse::<bool>()
+                .unwrap_or_default();
+                params.read_untracked().set_save_response.set(save_response);
+                if save_response {
+                    let data_str = get_stored_value(
+                        RequestFieldKind::SaveResponseData,
+                        "".to_owned(),
+                        rc_context.project.read_untracked().as_str(),
+                        rc_context.request.read_untracked().id,
+                    );
+                    if !data_str.is_empty() {
+                        match serde_json::from_str::<RestClientResponse>(&data_str) {
+                            Ok(data) => set_response.set(Some(data)),
+                            Err(err) => {
+                                set_response.set(None);
+                                show_error(err.to_string(), messages);
+                            }
+                        }
+                    }
+                } else {
+                    set_response.set(None);
+                }
             }
         },
         false,
@@ -143,7 +178,7 @@ pub fn RequestPanel() -> impl IntoView {
                         max_scr_ration={1.0 / 2.0}
                         default_scr_ration={1.0 / 6.0} />
 
-                    <RequestResultPanel save_response set_save_response response set_response params/>
+                    <RequestResultPanel response params/>
 
                 </div>
             </div>
