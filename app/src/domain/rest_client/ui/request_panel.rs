@@ -69,30 +69,7 @@ pub fn RequestPanel() -> impl IntoView {
 
     create_request_watcher(params, rc_context.clone(), set_response, messages);
     create_params_watchers(params, rc_context.clone());
-
-    Effect::watch(
-        move || response.get(),
-        move |value, _prev, _| {
-            if *save_response.read_untracked()
-                && let Some(response) = value
-            {
-                let json_string = serde_json::to_string(&response).unwrap();
-                set_stored_value(
-                    rc_context.project,
-                    rc_context.request.read_untracked().id,
-                    RequestFieldKind::SaveResponseData,
-                    json_string,
-                )
-            } else {
-                delete_stored_value(
-                    rc_context.project,
-                    rc_context.request,
-                    RequestFieldKind::SaveResponseData,
-                )
-            }
-        },
-        false,
-    );
+    create_response_watcher(params, rc_context.clone(), response);
 
     view! {
         <div class="flex-1 flex items-center justify-center"
@@ -121,6 +98,36 @@ pub fn RequestPanel() -> impl IntoView {
             </div>
         </div>
     }
+}
+
+fn create_response_watcher(
+    params: ReadSignal<RequestParams>,
+    rc_context: RestClientContext,
+    response: ReadSignal<Option<RestClientResponse>>,
+) {
+    Effect::watch(
+        move || response.get(),
+        move |value, _prev, _| {
+            if *params.read_untracked().save_response.read_untracked()
+                && let Some(response) = value
+            {
+                let json_string = serde_json::to_string(&response).unwrap();
+                set_stored_value(
+                    rc_context.project,
+                    rc_context.request.read_untracked().id,
+                    RequestFieldKind::SaveResponseData,
+                    json_string,
+                )
+            } else {
+                delete_stored_value(
+                    rc_context.project,
+                    rc_context.request,
+                    RequestFieldKind::SaveResponseData,
+                )
+            }
+        },
+        false,
+    );
 }
 
 fn create_request_watcher(
