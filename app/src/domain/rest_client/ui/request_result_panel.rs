@@ -37,8 +37,8 @@ pub fn RequestResultPanel(
     );
 
     let on_copy_click = move |_| {
-        if response.read_untracked().is_some() {
-            copy_to_clipboard(&response.get_untracked().unwrap().body);
+        if let Some(response) = response.get_untracked() {
+            copy_to_clipboard(&response.body);
             show_info(t!(i18n, rest_client_response_copied_to_clipboard_msg).to_html(), messages);
         }
     };

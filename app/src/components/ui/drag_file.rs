@@ -1,6 +1,6 @@
+use crate::i18n::*;
 use leptos::prelude::*;
 use web_sys::{ClipboardEvent, DragEvent, File, HtmlDivElement, Url};
-use crate::i18n::*;
 
 #[component]
 pub fn DragFile(
@@ -31,13 +31,13 @@ pub fn DragFile(
                 on:drop=move |event: DragEvent| {
                     deactive_drop_zone_handler(event.clone());
 
-                    if let Some(dt) = event.data_transfer() && let Some(files) = dt.files() && files.length() > 0 {
-                        on_drop_file.run(files.get(0).unwrap());
+                    if let Some(dt) = event.data_transfer() && let Some(files) = dt.files() && let Some(file) = files.get(0) {
+                        on_drop_file.run(file);
                     }
                 }
 
                 on:paste=move |event: ClipboardEvent| {
-                    if let Some(data) = event.clipboard_data() && let Some(files) = data.files() && files.length() > 0 && let Some(file) = files.get(0){
+                    if let Some(data) = event.clipboard_data() && let Some(files) = data.files() && let Some(file) = files.get(0){
                         let mime_type = file.type_().to_string();
                         if mime_type.starts_with("image/") {
                             set_img_url.set(Url::create_object_url_with_blob(&file).unwrap());

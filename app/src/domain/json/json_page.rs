@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use gloo_net::http::Request;
 use json_escape::unescape;
 use leptos::html::Div;
@@ -54,7 +52,7 @@ pub fn JsonPage() -> impl IntoView {
 
             set_dst_json.set(format_json(
                 json.read_untracked().as_borrowed(),
-                ident.get_untracked().parse().unwrap(),
+                ident.get_untracked().parse().unwrap_or(4),
             ));
 
             set_in_progress.set(InProgressType::None);
@@ -87,7 +85,7 @@ pub fn JsonPage() -> impl IntoView {
                                             .to_string(),
                                         messages,
                                     ),
-                                    Err(err) => show_error(err.as_string().unwrap(), messages),
+                                    Err(err) => show_error(err.as_string().unwrap_or("Error".to_owned()), messages),
                                 }
                             }
                             Err(err) => show_error(err.to_string(), messages),
@@ -123,8 +121,10 @@ pub fn JsonPage() -> impl IntoView {
             set_in_progress.set(InProgressType::Unescape);
 
             let json_str = json.read_untracked();
-            let unescaped_json: Cow<str> = unescape(json_str.as_str()).decode_utf8().unwrap();
-            set_dst_json.set(unescaped_json.to_string());
+            match unescape(json_str.as_str()).decode_utf8() {
+                Ok(unescaped_json) => set_dst_json.set(unescaped_json.to_string()),
+                Err(err) => show_error(err.to_string(), messages),
+            }
 
             set_in_progress.set(InProgressType::None);
         });
@@ -214,12 +214,12 @@ pub fn JsonPage() -> impl IntoView {
                 </div>
             </div>
 
-            <DragSplitter 
-                target_ref=left_panel_ref 
+            <DragSplitter
+                target_ref=left_panel_ref
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "json_left_panel_width".to_owned()
-                min_scr_ration={1.0 / 6.0} 
-                max_scr_ration={3.0 / 4.0} 
+                min_scr_ration={1.0 / 6.0}
+                max_scr_ration={3.0 / 4.0}
                 default_scr_ration={1.0 / 2.0}/>
 
             // RIGHT SIDE
