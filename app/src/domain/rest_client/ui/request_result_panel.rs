@@ -55,61 +55,58 @@ pub fn RequestResultPanel(
     let (request_raw, set_request_raw) = signal("".to_owned());
     let (show_preview_html, set_show_preview_html) = signal(false);
 
-    let on_updated_response = move |value: &Option<RestClientResponse>| {
-        set_tab_selected.set(0);
-        set_show_preview_html.set(false);
-        match value {
-            Some(response) => {
-                if let Some(error) = &response.error {
-                    show_error(error.to_owned(), messages);
-                };
+    Effect::watch(
+        move || response.get(),
+        move |value, _prev, _| {
+            set_tab_selected.set(0);
+            set_show_preview_html.set(false);
+            match value {
+                Some(response) => {
+                    if let Some(error) = &response.error {
+                        show_error(error.to_owned(), messages);
+                    };
 
-                set_response_status_code.set(response.status_code.to_string());
-                set_response_lang.set(
-                    response
-                        .headers
-                        .iter()
-                        .filter(|v| v.0.to_lowercase() == "content-type")
-                        .filter_map(|v| get_media_type_code(&v.1))
-                        .next()
-                        .unwrap_or("html".to_owned()),
-                );
-                set_response_body.set(response.body.to_owned());
-                set_response_headers.set(response.headers.clone());
-                set_request_raw.set(response.request_raw.to_owned());
+                    set_response_status_code.set(response.status_code.to_string());
+                    set_response_lang.set(
+                        response
+                            .headers
+                            .iter()
+                            .filter(|v| v.0.to_lowercase() == "content-type")
+                            .filter_map(|v| get_media_type_code(&v.1))
+                            .next()
+                            .unwrap_or("html".to_owned()),
+                    );
+                    set_response_body.set(response.body.to_owned());
+                    set_response_headers.set(response.headers.clone());
+                    set_request_raw.set(response.request_raw.to_owned());
+                }
+                None => {
+                    set_response_status_code.set("".to_owned());
+                    set_response_body.set("".to_owned());
+                    set_response_lang.set("".to_owned());
+                    set_response_headers.set(Vec::new());
+                    set_request_raw.set("".to_owned());
+                }
+            };
+
+            if formatting.get_untracked() {
+                if response_lang.get_untracked() == "xml" {
+                    let formatted_xml = match format_xml(&response_body.read_untracked(), 4) {
+                        Ok(formatted_text) => formatted_text,
+                        Err(err) => {
+                            show_error(format!("Cant format xml: {}", err), messages);
+                            return;
+                        }
+                    };
+                    set_response_body.set(formatted_xml);
+                } else if response_lang.get_untracked() == "json" {
+                    let formatted_json = format_json(&response_body.read_untracked(), 4);
+                    set_response_body.set(formatted_json);
+                }
             }
-            None => {
-                set_response_status_code.set("".to_owned());
-                set_response_body.set("".to_owned());
-                set_response_lang.set("".to_owned());
-                set_response_headers.set(Vec::new());
-                set_request_raw.set("".to_owned());
-            }
-        };
-
-        if formatting.get_untracked() {
-            if response_lang.get_untracked() == "xml" {
-                let formatted_xml = match format_xml(&response_body.read_untracked(), 4) {
-                    Ok(formatted_text) => formatted_text,
-                    Err(err) => {
-                        show_error(format!("Cant format xml: {}", err), messages);
-                        return;
-                    }
-                };
-                set_response_body.set(formatted_xml);
-            } else if response_lang.get_untracked() == "json" {
-                let formatted_json = format_json(&response_body.read_untracked(), 4);
-                set_response_body.set(formatted_json);
-            }
-        }
-    };
-
-    Effect::new(move || {
-        set_tab_selected.set(0);
-        //on_updated_response(&response.read_untracked());
-    });
-
-    Effect::watch(move || response.get(), move |value, _prev, _| on_updated_response(value), false);
+        },
+        false,
+    );
 
     let get_preview_src_doc = move || {
         let mut html = response_body.get_untracked();
