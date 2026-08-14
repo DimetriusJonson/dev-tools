@@ -16,7 +16,7 @@ pub fn RequestBodyFormPanel(params: ReadSignal<RequestParams>) -> impl IntoView 
         move || params.read_untracked().body_formencoded.get(),
         move |value, _prev, _| {
             set_stored_value(
-                rc_context.project,
+                rc_context.project.read_only(),
                 rc_context.request.read_untracked().id,
                 RequestFieldKind::BodyFormencoded,
                 body_form_to_string(value),

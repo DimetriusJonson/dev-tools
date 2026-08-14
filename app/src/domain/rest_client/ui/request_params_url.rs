@@ -37,7 +37,7 @@ pub fn RequestParamsUrl(
             if value.command == RequestCommand::Run
                 && let Some(send_btn) = send_btn_node_ref.get_untracked()
             {
-                rc_context.set_request.write_untracked().command = RequestCommand::None;
+                rc_context.request.write_untracked().command = RequestCommand::None;
                 send_btn.click();
             }
         },

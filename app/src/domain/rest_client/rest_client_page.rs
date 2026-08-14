@@ -8,17 +8,17 @@ use crate::{
 
 #[component]
 pub fn RestClientPage() -> impl IntoView {
-    let (request, set_request) = signal(RequestInfo::new_empty());
-    let (project, set_project) = signal("".to_owned());
+    let request = RwSignal::new(RequestInfo::new_empty());
+    let project = RwSignal::new("".to_owned());
 
-    let rest_client_context = RestClientContext { project, request, set_request };
+    let rest_client_context = RestClientContext { project, request };
     provide_context(rest_client_context);
 
     let explorer_ref = NodeRef::<Div>::new();
 
     view! {
         <div class="flex flex-row dark:text-white h-screen md:h-[95dvh] text-xs md:text-base">
-            <RestClientExplorer node_ref=explorer_ref set_project/>
+            <RestClientExplorer node_ref=explorer_ref />
 
             <DragSplitter
                 class_name="hidden md:block".to_owned()

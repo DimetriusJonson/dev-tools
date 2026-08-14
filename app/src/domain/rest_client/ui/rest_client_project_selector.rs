@@ -21,8 +21,7 @@ use crate::i18n::*;
 #[component]
 pub fn ProjectSelector(
     #[prop(optional)] class_name: String,
-    project: ReadSignal<String>,
-    set_project: WriteSignal<String>,
+    project: RwSignal<String>,
     #[prop(into)] on_delete: Callback<()>,
 ) -> impl IntoView {
     let i18n = use_i18n();
@@ -38,7 +37,7 @@ pub fn ProjectSelector(
 
     let _ = Effect::new(move || {
         set_projects.set(get_stored_projects());
-        set_project.set(get_stored_current_project());
+        project.set(get_stored_current_project());
     });
 
     Effect::watch(
@@ -95,8 +94,8 @@ pub fn ProjectSelector(
                         on_change=move |value| {
                             set_stored_current_project(value);
                         }
-                        value=project
-                        set_value=set_project
+                        value=project.read_only()
+                        set_value=project.write_only()
                     />
 
                     <div class="relative px-1 sm:px-2" node_ref=menu_ref>
@@ -129,7 +128,7 @@ pub fn ProjectSelector(
                                                 set_edit_name.set("".to_owned());
 
                                                 set_old_project.set(project.get());
-                                                set_project.set("".to_owned());
+                                                project.set("".to_owned());
 
                                                 set_timeout(move || {
                                                     if let Some(input) = edit_name_ref.get() {
@@ -160,9 +159,9 @@ pub fn ProjectSelector(
 
                                                     set_projects.write().retain(|p|p.id != project_id);
                                                     if let Some(prj) = projects.read_untracked().first() {
-                                                        set_project.set(prj.id.to_string());
+                                                        project.set(prj.id.to_string());
                                                     } else {
-                                                        set_project.set("".to_owned());
+                                                        project.set("".to_owned());
                                                     }
 
                                                     set_popup_menu_show.set(false);
@@ -200,10 +199,9 @@ pub fn ProjectSelector(
 
                             if project_id == 0 {
                                 let project_id = generate_project_id();
-                                let project = RestClientProject { id: project_id, name: value.trim().to_owned() };
-                                set_projects.write().push(project);
+                                set_projects.write().push(RestClientProject { id: project_id, name: value.trim().to_owned() });
 
-                                set_project.set(project_id.to_string());
+                                project.set(project_id.to_string());
                             } else {
                                 set_projects.write().iter_mut().filter(|p|p.id == project_id).for_each(|p| p.name = value.to_owned());
                             }
@@ -211,7 +209,7 @@ pub fn ProjectSelector(
                         }
                         on_cancel_change=move |_| {
                             let old_project_id = old_project.get_untracked();
-                            set_project.set(old_project_id);
+                            project.set(old_project_id);
                             set_edit_name_mode.set(false);
                         }
                     />

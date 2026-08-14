@@ -44,7 +44,7 @@ pub fn RequestRawPanel(
                 }
                 _ => (),
             }
-            rc_context.set_request.write_untracked().command = RequestCommand::None;
+            rc_context.request.write_untracked().command = RequestCommand::None;
         },
         false,
     );

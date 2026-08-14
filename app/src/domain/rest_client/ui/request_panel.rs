@@ -113,15 +113,15 @@ fn create_response_watcher(
             {
                 let json_string = serde_json::to_string(&response).unwrap();
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     RequestFieldKind::SaveResponseData,
                     json_string,
                 )
             } else {
                 delete_stored_value(
-                    rc_context.project,
-                    rc_context.request,
+                    rc_context.project.read_only(),
+                    rc_context.request.read_only(),
                     RequestFieldKind::SaveResponseData,
                 )
             }
@@ -234,12 +234,12 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     RequestFieldKind::Url,
                     value.to_string(),
                 );
-                rc_context.set_request.write().url = value.to_owned();
+                rc_context.request.write().url = value.to_owned();
             }
         },
         false,
@@ -250,12 +250,12 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     RequestFieldKind::Method,
                     value.to_string(),
                 );
-                rc_context.set_request.write().method = value.to_owned();
+                rc_context.request.write().method = value.to_owned();
             }
         },
         false,
@@ -266,7 +266,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     RequestFieldKind::ParamsTab,
                     value.to_string(),
@@ -283,7 +283,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     RequestFieldKind::BodyType,
                     value.to_string(),
@@ -297,7 +297,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move || params.read_untracked().headers.get(),
         move |value, _prev, _| {
             set_stored_value(
-                rc_context.project,
+                rc_context.project.read_only(),
                 rc_context.request.read_untracked().id,
                 RequestFieldKind::Headers,
                 headers_to_string(value),
@@ -328,7 +328,7 @@ fn create_watcher(
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     field,
                     value.to_string(),
@@ -349,7 +349,7 @@ fn create_watcher_bool(
         move |value, prev, _| {
             if prev.is_none() || value != prev.unwrap() {
                 set_stored_value(
-                    rc_context.project,
+                    rc_context.project.read_only(),
                     rc_context.request.read_untracked().id,
                     field,
                     value.to_string(),

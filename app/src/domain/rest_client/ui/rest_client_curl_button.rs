@@ -29,7 +29,7 @@ pub fn RestClientCUrlButton(
                 match parse_curl_cmd(&curl_cmd) {
                     Ok(parsed_request) => {
                         let request = RequestInfo::new(
-                            generate_request_id(rc_context.project),
+                            generate_request_id(rc_context.project.read_only()),
                             rc_context.project_id(),
                             parsed_request.url.to_owned(),
                             "".to_owned(),
@@ -38,11 +38,11 @@ pub fn RestClientCUrlButton(
 
                         set_requests.write().push(RwSignal::new(request.clone()));
 
-                        rc_context.set_request.set(request.clone());
-                        set_stored_requests_ids(rc_context.project, &requests.read_untracked());
-                        set_stored_value(rc_context.project, request.id, RequestFieldKind::Url, request.url);
+                        rc_context.request.set(request.clone());
+                        set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
+                        set_stored_value(rc_context.project.read_only(), request.id, RequestFieldKind::Url, request.url);
                         set_stored_value(
-                            rc_context.project,
+                            rc_context.project.read_only(),
                             request.id,
                             RequestFieldKind::Method,
                             request.method,
@@ -64,13 +64,13 @@ pub fn RestClientCUrlButton(
                                 &map.into_iter().collect::<Vec<(String, String)>>(),
                             ) {
                                 set_stored_value(
-                                    rc_context.project,
+                                    rc_context.project.read_only(),
                                     request.id,
                                     RequestFieldKind::BodyFormencoded,
                                     json,
                                 );
                                 set_stored_value(
-                                    rc_context.project,
+                                    rc_context.project.read_only(),
                                     request.id,
                                     RequestFieldKind::BodyType,
                                     "formencoded".to_owned(),
@@ -78,7 +78,7 @@ pub fn RestClientCUrlButton(
                             }
                         } else {
                             set_stored_value(
-                                rc_context.project,
+                                rc_context.project.read_only(),
                                 request.id,
                                 RequestFieldKind::Body,
                                 parsed_request.body.join("\n"),
@@ -87,7 +87,7 @@ pub fn RestClientCUrlButton(
                                 content_type.unwrap_or_default(),
                             );
                             set_stored_value(
-                                rc_context.project,
+                                rc_context.project.read_only(),
                                 request.id,
                                 RequestFieldKind::BodyType,
                                 body_type.to_string(),
@@ -95,7 +95,7 @@ pub fn RestClientCUrlButton(
                         }
 
                         set_stored_value(
-                            rc_context.project,
+                            rc_context.project.read_only(),
                             request.id,
                             RequestFieldKind::Headers,
                             parsed_request

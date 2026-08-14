@@ -25,7 +25,6 @@ use crate::{
 
 #[component]
 pub fn RestClientExplorer(
-    set_project: WriteSignal<String>,
     node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let i18n = use_i18n();
@@ -37,7 +36,7 @@ pub fn RestClientExplorer(
         let rc_context = rc_context.clone();
         move |_| {
             let request = RequestInfo::new(
-                generate_request_id(rc_context.project),
+                generate_request_id(rc_context.project.read_only()),
                 rc_context.project_id(),
                 format!("http://{}/test_json", window().location().host().unwrap()),
                 "".to_owned(),
@@ -46,11 +45,11 @@ pub fn RestClientExplorer(
 
             set_requests.write().push(RwSignal::new(request.clone()));
 
-            rc_context.set_request.set(request.clone());
-            set_stored_requests_ids(rc_context.project, &requests.read_untracked());
-            set_stored_value(rc_context.project, request.id, RequestFieldKind::Url, request.url);
+            rc_context.request.set(request.clone());
+            set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
+            set_stored_value(rc_context.project.read_only(), request.id, RequestFieldKind::Url, request.url);
             set_stored_value(
-                rc_context.project,
+                rc_context.project.read_only(),
                 request.id,
                 RequestFieldKind::Method,
                 request.method,
@@ -62,7 +61,7 @@ pub fn RestClientExplorer(
                 ("User-Agent".to_owned(), "WebDevUsefulTools Client".to_owned()),
             ];
             set_stored_value(
-                rc_context.project,
+                rc_context.project.read_only(),
                 request.id,
                 RequestFieldKind::Headers,
                 headers
@@ -79,9 +78,9 @@ pub fn RestClientExplorer(
         move |value, _prev, _| {
             set_requests.set(load_requests(value));
             if let Some(first) = requests.read_untracked().first() {
-                rc_context.set_request.set(first.get_untracked());
+                rc_context.request.set(first.get_untracked());
             } else {
-                rc_context.set_request.set(RequestInfo::new_empty());
+                rc_context.request.set(RequestInfo::new_empty());
             }
         },
         false,
@@ -103,9 +102,9 @@ pub fn RestClientExplorer(
     view! {
         <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
             <div class="flex flex-col p-2 md:p-4 gap-y-2">
-                <ProjectSelector project=rc_context.project set_project on_delete=move |_| {
+                <ProjectSelector project=rc_context.project on_delete=move |_| {
                     requests.read_untracked().iter().for_each(|r| {
-                        set_stored_requests_ids(rc_context.project, &requests.read_untracked());
+                        set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
                         delete_stored_request(rc_context.project.read_untracked().as_str(),  r.read_untracked().id);
                     });
                 }/>

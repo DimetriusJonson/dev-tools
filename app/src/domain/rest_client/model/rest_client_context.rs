@@ -1,12 +1,11 @@
-use leptos::prelude::{ReadSignal, ReadUntracked, WriteSignal};
+use leptos::prelude::{ReadUntracked, RwSignal};
 
 use crate::domain::rest_client::model::request_params::RequestInfo;
 
 #[derive(Clone)]
 pub struct RestClientContext {
-    pub project: ReadSignal<String>,
-    pub request: ReadSignal<RequestInfo>,
-    pub set_request: WriteSignal<RequestInfo>,
+    pub project: RwSignal<String>,
+    pub request: RwSignal<RequestInfo>,
 }
 
 impl RestClientContext {
