@@ -7,7 +7,7 @@ use crate::{
     },
     domain::rest_client::{
         model::{
-            request_params::{CustomHeader, RequestBodyFormValue, RequestBodyKind, RequestParams},
+            request_params::{CustomHeaders, RequestBodyFormValue, RequestBodyKind, RequestParams},
             rest_client_context::RestClientContext,
         },
         ui::request_params_url::RequestParamsUrl,
@@ -118,10 +118,10 @@ fn create_request_watcher(
             {
                 params.read_untracked().url.set(value.url.to_owned());
                 params.read_untracked().method.set(value.method.to_owned());
-                params
-                    .read_untracked()
-                    .headers
-                    .set(load_headers(&rc_context.project.read_untracked(), value.id));
+                params.read_untracked().headers.set(CustomHeaders::read_from_store(
+                    &rc_context.project.read_untracked(),
+                    value.id,
+                ));
 
                 params.read_untracked().params_tab_selected.set(
                     get_stored_value(
@@ -248,7 +248,11 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         false,
     );
 
-    create_watcher(params.read_untracked().body.read_only(), RequestFieldKind::Body, rc_context.clone());
+    create_watcher(
+        params.read_untracked().body.read_only(),
+        RequestFieldKind::Body,
+        rc_context.clone(),
+    );
 
     Effect::watch(
         move || params.read_untracked().body_type.get(),
@@ -272,7 +276,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
                 rc_context.project.read_only(),
                 rc_context.request.read_untracked().id,
                 RequestFieldKind::Headers,
-                headers_to_string(value),
+                value.to_string(),
             )
         },
         false,
@@ -330,36 +334,6 @@ fn create_watcher_bool(
         },
         false,
     );
-}
-
-fn headers_to_string(headers: &[CustomHeader]) -> String {
-    headers
-        .iter()
-        .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
-        .collect::<Vec<String>>()
-        .join("\n")
-}
-
-fn load_headers(project_id: &str, request_id: i32) -> Vec<CustomHeader> {
-    let stored_value =
-        get_stored_value(RequestFieldKind::Headers, "".to_owned(), project_id, request_id);
-    if stored_value.is_empty() {
-        return Vec::new();
-    }
-
-    let mut result = Vec::new();
-    for line in stored_value.lines() {
-        if let Some(index) = line.find(":") {
-            let (name, set_name) = signal(line[..index].to_owned());
-            let (value, set_value) = signal(line[index + 1..].to_owned());
-
-            let header =
-                CustomHeader { id: Uuid::new_v4().to_string(), name, set_name, value, set_value };
-            result.push(header);
-        }
-    }
-
-    result
 }
 
 fn load_body_formencoded(project_id: &str, request_id: i32) -> Vec<RequestBodyFormValue> {

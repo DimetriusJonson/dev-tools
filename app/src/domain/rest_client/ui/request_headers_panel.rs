@@ -20,7 +20,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
         <PropertyEditor
             key_label=move || t_display!(i18n, rest_client_header_name).to_string()
             value_label=move || t_display!(i18n, rest_client_header_value).to_string()
-            items=move || params.read_untracked().headers.get()
+            items=move || params.read_untracked().headers.read().vec_owned()
             key_options=HEADERS_AUTOCOMPLETE
             value_options=MEDIA_TYPES_AUTOCOMPLETE
             on_add=move |v:(String, String)| {
@@ -44,7 +44,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 }
             }
             on_delete=move |id:String| {
-                params.read_untracked().headers.write().retain(|h| h.id != id);
+                params.read_untracked().headers.write().remove_by_id(id);
             }
             on_change_key=move |v: (String, String)| {
                 if let Err(err) = HeaderName::from_str(&v.1) {

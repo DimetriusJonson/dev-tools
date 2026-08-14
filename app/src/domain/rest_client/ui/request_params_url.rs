@@ -63,7 +63,7 @@ pub fn RequestParamsUrl(
                 ));
             }
 
-            for header in params.headers.get_untracked() {
+            for header in params.headers.get_untracked().iter() {
                 headers.push((header.name.get_untracked(), header.value.get_untracked()));
             }
 

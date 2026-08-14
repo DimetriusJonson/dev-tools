@@ -1,11 +1,11 @@
-use std::{convert::Infallible, fmt::Display, str::FromStr};
+use std::{convert::Infallible, fmt::Display, slice::{Iter, IterMut}, str::FromStr};
 
-use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, RwSignal, WriteSignal};
+use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, RwSignal, WriteSignal, signal};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
-    components::layout::property_editor::KeyValueTableItem,
-    domain::rest_client::model::request_params::RequestCommand::None,
+    components::layout::property_editor::KeyValueTableItem, domain::rest_client::{model::request_params::RequestCommand::None, util::request_store::{RequestFieldKind, get_stored_value}},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -31,7 +31,7 @@ pub struct RequestParams {
     pub body: RwSignal<String>,
     pub body_type: RwSignal<RequestBodyKind>,
     pub body_formencoded: RwSignal<Vec<RequestBodyFormValue>>,
-    pub headers: RwSignal<Vec<CustomHeader>>,
+    pub headers: RwSignal<CustomHeaders>,
     pub save_response: RwSignal<bool>,
     pub formatting: RwSignal<bool>,
 }
@@ -54,7 +54,7 @@ impl RequestParams {
             body: RwSignal::new("".to_owned()),
             body_type: RwSignal::new(RequestBodyKind::Text),
             body_formencoded: RwSignal::new(Vec::new()),
-            headers: RwSignal::new(Vec::<CustomHeader>::new()),
+            headers: RwSignal::new(CustomHeaders::new()),
             save_response: RwSignal::new(false),
             formatting: RwSignal::new(false),
         }
@@ -99,6 +99,72 @@ pub struct RequestInfo {
     pub name: String,
     pub method: String,
     pub command: RequestCommand,
+}
+
+#[derive(Clone, Debug)]
+pub struct CustomHeaders {
+    inner: Vec<CustomHeader>,
+}
+
+impl CustomHeaders {
+    pub fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn push(&mut self, header: CustomHeader) {
+        self.inner.push(header)
+    }
+
+    pub fn iter(&self) -> Iter<'_, CustomHeader> {
+        self.inner.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, CustomHeader> {
+        self.inner.iter_mut()
+    }
+
+    pub fn remove_by_id(&mut self, id: String) {
+        self.inner.retain(|h| h.id != id);
+    }
+
+    pub fn vec_owned(&self) -> Vec<CustomHeader> {
+        self.inner.clone()
+    }
+
+    pub fn to_string(&self) -> String {
+        self.inner
+            .iter()
+            .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    pub fn read_from_store(project_id: &str, request_id: i32) -> Self {
+        let stored_value =
+            get_stored_value(RequestFieldKind::Headers, "".to_owned(), project_id, request_id);
+        if stored_value.is_empty() {
+            return CustomHeaders::new();
+        }
+
+        let mut result = CustomHeaders::new();
+        for line in stored_value.lines() {
+            if let Some(index) = line.find(":") {
+                let (name, set_name) = signal(line[..index].to_owned());
+                let (value, set_value) = signal(line[index + 1..].to_owned());
+
+                let header = CustomHeader {
+                    id: Uuid::new_v4().to_string(),
+                    name,
+                    set_name,
+                    value,
+                    set_value,
+                };
+                result.push(header);
+            }
+        }
+
+        result
+    }
 }
 
 #[derive(Clone, Debug)]
