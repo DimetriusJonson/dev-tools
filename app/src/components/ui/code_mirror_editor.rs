@@ -1,9 +1,10 @@
-use std::time::Duration;
-
 use leptos::prelude::*;
 use web_sys::wasm_bindgen::{JsValue, prelude::Closure};
 
-use crate::code_mirror::{code_editor_change_lang, init_code_editor, set_code_editor_value};
+use crate::{
+    code_mirror::{code_editor_change_lang, init_code_editor, set_code_editor_value},
+    common::ui_utils::safe_updating_ui_value,
+};
 
 #[component]
 pub fn CodeMirrorEditor(
@@ -15,19 +16,22 @@ pub fn CodeMirrorEditor(
     #[prop(optional)] hidden: Option<Box<dyn Fn() -> bool + Send + Sync + 'static>>,
     #[prop(optional)] read_only: bool,
 ) -> impl IntoView {
-    let (value_updating, set_value_updating) = signal(false);
+    let update_lock = RwSignal::new(false);
     let (editor_view, set_editor_view) = signal(JsValue::null());
 
     let on_change = Closure::wrap(Box::new(move |new_val: String| {
-        if !value_updating.get_untracked() {
-            set_value.set(new_val);
-        }
+        safe_updating_ui_value(update_lock, move || set_value.set(new_val.to_owned()));
     }) as Box<dyn FnMut(String)>);
 
     Effect::new({
         let element_id = element_id.to_owned();
         move |_| {
-            let view = init_code_editor(&element_id.to_owned(), &value.get_untracked(), read_only, on_change.as_ref());
+            let view = init_code_editor(
+                &element_id.to_owned(),
+                &value.get_untracked(),
+                read_only,
+                on_change.as_ref(),
+            );
             set_editor_view.set(view);
         }
     });
@@ -35,47 +39,26 @@ pub fn CodeMirrorEditor(
     Effect::watch(
         move || value.get(),
         move |_value, _prev, _| {
-            if !value_updating.get_untracked() {
-                set_value_updating.set(true);
-                set_timeout(
-                    {
-                        move || {
-                            set_code_editor_value(&editor_view.read_untracked(), &value.read_untracked());
-                            set_timeout(
-                                move || set_value_updating.set(false),
-                                Duration::from_millis(1),
-                            );
-                        }
-                    },
-                    std::time::Duration::from_millis(1),
-                );
-            }
+            safe_updating_ui_value(update_lock, move || {
+                set_code_editor_value(&editor_view.read_untracked(), &value.read_untracked())
+            });
         },
         false,
     );
 
     let on_change = Closure::wrap(Box::new(move |new_val: String| {
-        if !value_updating.get_untracked() {
-            set_value_updating.set(true);
-            set_timeout(
-                {
-                    move || {
-                        set_value.set(new_val);
-                        set_timeout(
-                            move || set_value_updating.set(false),
-                            Duration::from_millis(1),
-                        );
-                    }
-                },
-                std::time::Duration::from_millis(1),
-            );
-        }
+        safe_updating_ui_value(update_lock, move || set_value.set(new_val.to_owned()));
     }) as Box<dyn FnMut(String)>);
 
     Effect::watch(
         move || lang.get(),
         move |lang, _prev, _| {
-            code_editor_change_lang(&editor_view.read_untracked(), lang, read_only, on_change.as_ref());
+            code_editor_change_lang(
+                &editor_view.read_untracked(),
+                lang,
+                read_only,
+                on_change.as_ref(),
+            );
         },
         false,
     );
