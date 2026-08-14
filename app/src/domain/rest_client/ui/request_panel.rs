@@ -70,6 +70,30 @@ pub fn RequestPanel() -> impl IntoView {
     create_request_watcher(params, rc_context.clone(), set_response, messages);
     create_params_watchers(params, rc_context.clone());
 
+    Effect::watch(
+        move || response.get(),
+        move |value, _prev, _| {
+            if *save_response.read_untracked()
+                && let Some(response) = value
+            {
+                let json_string = serde_json::to_string(&response).unwrap();
+                set_stored_value(
+                    rc_context.project,
+                    rc_context.request.read_untracked().id,
+                    RequestFieldKind::SaveResponseData,
+                    json_string,
+                )
+            } else {
+                delete_stored_value(
+                    rc_context.project,
+                    rc_context.request,
+                    RequestFieldKind::SaveResponseData,
+                )
+            }
+        },
+        false,
+    );
+
     view! {
         <div class="flex-1 flex items-center justify-center"
             class:hidden=move || { rc_context.request.read().id > 0 }>
@@ -82,12 +106,6 @@ pub fn RequestPanel() -> impl IntoView {
             <RequestParamsUrl
                 params
                 on_result=move|res: RestClientResponse| {
-                    if *save_response.read_untracked() {
-                        let json_string = serde_json::to_string(&res).unwrap();
-                        set_stored_value(rc_context.project, rc_context.request.read_untracked().id, RequestFieldKind::SaveResponseData, json_string)
-                    } else {
-                        delete_stored_value(rc_context.project, rc_context.request, RequestFieldKind::SaveResponseData)
-                    }
                     set_response.set(Some(res));
                 }
             />
@@ -289,9 +307,16 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         false,
     );
 
-    create_watcher_bool(params.read_untracked().save_response, RequestFieldKind::SaveResponse, rc_context.clone());
-    create_watcher_bool(params.read_untracked().formatting, RequestFieldKind::Formatting, rc_context.clone());
-
+    create_watcher_bool(
+        params.read_untracked().save_response,
+        RequestFieldKind::SaveResponse,
+        rc_context.clone(),
+    );
+    create_watcher_bool(
+        params.read_untracked().formatting,
+        RequestFieldKind::Formatting,
+        rc_context.clone(),
+    );
 }
 
 fn create_watcher(
