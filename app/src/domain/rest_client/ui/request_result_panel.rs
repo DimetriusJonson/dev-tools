@@ -182,7 +182,7 @@ pub fn RequestResultPanel(
 
                 <div node_ref=tab_headers_ref class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full">
                     <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
-                        <div class="grid grid-cols-2 gap-4 px-4 dark:text-white" inner_html={move || render_headers(response_headers.get())}/>
+                        <div class="h-0 flex flex-col gap-4 px-4 dark:text-white whitespace-pre-wrap wrap-break-word break-all" inner_html={move || render_headers(response_headers.get())}/>
                     </div>
                 </div>
 
@@ -202,6 +202,6 @@ fn get_media_type_code(media_type: &str) -> Option<String> {
 
 fn render_headers(headers: Vec<(String, String)>) -> String {
     let list: Vec<String> =
-        headers.iter().map(|h| format!("<div>{}</div><div>{}</div>", h.0, h.1)).collect();
+        headers.iter().map(|h| format!("<div class=\"flex flex-row gap-4\"><div class=\"w-1/3\">{}</div><div class=\"w-full\">{}</div></div>", h.0, h.1)).collect();
     list.join("\n")
 }
