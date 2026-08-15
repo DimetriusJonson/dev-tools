@@ -158,7 +158,7 @@ pub fn RequestResultPanel(
                         />
 
                         <Show when=move || { show_preview_html.get() }>
-                            <iframe class="w-full px-1 md:px-4 py-2"
+                            <iframe class="w-full"
                                 srcdoc=get_preview_src_doc sandbox
                             >
                             </iframe>
@@ -167,7 +167,7 @@ pub fn RequestResultPanel(
                         <Button
                             label=move || "👁".to_owned()
                             title=move || t_string!(i18n, rest_client_response_html_preview).to_owned()
-                            class_name="absolute right-8 top-2 text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-50".to_owned()
+                            class_name="absolute right-4 top-0 text-bold w-8 text-gray-500 hover:text-green-500 z-50".to_owned()
                             class:hidden=move || response_lang.read().as_str() != "html"
                             button_width=ButtonWidth::Custom
                             button_height=ButtonHeight::Custom
