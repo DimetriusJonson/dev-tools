@@ -24,7 +24,7 @@ fn build_curl_cmd(
     result.push_str(&format!("{}{}{}", quote, request_params.url.read_untracked(), quote));
 
     //method
-    if request_params.method.read_untracked() != "GET".to_owned() {
+    if request_params.method.read_untracked() != "GET".to_owned() || !request_params.body.read_untracked().is_empty() {
         result.push_str(&format!(" {}-X {}", new_line, request_params.method.read_untracked()));
     }
 
