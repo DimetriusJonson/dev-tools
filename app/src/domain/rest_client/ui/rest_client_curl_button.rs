@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use http::Method;
 use leptos::{prelude::*, task::spawn_local};
 
 use crate::domain::rest_client::model::request_params::RequestBodyKind;
@@ -33,14 +34,22 @@ pub fn RestClientCUrlButton(
                             rc_context.project_id(),
                             parsed_request.url.to_owned(),
                             "".to_owned(),
-                            parsed_request.method.to_string(),
+                            parsed_request.method.unwrap_or(Method::GET).to_string(),
                         );
 
                         set_requests.write().push(RwSignal::new(request.clone()));
 
                         rc_context.request.set(request.clone());
-                        set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
-                        set_stored_value(rc_context.project.read_only(), request.id, RequestFieldKind::Url, request.url);
+                        set_stored_requests_ids(
+                            rc_context.project.read_only(),
+                            &requests.read_untracked(),
+                        );
+                        set_stored_value(
+                            rc_context.project.read_only(),
+                            request.id,
+                            RequestFieldKind::Url,
+                            request.url,
+                        );
                         set_stored_value(
                             rc_context.project.read_only(),
                             request.id,

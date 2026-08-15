@@ -17,12 +17,12 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
     let input = win_cmd_unescape(input); // win cmd double quote unescape 
 
     let pairs = CurlParser::parse(Rule::input, &input)?;
-    let mut parsed = ParsedRequest::default();
+    let mut parsed = ParsedRequest::new();
     for pair in pairs {
         match pair.as_rule() {
             Rule::method => {
                 let method = pair.as_str().parse()?;
-                parsed.method = method;
+                parsed.method = Some(method);
             }
             Rule::url => {
                 let url = pair.into_inner().as_str();
@@ -115,8 +115,8 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
     if parsed.headers.get(ACCEPT).is_none() {
         parsed.headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
     }
-    if !parsed.body.is_empty() && parsed.method == Method::GET {
-        parsed.method = Method::POST
+    if !parsed.body.is_empty() && parsed.method.is_none() {
+        parsed.method = Some(Method::POST)
     }
     Ok(parsed)
 }
