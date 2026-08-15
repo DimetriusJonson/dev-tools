@@ -1,7 +1,6 @@
 use base64::{Engine, engine::general_purpose::STANDARD};
 use http::{
-    HeaderValue, Method,
-    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, HeaderName},
+    HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, HeaderName, USER_AGENT},
 };
 use pest::Parser as _;
 use pest_derive::Parser;
@@ -101,7 +100,11 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::compressed_option => {
                 parsed.compressed = true;
             }
-            Rule::url_option => {
+            Rule::url_option | Rule::verbose_option | Rule::output_option | Rule::head_option | Rule::fail_option | Rule::silent_option | Rule::show_headers_option => {
+            }
+            Rule::user_agent => {
+                let name = pair.into_inner().next().expect("header string must be present").as_str();
+                parsed.headers.insert(USER_AGENT, name.parse()?);
             }
             Rule::EOI => break,
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),

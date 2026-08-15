@@ -15,7 +15,7 @@ double_quoted_inner = { (("\\" ~ ANY) | (!"\"" ~ ANY))* }
 none_ws = { (!ws ~ ANY)+ }
 url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
 url = { single_quoted | double_quoted | url_plain}
-option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option }
+option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option | verbose_option | output_option | silent_option | head_option | fail_option | show_headers_option | user_agent_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
 method = @{ "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" }
@@ -41,6 +41,16 @@ auth = { single_quoted | double_quoted | none_ws }
 ssl_verify_option = { ("-k" | "--insecure") }
 
 compressed_option = { "--compressed" }
+
+verbose_option = { ("-v" | "--verbose") }
+output_option = { ("-o" | "--output") }
+silent_option = { ("-s" | "--silent") }
+head_option = { ("-I" | "--head") }
+fail_option = { ("-f" | "--fail") }
+show_headers_option = { ("-i" | "--show-headers") }
+
+user_agent_option = _{ ("-A" | "--user-agent") ~ ws+ ~ user_agent }
+user_agent = { single_quoted | double_quoted | none_ws }
 
 url_option = { "--url" }
 
