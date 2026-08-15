@@ -1,9 +1,6 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use leptos::{
-    leptos_dom::logging::console_log,
-    prelude::{Effect, Get, GetUntracked, ReadUntracked, RwSignal},
-};
+use leptos::prelude::{Effect, Get, GetUntracked, ReadUntracked, RwSignal};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::rest_client::{
@@ -78,7 +75,7 @@ where
 
     Effect::watch(
         move || signal.get(),
-        move |value, prev, _| {
+        move |value, _prev, _| {
             set_stored_value(
                 rc_context.project.read_only(),
                 rc_context.request.read_untracked().id,
