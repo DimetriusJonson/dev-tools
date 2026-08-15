@@ -150,7 +150,7 @@ pub fn RequestParamsPanel(
                             <Button
                                 label=move || "¶".to_owned()
                                 title=move || t_string!(i18n, rest_client_req_body_format_title).to_owned()
-                                class_name="absolute right-1 top-1 hidden group-hover:block text-bold w-8 px-2 text-gray-500 hover:text-green-500 z-1000".to_owned()
+                                class_name="absolute right-1 top-4 hidden group-hover:block text-bold w-8 text-gray-500 hover:text-green-500 z-1000".to_owned()
                                 button_width=ButtonWidth::Custom
                                 button_height=ButtonHeight::Custom
                                 color=ButtonColor::Custom
