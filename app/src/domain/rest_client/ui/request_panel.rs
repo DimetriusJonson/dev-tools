@@ -4,22 +4,16 @@ use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
-    },
-    domain::rest_client::{
+    }, domain::rest_client::{
         model::{
-            request_params::{CustomHeaders, RequestBodyFormValue, RequestBodyKind, RequestParams},
-            rest_client_context::RestClientContext,
-        },
-        ui::request_params_url::RequestParamsUrl,
-        util::{
+            custom_header::CustomHeaders, request_params::{RequestBodyFormValue, RequestBodyKind, RequestParams}, rest_client_context::RestClientContext,
+        }, ui::request_params_url::RequestParamsUrl, util::{
             request_store::{
                 RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
             },
             rest_client_utils::KeyValueVector,
         },
-    },
-    i18n::*,
-    model::restclient::rest_client_response::RestClientResponse,
+    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{html::Div, leptos_dom::logging::console_log, prelude::*};
 use uuid::Uuid;

@@ -1,0 +1,112 @@
+use std::slice::{Iter, IterMut};
+
+use leptos::prelude::{GetUntracked, ReadSignal, RwSignal, WriteSignal};
+use uuid::Uuid;
+
+use crate::{
+    components::layout::property_editor::KeyValueTableItem,
+    domain::rest_client::util::request_store::{
+        RequestFieldKind, get_stored_value, set_stored_value,
+    },
+};
+
+#[derive(Clone, Debug)]
+pub struct CustomHeader {
+    pub id: String,
+    pub name: RwSignal<String>,
+    pub value: RwSignal<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct CustomHeaders {
+    inner: Vec<CustomHeader>,
+}
+
+impl CustomHeader {
+    pub fn new(name: String, value: String) -> Self {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            name: RwSignal::new(name),
+            value: RwSignal::new(value),
+        }
+    }
+}
+
+impl CustomHeaders {
+    pub fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn push(&mut self, header: CustomHeader) {
+        self.inner.push(header)
+    }
+
+    pub fn iter(&self) -> Iter<'_, CustomHeader> {
+        self.inner.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, CustomHeader> {
+        self.inner.iter_mut()
+    }
+
+    pub fn remove_by_id(&mut self, id: String) {
+        self.inner.retain(|h| h.id != id);
+    }
+
+    pub fn vec_owned(&self) -> Vec<CustomHeader> {
+        self.inner.clone()
+    }
+
+    pub fn write_to_store(&self, project: ReadSignal<String>, request_id: i32) {
+        let s = self
+            .inner
+            .iter()
+            .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        set_stored_value(project, request_id, RequestFieldKind::Headers, s);
+    }
+
+    pub fn read_from_store(project_id: &str, request_id: i32) -> Self {
+        let stored_value =
+            get_stored_value(RequestFieldKind::Headers, "".to_owned(), project_id, request_id);
+        if stored_value.is_empty() {
+            return CustomHeaders::new();
+        }
+
+        let mut result = CustomHeaders::new();
+        for line in stored_value.lines() {
+            if let Some(index) = line.find(":") {
+                result.push(CustomHeader::new(
+                    line[..index].to_owned(),
+                    line[index + 1..].to_owned(),
+                ));
+            }
+        }
+
+        result
+    }
+}
+
+impl KeyValueTableItem for CustomHeader {
+    fn id(&self) -> String {
+        self.id.to_string()
+    }
+
+    fn name(&self) -> ReadSignal<String> {
+        self.name.read_only()
+    }
+
+    fn set_name(&self) -> WriteSignal<String> {
+        self.name.write_only()
+    }
+
+    fn value(&self) -> ReadSignal<String> {
+        self.value.read_only()
+    }
+
+    fn set_value(&self) -> WriteSignal<String> {
+        self.value.write_only()
+    }
+}

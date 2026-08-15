@@ -3,11 +3,11 @@ use std::str::FromStr;
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::property_editor::PropertyEditor;
-use crate::domain::rest_client::model::request_params::{CustomHeader, RequestParams};
+use crate::domain::rest_client::model::custom_header::CustomHeader;
+use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::i18n::*;
 use http::{HeaderName, HeaderValue};
 use leptos::prelude::*;
-use uuid::Uuid;
 
 use crate::common::constants::MEDIA_TYPES_AUTOCOMPLETE;
 
@@ -35,12 +35,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                         show_error(err.to_string(), messages);
                         return;
                     }
-
-                    let id = Uuid::new_v4().to_string();
-                    let (name, set_name) = signal(v.0);
-                    let (value, set_value) = signal(v.1);
-
-                    params.read_untracked().headers.write().push(CustomHeader{ id, name, set_name, value, set_value });
+                    params.read_untracked().headers.write().push(CustomHeader::new(v.0, v.1));
                 }
             }
             on_delete=move |id:String| {
@@ -52,7 +47,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 } else {
                     params.read_untracked().headers.write().iter_mut()
                         .filter(|h|h.id == v.0)
-                        .for_each(|h| {h.set_name.set(v.1.to_owned())});
+                        .for_each(|h| {h.name.set(v.1.to_owned())});
                 }
             }
             on_change_value=move |v: (String, String)| {
@@ -61,7 +56,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 } else {
                     params.read_untracked().headers.write().iter_mut()
                         .filter(|h|h.id == v.0)
-                        .for_each(|h| {h.set_value.set(v.1.to_owned())});
+                        .for_each(|h| {h.value.set(v.1.to_owned())});
                 }
             }
         />
