@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::common::constants::HEADERS_AUTOCOMPLETE;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::property_editor::PropertyEditor;
-use crate::domain::rest_client::model::custom_header::CustomHeader;
+use crate::domain::rest_client::model::request_header::RequestHeader;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::i18n::*;
 use http::{HeaderName, HeaderValue};
@@ -35,7 +35,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                         show_error(err.to_string(), messages);
                         return;
                     }
-                    params.read_untracked().headers.write().push(CustomHeader::new(v.0, v.1));
+                    params.read_untracked().headers.write().push(RequestHeader::new(v.0, v.1));
                 }
             }
             on_delete=move |id:String| {

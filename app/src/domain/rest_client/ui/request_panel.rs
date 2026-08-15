@@ -7,7 +7,7 @@ use crate::{
     },
     domain::rest_client::{
         model::{
-            custom_header::CustomHeaders,
+            request_header::RequestHeaders,
             request_body_form::RequestBodyFormValues,
             request_params::{RequestBodyKind, RequestParams},
             rest_client_context::RestClientContext,
@@ -116,7 +116,7 @@ fn create_request_watcher(
             {
                 params.read_untracked().url.set(value.url.to_owned());
                 params.read_untracked().method.set(value.method.to_owned());
-                params.read_untracked().headers.set(CustomHeaders::read_from_store(
+                params.read_untracked().headers.set(RequestHeaders::read_from_store(
                     &rc_context.project.read_untracked(),
                     value.id,
                 ));

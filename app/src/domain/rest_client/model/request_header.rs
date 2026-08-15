@@ -11,18 +11,18 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub struct CustomHeader {
+pub struct RequestHeader {
     pub id: String,
     pub name: RwSignal<String>,
     pub value: RwSignal<String>,
 }
 
 #[derive(Clone, Debug)]
-pub struct CustomHeaders {
-    inner: Vec<CustomHeader>,
+pub struct RequestHeaders {
+    inner: Vec<RequestHeader>,
 }
 
-impl CustomHeader {
+impl RequestHeader {
     pub fn new(name: String, value: String) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
@@ -32,20 +32,20 @@ impl CustomHeader {
     }
 }
 
-impl CustomHeaders {
+impl RequestHeaders {
     pub fn new() -> Self {
         Self { inner: Vec::new() }
     }
 
-    pub fn push(&mut self, header: CustomHeader) {
+    pub fn push(&mut self, header: RequestHeader) {
         self.inner.push(header)
     }
 
-    pub fn iter(&self) -> Iter<'_, CustomHeader> {
+    pub fn iter(&self) -> Iter<'_, RequestHeader> {
         self.inner.iter()
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<'_, CustomHeader> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, RequestHeader> {
         self.inner.iter_mut()
     }
 
@@ -53,7 +53,7 @@ impl CustomHeaders {
         self.inner.retain(|h| h.id != id);
     }
 
-    pub fn vec_owned(&self) -> Vec<CustomHeader> {
+    pub fn vec_owned(&self) -> Vec<RequestHeader> {
         self.inner.clone()
     }
 
@@ -72,13 +72,13 @@ impl CustomHeaders {
         let stored_value =
             get_stored_value(RequestFieldKind::Headers, "".to_owned(), project_id, request_id);
         if stored_value.is_empty() {
-            return CustomHeaders::new();
+            return RequestHeaders::new();
         }
 
-        let mut result = CustomHeaders::new();
+        let mut result = RequestHeaders::new();
         for line in stored_value.lines() {
             if let Some(index) = line.find(":") {
-                result.push(CustomHeader::new(
+                result.push(RequestHeader::new(
                     line[..index].to_owned(),
                     line[index + 1..].to_owned(),
                 ));
@@ -89,7 +89,7 @@ impl CustomHeaders {
     }
 }
 
-impl KeyValueTableItem for CustomHeader {
+impl KeyValueTableItem for RequestHeader {
     fn id(&self) -> String {
         self.id.to_string()
     }

@@ -4,7 +4,7 @@ use leptos::prelude::{GetUntracked, ReadUntracked, RwSignal};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::rest_client::model::{
-    custom_header::CustomHeaders, request_body_form::RequestBodyFormValues,
+    request_header::RequestHeaders, request_body_form::RequestBodyFormValues,
     request_params::RequestCommand::None,
 };
 
@@ -31,7 +31,7 @@ pub struct RequestParams {
     pub body: RwSignal<String>,
     pub body_type: RwSignal<RequestBodyKind>,
     pub body_formencoded: RwSignal<RequestBodyFormValues>,
-    pub headers: RwSignal<CustomHeaders>,
+    pub headers: RwSignal<RequestHeaders>,
     pub save_response: RwSignal<bool>,
     pub formatting: RwSignal<bool>,
 }
@@ -45,7 +45,7 @@ impl RequestParams {
             body: RwSignal::new("".to_owned()),
             body_type: RwSignal::new(RequestBodyKind::Text),
             body_formencoded: RwSignal::new(RequestBodyFormValues::new()),
-            headers: RwSignal::new(CustomHeaders::new()),
+            headers: RwSignal::new(RequestHeaders::new()),
             save_response: RwSignal::new(false),
             formatting: RwSignal::new(false),
         }
