@@ -7,8 +7,8 @@ use crate::{
     },
     domain::rest_client::{
         model::{
-            request_header::RequestHeaders,
             request_body_form::RequestBodyFormValues,
+            request_header::RequestHeaders,
             request_params::{RequestBodyKind, RequestParams},
             rest_client_context::RestClientContext,
         },
@@ -32,13 +32,12 @@ pub fn RequestPanel() -> impl IntoView {
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
 
-    let (params, _set_params) = signal(RequestParams::new());
+    let (params, _set_params) = signal(RequestParams::new(rc_context.clone()));
     let (response, set_response) = signal(None);
 
     let params_ref = NodeRef::<Div>::new();
 
     create_request_watcher(params, rc_context.clone(), set_response, messages);
-    create_params_watchers(params, rc_context.clone());
     create_response_watcher(params, rc_context.clone(), response);
 
     view! {
@@ -194,140 +193,6 @@ fn create_request_watcher(
                     .parse::<bool>()
                     .unwrap_or(false),
                 );
-            }
-        },
-        false,
-    );
-}
-
-fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestClientContext) {
-    Effect::watch(
-        move || params.read_untracked().url.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    RequestFieldKind::Url,
-                    value.to_string(),
-                );
-                rc_context.request.write().url = value.to_owned();
-            }
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || params.read_untracked().method.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    RequestFieldKind::Method,
-                    value.to_string(),
-                );
-                rc_context.request.write().method = value.to_owned();
-            }
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || params.read_untracked().params_tab_selected.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    RequestFieldKind::ParamsTab,
-                    value.to_string(),
-                )
-            }
-        },
-        false,
-    );
-
-    create_watcher(
-        params.read_untracked().body.read_only(),
-        RequestFieldKind::Body,
-        rc_context.clone(),
-    );
-
-    Effect::watch(
-        move || params.read_untracked().body_type.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    RequestFieldKind::BodyType,
-                    value.to_string(),
-                )
-            }
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || params.read_untracked().headers.get(),
-        move |value, _prev, _| {
-            value.write_to_store(
-                rc_context.project.read_only(),
-                rc_context.request.read_untracked().id,
-            );
-        },
-        false,
-    );
-
-    create_watcher_bool(
-        params.read_untracked().save_response.read_only(),
-        RequestFieldKind::SaveResponse,
-        rc_context.clone(),
-    );
-    create_watcher_bool(
-        params.read_untracked().formatting.read_only(),
-        RequestFieldKind::Formatting,
-        rc_context.clone(),
-    );
-}
-
-fn create_watcher(
-    value: ReadSignal<String>,
-    field: RequestFieldKind,
-    rc_context: RestClientContext,
-) {
-    Effect::watch(
-        move || value.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    field,
-                    value.to_string(),
-                )
-            }
-        },
-        false,
-    );
-}
-
-fn create_watcher_bool(
-    value: ReadSignal<bool>,
-    field: RequestFieldKind,
-    rc_context: RestClientContext,
-) {
-    Effect::watch(
-        move || value.get(),
-        move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    field,
-                    value.to_string(),
-                )
             }
         },
         false,

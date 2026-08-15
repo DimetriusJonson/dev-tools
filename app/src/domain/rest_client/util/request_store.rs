@@ -27,8 +27,6 @@ pub enum RequestFieldKind {
     ParamsTab,
     #[strum(serialize = "body_formencoded")]
     BodyFormencoded,
-    #[strum(serialize = "formencoded")]
-    Formencoded,
     #[strum(serialize = "save_response_data")]
     SaveResponseData,
     #[strum(serialize = "headers_height")]

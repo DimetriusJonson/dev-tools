@@ -10,8 +10,10 @@ use leptos::{
 use uuid::Uuid;
 
 use crate::{
-    components::layout::property_editor::KeyValueTableItem, domain::rest_client::util::{
-        request_store::{RequestFieldKind, get_stored_value, set_stored_value}, rest_client_utils::KeyValueVector,
+    components::layout::property_editor::KeyValueTableItem,
+    domain::rest_client::util::{
+        request_store::{RequestFieldKind, get_stored_value},
+        rest_client_utils::KeyValueVector,
     },
 };
 
@@ -52,10 +54,6 @@ impl RequestBodyFormValues {
         self.inner.clone()
     }
 
-    pub fn write_to_store(&self, project: ReadSignal<String>, request_id: i32) {
-        set_stored_value(project, request_id, RequestFieldKind::BodyFormencoded, self.to_json());
-    }
-
     pub fn read_from_store(project_id: &str, request_id: i32) -> RequestBodyFormValues {
         let stored_value = get_stored_value(
             RequestFieldKind::BodyFormencoded,
@@ -91,6 +89,12 @@ impl RequestBodyFormValues {
             self.iter().map(|h| (h.name.get_untracked(), h.value.get_untracked())).collect();
 
         serde_json::to_string(&list).unwrap()
+    }
+}
+
+impl ToString for RequestBodyFormValues {
+    fn to_string(&self) -> String {
+        self.to_json()
     }
 }
 

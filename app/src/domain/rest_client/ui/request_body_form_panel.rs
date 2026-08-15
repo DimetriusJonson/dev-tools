@@ -1,25 +1,12 @@
 use crate::components::layout::property_editor::PropertyEditor;
 use crate::domain::rest_client::model::request_body_form::RequestBodyFormValue;
 use crate::domain::rest_client::model::request_params::RequestParams;
-use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
 use leptos::prelude::*;
 
 #[component]
 pub fn RequestBodyFormPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().unwrap();
-
-    Effect::watch(
-        move || params.read_untracked().body_formencoded.get(),
-        move |value, _prev, _| {
-            value.write_to_store(
-                rc_context.project.read_only(),
-                rc_context.request.read_untracked().id,
-            )
-        },
-        false,
-    );
 
     view! {
         <PropertyEditor

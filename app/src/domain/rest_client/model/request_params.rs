@@ -1,11 +1,17 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use leptos::prelude::{GetUntracked, ReadUntracked, RwSignal};
+use leptos::{
+    leptos_dom::logging::console_log,
+    prelude::{Effect, Get, GetUntracked, ReadUntracked, RwSignal},
+};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::rest_client::model::{
-    request_header::RequestHeaders, request_body_form::RequestBodyFormValues,
-    request_params::RequestCommand::None,
+use crate::domain::rest_client::{
+    model::{
+        request_body_form::RequestBodyFormValues, request_header::RequestHeaders,
+        request_params::RequestCommand::None, rest_client_context::RestClientContext,
+    },
+    util::request_store::{RequestFieldKind, set_stored_value},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -37,19 +43,53 @@ pub struct RequestParams {
 }
 
 impl RequestParams {
-    pub fn new() -> Self {
+    pub fn new(rc_context: RestClientContext) -> Self {
         Self {
-            url: RwSignal::new("".to_owned()),
-            method: RwSignal::new("".to_owned()),
-            params_tab_selected: RwSignal::new(0),
-            body: RwSignal::new("".to_owned()),
-            body_type: RwSignal::new(RequestBodyKind::Text),
-            body_formencoded: RwSignal::new(RequestBodyFormValues::new()),
-            headers: RwSignal::new(RequestHeaders::new()),
-            save_response: RwSignal::new(false),
-            formatting: RwSignal::new(false),
+            url: create_signal("".to_owned(), RequestFieldKind::Url, rc_context.clone()),
+            method: create_signal("".to_owned(), RequestFieldKind::Method, rc_context.clone()),
+            params_tab_selected: create_signal(0, RequestFieldKind::ParamsTab, rc_context.clone()),
+            body: create_signal("".to_owned(), RequestFieldKind::Body, rc_context.clone()),
+            body_type: create_signal(
+                RequestBodyKind::Text,
+                RequestFieldKind::BodyType,
+                rc_context.clone(),
+            ),
+            save_response: create_signal(false, RequestFieldKind::SaveResponse, rc_context.clone()),
+            formatting: create_signal(false, RequestFieldKind::Formatting, rc_context.clone()),
+            body_formencoded: create_signal(
+                RequestBodyFormValues::new(),
+                RequestFieldKind::BodyFormencoded,
+                rc_context.clone(),
+            ),
+            headers: create_signal(
+                RequestHeaders::new(),
+                RequestFieldKind::Headers,
+                rc_context.clone(),
+            ),
         }
     }
+}
+
+fn create_signal<T>(value: T, field: RequestFieldKind, rc_context: RestClientContext) -> RwSignal<T>
+where
+    T: ToString + Clone + Send + Sync + 'static,
+{
+    let signal = RwSignal::new(value);
+
+    Effect::watch(
+        move || signal.get(),
+        move |value, prev, _| {
+            set_stored_value(
+                rc_context.project.read_only(),
+                rc_context.request.read_untracked().id,
+                field,
+                value.to_string(),
+            )
+        },
+        false,
+    );
+
+    signal
 }
 
 #[derive(Clone, Debug, PartialEq)]
