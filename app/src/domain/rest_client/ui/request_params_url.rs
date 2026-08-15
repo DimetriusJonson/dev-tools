@@ -4,7 +4,6 @@ use crate::domain::rest_client::model::request_params::{
     RequestBodyKind, RequestCommand, RequestParams,
 };
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
-use crate::domain::rest_client::util::rest_client_utils::formencoded_to_str;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
@@ -69,7 +68,7 @@ pub fn RequestParamsUrl(
 
             let body = match params.body_type.get_untracked() {
                 RequestBodyKind::Formencoded => {
-                    match formencoded_to_str(params.body_formencoded.get_untracked()) {
+                    match params.body_formencoded.get_untracked().to_urlencoded_string() {
                         Ok(url) => url,
                         Err(err) => {
                             show_error(format!("Error: {}", err), messages);

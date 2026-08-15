@@ -1,9 +1,6 @@
 use leptos::prelude::{GetUntracked, ReadUntracked};
 
-use crate::domain::rest_client::{
-    model::request_params::{RequestBodyKind, RequestParams},
-    util::rest_client_utils::formencoded_to_str,
-};
+use crate::domain::rest_client::model::request_params::{RequestBodyKind, RequestParams};
 
 pub fn build_curl_bash_cmd(request_params: &RequestParams) -> String {
     build_curl_cmd(request_params, "curl", "\'", "\\\r\n")
@@ -63,7 +60,7 @@ fn build_curl_cmd(
             request_params.body.get_untracked()
         }
         RequestBodyKind::Formencoded => {
-            match formencoded_to_str(request_params.body_formencoded.get_untracked()) {
+            match request_params.body_formencoded.get_untracked().to_urlencoded_string() {
                 Ok(url) => url,
                 Err(_err) => "".to_owned(),
             }

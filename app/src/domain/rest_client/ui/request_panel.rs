@@ -4,19 +4,23 @@ use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
-    }, domain::rest_client::{
+    },
+    domain::rest_client::{
         model::{
-            custom_header::CustomHeaders, request_params::{RequestBodyFormValue, RequestBodyKind, RequestParams}, rest_client_context::RestClientContext,
-        }, ui::request_params_url::RequestParamsUrl, util::{
-            request_store::{
-                RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
-            },
-            rest_client_utils::KeyValueVector,
+            custom_header::CustomHeaders,
+            request_body_form::RequestBodyFormValues,
+            request_params::{RequestBodyKind, RequestParams},
+            rest_client_context::RestClientContext,
         },
-    }, i18n::*, model::restclient::rest_client_response::RestClientResponse,
+        ui::request_params_url::RequestParamsUrl,
+        util::request_store::{
+            RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
+        },
+    },
+    i18n::*,
+    model::restclient::rest_client_response::RestClientResponse,
 };
-use leptos::{html::Div, leptos_dom::logging::console_log, prelude::*};
-use uuid::Uuid;
+use leptos::{html::Div, prelude::*};
 
 use crate::domain::rest_client::ui::{
     request_params_panel::RequestParamsPanel, request_result_panel::RequestResultPanel,
@@ -128,10 +132,12 @@ fn create_request_watcher(
                     .unwrap_or(0),
                 );
 
-                params
-                    .read_untracked()
-                    .body_formencoded
-                    .set(load_body_formencoded(&rc_context.project.read_untracked(), value.id));
+                params.read_untracked().body_formencoded.set(
+                    RequestBodyFormValues::read_from_store(
+                        &rc_context.project.read_untracked(),
+                        value.id,
+                    ),
+                );
                 params.read_untracked().body.set(get_stored_value(
                     RequestFieldKind::Body,
                     "".to_owned(),
@@ -326,33 +332,4 @@ fn create_watcher_bool(
         },
         false,
     );
-}
-
-fn load_body_formencoded(project_id: &str, request_id: i32) -> Vec<RequestBodyFormValue> {
-    let stored_value =
-        get_stored_value(RequestFieldKind::BodyFormencoded, "".to_owned(), project_id, request_id);
-    if stored_value.is_empty() {
-        return Vec::new();
-    }
-
-    let mut result = Vec::new();
-    match serde_json::from_str::<KeyValueVector>(&stored_value) {
-        Ok(values) => {
-            for value in values.iter() {
-                let (name, set_name) = signal(value.0.to_owned());
-                let (value, set_value) = signal(value.1.to_owned());
-
-                let header = RequestBodyFormValue {
-                    id: Uuid::new_v4().to_string(),
-                    name,
-                    set_name,
-                    value,
-                    set_value,
-                };
-                result.push(header);
-            }
-        }
-        Err(err) => console_log(&format!("Error: {}", err)),
-    }
-    result
 }

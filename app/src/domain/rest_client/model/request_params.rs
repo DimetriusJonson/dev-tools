@@ -1,13 +1,11 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use leptos::prelude::{GetUntracked, ReadSignal, ReadUntracked, RwSignal, WriteSignal};
+use leptos::prelude::{GetUntracked, ReadUntracked, RwSignal};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    components::layout::property_editor::KeyValueTableItem,
-    domain::rest_client::model::{
-        custom_header::CustomHeaders, request_params::RequestCommand::None,
-    },
+use crate::domain::rest_client::model::{
+    custom_header::CustomHeaders, request_body_form::RequestBodyFormValues,
+    request_params::RequestCommand::None,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -32,19 +30,10 @@ pub struct RequestParams {
     pub params_tab_selected: RwSignal<usize>,
     pub body: RwSignal<String>,
     pub body_type: RwSignal<RequestBodyKind>,
-    pub body_formencoded: RwSignal<Vec<RequestBodyFormValue>>,
+    pub body_formencoded: RwSignal<RequestBodyFormValues>,
     pub headers: RwSignal<CustomHeaders>,
     pub save_response: RwSignal<bool>,
     pub formatting: RwSignal<bool>,
-}
-
-#[derive(Clone, Debug)]
-pub struct RequestBodyFormValue {
-    pub id: String,
-    pub name: ReadSignal<String>,
-    pub set_name: WriteSignal<String>,
-    pub value: ReadSignal<String>,
-    pub set_value: WriteSignal<String>,
 }
 
 impl RequestParams {
@@ -55,33 +44,11 @@ impl RequestParams {
             params_tab_selected: RwSignal::new(0),
             body: RwSignal::new("".to_owned()),
             body_type: RwSignal::new(RequestBodyKind::Text),
-            body_formencoded: RwSignal::new(Vec::new()),
+            body_formencoded: RwSignal::new(RequestBodyFormValues::new()),
             headers: RwSignal::new(CustomHeaders::new()),
             save_response: RwSignal::new(false),
             formatting: RwSignal::new(false),
         }
-    }
-}
-
-impl KeyValueTableItem for RequestBodyFormValue {
-    fn id(&self) -> String {
-        self.id.to_string()
-    }
-
-    fn name(&self) -> ReadSignal<String> {
-        self.name
-    }
-
-    fn set_name(&self) -> WriteSignal<String> {
-        self.set_name
-    }
-
-    fn value(&self) -> ReadSignal<String> {
-        self.value
-    }
-
-    fn set_value(&self) -> WriteSignal<String> {
-        self.set_value
     }
 }
 
