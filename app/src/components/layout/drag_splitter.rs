@@ -11,7 +11,8 @@ use crate::common::{
 
 #[component]
 pub fn DragSplitter(
-    target_ref: NodeRef<Div>,
+    first_target_ref: NodeRef<Div>,
+    second_target_ref: NodeRef<Div>,
     local_store_prop_name: impl Fn() -> String + Send + Sync + 'static,
     min_scr_ration: f64,
     max_scr_ration: f64,
@@ -37,13 +38,13 @@ pub fn DragSplitter(
         .unwrap();
 
         if (!is_mobile() || allow_mobile)
-            && let Some(target_elem) = target_ref.get() {
+            && let Some(target_elem) = first_target_ref.get() {
                 (*target_elem).style().set_property(prop_name, &format!("{}px", init_size)).unwrap();
             }
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
-        if let Some(Some(target_elem)) = target_ref.try_get()
+        if let Some(Some(target_elem)) = first_target_ref.try_get()
             && let Ok(screen_size) = if horizontal { get_browser_height() } else { get_browser_width()}
         {
             let default_size = screen_size * default_scr_ration;
@@ -80,7 +81,7 @@ pub fn DragSplitter(
     let _ = leptos_dom::helpers::window_event_listener(ev::mousemove, move |ev| {
         if let Some(dragging) = dragging.try_get_untracked()
             && dragging
-                && let Some(Some(target_elem)) = target_ref.try_get()
+                && let Some(Some(target_elem)) = first_target_ref.try_get()
                 && (!is_mobile() || allow_mobile)
                 && let Ok(screen_size) = if horizontal { get_browser_height() } else { get_browser_width()}
             {

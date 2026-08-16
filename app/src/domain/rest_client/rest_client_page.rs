@@ -1,8 +1,10 @@
 use leptos::{html::Div, prelude::*};
 
 use crate::{
-    components::layout::drag_splitter::DragSplitter, domain::rest_client::{
-        model::{request_info::RequestInfo, rest_client_context::RestClientContext}, ui::{request_panel::RequestPanel, rest_client_explorer::RestClientExplorer},
+    components::layout::drag_splitter::DragSplitter,
+    domain::rest_client::{
+        model::{request_info::RequestInfo, rest_client_context::RestClientContext},
+        ui::{request_panel::RequestPanel, rest_client_explorer::RestClientExplorer},
     },
 };
 
@@ -15,6 +17,7 @@ pub fn RestClientPage() -> impl IntoView {
     provide_context(rest_client_context);
 
     let explorer_ref = NodeRef::<Div>::new();
+    let right_panel_ref = NodeRef::<Div>::new();
 
     view! {
         <div class="flex flex-row dark:text-white h-screen md:h-[95dvh] text-xs md:text-base">
@@ -22,13 +25,14 @@ pub fn RestClientPage() -> impl IntoView {
 
             <DragSplitter
                 class_name="hidden md:block".to_owned()
-                target_ref=explorer_ref
+                first_target_ref=explorer_ref
+                second_target_ref=explorer_ref
                 local_store_prop_name=move || "rc_explorer_width".to_owned()
                 min_scr_ration={1.0 / 10.0}
                 max_scr_ration={1.0 / 2.0}
                 default_scr_ration={1.0 / 6.0} />
 
-            <RequestPanel />
+            <RequestPanel node_ref=right_panel_ref />
         </div>
     }
 }

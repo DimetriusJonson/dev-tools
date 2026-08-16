@@ -43,6 +43,7 @@ pub fn XmlPage() -> impl IntoView {
 
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
     let left_panel_ref = NodeRef::<Div>::new();
+    let right_panel_ref = NodeRef::<Div>::new();
 
     let on_format_click = move |_| {
         spawn_local(async move {
@@ -210,7 +211,8 @@ pub fn XmlPage() -> impl IntoView {
             </div>
 
             <DragSplitter 
-                target_ref=left_panel_ref 
+                first_target_ref=left_panel_ref 
+                second_target_ref=right_panel_ref
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "xml_left_panel_width".to_owned()
                 min_scr_ration={1.0 / 6.0} 
@@ -218,7 +220,7 @@ pub fn XmlPage() -> impl IntoView {
                 default_scr_ration={1.0 / 2.0}/>
 
             // RIGHT SIDE
-            <div class="md:flex-1 overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
+            <div node_ref=right_panel_ref class="md:flex-1 overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                         <CodeInner code={dst_xml.get()} lang=move || "xml".to_string()/>

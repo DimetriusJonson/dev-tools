@@ -25,6 +25,7 @@ pub fn CompareTextPage() -> impl IntoView {
     let (in_progress, set_in_progress) = signal(false);
 
     let text1_ref = NodeRef::<Div>::new();
+    let right_panel_ref = NodeRef::<Div>::new();
 
     let on_compare_click = move |_| {
         spawn_local(async move {
@@ -43,9 +44,9 @@ pub fn CompareTextPage() -> impl IntoView {
 
     view! {
 
-        <div class="flex-1 px-2 ">
+        <div class="flex-1 px-2 pt-4">
             <Tabs tab_selected set_tab_selected items=move || vec![
-                    TabItem::new_simple(t_string!(i18n, compare_page_source_tab), tab_source_ref), 
+                    TabItem::new_simple(t_string!(i18n, compare_page_source_tab), tab_source_ref),
                     TabItem::new_simple(t_string!(i18n, compare_page_result_tab), tab_result_ref)
                 ] />
 
@@ -66,49 +67,52 @@ pub fn CompareTextPage() -> impl IntoView {
                         />
                     </div>
 
-                    <DragSplitter 
-                        target_ref=text1_ref 
+                    <DragSplitter
+                        first_target_ref=text1_ref
+                        second_target_ref=right_panel_ref
                         class_name="hidden md:block".to_owned()
                         local_store_prop_name=move || "compare_text1_width".to_owned()
-                        min_scr_ration={1.0 / 6.0} 
-                        max_scr_ration={3.0 / 4.0} 
+                        min_scr_ration={1.0 / 6.0}
+                        max_scr_ration={3.0 / 4.0}
                         default_scr_ration={1.0 / 2.0}/>
 
-                    <TextArea
-                        name="text2".to_owned()
-                        class_name="flex-1 resize-none".to_owned()
-                        placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
-                        value=text2
-                        set_value=set_text2
-                        on_change=move |_| {
-                            set_local_store_value("compare_text2", text2.get_untracked());
-                        }
-                    />
-
-                    <div class="flex flex-col gap-4 items-center justify-center">
-                        <Button
-                            title=move || "".to_owned()
-                            label=move || t_display!(i18n, compare_btn_label).to_string()
-                            button_width=ButtonWidth::Md
-                            loading=move || in_progress.get()
-                            on_click=on_compare_click
-                            disabled=move || in_progress.get()
-                        />
-                        <Button
-                            title=move || "".to_owned()
-                            label=move || "⇄".to_owned()
-                            button_width=ButtonWidth::Md
-                            loading=move || false
-                            on_click=move |_| {
-                                let temp_text = text1.get();
-                                set_text1.set(text2.get());
-                                set_text2.set(temp_text);
-
-                                set_local_store_value("compare_text1", text1.get_untracked());
+                    <div class="flex-1 flex gap-4" node_ref=right_panel_ref>
+                        <TextArea
+                            name="text2".to_owned()
+                            class_name="flex-1 resize-none".to_owned()
+                            placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
+                            value=text2
+                            set_value=set_text2
+                            on_change=move |_| {
                                 set_local_store_value("compare_text2", text2.get_untracked());
                             }
-                            disabled=move || in_progress.get()
                         />
+
+                        <div class="flex flex-col gap-4 items-center justify-center">
+                            <Button
+                                title=move || "".to_owned()
+                                label=move || t_display!(i18n, compare_btn_label).to_string()
+                                button_width=ButtonWidth::Md
+                                loading=move || in_progress.get()
+                                on_click=on_compare_click
+                                disabled=move || in_progress.get()
+                            />
+                            <Button
+                                title=move || "".to_owned()
+                                label=move || "⇄".to_owned()
+                                button_width=ButtonWidth::Md
+                                loading=move || false
+                                on_click=move |_| {
+                                    let temp_text = text1.get();
+                                    set_text1.set(text2.get());
+                                    set_text2.set(temp_text);
+
+                                    set_local_store_value("compare_text1", text1.get_untracked());
+                                    set_local_store_value("compare_text2", text2.get_untracked());
+                                }
+                                disabled=move || in_progress.get()
+                            />
+                        </div>
                     </div>
                 </div>
 

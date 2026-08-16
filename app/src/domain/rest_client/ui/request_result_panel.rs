@@ -19,6 +19,7 @@ use leptos::prelude::*;
 pub fn RequestResultPanel(
     params: ReadSignal<RequestParams>,
     response: ReadSignal<Option<RestClientResponse>>,
+    node_ref: NodeRef<Div>,
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
@@ -103,7 +104,7 @@ pub fn RequestResultPanel(
     };
 
     view! {
-        <div class="flex-1 overflow-y-auto flex flex-col gap-4">
+        <div node_ref=node_ref class="flex-1 overflow-y-auto flex flex-col gap-4">
 
             <Tabs tab_selected set_tab_selected items=move || vec![
                     TabItem::new_simple(t_string!(i18n, rest_client_response_body_tab), tab_body_ref),

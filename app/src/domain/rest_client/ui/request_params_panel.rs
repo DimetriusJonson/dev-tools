@@ -32,6 +32,7 @@ pub fn RequestParamsPanel(
     let tab_body_text_ref = NodeRef::<Div>::new();
     let tab_body_form_encoded_ref = NodeRef::<Div>::new();
     let params_ref = NodeRef::<Div>::new();
+    let body_ref = NodeRef::<Div>::new();
 
     let (body_lang, set_body_lang) = signal("text".to_owned());
     let tab_headers_ref = NodeRef::<Div>::new();
@@ -120,7 +121,8 @@ pub fn RequestParamsPanel(
 
                 <DragSplitter
                     class_name="hidden md:block".to_owned()
-                    target_ref=params_ref
+                    first_target_ref=params_ref
+                    second_target_ref=body_ref
                     horizontal=true
                     local_store_prop_name=move || build_request_stored_key(rc_context.project.read().as_str(), rc_context.request.read().id, "headers_height")
                     min_scr_ration={1.0 / 10.0}
@@ -129,7 +131,7 @@ pub fn RequestParamsPanel(
                     allow_mobile=true
                 />
 
-                <div class="flex-1 flex flex-col pt-4">
+                <div node_ref=body_ref class="flex-1 flex flex-col pt-4">
                     <Tabs class_name="".to_owned()
                         tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
                         items=move || vec![

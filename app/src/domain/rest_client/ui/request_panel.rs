@@ -19,7 +19,7 @@ use crate::domain::rest_client::ui::{
 };
 
 #[component]
-pub fn RequestPanel() -> impl IntoView {
+pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
@@ -28,33 +28,37 @@ pub fn RequestPanel() -> impl IntoView {
     let response = RequestResponse::new(params, rc_context.clone());
 
     let params_ref = NodeRef::<Div>::new();
+    let result_ref = NodeRef::<Div>::new();
 
     create_request_watcher(params, rc_context.clone(), response.clone(), messages);
 
     view! {
-        <div class="flex-1 flex items-center justify-center"
-            class:hidden=move || { rc_context.request.read().id > 0 }>
-            {t!(i18n, rest_client_request_not_selected_msg)}
-        </div>
+        <div node_ref=node_ref class="flex-1 flex">
+            <div class="flex-1 flex items-center justify-center"
+                class:hidden=move || { rc_context.request.read().id > 0 }>
+                {t!(i18n, rest_client_request_not_selected_msg)}
+            </div>
 
-        <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
-            class:hidden=move || { rc_context.request.read().id == 0 }
-            >
-            <RequestParamsUrl params set_response=response.write_only() />
+            <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
+                class:hidden=move || { rc_context.request.read().id == 0 }
+                >
+                <RequestParamsUrl params set_response=response.write_only() />
 
-            <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
-                <RequestParamsPanel node_ref=params_ref params />
+                <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
+                    <RequestParamsPanel node_ref=params_ref params />
 
-                <DragSplitter
-                    class_name="hidden md:block".to_owned()
-                    target_ref=params_ref
-                    local_store_prop_name=move || "params_width".to_owned()
-                    min_scr_ration={1.0 / 6.0}
-                    max_scr_ration={1.0 / 2.0}
-                    default_scr_ration={1.0 / 6.0} />
+                    <DragSplitter
+                        class_name="hidden md:block".to_owned()
+                        first_target_ref=params_ref
+                        second_target_ref=result_ref
+                        local_store_prop_name=move || "params_width".to_owned()
+                        min_scr_ration={1.0 / 6.0}
+                        max_scr_ration={1.0 / 2.0}
+                        default_scr_ration={1.0 / 6.0} />
 
-                <RequestResultPanel response=response.read_only() params/>
+                    <RequestResultPanel response=response.read_only() params node_ref=result_ref />
 
+                </div>
             </div>
         </div>
     }
