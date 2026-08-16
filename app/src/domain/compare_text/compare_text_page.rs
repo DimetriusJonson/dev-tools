@@ -72,9 +72,9 @@ pub fn CompareTextPage() -> impl IntoView {
                         second_target_ref=right_panel_ref
                         class_name="hidden md:block".to_owned()
                         local_store_prop_name=move || "compare_text1_width".to_owned()
-                        min_scr_ration={1.0 / 6.0}
-                        max_scr_ration={3.0 / 4.0}
-                        default_scr_ration={1.0 / 2.0}/>
+                        min_first_ratio={1.0 / 6.0}
+                        max_first_ratio={3.0 / 4.0}
+                        default_first_ratio={1.0 / 2.0}/>
 
                     <div class="flex-1 flex gap-4" node_ref=right_panel_ref>
                         <TextArea

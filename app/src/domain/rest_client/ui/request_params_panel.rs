@@ -125,9 +125,9 @@ pub fn RequestParamsPanel(
                     second_target_ref=body_ref
                     horizontal=true
                     local_store_prop_name=move || build_request_stored_key(rc_context.project.read().as_str(), rc_context.request.read().id, "headers_height")
-                    min_scr_ration={1.0 / 10.0}
-                    max_scr_ration={2.0 / 3.0}
-                    default_scr_ration={1.0 / 6.0}
+                    min_first_ratio={1.0 / 10.0}
+                    max_first_ratio={2.0 / 3.0}
+                    default_first_ratio={1.0 / 6.0}
                     allow_mobile=true
                 />
 

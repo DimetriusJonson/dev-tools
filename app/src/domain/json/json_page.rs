@@ -223,9 +223,9 @@ pub fn JsonPage() -> impl IntoView {
                 second_target_ref=right_panel_ref
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "json_left_panel_width".to_owned()
-                min_scr_ration={1.0 / 6.0}
-                max_scr_ration={3.0 / 4.0}
-                default_scr_ration={1.0 / 2.0}/>
+                min_first_ratio={1.0 / 6.0}
+                max_first_ratio={3.0 / 4.0}
+                default_first_ratio={1.0 / 2.0}/>
 
             // RIGHT SIDE
             <div node_ref=right_panel_ref class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">

@@ -28,9 +28,9 @@ pub fn RestClientPage() -> impl IntoView {
                 first_target_ref=explorer_ref
                 second_target_ref=explorer_ref
                 local_store_prop_name=move || "rc_explorer_width".to_owned()
-                min_scr_ration={1.0 / 10.0}
-                max_scr_ration={1.0 / 2.0}
-                default_scr_ration={1.0 / 6.0} />
+                min_first_ratio={1.0 / 10.0}
+                max_first_ratio={1.0 / 2.0}
+                default_first_ratio={1.0 / 6.0} />
 
             <RequestPanel node_ref=right_panel_ref />
         </div>

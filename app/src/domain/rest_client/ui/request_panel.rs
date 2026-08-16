@@ -52,9 +52,9 @@ pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
                         first_target_ref=params_ref
                         second_target_ref=result_ref
                         local_store_prop_name=move || "params_width".to_owned()
-                        min_scr_ration={1.0 / 6.0}
-                        max_scr_ration={1.0 / 2.0}
-                        default_scr_ration={1.0 / 6.0} />
+                        min_first_ratio={1.0 / 6.0}
+                        max_first_ratio={1.0 / 2.0}
+                        default_first_ratio={1.0 / 6.0} />
 
                     <RequestResultPanel response=response.read_only() params node_ref=result_ref />
 
