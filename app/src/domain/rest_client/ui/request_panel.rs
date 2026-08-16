@@ -4,14 +4,13 @@ use crate::{
         message_banner::{Messages, show_error},
     },
     domain::rest_client::{
-        model::{request_params::RequestParams, rest_client_context::RestClientContext},
-        ui::request_params_url::RequestParamsUrl,
-        util::request_store::{
-            RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
+        model::{
+            request_params::RequestParams, request_response::RequestResponse,
+            rest_client_context::RestClientContext,
         },
+        ui::request_params_url::RequestParamsUrl,
     },
     i18n::*,
-    model::restclient::rest_client_response::RestClientResponse,
 };
 use leptos::{html::Div, prelude::*};
 
@@ -26,12 +25,11 @@ pub fn RequestPanel() -> impl IntoView {
     let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (params, _set_params) = signal(RequestParams::new(rc_context.clone()));
-    let (response, set_response) = signal(None);
+    let response = RequestResponse::new(params, rc_context.clone());
 
     let params_ref = NodeRef::<Div>::new();
 
-    create_request_watcher(params, rc_context.clone(), set_response, messages);
-    create_response_watcher(params, rc_context.clone(), response);
+    create_request_watcher(params, rc_context.clone(), response.clone(), messages);
 
     view! {
         <div class="flex-1 flex items-center justify-center"
@@ -42,7 +40,7 @@ pub fn RequestPanel() -> impl IntoView {
         <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
             class:hidden=move || { rc_context.request.read().id == 0 }
             >
-            <RequestParamsUrl params set_response />
+            <RequestParamsUrl params set_response=response.write_only() />
 
             <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
                 <RequestParamsPanel node_ref=params_ref params />
@@ -55,47 +53,17 @@ pub fn RequestPanel() -> impl IntoView {
                     max_scr_ration={1.0 / 2.0}
                     default_scr_ration={1.0 / 6.0} />
 
-                <RequestResultPanel response params/>
+                <RequestResultPanel response=response.read_only() params/>
 
             </div>
         </div>
     }
 }
 
-fn create_response_watcher(
-    params: ReadSignal<RequestParams>,
-    rc_context: RestClientContext,
-    response: ReadSignal<Option<RestClientResponse>>,
-) {
-    Effect::watch(
-        move || response.get(),
-        move |value, _prev, _| {
-            if *params.read_untracked().save_response.read_untracked()
-                && let Some(response) = value
-            {
-                let json_string = serde_json::to_string(&response).unwrap();
-                set_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_untracked().id,
-                    RequestFieldKind::SaveResponseData,
-                    json_string,
-                )
-            } else {
-                delete_stored_value(
-                    rc_context.project.read_only(),
-                    rc_context.request.read_only(),
-                    RequestFieldKind::SaveResponseData,
-                )
-            }
-        },
-        false,
-    );
-}
-
 fn create_request_watcher(
     params: ReadSignal<RequestParams>,
     rc_context: RestClientContext,
-    set_response: WriteSignal<Option<RestClientResponse>>,
+    response: RequestResponse,
     messages: Messages,
 ) {
     Effect::watch(
@@ -112,23 +80,12 @@ fn create_request_watcher(
                 params.read_untracked().read_from_store(rc_context.clone(), value.id);
 
                 if params.read_untracked().save_response.get_untracked() {
-                    let data_str = get_stored_value(
-                        RequestFieldKind::SaveResponseData,
-                        "".to_owned(),
-                        rc_context.project.read_untracked().as_str(),
-                        rc_context.request.read_untracked().id,
-                    );
-                    if !data_str.is_empty() {
-                        match serde_json::from_str::<RestClientResponse>(&data_str) {
-                            Ok(data) => set_response.set(Some(data)),
-                            Err(err) => {
-                                set_response.set(None);
-                                show_error(err.to_string(), messages);
-                            }
-                        }
+                    if let Err(err) = response.read_from_store(rc_context.clone(), value.id) {
+                        response.clear();
+                        show_error(err.to_string(), messages);
                     }
                 } else {
-                    set_response.set(None);
+                    response.clear();
                 }
             }
         },

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::rest_client::{
     model::{
         request_body_form::RequestBodyFormValues, request_header::RequestHeaders,
-        request_params::RequestCommand::None, rest_client_context::RestClientContext,
+        rest_client_context::RestClientContext,
     },
     util::request_store::{RequestFieldKind, get_stored_value, set_stored_value},
 };
@@ -177,7 +177,7 @@ impl RequestParams {
 
 impl RequestInfo {
     pub fn new(id: i32, project_id: i32, url: String, name: String, method: String) -> Self {
-        Self { id, project_id, url, method, name, command: None }
+        Self { id, project_id, url, method, name, command: RequestCommand::None }
     }
 
     pub fn new_empty() -> Self {
@@ -187,7 +187,7 @@ impl RequestInfo {
             url: "".to_owned(),
             method: "".to_owned(),
             name: "".to_owned(),
-            command: None,
+            command: RequestCommand::None,
         }
     }
 
