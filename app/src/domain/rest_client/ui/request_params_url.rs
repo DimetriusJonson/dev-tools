@@ -1,7 +1,8 @@
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::ui::button_world::ButtonWorld;
+use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::request_params::{
-    RequestBodyKind, RequestCommand, RequestParams,
+    RequestBodyKind, RequestParams,
 };
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;

@@ -12,7 +12,7 @@ use crate::i18n::*;
 use crate::{
     common::{curl_parser::parser::parse_curl_cmd, ui_utils::paste_from_clipboard},
     components::layout::message_banner::{Messages, show_error},
-    domain::rest_client::model::request_params::RequestInfo,
+    domain::rest_client::model::request_info::RequestInfo,
 };
 
 #[component]

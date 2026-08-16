@@ -1,6 +1,6 @@
 use leptos::prelude::{ReadUntracked, RwSignal};
 
-use crate::domain::rest_client::model::request_params::RequestInfo;
+use crate::domain::rest_client::model::request_info::RequestInfo;
 
 #[derive(Clone)]
 pub struct RestClientContext {

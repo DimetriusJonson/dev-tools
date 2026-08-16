@@ -4,7 +4,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{
     common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
-    domain::rest_client::model::request_params::{RequestInfo, RestClientProject},
+    domain::rest_client::model::{request_info::RequestInfo, request_params::RestClientProject},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, EnumString, EnumIter, Display)]
@@ -80,15 +80,16 @@ pub fn delete_stored_request(project_id: &str, request_id: i32) {
     }
 }
 
-pub fn copy_stored_request(src_project_id: &str, src_request_id: i32, dst_project_id: &str, dst_request_id: i32) {
+pub fn copy_stored_request(
+    src_project_id: &str,
+    src_request_id: i32,
+    dst_project_id: &str,
+    dst_request_id: i32,
+) {
     for field in RequestFieldKind::iter() {
         let value = get_stored_value(field, "".to_owned(), src_project_id, src_request_id);
         set_local_store_value(
-            &build_request_stored_key(
-                dst_project_id,
-                dst_request_id,
-                &field.to_string(),
-            ),
+            &build_request_stored_key(dst_project_id, dst_request_id, &field.to_string()),
             value,
         );
     }

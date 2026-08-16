@@ -6,7 +6,7 @@ use leptos::{html::Input, prelude::*};
 use web_sys::wasm_bindgen::JsCast;
 
 use crate::components::layout::message_banner::{Messages, show_error};
-use crate::domain::rest_client::model::request_params::RequestCommand;
+use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_popup_menu::RequestPopupMenu;
 use crate::domain::rest_client::util::request_store::{
@@ -19,7 +19,7 @@ use crate::{
         button::{Button, ButtonColor, ButtonHeight, ButtonTextSize, ButtonWidth},
         text_input::TextInput,
     },
-    domain::rest_client::model::request_params::RequestInfo,
+    domain::rest_client::model::request_info::RequestInfo,
 };
 
 #[component]

@@ -2,7 +2,7 @@ use leptos::{html::Div, prelude::*};
 
 use crate::{
     components::layout::drag_splitter::DragSplitter, domain::rest_client::{
-        model::{request_params::RequestInfo, rest_client_context::RestClientContext}, ui::{request_panel::RequestPanel, rest_client_explorer::RestClientExplorer},
+        model::{request_info::RequestInfo, rest_client_context::RestClientContext}, ui::{request_panel::RequestPanel, rest_client_explorer::RestClientExplorer},
     },
 };
 

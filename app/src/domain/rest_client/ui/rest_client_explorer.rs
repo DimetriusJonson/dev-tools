@@ -3,7 +3,7 @@ use leptos::{html::Div, prelude::*};
 use crate::{
     common::ui_utils::get_accept_language,
     domain::rest_client::{
-        model::rest_client_context::RestClientContext,
+        model::{request_info::RequestInfo, rest_client_context::RestClientContext},
         ui::{
             rest_client_curl_button::RestClientCUrlButton,
             rest_client_explorer_row::RestClientExplorerRow,
@@ -14,12 +14,9 @@ use crate::{
 };
 use crate::{
     components::ui::button::{Button, ButtonWidth},
-    domain::rest_client::{
-        model::request_params::RequestInfo,
-        util::request_store::{
-            RequestFieldKind, delete_stored_request, generate_request_id, get_stored_requests_ids,
-            get_stored_value, set_stored_requests_ids, set_stored_value,
-        },
+    domain::rest_client::util::request_store::{
+        RequestFieldKind, delete_stored_request, generate_request_id, get_stored_requests_ids,
+        get_stored_value, set_stored_requests_ids, set_stored_value,
     },
 };
 
