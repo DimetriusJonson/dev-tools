@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use http::Method;
 use leptos::{prelude::*, task::spawn_local};
 
-use crate::domain::rest_client::model::request_params::RequestBodyKind;
+use crate::domain::rest_client::model::request_body_kind::RequestBodyKind;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::util::request_store::{
     RequestFieldKind, generate_request_id, set_stored_requests_ids, set_stored_value,

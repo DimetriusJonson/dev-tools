@@ -1,12 +1,12 @@
-use std::{convert::Infallible, fmt::Display, str::FromStr};
+use std::str::FromStr;
 
 use leptos::prelude::{Effect, Get, GetUntracked, ReadUntracked, RwSignal, Set};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::rest_client::{
     model::{
-        request_body_form::RequestBodyFormValues, request_header::RequestHeaders,
-        rest_client_context::RestClientContext,
+        request_body_form::RequestBodyFormValues, request_body_kind::RequestBodyKind,
+        request_header::RequestHeaders, rest_client_context::RestClientContext,
     },
     util::request_store::{RequestFieldKind, get_stored_value, set_stored_value},
 };
@@ -15,15 +15,6 @@ use crate::domain::rest_client::{
 pub struct RestClientProject {
     pub id: i32,
     pub name: String,
-}
-
-#[derive(PartialEq, Eq, Clone, Default)]
-pub enum RequestBodyKind {
-    #[default]
-    Text,
-    Json,
-    Xml,
-    Formencoded,
 }
 
 #[derive(Clone, Debug)]
@@ -154,52 +145,5 @@ impl RequestParams {
             .iter()
             .find(|h| h.name.read_untracked().as_str().to_lowercase() == "content-type")
             .map(|h| h.value.get_untracked())
-    }
-}
-
-impl RequestBodyKind {
-    pub fn content_type(&self) -> &str {
-        match self {
-            RequestBodyKind::Text => "text/plain",
-            RequestBodyKind::Json => "application/json",
-            RequestBodyKind::Xml => "application/xml",
-            RequestBodyKind::Formencoded => "application/x-www-form-urlencoded",
-        }
-    }
-
-    pub fn from_content_type(content_type: &str) -> Self {
-        match content_type.to_lowercase().trim() {
-            "text/plain" => RequestBodyKind::Text,
-            "application/xml" => RequestBodyKind::Xml,
-            "application/x-www-form-urlencoded" => RequestBodyKind::Formencoded,
-            _ => RequestBodyKind::Json,
-        }
-    }
-}
-
-impl Display for RequestBodyKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RequestBodyKind::Text => write!(f, "text"),
-            RequestBodyKind::Formencoded => write!(f, "formencoded"),
-            RequestBodyKind::Json => write!(f, "json"),
-            RequestBodyKind::Xml => write!(f, "xml"),
-        }
-    }
-}
-
-impl FromStr for RequestBodyKind {
-    type Err = Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "formencoded" {
-            Ok(RequestBodyKind::Formencoded)
-        } else if s == "json" {
-            Ok(RequestBodyKind::Json)
-        } else if s == "xml" {
-            Ok(RequestBodyKind::Xml)
-        } else {
-            Ok(RequestBodyKind::Text)
-        }
     }
 }

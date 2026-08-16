@@ -1,6 +1,8 @@
 use leptos::prelude::{GetUntracked, ReadUntracked};
 
-use crate::domain::rest_client::model::request_params::{RequestBodyKind, RequestParams};
+use crate::domain::rest_client::model::{
+    request_body_kind::RequestBodyKind, request_params::RequestParams,
+};
 
 pub fn build_curl_bash_cmd(request_params: &RequestParams) -> String {
     build_curl_cmd(request_params, "curl", "\'", "\\\r\n")
@@ -24,14 +26,14 @@ fn build_curl_cmd(
     result.push_str(&format!("{}{}{}", quote, request_params.url.read_untracked(), quote));
 
     //method
-    if request_params.method.read_untracked() != "GET".to_owned() || !request_params.body.read_untracked().is_empty() {
+    if request_params.method.read_untracked() != "GET".to_owned()
+        || !request_params.body.read_untracked().is_empty()
+    {
         result.push_str(&format!(" {}-X {}", new_line, request_params.method.read_untracked()));
     }
 
     //headers
-    if !request_params.body.read_untracked().is_empty()
-        && request_params.content_type().is_none()
-    {
+    if !request_params.body.read_untracked().is_empty() && request_params.content_type().is_none() {
         add_header_param(
             &mut result,
             "Content-Type",
