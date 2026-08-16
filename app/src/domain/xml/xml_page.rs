@@ -214,7 +214,7 @@ pub fn XmlPage() -> impl IntoView {
                 target_ref=left_panel_ref 
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "xml_left_panel_width".to_owned()
-                min_ratio={1.0 / 6.0} 
+                min_ratio={1.0 / 4.0} 
                 max_ratio={3.0 / 4.0} 
                 default_ratio={1.0 / 2.0}/>
 

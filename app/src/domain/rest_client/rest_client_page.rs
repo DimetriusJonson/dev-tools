@@ -27,9 +27,11 @@ pub fn RestClientPage() -> impl IntoView {
                 class_name="hidden md:block".to_owned()
                 target_ref=explorer_ref
                 local_store_prop_name=move || "rc_explorer_width".to_owned()
-                min_ratio={1.0 / 10.0}
-                max_ratio={1.0 / 2.0}
-                default_ratio={1.0 / 6.0} />
+                min_ratio={1.0 / 6.0}
+                max_ratio={5.0 / 6.0}
+                default_ratio={1.0 / 6.0} 
+                allow_hidden=true
+                />
 
             <RequestPanel node_ref=right_panel_ref />
         </div>
