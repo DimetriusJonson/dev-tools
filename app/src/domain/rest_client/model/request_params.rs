@@ -1,6 +1,6 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
-use leptos::prelude::{Effect, Get, GetUntracked, ReadUntracked, RwSignal};
+use leptos::prelude::{Effect, Get, GetUntracked, ReadUntracked, RwSignal, Set};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::rest_client::{
@@ -8,7 +8,7 @@ use crate::domain::rest_client::{
         request_body_form::RequestBodyFormValues, request_header::RequestHeaders,
         request_params::RequestCommand::None, rest_client_context::RestClientContext,
     },
-    util::request_store::{RequestFieldKind, set_stored_value},
+    util::request_store::{RequestFieldKind, get_stored_value, set_stored_value},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -64,6 +64,64 @@ impl RequestParams {
                 rc_context.clone(),
             ),
         }
+    }
+
+    pub fn read_from_store(&self, rc_context: RestClientContext, request_id: i32) {
+        self.headers
+            .set(RequestHeaders::read_from_store(&rc_context.project.read_untracked(), request_id));
+
+        self.params_tab_selected.set(
+            get_stored_value(
+                RequestFieldKind::ParamsTab,
+                "0".to_owned(),
+                &rc_context.project.read_untracked(),
+                rc_context.request.read_untracked().id,
+            )
+            .parse()
+            .unwrap_or(0),
+        );
+
+        self.body_formencoded.set(RequestBodyFormValues::read_from_store(
+            &rc_context.project.read_untracked(),
+            request_id,
+        ));
+        self.body.set(get_stored_value(
+            RequestFieldKind::Body,
+            "".to_owned(),
+            rc_context.project.read_untracked().as_str(),
+            request_id,
+        ));
+        self.body_type.set(
+            RequestBodyKind::from_str(&get_stored_value(
+                RequestFieldKind::BodyType,
+                "".to_owned(),
+                rc_context.project.read_untracked().as_str(),
+                request_id,
+            ))
+            .unwrap_or_default(),
+        );
+
+        self.save_response.set(
+            get_stored_value(
+                RequestFieldKind::SaveResponse,
+                "false".to_owned(),
+                rc_context.project.read_untracked().as_str(),
+                rc_context.request.read_untracked().id,
+            )
+            .parse::<bool>()
+            .unwrap_or_default(),
+        );
+
+        self.formatting.set(
+            get_stored_value(
+                RequestFieldKind::Formatting,
+                "true".to_owned(),
+                rc_context.project.read_untracked().as_str(),
+                request_id,
+            )
+            .parse::<bool>()
+            .unwrap_or(false),
+        );
     }
 }
 

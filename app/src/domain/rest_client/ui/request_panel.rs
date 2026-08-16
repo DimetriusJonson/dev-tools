@@ -1,17 +1,10 @@
-use std::str::FromStr;
-
 use crate::{
     components::layout::{
         drag_splitter::DragSplitter,
         message_banner::{Messages, show_error},
     },
     domain::rest_client::{
-        model::{
-            request_body_form::RequestBodyFormValues,
-            request_header::RequestHeaders,
-            request_params::{RequestBodyKind, RequestParams},
-            rest_client_context::RestClientContext,
-        },
+        model::{request_params::RequestParams, rest_client_context::RestClientContext},
         ui::request_params_url::RequestParamsUrl,
         util::request_store::{
             RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
@@ -115,55 +108,10 @@ fn create_request_watcher(
             {
                 params.read_untracked().url.set(value.url.to_owned());
                 params.read_untracked().method.set(value.method.to_owned());
-                params.read_untracked().headers.set(RequestHeaders::read_from_store(
-                    &rc_context.project.read_untracked(),
-                    value.id,
-                ));
 
-                params.read_untracked().params_tab_selected.set(
-                    get_stored_value(
-                        RequestFieldKind::ParamsTab,
-                        "0".to_owned(),
-                        &rc_context.project.read_untracked(),
-                        rc_context.request.read_untracked().id,
-                    )
-                    .parse()
-                    .unwrap_or(0),
-                );
+                params.read_untracked().read_from_store(rc_context.clone(), value.id);
 
-                params.read_untracked().body_formencoded.set(
-                    RequestBodyFormValues::read_from_store(
-                        &rc_context.project.read_untracked(),
-                        value.id,
-                    ),
-                );
-                params.read_untracked().body.set(get_stored_value(
-                    RequestFieldKind::Body,
-                    "".to_owned(),
-                    rc_context.project.read_untracked().as_str(),
-                    value.id,
-                ));
-                params.read_untracked().body_type.set(
-                    RequestBodyKind::from_str(&get_stored_value(
-                        RequestFieldKind::BodyType,
-                        "".to_owned(),
-                        rc_context.project.read_untracked().as_str(),
-                        value.id,
-                    ))
-                    .unwrap_or_default(),
-                );
-
-                let save_response = get_stored_value(
-                    RequestFieldKind::SaveResponse,
-                    "false".to_owned(),
-                    rc_context.project.read_untracked().as_str(),
-                    rc_context.request.read_untracked().id,
-                )
-                .parse::<bool>()
-                .unwrap_or_default();
-
-                params.read_untracked().save_response.set(save_response);
-                if save_response {
+                if params.read_untracked().save_response.get_untracked() {
                     let data_str = get_stored_value(
                         RequestFieldKind::SaveResponseData,
                         "".to_owned(),
@@ -182,17 +130,6 @@ fn create_request_watcher(
                 } else {
                     set_response.set(None);
                 }
-
-                params.read_untracked().formatting.set(
-                    get_stored_value(
-                        RequestFieldKind::Formatting,
-                        "true".to_owned(),
-                        rc_context.project.read_untracked().as_str(),
-                        rc_context.request.read_untracked().id,
-                    )
-                    .parse::<bool>()
-                    .unwrap_or(false),
-                );
             }
         },
         false,
