@@ -211,13 +211,12 @@ pub fn XmlPage() -> impl IntoView {
             </div>
 
             <DragSplitter 
-                first_target_ref=left_panel_ref 
-                second_target_ref=right_panel_ref
+                target_ref=left_panel_ref 
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "xml_left_panel_width".to_owned()
-                min_first_ratio={1.0 / 6.0} 
-                max_first_ratio={3.0 / 4.0} 
-                default_first_ratio={1.0 / 2.0}/>
+                min_ratio={1.0 / 6.0} 
+                max_ratio={3.0 / 4.0} 
+                default_ratio={1.0 / 2.0}/>
 
             // RIGHT SIDE
             <div node_ref=right_panel_ref class="md:flex-1 overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">

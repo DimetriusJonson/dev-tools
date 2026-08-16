@@ -49,12 +49,11 @@ pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
 
                     <DragSplitter
                         class_name="hidden md:block".to_owned()
-                        first_target_ref=params_ref
-                        second_target_ref=result_ref
+                        target_ref=params_ref
                         local_store_prop_name=move || "params_width".to_owned()
-                        min_first_ratio={1.0 / 6.0}
-                        max_first_ratio={1.0 / 2.0}
-                        default_first_ratio={1.0 / 6.0} />
+                        min_ratio={1.0 / 6.0}
+                        max_ratio={1.0 / 2.0}
+                        default_ratio={1.0 / 6.0} />
 
                     <RequestResultPanel response=response.read_only() params node_ref=result_ref />
 

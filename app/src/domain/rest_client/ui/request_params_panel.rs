@@ -121,13 +121,12 @@ pub fn RequestParamsPanel(
 
                 <DragSplitter
                     class_name="hidden md:block".to_owned()
-                    first_target_ref=params_ref
-                    second_target_ref=body_ref
+                    target_ref=params_ref
                     horizontal=true
                     local_store_prop_name=move || build_request_stored_key(rc_context.project.read().as_str(), rc_context.request.read().id, "headers_height")
-                    min_first_ratio={1.0 / 10.0}
-                    max_first_ratio={2.0 / 3.0}
-                    default_first_ratio={1.0 / 6.0}
+                    min_ratio={1.0 / 10.0}
+                    max_ratio={2.0 / 3.0}
+                    default_ratio={1.0 / 6.0}
                     allow_mobile=true
                 />
 
