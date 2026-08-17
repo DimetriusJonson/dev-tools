@@ -31,6 +31,7 @@ pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
     let result_ref = NodeRef::<Div>::new();
 
     create_request_watcher(params, rc_context.clone(), response.clone(), messages);
+    create_params_watchers(params, rc_context.clone());
 
     view! {
         <div node_ref=node_ref class="flex-1 flex">
@@ -91,6 +92,28 @@ fn create_request_watcher(
                 } else {
                     response.clear();
                 }
+            }
+        },
+        false,
+    );
+}
+
+fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestClientContext) {
+    Effect::watch(
+        move || params.read_untracked().url.get(),
+        move |value, prev, _| {
+            if prev.is_none() || value != prev.unwrap() {
+                rc_context.request.write().url = value.to_owned();
+            }
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || params.read_untracked().method.get(),
+        move |value, prev, _| {
+            if prev.is_none() || value != prev.unwrap() {
+                rc_context.request.write().method = value.to_owned();
             }
         },
         false,
