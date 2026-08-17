@@ -56,7 +56,7 @@ pub fn DragSplitter(
     });
 
     Effect::new(move || {
-        let init_size =
+        let mut init_size =
             get_local_store_value(&local_store_prop_name_memo.get(), default_ratio.to_string())
                 .parse::<f64>()
                 .unwrap();
@@ -65,6 +65,8 @@ pub fn DragSplitter(
             if let Some(target_elem) = target_ref.get() {
                 target_elem.class_list().add_1("hidden").unwrap();
             }
+        } else if init_size > max_ratio {
+            init_size = default_ratio;
         }
 
         if (!mobile.get_untracked() || allow_mobile)
