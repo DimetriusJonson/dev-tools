@@ -7,9 +7,11 @@ use leptos::{
 use web_sys::HtmlDivElement;
 
 use crate::common::{
-    local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+    local_store::{get_local_store_value, set_local_store_value},
     ui_utils::get_browser_width,
 };
+
+const MOBILE_WIDTH: f64 = 640.0;
 
 #[component]
 pub fn DragSplitter(
@@ -25,6 +27,7 @@ pub fn DragSplitter(
     #[prop(optional)] allow_hidden: bool,
 ) -> impl IntoView {
     let (dragging, set_dragging) = signal(false);
+    let (mobile, set_mobile) = signal(get_browser_width().unwrap() < MOBILE_WIDTH);
     let dragbar_ref = NodeRef::<Div>::new();
     let local_store_prop_name_memo = Memo::new(move |_| local_store_prop_name());
 
@@ -32,23 +35,27 @@ pub fn DragSplitter(
 
     let (size, set_size) = signal(default_ratio);
 
-    let set_element_size = move |target_elem: HtmlDivElement,
-                                 second_target_elem: HtmlDivElement,
-                                 prop_name: &str,
-                                 new_size: f64| {
+    let set_element_size = |target_elem: HtmlDivElement,
+                            second_target_elem: HtmlDivElement,
+                            prop_name: &str,
+                            new_size: f64| {
         //        console_log(&format!("{}={}%", local_store_prop_name_memo.get(), new_size));
-
         (*target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", new_size))
             .unwrap();
+
         (*second_target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", 100.0 - new_size))
             .unwrap();
     };
 
-    let _ = Effect::new(move |_prev| {
+    let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
+        set_mobile.set(get_browser_width().unwrap() < MOBILE_WIDTH);
+    });
+
+    Effect::new(move || {
         let init_size =
             get_local_store_value(&local_store_prop_name_memo.get(), default_ratio.to_string())
                 .parse::<f64>()
@@ -60,39 +67,11 @@ pub fn DragSplitter(
             }
         }
 
-        if (!is_mobile() || allow_mobile)
+        if (!mobile.get_untracked() || allow_mobile)
             && let Some(target_elem) = target_ref.get()
             && let Some(Some(second_target_elem)) = second_target_ref.try_get()
         {
             set_element_size(target_elem, second_target_elem, prop_name, init_size);
-        }
-    });
-
-    let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
-        if let Some(Some(target_elem)) = target_ref.try_get()
-            && let Some(Some(second_target_elem)) = second_target_ref.try_get()
-        {
-            let default_size = default_ratio;
-            if !is_mobile() || allow_mobile {
-                let current_size = size.get();
-
-                let min_size = min_ratio;
-                let max_size = max_ratio;
-
-                if current_size < min_size {
-                    set_element_size(target_elem, second_target_elem, prop_name, min_size);
-                    set_size.set(min_size);
-                    set_local_store_value(&local_store_prop_name_memo.get(), min_size.to_string());
-                } else if current_size > max_size {
-                    set_element_size(target_elem, second_target_elem, prop_name, max_size);
-                    set_size.set(max_size);
-                    set_local_store_value(&local_store_prop_name_memo.get(), max_size.to_string());
-                }
-            } else {
-                (*target_elem).style().remove_property(prop_name).unwrap();
-                delete_local_store_value(&local_store_prop_name_memo.get());
-                set_size.set(default_size);
-            }
         }
     });
 
@@ -101,23 +80,25 @@ pub fn DragSplitter(
             && dragging
             && let Some(Some(target_elem)) = target_ref.try_get()
             && let Some(Some(second_target_elem)) = second_target_ref.try_get()
-            && (!is_mobile() || allow_mobile)
+            && (!mobile.get_untracked() || allow_mobile)
         {
-            let min_size = min_ratio;
-            let max_size = max_ratio;
-
             let parent_rect = target_elem.parent_element().unwrap().get_bounding_client_rect();
+            let target_rect = target_elem.get_bounding_client_rect();
 
-            let rect = target_elem.get_bounding_client_rect();
-            let old_size = if horizontal { rect.height() } else { rect.width() };
-            let new_size = if horizontal {
-                ((ev.client_y() as f64 - rect.top()) / parent_rect.height()) * 100.0
+            let (old_size, new_size) = if horizontal {
+                (
+                    target_rect.height(),
+                    ((ev.client_y() as f64 - target_rect.top()) / parent_rect.height()) * 100.0,
+                )
             } else {
-                ((ev.client_x() as f64 - rect.left()) / parent_rect.width()) * 100.0
+                (
+                    target_rect.width(),
+                    ((ev.client_x() as f64 - target_rect.left()) / parent_rect.width()) * 100.0,
+                )
             };
 
-            if allow_hidden && old_size > 0.0 && new_size < min_size {
-                if (old_size - new_size) > min_size / 2.0 {
+            if allow_hidden && old_size > 0.0 && new_size < min_ratio {
+                if (old_size - new_size) > min_ratio / 2.0 {
                     if !target_elem.class_list().contains("hidden") {
                         target_elem.class_list().add_1("hidden").unwrap();
                     }
@@ -133,8 +114,8 @@ pub fn DragSplitter(
                         size.get_untracked().to_string(),
                     );
                 }
-            } else if new_size <= max_size && new_size >= min_size {
-                if old_size == 0.0 && new_size > min_size / 2.0 {
+            } else if new_size <= max_ratio && new_size >= min_ratio {
+                if old_size == 0.0 && new_size > min_ratio / 2.0 {
                     if target_elem.class_list().contains("hidden") {
                         target_elem.class_list().remove_1("hidden").unwrap();
                     }
@@ -169,8 +150,4 @@ pub fn DragSplitter(
             }
         />
     }
-}
-
-fn is_mobile() -> bool {
-    get_browser_width().unwrap() < 640.0
 }
