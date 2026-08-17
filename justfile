@@ -20,7 +20,7 @@ build-linux:
     cargo tauri build
 
 build-windows:
-    $env:LEPTOS_TAILWIND_VERSION="v4.3.3"; cargo leptos build --release -vv
+    LEPTOS_TAILWIND_VERSION="v4.3.3" cargo leptos build --release -vv
     mkdir -p src-tauri/binaries
     cp target/release/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
     cargo tauri build
