@@ -143,7 +143,7 @@ pub fn DragSplitter(
     let size_classes = if horizontal { "h-1 w-full" } else { "w-1 h-full" };
 
     view! {
-        <div node_ref=dragbar_ref class={format!("overflow-y-auto hover:bg-blue-400/50 cursor-col-resize transition delay-300 duration-300 {} {}", size_classes, class_name)}
+        <div node_ref=dragbar_ref class={format!("hover:bg-blue-400/50 cursor-col-resize transition delay-300 duration-300 {} {}", size_classes, class_name)}
             class=(["bg-gray-700"], move || !dragging.get())
             class=(["bg-blue-400/50"], move || dragging.get())
             on:mousedown=move |e| {

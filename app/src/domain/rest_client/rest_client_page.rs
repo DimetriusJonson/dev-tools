@@ -20,7 +20,7 @@ pub fn RestClientPage() -> impl IntoView {
     let right_panel_ref = NodeRef::<Div>::new();
 
     view! {
-        <div class="flex flex-row dark:text-white max-w-screen h-screen md:h-[95dvh] text-xs md:text-base">
+        <div class="flex overflow-y-auto dark:text-white max-w-screen h-screen md:h-[95dvh] text-xs md:text-base">
             <RestClientExplorer node_ref=explorer_ref />
 
             <DragSplitter
