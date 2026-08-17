@@ -53,7 +53,7 @@ pub fn App() -> impl IntoView {
 
         // content for this welcome page
         <Router>
-            <div class="flex flex-col h-dvh">
+            <div class="flex flex-col h-dvh scrollbar-thin scrollbar-thumb-primary scrollbar-track-white dark:scrollbar-track-dark-bg">
                 <MessageBanner />
 
                 <Navbar />
