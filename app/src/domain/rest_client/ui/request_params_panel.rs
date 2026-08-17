@@ -100,9 +100,9 @@ pub fn RequestParamsPanel(
 
     view! {
 
-        <div node_ref=node_ref class="min-h-0 overflow-y-auto flex flex-col gap-2 md:gap-4">
-            <div class="flex-1 flex flex-col">
-                <div node_ref=params_ref class="flex flex-col">
+        <div node_ref=node_ref class="overflow-y-auto flex flex-col gap-2 md:gap-4">
+            <div class="overflow-y-auto flex-1 flex flex-col gap-4">
+                <div node_ref=params_ref class="flex flex-col overflow-y-auto">
                     <Tabs class_name="".to_owned()
                         tab_selected=params.read_untracked().params_tab_selected.read_only() set_tab_selected=params.read_untracked().params_tab_selected.write_only()
                         items=move || vec![
@@ -131,7 +131,7 @@ pub fn RequestParamsPanel(
                     allow_mobile=true
                 />
 
-                <div node_ref=body_ref class="flex-1 flex flex-col pt-4">
+                <div node_ref=body_ref class="flex-1 overflow-y-auto flex flex-col pt-4">
                     <Tabs class_name="".to_owned()
                         tab_selected=body_tab_selected set_tab_selected=set_body_tab_selected
                         items=move || vec![

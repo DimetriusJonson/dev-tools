@@ -46,7 +46,7 @@ where
 
     view! {
         <div class="flex flex-col gap-x-1 md:gap-x-2 gap-y-2">
-            <div class="relative flex flex-row gap-x-1 md:gap-x-2">
+            <div class="relative flex w-full gap-x-1 md:gap-x-2">
                 <AutocompleteInput
                     class_name="sm:min-w-36".to_owned()
                     placeholder=move || key_label_memo.get()

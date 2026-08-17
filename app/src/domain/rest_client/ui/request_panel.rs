@@ -39,12 +39,12 @@ pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
                 {t!(i18n, rest_client_request_not_selected_msg)}
             </div>
 
-            <div class="flex-2 flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
+            <div class="flex-1 overflow-y-auto flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
                 class:hidden=move || { rc_context.request.read().id == 0 }
                 >
                 <RequestParamsUrl params set_response=response.write_only() />
 
-                <div class="flex-1 flex flex-col md:flex-row gap-2 text-xs md:text-base">
+                <div class="flex-1 overflow-y-auto flex flex-col md:flex-row gap-2 text-xs md:text-base">
                     <RequestParamsPanel node_ref=params_ref params />
 
                     <DragSplitter
