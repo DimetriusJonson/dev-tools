@@ -32,7 +32,6 @@ web-sys = { version = "0.3", features = ["Window", "Navigator", "Clipboard", "Ht
   "CssStyleDeclaration",
   "HtmlElement"
   ]}
-tw_merge = { version = "0.1", features = ["variant", "debug"]}
 quick-xml = { version = "0.40.1", features = ["async-tokio"]}
 futures-util = "0.3.32"
 bytes = "1.12.0"
