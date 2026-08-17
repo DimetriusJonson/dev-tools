@@ -76,7 +76,7 @@ pub fn CompareTextPage() -> impl IntoView {
                             max_ratio={80.0}
                             default_ratio={50.0}/>
 
-                        <div class="flex gap-4" node_ref=right_panel_ref>
+                        <div class="flex-1 flex gap-4" node_ref=right_panel_ref>
                             <TextArea
                                 name="text2".to_owned()
                                 class_name="flex-1 resize-none".to_owned()
