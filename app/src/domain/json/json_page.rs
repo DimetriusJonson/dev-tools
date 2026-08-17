@@ -220,14 +220,15 @@ pub fn JsonPage() -> impl IntoView {
 
             <DragSplitter
                 target_ref=left_panel_ref
+                second_target_ref=right_panel_ref
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "json_left_panel_width".to_owned()
-                min_ratio={1.0 / 4.0}
-                max_ratio={3.0 / 4.0}
-                default_ratio={1.0 / 2.0}/>
+                min_ratio={25.0}
+                max_ratio={75.0}
+                default_ratio={50.0}/>
 
             // RIGHT SIDE
-            <div node_ref=right_panel_ref class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
+            <div node_ref=right_panel_ref class="min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                         <CodeInner code={dst_json.get()} lang=move || "json".to_string()/>

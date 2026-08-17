@@ -6,8 +6,8 @@ pub fn TextArea(
     #[prop(optional)] class_name: String,
     value: ReadSignal<String>,
     set_value: WriteSignal<String>,
-    #[prop(optional, default="4".to_owned())] rows: String,
-    #[prop(optional, default="50".to_owned())] cols: String,
+    #[prop(optional)] rows: String,
+    #[prop(optional)] cols: String,
     placeholder: impl Fn() -> String + Send + Sync + 'static,
     #[prop(into)] on_change: Callback<String>,
 ) -> impl IntoView {

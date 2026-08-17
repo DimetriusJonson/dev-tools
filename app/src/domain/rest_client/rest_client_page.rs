@@ -20,16 +20,17 @@ pub fn RestClientPage() -> impl IntoView {
     let right_panel_ref = NodeRef::<Div>::new();
 
     view! {
-        <div class="flex flex-row dark:text-white h-screen md:h-[95dvh] text-xs md:text-base">
+        <div class="flex flex-row dark:text-white max-w-screen h-screen md:h-[95dvh] text-xs md:text-base">
             <RestClientExplorer node_ref=explorer_ref />
 
             <DragSplitter
                 class_name="hidden md:block".to_owned()
                 target_ref=explorer_ref
+                second_target_ref=right_panel_ref
                 local_store_prop_name=move || "rc_explorer_width".to_owned()
-                min_ratio={1.0 / 6.0}
-                max_ratio={5.0 / 6.0}
-                default_ratio={1.0 / 6.0} 
+                min_ratio={10.0}
+                max_ratio={83.0}
+                default_ratio={16.0} 
                 allow_hidden=true
                 />
 

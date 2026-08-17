@@ -104,7 +104,7 @@ pub fn RequestResultPanel(
     };
 
     view! {
-        <div node_ref=node_ref class="flex-1 overflow-y-auto flex flex-col gap-4">
+        <div node_ref=node_ref class="overflow-y-auto flex flex-col gap-4">
 
             <Tabs tab_selected set_tab_selected items=move || vec![
                     TabItem::new_simple(t_string!(i18n, rest_client_response_body_tab), tab_body_ref),

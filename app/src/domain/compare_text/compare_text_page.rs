@@ -53,66 +53,69 @@ pub fn CompareTextPage() -> impl IntoView {
             //Tab Content Panels
             <div class="mt-4">
                 <div node_ref=tab_source_ref class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]">
-
-                    <div node_ref=text1_ref class="flex-1 sm:flex-none flex">
-                        <TextArea
-                            name="text1".to_owned()
-                            class_name="w-full resize-none".to_owned()
-                            placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
-                            value=text1
-                            set_value=set_text1
-                            on_change=move |_| {
-                                set_local_store_value("compare_text1", text1.get_untracked());
-                            }
-                        />
-                    </div>
-
-                    <DragSplitter
-                        target_ref=text1_ref
-                        class_name="hidden md:block".to_owned()
-                        local_store_prop_name=move || "compare_text1_width".to_owned()
-                        min_ratio={1.0 / 6.0}
-                        max_ratio={3.0 / 4.0}
-                        default_ratio={1.0 / 2.0}/>
-
-                    <div class="flex-1 flex gap-4" node_ref=right_panel_ref>
-                        <TextArea
-                            name="text2".to_owned()
-                            class_name="flex-1 resize-none".to_owned()
-                            placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
-                            value=text2
-                            set_value=set_text2
-                            on_change=move |_| {
-                                set_local_store_value("compare_text2", text2.get_untracked());
-                            }
-                        />
-
-                        <div class="flex flex-col gap-4 items-center justify-center">
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || t_display!(i18n, compare_btn_label).to_string()
-                                button_width=ButtonWidth::Md
-                                loading=move || in_progress.get()
-                                on_click=on_compare_click
-                                disabled=move || in_progress.get()
-                            />
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || "⇄".to_owned()
-                                button_width=ButtonWidth::Md
-                                loading=move || false
-                                on_click=move |_| {
-                                    let temp_text = text1.get();
-                                    set_text1.set(text2.get());
-                                    set_text2.set(temp_text);
-
+                    <div class="flex-1 flex gap-x-4">
+                        <div node_ref=text1_ref class="flex-1 sm:flex-none flex">
+                            <TextArea
+                                name="text1".to_owned()
+                                class_name="w-full resize-none".to_owned()
+                                placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
+                                value=text1
+                                set_value=set_text1
+                                on_change=move |_| {
                                     set_local_store_value("compare_text1", text1.get_untracked());
+                                }
+                            />
+                        </div>
+
+                        <DragSplitter
+                            target_ref=text1_ref
+                            second_target_ref=right_panel_ref
+                            class_name="hidden md:block".to_owned()
+                            local_store_prop_name=move || "compare_text1_width".to_owned()
+                            min_ratio={20.0}
+                            max_ratio={80.0}
+                            default_ratio={50.0}/>
+
+                        <div class="flex gap-4" node_ref=right_panel_ref>
+                            <TextArea
+                                name="text2".to_owned()
+                                class_name="flex-1 resize-none".to_owned()
+                                placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
+                                value=text2
+                                set_value=set_text2
+                                on_change=move |_| {
                                     set_local_store_value("compare_text2", text2.get_untracked());
                                 }
-                                disabled=move || in_progress.get()
                             />
                         </div>
                     </div>
+
+                    <div class="flex flex-col gap-4 items-center justify-center">
+                        <Button
+                            title=move || "".to_owned()
+                            label=move || t_display!(i18n, compare_btn_label).to_string()
+                            button_width=ButtonWidth::Md
+                            loading=move || in_progress.get()
+                            on_click=on_compare_click
+                            disabled=move || in_progress.get()
+                        />
+                        <Button
+                            title=move || "".to_owned()
+                            label=move || "⇄".to_owned()
+                            button_width=ButtonWidth::Md
+                            loading=move || false
+                            on_click=move |_| {
+                                let temp_text = text1.get();
+                                set_text1.set(text2.get());
+                                set_text2.set(temp_text);
+
+                                set_local_store_value("compare_text1", text1.get_untracked());
+                                set_local_store_value("compare_text2", text2.get_untracked());
+                            }
+                            disabled=move || in_progress.get()
+                        />
+                    </div>
+                    
                 </div>
 
                 <div node_ref=tab_result_ref class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]">
