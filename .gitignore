@@ -23,5 +23,5 @@ src-tauri/target/
 src-tauri/binaries/
 
 node_modules
-package-lock.json
+#package-lock.json
 site
