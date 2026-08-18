@@ -5,7 +5,7 @@ use clap::Parser;
 
 #[derive(Parser)]
 #[command(name = "Dev Tools")]
-#[command(version = "0.5.3")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "WebDev Useful Tools", long_about = None)]
 struct Cli {
     #[arg(short, long, value_name = "PORT", help="Server port. Example \"--PORT 3005\"")]
