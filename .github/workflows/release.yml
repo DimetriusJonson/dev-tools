@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin' # M1/M2/M3 Silicon Macs
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'  # Intel Macs
+          - platform: 'ubuntu-latest'
+            args: '--target x86_64-unknown-linux-gnu'
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux deps
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils curl rpm
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin,wasm32-unknown-unknown' || 'wasm32-unknown-unknown' }}
+
+      - name: Install leptos Linux and Mac
+        if: ${{ matrix.platform.os != 'windows-latest' }}
+        run: sudo curl --proto '=https' --tlsv1.2 -LsSf https://github.com/leptos-rs/cargo-leptos/releases/download/v0.3.6/cargo-leptos-installer.sh | sh
+
+      - name: Install leptos Windows
+        if: ${{ matrix.platform.os == 'windows-latest' }}
+        run: powershell -ExecutionPolicy Bypass -c "irm https://github.com/leptos-rs/cargo-leptos/releases/download/v0.3.7/cargo-leptos-installer.ps1 | iex"
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            '. -> target'
+            './src-tauri -> target'          
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-level: 'lts/*'
+          cache: 'npm' 
+
+      - name: Install frontend dependencies
+        run: npm install 
+
+      - name: Build App binaries
+        env:
+          LEPTOS_TAILWIND_VERSION: 'v4.3.3'
+        run: cargo leptos build --release -vv
+
+      - name: create directory binaries
+        run: mkdir -p src-tauri/binaries
+
+      - name: Copy App binaries Linux
+        if: ${{ matrix.platform.os == 'ubuntu-latest' }}
+        run: cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-unknown-linux-gnu
+
+      - name: Copy App binaries Mac x86_64
+        if: ${{ matrix.args == '--target x86_64-apple-darwin' }}
+        run: cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-apple-darwin
+
+      - name: Copy App binaries Mac Arm
+        if: ${{ matrix.args == '--target aarch64-apple-darwin' }}
+        run: cp target/release/server src-tauri/binaries/webdev_useful_tools_server-aarch64-apple-darwin
+
+      - name: Copy App binaries Windows
+        if: ${{ matrix.platform.os == 'windows-latest' }}
+        run: cp target/release/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
+          releaseName: 'v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
