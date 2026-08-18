@@ -1,4 +1,5 @@
 use std::env;
+use std::error::Error;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -8,12 +9,61 @@ use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+
+const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tauri::command]
 fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
     app_handle.path().resource_dir().unwrap()
+}
+
+async fn get_last_version(app_title: String) -> Result<Option<String>, Box<dyn Error>> {
+    let client = reqwest::Client::builder().user_agent(app_title).build()?;
+    let data = client
+        .get("https://api.github.com/repos/DimetriusJonson/dev-tools/tags")
+        .send()
+        .await?
+        .json::<serde_json::Value>()
+        .await?;
+
+    if let Some(tags) = data.as_array()
+        && let Some(last_tag) = tags.first()
+    {
+        if let Some(version) = last_tag.get("name")
+            && let Some(version) = version.as_str()
+        {
+            return Ok(Some(version[1..].to_owned()));
+        }
+    }
+
+    Ok(None)
+}
+
+fn check_version(app_handle: AppHandle, app_title: String) {
+    tauri::async_runtime::spawn(async move {
+        match get_last_version(app_title).await {
+            Ok(last_version) => {
+                if let Some(last_version) = last_version {
+                    if APP_VERSION != last_version {
+                        let opener = app_handle.opener();
+                        if let Err(err) = opener.open_url(
+                            "https://github.com/DimetriusJonson/dev-tools/releases",
+                            None::<&str>,
+                        ) {
+                            error!("Cant open url: {}", err)
+                        };
+                    }
+                }
+            }
+            Err(err) => {
+                error!("Cant get last version: {}", err);
+            }
+        };
+        return false;
+    });
 }
 
 fn start_backend_server(
@@ -62,12 +112,15 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_opener::init()) 
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(LevelFilter::Info)
                 .targets([
                     Target::new(TargetKind::Stdout),
-                    Target::new(TargetKind::LogDir { file_name: Some("webdev_useful_tools.log".to_owned()) }),
+                    Target::new(TargetKind::LogDir {
+                        file_name: Some("webdev_useful_tools.log".to_owned()),
+                    }),
                     Target::new(TargetKind::Webview),
                 ])
                 .build(),
@@ -81,14 +134,15 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
         }))
         .setup(move |app| {
             let port = port.unwrap_or(3005);
-            let remote_server_url = remote_server_url
-                .unwrap_or("https://dev-tools-rust.vercel.app".to_owned());
+            let remote_server_url =
+                remote_server_url.unwrap_or("https://dev-tools-rust.vercel.app".to_owned());
 
             let resource_dir = get_resource_dir(app.app_handle());
 
             let server_url;
             if !no_start_server {
-                let server_descr = start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
+                let server_descr =
+                    start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
                 *server_cmd_child.lock().unwrap() = Some(server_descr.1);
 
                 tauri::async_runtime::spawn(async move {
@@ -114,7 +168,11 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 server_url = remote_server_url.to_owned();
             }
 
-            let app_title = format!("{} {}", app.config().product_name.as_ref().unwrap(), app.config().version.as_ref().unwrap());
+            let app_title = format!(
+                "{} {}",
+                app.config().product_name.as_ref().unwrap(),
+                app.config().version.as_ref().unwrap()
+            );
 
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(target_url))
@@ -130,7 +188,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
-                .tooltip(app_title)
+                .tooltip(app_title.to_owned())
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
@@ -165,6 +223,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     _ => {}
                 })
                 .build(app)?;
+
+            check_version(app.app_handle().clone(), app_title);
 
             Ok(())
         })
