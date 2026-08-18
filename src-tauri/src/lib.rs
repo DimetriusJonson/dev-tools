@@ -112,7 +112,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_opener::init()) 
+        .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(LevelFilter::Info)
@@ -168,11 +168,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 server_url = remote_server_url.to_owned();
             }
 
-            let app_title = format!(
-                "{} {}",
-                app.config().product_name.as_ref().unwrap(),
-                app.config().version.as_ref().unwrap()
-            );
+            let app_title =
+                format!("{} {}", app.config().product_name.as_ref().unwrap(), APP_VERSION);
 
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(target_url))
