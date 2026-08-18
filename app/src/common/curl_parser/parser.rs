@@ -3,7 +3,6 @@ use http::{
     HeaderValue, Method,
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, HeaderName, USER_AGENT},
 };
-use leptos::leptos_dom::logging::console_log;
 use pest::Parser as _;
 use pest_derive::Parser;
 use std::{error::Error, str::FromStr};
