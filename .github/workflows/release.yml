@@ -49,8 +49,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: |
-            '. -> target'
-            './src-tauri -> target'          
+            . -> target
+            src-tauri -> target
 
       - name: Setup Node
         uses: actions/setup-node@v4
