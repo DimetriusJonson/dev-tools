@@ -18,7 +18,7 @@ url = { single_quoted | double_quoted | url_plain}
 option = _{ method_option | header_option | cookie_option | data_raw_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option | verbose_option | output_option | silent_option | head_option | fail_option | show_headers_option | user_agent_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
-method = @{ "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" }
+method = { single_quoted | double_quoted | none_ws }
 
 header_option = _{ ("-H" | "--header") ~ ws+ ~ header }
 header = { single_quoted | double_quoted | none_ws }

@@ -1,7 +1,9 @@
 use base64::{Engine, engine::general_purpose::STANDARD};
 use http::{
-    HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, HeaderName, USER_AGENT},
+    HeaderValue, Method,
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, HeaderName, USER_AGENT},
 };
+use leptos::leptos_dom::logging::console_log;
 use pest::Parser as _;
 use pest_derive::Parser;
 use std::{error::Error, str::FromStr};
@@ -20,7 +22,22 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
     for pair in pairs {
         match pair.as_rule() {
             Rule::method => {
-                let method = pair.as_str().parse()?;
+                let s = pair.into_inner().next().expect("method string must be present").as_str();
+                let method = s.parse()?;
+                if !vec![
+                    Method::GET,
+                    Method::POST,
+                    Method::PUT,
+                    Method::DELETE,
+                    Method::PATCH,
+                    Method::HEAD,
+                    Method::OPTIONS,
+                ]
+                .contains(&method)
+                {
+                    return Err(format!("Unknown request method {}.", method).into());
+                };
+
                 parsed.method = Some(method);
             }
             Rule::url => {
@@ -66,13 +83,13 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 }
             }
             Rule::cookie => {
-                let cookie_value = pair.into_inner().next().expect("cookie string must be present").as_str();
+                let cookie_value =
+                    pair.into_inner().next().expect("cookie string must be present").as_str();
 
                 let header_value = unescape_string(cookie_value.trim());
-                parsed.headers.insert(
-                    HeaderName::from_str("Cookie")?,
-                    HeaderValue::from_str(&header_value)?,
-                );
+                parsed
+                    .headers
+                    .insert(HeaderName::from_str("Cookie")?, HeaderValue::from_str(&header_value)?);
             }
             Rule::auth => {
                 let s = pair.into_inner().next().expect("header string must be present").as_str();
@@ -89,7 +106,8 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 parsed.body.push(s.into());
             }
             Rule::data_raw => {
-                let data_raw_value = pair.into_inner().next().expect("data-raw string must be present").as_str();
+                let data_raw_value =
+                    pair.into_inner().next().expect("data-raw string must be present").as_str();
                 let data_raw_value = data_raw_value.replace("\\r\\n", "\r\n");
                 let data_raw_value = data_raw_value.replace("\\n", "\n");
                 parsed.body.push(data_raw_value);
@@ -100,10 +118,16 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::compressed_option => {
                 parsed.compressed = true;
             }
-            Rule::url_option | Rule::verbose_option | Rule::output_option | Rule::head_option | Rule::fail_option | Rule::silent_option | Rule::show_headers_option => {
-            }
+            Rule::url_option
+            | Rule::verbose_option
+            | Rule::output_option
+            | Rule::head_option
+            | Rule::fail_option
+            | Rule::silent_option
+            | Rule::show_headers_option => {}
             Rule::user_agent => {
-                let name = pair.into_inner().next().expect("header string must be present").as_str();
+                let name =
+                    pair.into_inner().next().expect("header string must be present").as_str();
                 parsed.headers.insert(USER_AGENT, name.parse()?);
             }
             Rule::EOI => break,
@@ -193,5 +217,4 @@ fn win_cmd_unescape(s: &str) -> String {
     }
 
     result.replace("^%^", "%")
-
 }
