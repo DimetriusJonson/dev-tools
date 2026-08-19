@@ -34,7 +34,7 @@ The application will work with the server specified in the --remote-server-url o
 
 Useful commands:
 
-1) Build standolone app
+Build standolone app:
 
 just build-windows<br>
 just build-linux<br>
