@@ -42,7 +42,18 @@
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
-      "timestampUrl": ""
+      "timestampUrl": "",
+      "nsis": {
+        "displayLanguageSelector": true,
+        "languages": [
+          "English",
+          "Russian",
+          "SimpChinese",
+          "German",
+          "French",
+          "SpanishInternational"
+        ]
+      }
     },
     "macOS": {
       "frameworks": [],
