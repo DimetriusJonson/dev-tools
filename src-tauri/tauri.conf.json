@@ -40,31 +40,13 @@
       "binaries/webdev_useful_tools_server"
     ],
     "windows": {
-      "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
-      "timestampUrl": "",
       "nsis": {
         "displayLanguageSelector": true,
         "languages": [
           "English",
-          "Russian",
-          "SimpChinese",
-          "German",
-          "French",
-          "SpanishInternational"
+          "Russian"
         ]
-      }
-    },
-    "macOS": {
-      "frameworks": [],
-      "minimumSystemVersion": "",
-      "exceptionDomain": "",
-      "signingIdentity": null,
-      "entitlements": null
-    },
-    "linux": {
-      "deb": {
-        "depends": []
       }
     },
     "licenseFile": "LICENSE"
