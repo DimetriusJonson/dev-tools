@@ -1,4 +1,3 @@
-use gloo_net::http::Request;
 use json_escape::unescape;
 use leptos::html::Div;
 use leptos::task::spawn_local;
@@ -69,7 +68,8 @@ pub fn JsonPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                match Request::post("/format_json")
+                #[cfg(not(feature = "ssr"))]
+                match gloo_net::http::Request::post("/format_json")
                     .header("content-type", "application/json")
                     .body(&file)
                 {

@@ -3,8 +3,8 @@ pub fn get_local_store_value(_key: &str, default: String) -> String {
     use gloo_storage::{LocalStorage, Storage};
 
     #[cfg(not(feature = "ssr"))]
-    let val = LocalStorage::get(_key); 
-    
+    let val = LocalStorage::get(_key);
+
     #[cfg(feature = "ssr")]
     let val: Result<String, std::convert::Infallible> = Ok(default.to_owned());
 
@@ -15,11 +15,17 @@ pub fn get_local_store_value(_key: &str, default: String) -> String {
 }
 
 pub fn set_local_store_value(key: &str, value: String) {
-    use gloo_storage::{LocalStorage, Storage};
-    LocalStorage::set(key, value).unwrap_or(());
+    #[cfg(not(feature = "ssr"))]
+    {
+        use gloo_storage::{LocalStorage, Storage};
+        LocalStorage::set(key, value).unwrap_or(());
+    }
 }
 
 pub fn delete_local_store_value(key: &str) {
-    use gloo_storage::{LocalStorage, Storage};
-    LocalStorage::delete(key);
+    #[cfg(not(feature = "ssr"))]
+    {
+        use gloo_storage::{LocalStorage, Storage};
+        LocalStorage::delete(key);
+    }
 }

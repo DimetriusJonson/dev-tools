@@ -6,7 +6,6 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
 use leptos::prelude::*;
-use url::Url;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -26,10 +25,11 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let (items, set_items) = signal(Vec::<QueryItem>::new());
     let update_lock = RwSignal::new(false);
 
+    #[cfg(not(feature = "ssr"))]
     Effect::watch(
         move || rc_context.request.get(),
         move |value, _prev, _| {
-            if let Ok(url) = Url::parse(&value.url) {
+            if let Ok(url) = url::Url::parse(&value.url) {
                 safe_updating_ui_value(update_lock, move || {
                     let mut query_items = Vec::new();
                     for pair in url.query_pairs() {
@@ -50,11 +50,12 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
         false,
     );
 
+    #[cfg(not(feature = "ssr"))]
     Effect::watch(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
             if (prev.is_none() || value != prev.unwrap())
-                && let Ok(url) = Url::parse(value)
+                && let Ok(url) = url::Url::parse(value)
             {
                 safe_updating_ui_value(update_lock, move || {
                     let mut query_items = Vec::new();
@@ -76,11 +77,12 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
         false,
     );
 
+    #[cfg(not(feature = "ssr"))]
     Effect::watch(
         move || items.get(),
         move |value, _prev, _| {
             if !update_lock.get_untracked()
-                && let Ok(mut url) = Url::from_str(&params.get_untracked().url.read_untracked())
+                && let Ok(mut url) = url::Url::from_str(&params.get_untracked().url.read_untracked())
             {
                 url.query_pairs_mut().clear();
                 for item in value {

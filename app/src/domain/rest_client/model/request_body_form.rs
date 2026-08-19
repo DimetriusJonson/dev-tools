@@ -1,6 +1,5 @@
 use std::{
-    collections::HashMap,
-    slice::{Iter, IterMut},
+    collections::HashMap, error::Error, slice::{Iter, IterMut},
 };
 
 use leptos::{
@@ -77,11 +76,16 @@ impl RequestBodyFormValues {
         result
     }
 
-    pub fn to_urlencoded_string(&self) -> Result<String, serde_urlencoded::ser::Error> {
+    #[cfg(feature = "ssr")]
+    pub fn to_urlencoded_string(&self) -> Result<String, Box<dyn Error>> {
+        Err("ssr not supported!".into())
+    }
+
+    #[cfg(not(feature = "ssr"))]
+    pub fn to_urlencoded_string(&self) -> Result<String, Box<dyn Error>> {
         let map: HashMap<String, String> =
             self.iter().map(|fv| (fv.name.get_untracked(), fv.value.get_untracked())).collect();
-
-        serde_urlencoded::to_string(&map)
+        serde_urlencoded::to_string(&map).map_err(|e|e.to_string().into())
     }
 
     pub fn to_json(&self) -> String {

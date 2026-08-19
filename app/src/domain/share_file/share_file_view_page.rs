@@ -1,4 +1,3 @@
-use gloo_net::http::Request;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_router::hooks::use_query_map;
@@ -17,7 +16,8 @@ pub fn ShareFileViewPage() -> impl IntoView {
         move || params.read().get("local").unwrap_or_default().parse::<bool>().unwrap_or_default();
 
     let share_info_resource = LocalResource::new(move || async move {
-        match Request::get("/share_file_info_ex")
+        #[cfg(not(feature = "ssr"))]
+        match gloo_net::http::Request::get("/share_file_info_ex")
             .query([("id", params.read().get("id").unwrap_or_default()), ("local", params.read().get("local").unwrap_or("false".to_owned()))])
             .build()
         {
@@ -39,12 +39,15 @@ pub fn ShareFileViewPage() -> impl IntoView {
                 None
             }
         }
+
+        #[cfg(feature = "ssr")]
+        None
     });
 
     view! {
         <div class="flex flex-col items-center justify-center gap-4 py-12 text-xs md:text-base dark:text-white">
             {move || share_info_resource.get().map(|info| {
-                info.map(|info|{
+                info.map(|info: ShareFileInfoDto|{
                     let file_name = info.file_name.to_owned();
                     let download_file_name = info.file_name.to_owned();
                     let download_srv_name = if local() {"share_local_file_download"} else {"share_file_download"};
