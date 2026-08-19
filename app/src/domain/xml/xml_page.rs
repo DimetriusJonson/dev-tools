@@ -1,3 +1,4 @@
+use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
@@ -67,8 +68,7 @@ pub fn XmlPage() -> impl IntoView {
             if let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
-                #[cfg(not(feature = "ssr"))]
-                match gloo_net::http::Request::post("/format_xml")
+                match Request::post("/format_xml")
                     .header("content-type", "application/xml")
                     .body(&file)
                 {

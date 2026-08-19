@@ -1,3 +1,4 @@
+use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 use web_sys::{File, HtmlInputElement};
@@ -48,8 +49,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     };
 
     let custom_servers_resource = LocalResource::new(async move || {
-        #[cfg(not(feature = "ssr"))]
-        match gloo_net::http::Request::get("/share_file_custom_servers").build() {
+        match Request::get("/share_file_custom_servers").build() {
             Ok(request) => match request.send().await {
                 Ok(response) => match response.json::<Vec<ShareFileServerDto>>().await {
                     Ok(servers) => {
@@ -66,9 +66,6 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             },
             Err(_err) => Vec::new(),
         }
-
-        #[cfg(feature = "ssr")]
-        Vec::new()
     });
 
     view! {
@@ -192,8 +189,7 @@ fn upload_file(
         };
 
         if file.size() <= max_file_size as f64 {
-            #[cfg(not(feature = "ssr"))]
-            match gloo_net::http::Request::post(service_name)
+            match Request::post(service_name)
                 .header("content-type", &file.type_())
                 .query([("file_name", file.name())])
                 .body(&file)

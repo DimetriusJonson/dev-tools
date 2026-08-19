@@ -9,13 +9,11 @@ use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
+use crate::domain::rest_client::util::html_utils::make_absolute_links;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_response::RestClientResponse;
 use leptos::html::Div;
 use leptos::prelude::*;
-
-#[cfg(not(feature = "ssr"))]
-use crate::domain::rest_client::util::html_utils::make_absolute_links;
 
 #[component]
 pub fn RequestResultPanel(
@@ -101,7 +99,6 @@ pub fn RequestResultPanel(
 
     let get_preview_src_doc = move || {
         let mut html = response_body.get_untracked();
-        #[cfg(not(feature = "ssr"))]
         make_absolute_links(&mut html, &rc_context.request.read_untracked().url);
         html
     };

@@ -1,10 +1,10 @@
-#[cfg(not(feature = "ssr"))]
+use url::Url;
+
 pub fn make_absolute_links(html: &mut String, base_url: &str) {
     make_absolute_links_by_attr(html, base_url, "href");
     make_absolute_links_by_attr(html, base_url, "src");
 }
 
-#[cfg(not(feature = "ssr"))]
 fn make_absolute_links_by_attr(html: &mut String, base_url: &str, attr_name: &str) {
     let attr_part = format!("{}=\"", attr_name);
 
@@ -35,7 +35,6 @@ fn is_absolute_url(url_str: &str) -> bool {
     url_str.starts_with("http://") || url_str.starts_with("https://") || url_str.starts_with("//")
 }
 
-#[cfg(not(feature = "ssr"))]
 fn resolve_absolute(relative: &str, base: &str) -> Option<String> {
     let relative = relative.trim();
     let base = base.trim();
@@ -62,7 +61,7 @@ fn resolve_absolute(relative: &str, base: &str) -> Option<String> {
         return Some(relative.to_string());
     }
 
-    let base_url = url::Url::parse(base).ok()?;
+    let base_url = Url::parse(base).ok()?;
     let resolved = base_url.join(relative).ok()?;
     Some(resolved.to_string())
 }

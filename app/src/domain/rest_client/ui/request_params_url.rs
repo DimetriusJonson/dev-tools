@@ -7,6 +7,7 @@ use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
+use gloo_net::http::Request;
 use leptos::html::Button;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -87,8 +88,7 @@ pub fn RequestParamsUrl(
                 body,
             };
 
-            #[cfg(not(feature = "ssr"))]
-            match gloo_net::http::Request::post("/rest_client_send").json(&rc_request) {
+            match Request::post("/rest_client_send").json(&rc_request) {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.json::<RestClientResponse>().await {
                         Ok(resp) => {

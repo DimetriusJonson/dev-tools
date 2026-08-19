@@ -10,13 +10,10 @@ use crate::domain::rest_client::util::request_store::{
 };
 use crate::i18n::*;
 use crate::{
-    common::{ui_utils::paste_from_clipboard},
+    common::{curl_parser::parser::parse_curl_cmd, ui_utils::paste_from_clipboard},
     components::layout::message_banner::{Messages, show_error},
     domain::rest_client::model::request_info::RequestInfo,
 };
-
-#[cfg(not(feature = "ssr"))]
-use crate::common::curl_parser::parser::parse_curl_cmd;
 
 #[component]
 pub fn RestClientCUrlButton(
@@ -30,7 +27,6 @@ pub fn RestClientCUrlButton(
         let rc_context = use_context::<RestClientContext>().unwrap();
         spawn_local(async move {
             if let Some(curl_cmd) = paste_from_clipboard().await {
-                #[cfg(not(feature = "ssr"))]
                 match parse_curl_cmd(&curl_cmd) {
                     Ok(parsed_request) => {
                         let request = RequestInfo::new(
