@@ -8,6 +8,7 @@
 4) Share file
 5) Supporting large files
 6) Rest client
+
 Web version: https://dev-tools-rust.vercel.app
 
 There are also standalone applications for Windows, Linux, and Mac OS.
