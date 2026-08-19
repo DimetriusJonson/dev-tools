@@ -9,7 +9,7 @@ use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
-use crate::components::ui::code_inner::CodeInner;
+use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
@@ -36,6 +36,7 @@ pub fn XmlPage() -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
+    let code_lang = RwSignal::new("xml".to_owned());
     let (xml, set_xml) = signal(get_local_store_value("src_xml", "".to_owned()));
     let (dst_xml, set_dst_xml) = signal("".to_owned());
     let (ident, set_ident) = signal(get_local_store_value("xml_ident", "4".to_owned()));
@@ -223,7 +224,13 @@ pub fn XmlPage() -> impl IntoView {
             <div node_ref=right_panel_ref class="overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
-                        <CodeInner code={dst_xml.get()} lang=move || "xml".to_string()/>
+                        <CodeMirrorEditor
+                            element_id="xml-code-editor".to_owned()
+                            lang=code_lang.read_only()
+                            value=dst_xml
+                            set_value=set_dst_xml
+                            read_only=true
+                        />
                     </div>
                     }
                 }

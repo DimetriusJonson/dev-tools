@@ -32,7 +32,8 @@ pub fn CodeMirrorEditor(
 
                     set_editor_view.set(init_code_editor(
                         &element_id.to_owned(),
-                        &value.get_untracked(),
+                        &value.read_untracked(),
+                        &lang.read_untracked(),
                         read_only,
                         on_change.as_ref(),
                     ));

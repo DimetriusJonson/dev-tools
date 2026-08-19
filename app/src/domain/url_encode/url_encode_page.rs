@@ -5,7 +5,6 @@ use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
-use crate::components::ui::code_inner::CodeInner;
 use crate::components::ui::text_area::TextArea;
 use crate::i18n::use_i18n;
 use crate::i18n::*;
@@ -93,7 +92,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
             <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[38dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
-                        <CodeInner code={dst_url.get()} lang=move || "html".to_string()/>
+                        <pre class="whitespace-pre-wrap wrap-break-word break-all"><code>{dst_url}</code></pre>
                     </div>
                     }
                 }

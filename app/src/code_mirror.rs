@@ -6,7 +6,7 @@ mod csr {
     #[wasm_bindgen]
     extern "C" {
         #[wasm_bindgen(js_name = initCodeEditor)]
-        pub fn init_code_editor(id: &str, initial_val: &str, read_only: bool, callback: &JsValue) -> JsValue;
+        pub fn init_code_editor(id: &str, initial_val: &str, _lang: &str, read_only: bool, callback: &JsValue) -> JsValue;
 
         #[wasm_bindgen(js_name = setCodeEditorValue)]
         pub fn set_code_editor_value(editor_view: &JsValue, new_value: &str);
@@ -20,7 +20,7 @@ mod csr {
 mod ssr {
     use web_sys::wasm_bindgen::JsValue;
 
-    pub fn init_code_editor(_id: &str, _initial_val: &str, _read_only: bool, _callback: &JsValue) -> JsValue { JsValue::null() }
+    pub fn init_code_editor(_id: &str, _initial_val: &str, _lang: &str, _read_only: bool, _callback: &JsValue) -> JsValue { JsValue::null() }
     pub fn set_code_editor_value(_editor_view: &JsValue, _new_value: &str) {}
 
     pub fn code_editor_change_lang(_editor_view: &JsValue, _lang: &str, _read_only: bool, _callback: &JsValue) {}

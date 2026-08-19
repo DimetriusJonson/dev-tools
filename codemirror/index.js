@@ -1,5 +1,5 @@
 import { EditorView, basicSetup } from "codemirror";
-import { EditorState, StateEffect, Compartment  } from "@codemirror/state"
+import { EditorState, StateEffect, Compartment } from "@codemirror/state"
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import { xml } from "@codemirror/lang-xml";
@@ -12,24 +12,42 @@ import { vsCodeLight } from '@fsegurai/codemirror-theme-vscode-light'
 const themeCompartment = new Compartment();
 
 function getSystemTheme() {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? vsCodeDark : vsCodeLight;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? vsCodeDark : vsCodeLight;
 }
 
-window.initCodeEditor = (elementId, initialValue, readOnly, onDocChange) => {
+function getExtensionsByLang(lang) {
+    let extensions = [];
+    if (lang == "xml") {
+        extensions.push(markdown(), xml(), xmlLinter);
+    } else if (lang == "json") {
+        extensions.push(json(), linter(jsonParseLinter()));
+    } else if (lang == "html") {
+        extensions.push(html());
+    }
+
+    return extensions;
+}
+
+window.initCodeEditor = (elementId, initialValue, lang, readOnly, onDocChange) => {
     const parentElement = document.getElementById(elementId);
+
+    let extensions = [
+        basicSetup,
+        EditorView.lineWrapping,
+        EditorState.readOnly.of(readOnly),
+        themeCompartment.of(getSystemTheme()),
+        EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+                onDocChange(update.state.doc.toString());
+            }
+        })
+    ];
+
+    extensions.push(getExtensionsByLang(lang));
 
     let startState = EditorState.create({
         doc: initialValue,
-        extensions: [
-            basicSetup,
-            EditorView.lineWrapping,
-            EditorState.readOnly.of(readOnly),
-            EditorView.updateListener.of((update) => {
-                if (update.docChanged) {
-                    onDocChange(update.state.doc.toString());
-                }
-            })
-        ]
+        extensions: extensions
     })
 
     return new EditorView({
@@ -90,13 +108,7 @@ window.codeEditorChangeLang = (editorView, lang, readOnly, onDocChange) => {
             })
         ];
 
-        if (lang == "xml") {
-            extensions.push(markdown(), xml(), xmlLinter);
-        } else if (lang == "json") {
-            extensions.push(json(), linter(jsonParseLinter()));
-        } else if (lang == "html") {
-            extensions.push(html());
-        }
+        extensions.push(getExtensionsByLang(lang));
 
         editorView.dispatch({
             effects: StateEffect.reconfigure.of(extensions)

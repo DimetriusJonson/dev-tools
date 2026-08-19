@@ -10,7 +10,7 @@ use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
-use crate::components::ui::code_inner::CodeInner;
+use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
@@ -38,6 +38,7 @@ pub fn JsonPage() -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
 
+    let code_lang = RwSignal::new("json".to_owned());
     let (json, set_json) = signal(get_local_store_value("src_json", "".to_owned()));
     let (dst_json, set_dst_json) = signal("".to_owned());
     let (ident, set_ident) = signal(get_local_store_value("json_ident", "4".to_owned()));
@@ -231,7 +232,13 @@ pub fn JsonPage() -> impl IntoView {
             <div node_ref=right_panel_ref class="min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[35dvh] md:h-[90dvh]">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
-                        <CodeInner code={dst_json.get()} lang=move || "json".to_string()/>
+                        <CodeMirrorEditor
+                            element_id="json-code-editor".to_owned()
+                            lang=code_lang.read_only()
+                            value=dst_json
+                            set_value=set_dst_json
+                            read_only=true
+                        />
                     </div>
                     }
                 }

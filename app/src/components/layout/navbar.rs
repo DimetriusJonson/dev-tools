@@ -22,10 +22,10 @@ pub fn Navbar() -> impl IntoView {
                     <div class="flex flex-row flex-wrap gap-2 md:gap-4">
                         <ButtonLink label=move || "XML".to_owned() href="/".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/") />
-                        <ButtonLink label=move || "URL".to_owned() href="/urlEncoder".to_owned() button_width=ButtonLinkWidth::Auto
-                            color=move || nav_button_color(location.pathname.get(), "/urlEncoder") />
                         <ButtonLink label=move || "JSON".to_owned() href="/json".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/json") />
+                        <ButtonLink label=move || "URL".to_owned() href="/urlEncoder".to_owned() button_width=ButtonLinkWidth::Auto
+                            color=move || nav_button_color(location.pathname.get(), "/urlEncoder") />
                         <ButtonLink label=move || t_display!(i18n, compare_btn_label).to_string() href="/compare_text".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/compare_text") />
                         <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto
