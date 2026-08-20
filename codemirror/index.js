@@ -8,11 +8,35 @@ import { markdown } from '@codemirror/lang-markdown'
 import { html } from "@codemirror/lang-html";
 import { vsCodeDark } from '@fsegurai/codemirror-theme-vscode-dark'
 import { vsCodeLight } from '@fsegurai/codemirror-theme-vscode-light'
+import { search } from '@codemirror/search'
 
 const themeCompartment = new Compartment();
 
 function getSystemTheme() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? vsCodeDark : vsCodeLight;
+}
+
+function getBaseExtensions(onDocChange, readOnly) {
+    let extensions = [
+        basicSetup,
+        EditorView.lineWrapping,
+        EditorState.readOnly.of(readOnly),
+        themeCompartment.of(getSystemTheme()),
+        search({
+            scrollToMatch: (range) => 
+                { 
+                    console.log("range:" + JSON.stringify(range));
+                    return EditorView.scrollIntoView(range, { y: "start" });
+                }
+        }),
+        EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+                onDocChange(update.state.doc.toString());
+            }
+        })
+    ];
+
+    return extensions;
 }
 
 function getExtensionsByLang(lang) {
@@ -31,18 +55,7 @@ function getExtensionsByLang(lang) {
 window.initCodeEditor = (elementId, initialValue, lang, readOnly, onDocChange) => {
     const parentElement = document.getElementById(elementId);
 
-    let extensions = [
-        basicSetup,
-        EditorView.lineWrapping,
-        EditorState.readOnly.of(readOnly),
-        themeCompartment.of(getSystemTheme()),
-        EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-                onDocChange(update.state.doc.toString());
-            }
-        })
-    ];
-
+    let extensions = getBaseExtensions(onDocChange, readOnly);
     extensions.push(getExtensionsByLang(lang));
 
     let startState = EditorState.create({
@@ -96,18 +109,7 @@ const xmlLinter = linter((view) => {
 
 window.codeEditorChangeLang = (editorView, lang, readOnly, onDocChange) => {
     if (editorView) {
-        let extensions = [
-            basicSetup,
-            EditorView.lineWrapping,
-            EditorState.readOnly.of(readOnly),
-            themeCompartment.of(getSystemTheme()),
-            EditorView.updateListener.of((update) => {
-                if (update.docChanged) {
-                    onDocChange(update.state.doc.toString());
-                }
-            })
-        ];
-
+        let extensions = getBaseExtensions(onDocChange, readOnly);
         extensions.push(getExtensionsByLang(lang));
 
         editorView.dispatch({
