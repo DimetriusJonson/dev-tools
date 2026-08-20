@@ -23,11 +23,7 @@ function getBaseExtensions(onDocChange, readOnly) {
         EditorState.readOnly.of(readOnly),
         themeCompartment.of(getSystemTheme()),
         search({
-            scrollToMatch: (range) => 
-                { 
-                    console.log("range:" + JSON.stringify(range));
-                    return EditorView.scrollIntoView(range, { y: "start" });
-                }
+            scrollToMatch: (range) => EditorView.scrollIntoView(range, { y: "start" })
         }),
         EditorView.updateListener.of((update) => {
             if (update.docChanged) {
