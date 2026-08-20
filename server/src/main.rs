@@ -6,19 +6,23 @@ use std::{
 use app::common::constants::REMOTE_SERVER_HOST;
 use clap::Parser;
 use dotenvy::dotenv;
-use tracing::info;
 use server::server_starter::start_axum_server;
+use tracing::info;
 
 #[derive(Parser)]
 #[command(name = "Dev Tools Server")]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "WebDev Useful Tools Server", long_about = None)]
 struct Cli {
-    #[arg(long, value_name = "ADDR", help="Server socket addr. Example \"--ADDR 0.0.0.0:3005\"")]
+    #[arg(long, value_name = "ADDR", help = "Server socket addr. Example \"--ADDR 0.0.0.0:3005\"")]
     addr: Option<String>,
-    #[arg(long, value_name = "DATABASE_URL", help="Postgres connection url")]
+    #[arg(long, value_name = "DATABASE_URL", help = "Postgres connection url")]
     database_url: Option<String>,
-    #[arg(long, value_name = "REMOTE_SERVER_URL", help="Remote server address. Only for the \"Share File\" feature and if the server is running without a database. Defaults to \"https://dev-tools-rust.vercel.app\".")]
+    #[arg(
+        long,
+        value_name = "REMOTE_SERVER_URL",
+        help = "Remote server address. Only for the \"Share File\" feature and if the server is running without a database. Defaults to \"https://dev-tools-rust.vercel.app\"."
+    )]
     remote_server_url: Option<String>,
 }
 
@@ -52,6 +56,11 @@ async fn main() -> anyhow::Result<()> {
         None => None,
     };
 
+    let rc_max_content_length = match std::env::var("RC_MAX_CONTENT_LENGTH") {
+        Ok(s) => s.parse()?,
+        Err(_) => u64::MAX,
+    };
+
     info!("start_axum_server...");
-    start_axum_server(addr_v4, Some(remote_server_url), database_url).await
+    start_axum_server(addr_v4, Some(remote_server_url), database_url, rc_max_content_length).await
 }

@@ -30,13 +30,14 @@ pub async fn build_app_router(
     pool: Option<Pool<Postgres>>,
     remote_server_url: Option<String>,
     dump_port: u16,
+    rc_max_content_length: u64,
 ) -> anyhow::Result<Router> {
     let leptos_options = conf_file.leptos_options;
 
     let routes = generate_route_list(App);
 
     let app_state =
-        AppState { leptos_options: leptos_options.clone(), pool: pool.clone(), remote_server_url, dump_port };
+        AppState { leptos_options: leptos_options.clone(), pool: pool.clone(), remote_server_url, dump_port, max_content_length: rc_max_content_length };
 
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))

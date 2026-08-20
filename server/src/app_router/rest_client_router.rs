@@ -33,6 +33,13 @@ pub async fn rest_client_send_handler(
                     Some((key_str, val_str))
                 })
                 .collect();
+
+            if let Some(content_length) =  response.content_length() {
+                if content_length > app_state.max_content_length {
+                    return Err(AppError::system_error("The response size is too large."));
+                }
+            }
+
             let body = response.text().await.map_err(AppError::system_error)?;
 
             Ok(Json(RestClientResponse {

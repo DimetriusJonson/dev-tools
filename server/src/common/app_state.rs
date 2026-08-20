@@ -8,4 +8,5 @@ pub struct AppState {
     pub pool: Option<Pool<Postgres>>,
     pub remote_server_url: Option<String>,
     pub dump_port: u16,
+    pub max_content_length: u64,
 }
