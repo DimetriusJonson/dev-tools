@@ -5,7 +5,7 @@ use crate::{
     common::{app_error::AppError, app_state::AppState},
 };
 use app::model::restclient::{
-    rest_client_request::RestClientRequest, rest_client_response::RestClientResponse,
+    rest_client_request::RestClientRequest, rest_client_response::{RestClientResponse, RestClientResponseBody},
 };
 use axum::{Json, extract::State};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};

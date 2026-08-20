@@ -40,7 +40,9 @@ pub fn Navbar() -> impl IntoView {
                                 let host_name = host_name_resource.await;
                                 view! {
                                     <Show when=move || { host_name.contains("dev-tools") }>
-                                        <ButtonLink label=move || t_string!(i18n, standalone_download_label).to_owned() 
+                                        <ButtonLink 
+                                            class_name="hidden md:block".to_owned()
+                                            label=move || t_string!(i18n, standalone_download_label).to_owned() 
                                             title=Box::new(move || t_string!(i18n, standalone_download_title).to_owned())
                                             href="https://github.com/DimetriusJonson/dev-tools/releases".to_owned() attr:target="_blank"
                                             button_width=ButtonLinkWidth::Auto
