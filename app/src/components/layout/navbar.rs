@@ -12,7 +12,7 @@ pub fn Navbar() -> impl IntoView {
     let i18n = use_i18n();
     let location = use_location();
 
-    let rest_client_route = OnceResource::new(get_rest_client_route());
+    let host_name_resource = OnceResource::new(get_host_name());
 
     view! {
         <nav class="w-full relative bg-primary">
@@ -30,22 +30,24 @@ pub fn Navbar() -> impl IntoView {
                             color=move || nav_button_color(location.pathname.get(), "/compare_text") />
                         <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file".to_owned() button_width=ButtonLinkWidth::Auto
                             color=move || nav_button_color(location.pathname.get(), "/share_file") />
+                    </div>
 
-
+                    <div class="flex gap-4">
                         <Transition>
                             {move || Suspend::new(async move {
-                                let rest_client_route = rest_client_route.await;
+                                let host_name = host_name_resource.await;
                                 view! {
-                                    <ButtonLink label=move || t_display!(i18n, rest_client_btn_label).to_string() href=rest_client_route.to_owned()
-                                        button_width=ButtonLinkWidth::Auto
-                                        color=move || nav_button_color(location.pathname.get(), &rest_client_route) />
+                                    <Show when=move || { !host_name.contains("dev-tools") }>
+                                        <ButtonLink label=move || t_string!(i18n, standalone_download_label).to_owned() 
+                                            title=Box::new(move || t_string!(i18n, standalone_download_title).to_owned())
+                                            href="https://github.com/DimetriusJonson/dev-tools/releases".to_owned() attr:target="_blank"
+                                            button_width=ButtonLinkWidth::Auto
+                                            color=move || ButtonLinkColor::Brown />
+                                    </Show>
                                 }
                             })}
                         </Transition>                            
 
-                    </div>
-
-                    <div class="flex">
                         <LanguageSelector />
                     </div>
 
@@ -59,12 +61,4 @@ pub fn Navbar() -> impl IntoView {
 
 fn nav_button_color(curr_path: String, button_path: &str) -> ButtonLinkColor {
     if curr_path.as_str() == button_path { ButtonLinkColor::Black } else { ButtonLinkColor::Brown }
-}
-
-async fn get_rest_client_route() -> String {
-    if get_host_name().await.contains("dev-tools") {
-        "/rest_client_info".to_owned()
-    } else {
-        "/rest_client".to_owned()
-    }
 }
