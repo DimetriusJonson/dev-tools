@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub enum RestClientResponseBody {
-    None, Text(String), Attachment(String)
+    #[default]
+    None,
+    Text(String),
+    Attachment(String),
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct RestClientResponse {
     pub status_code: u16,
     pub headers: Vec<(String, String)>,

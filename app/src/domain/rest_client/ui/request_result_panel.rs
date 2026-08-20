@@ -8,6 +8,7 @@ use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWid
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
+use crate::domain::rest_client::model::request_result::{RequestResult};
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_utils::make_absolute_links;
 use crate::i18n::*;
@@ -39,11 +40,7 @@ pub fn RequestResultPanel(
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_request_raw_ref = NodeRef::<Div>::new();
 
-    let (response_status_code, set_response_status_code) = signal("".to_owned());
-    let (response_body, set_response_body) = signal("".to_owned());
-    let (response_lang, set_response_lang) = signal("".to_owned());
-    let (response_headers, set_response_headers) = signal(Vec::new());
-    let (request_raw, set_request_raw) = signal("".to_owned());
+    let request_result = RequestResult::new();
     let (show_preview_html, set_show_preview_html) = signal(false);
 
     Effect::watch(
@@ -57,8 +54,8 @@ pub fn RequestResultPanel(
                         show_error(error.to_owned(), messages);
                     };
 
-                    set_response_status_code.set(response.status_code.to_string());
-                    set_response_lang.set(
+                    request_result.status_code.set(response.status_code.to_string());
+                    request_result.lang.set(
                         response
                             .headers
                             .iter()
@@ -69,40 +66,40 @@ pub fn RequestResultPanel(
                     );
 
                     match &response.body {
-                        RestClientResponseBody::None => set_response_body.set("".to_owned()),
+                        RestClientResponseBody::None => request_result.body.set("".to_owned()),
                         RestClientResponseBody::Text(body) => {
-                            set_response_body.set(body.to_owned())
+                            request_result.body.set(body.to_owned())
                         }
                         RestClientResponseBody::Attachment(file_name) => {
-                            set_response_body.set(format!("Attachment: {}", file_name))
+                            request_result.body.set(format!("Attachment: {}", file_name))
                         }
                     }
 
-                    set_response_headers.set(response.headers.clone());
-                    set_request_raw.set(response.request_raw.to_owned());
+                    request_result.headers.set(response.headers.clone());
+                    request_result.request_raw.set(response.request_raw.to_owned());
                 }
                 None => {
-                    set_response_status_code.set("".to_owned());
-                    set_response_body.set("".to_owned());
-                    set_response_lang.set("".to_owned());
-                    set_response_headers.set(Vec::new());
-                    set_request_raw.set("".to_owned());
+                    request_result.status_code.set("".to_owned());
+                    request_result.body.set("".to_owned());
+                    request_result.lang.set("".to_owned());
+                    request_result.headers.set(Vec::new());
+                    request_result.request_raw.set("".to_owned());
                 }
             };
 
             if params.read_untracked().formatting.get_untracked() {
-                if response_lang.get_untracked() == "xml" {
-                    let formatted_xml = match format_xml(&response_body.read_untracked(), 4) {
+                if request_result.lang.get_untracked() == "xml" {
+                    let formatted_xml = match format_xml(&request_result.body.read_untracked(), 4) {
                         Ok(formatted_text) => formatted_text,
                         Err(err) => {
                             show_error(format!("Cant format xml: {}", err), messages);
                             return;
                         }
                     };
-                    set_response_body.set(formatted_xml);
-                } else if response_lang.get_untracked() == "json" {
-                    let formatted_json = format_json(&response_body.read_untracked(), 4);
-                    set_response_body.set(formatted_json);
+                    request_result.body.set(formatted_xml);
+                } else if request_result.lang.get_untracked() == "json" {
+                    let formatted_json = format_json(&request_result.body.read_untracked(), 4);
+                    request_result.body.set(formatted_json);
                 }
             }
         },
@@ -110,7 +107,7 @@ pub fn RequestResultPanel(
     );
 
     let get_preview_src_doc = move || {
-        let mut html = response_body.get();
+        let mut html = request_result.body.get();
         make_absolute_links(&mut html, &rc_context.request.read_untracked().url);
         html
     };
@@ -128,7 +125,7 @@ pub fn RequestResultPanel(
             <div class="flex-1 overflow-y-auto flex">
                 <div node_ref=tab_body_ref class="flex flex-col gap-4 w-full">
                     <div class="flex justify-between">
-                        <span class="dark:text-white">{move || format!("Status: {}", response_status_code.get())}</span>
+                        <span class="dark:text-white">{move || format!("Status: {}", request_result.status_code.get())}</span>
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"
@@ -149,7 +146,7 @@ pub fn RequestResultPanel(
                                 label=move || "👁".to_owned()
                                 title=move || t_string!(i18n, rest_client_response_html_preview).to_owned()
                                 class_name="w-6 dark:text-white text-black".to_owned()
-                                class:hidden=move || response_lang.read().as_str() != "html"
+                                class:hidden=move || request_result.lang.read().as_str() != "html"
                                 class:border=show_preview_html
                                 button_width=ButtonWidth::Custom
                                 button_height=ButtonHeight::Custom
@@ -174,12 +171,12 @@ pub fn RequestResultPanel(
                         </div>
                     </div>
                     <div class="flex-1 relative flex overflow-auto w-full min-w-0"
-                        class:hidden=move || response_body.read().is_empty() >
+                        class:hidden=move || request_result.body.read().is_empty() >
                         <CodeMirrorEditor
                             element_id="response-body-code-editor".to_owned()
-                            lang=response_lang
-                            value=response_body
-                            set_value=set_response_body
+                            lang=request_result.lang.read_only()
+                            value=request_result.body.read_only()
+                            set_value=request_result.body.write_only()
                             read_only=false
                             hidden=Box::new(move || show_preview_html.get())
                         />
@@ -196,11 +193,11 @@ pub fn RequestResultPanel(
 
                 <div node_ref=tab_headers_ref class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full">
                     <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
-                        <div class="h-0 flex flex-col gap-4 px-4 dark:text-white whitespace-pre-wrap wrap-break-word break-all" inner_html={move || render_headers(response_headers.get())}/>
+                        <div class="h-0 flex flex-col gap-4 px-4 dark:text-white whitespace-pre-wrap wrap-break-word break-all" inner_html={move || render_headers(request_result.headers.get())}/>
                     </div>
                 </div>
 
-                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_raw params />
+                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_result.request_raw.read_only() params />
             </div>
         </div>
     }

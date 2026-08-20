@@ -1,8 +1,5 @@
 use crate::{
-    components::layout::{
-        drag_splitter::DragSplitter,
-        message_banner::{Messages, show_error},
-    },
+    components::layout::drag_splitter::DragSplitter,
     domain::rest_client::{
         model::{
             request_params::RequestParams, request_response::RequestResponse,
@@ -20,7 +17,6 @@ use crate::domain::rest_client::ui::{
 
 #[component]
 pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
-    let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
 
@@ -30,7 +26,7 @@ pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
     let params_ref = NodeRef::<Div>::new();
     let result_ref = NodeRef::<Div>::new();
 
-    create_request_watcher(params, rc_context.clone(), response.clone(), messages);
+    create_request_watcher(params, rc_context.clone(), response.clone());
     create_params_watchers(params, rc_context.clone());
 
     view! {
@@ -69,7 +65,6 @@ fn create_request_watcher(
     params: ReadSignal<RequestParams>,
     rc_context: RestClientContext,
     response: RequestResponse,
-    messages: Messages,
 ) {
     Effect::watch(
         move || rc_context.request.get(),
@@ -85,10 +80,7 @@ fn create_request_watcher(
                 params.read_untracked().read_from_store(rc_context.clone(), value.id);
 
                 if params.read_untracked().save_response.get_untracked() {
-                    if let Err(err) = response.read_from_store(rc_context.clone(), value.id) {
-                        response.clear();
-                        show_error(err.to_string(), messages);
-                    }
+                    response.read_from_store(rc_context.clone(), value.id);
                 } else {
                     response.clear();
                 }

@@ -52,7 +52,7 @@ impl RequestResponse {
     pub fn read_from_store(&self,
         rc_context: RestClientContext,
         request_id: i32,
-    ) -> Result<(), serde_json::Error> {
+    ) {
         let data_str = get_stored_value(
             RequestFieldKind::SaveResponseData,
             "".to_owned(),
@@ -60,11 +60,9 @@ impl RequestResponse {
             request_id,
         );
         if !data_str.is_empty() {
-            let r = Some(serde_json::from_str::<RestClientResponse>(&data_str)?);
+            let r = Some(serde_json::from_str::<RestClientResponse>(&data_str).unwrap_or_default());
             self.inner.set(r);
         }
-
-        Ok(())
     }
 
     pub fn clear(&self) {
