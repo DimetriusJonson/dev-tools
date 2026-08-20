@@ -4,20 +4,25 @@ pub fn make_absolute_links(html: &mut String, base_url: &str) {
     make_absolute_links_by_attr(html, base_url, "href");
     make_absolute_links_by_attr(html, base_url, "src");
 
+
+    make_absolute_links_by_attr_part(html, base_url, "background:url(", ")");
     make_absolute_links_by_attr_part(html, base_url, "background:url('", "'");
     make_absolute_links_by_attr_part(html, base_url, "background:url(\"", "\"");
+    make_absolute_links_by_attr_part(html, base_url, "background: url(", ")");
     make_absolute_links_by_attr_part(html, base_url, "background: url('", "'");
     make_absolute_links_by_attr_part(html, base_url, "background: url(\"", "\"");
+
+    make_absolute_links_by_attr_part(html, base_url, "background-image:url(", ")");
     make_absolute_links_by_attr_part(html, base_url, "background-image:url('", "'");
     make_absolute_links_by_attr_part(html, base_url, "background-image:url(\"", "\"");
+    make_absolute_links_by_attr_part(html, base_url, "background-image: url(", ")");
     make_absolute_links_by_attr_part(html, base_url, "background-image: url('", "'");
     make_absolute_links_by_attr_part(html, base_url, "background-image: url(\"", "\"");
 }
 
 fn make_absolute_links_by_attr(html: &mut String, base_url: &str, attr_name: &str) {
-    let attr_part = format!("{}=\"", attr_name);
-
-    make_absolute_links_by_attr_part(html, base_url, &attr_part, "\"");
+    make_absolute_links_by_attr_part(html, base_url, &format!("{}=\"", attr_name), "\"");
+    make_absolute_links_by_attr_part(html, base_url, &format!("{}='", attr_name), "'");
 }
 
 fn make_absolute_links_by_attr_part(
