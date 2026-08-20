@@ -98,7 +98,7 @@ pub fn RequestResultPanel(
     );
 
     let get_preview_src_doc = move || {
-        let mut html = response_body.get_untracked();
+        let mut html = response_body.get();
         make_absolute_links(&mut html, &rc_context.request.read_untracked().url);
         html
     };
@@ -168,13 +168,13 @@ pub fn RequestResultPanel(
                             lang=response_lang
                             value=response_body
                             set_value=set_response_body
-                            read_only=true
+                            read_only=false
                             hidden=Box::new(move || show_preview_html.get())
                         />
 
                         <Show when=move || { show_preview_html.get() }>
                             <iframe class="w-full"
-                                srcdoc=get_preview_src_doc sandbox="allow-scripts"
+                                srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups"
                             >
                             </iframe>
                         </Show>
