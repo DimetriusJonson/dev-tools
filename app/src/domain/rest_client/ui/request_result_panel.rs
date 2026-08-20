@@ -174,7 +174,7 @@ pub fn RequestResultPanel(
 
                         <Show when=move || { show_preview_html.get() }>
                             <iframe class="w-full"
-                                srcdoc=get_preview_src_doc sandbox
+                                srcdoc=get_preview_src_doc sandbox="allow-scripts"
                             >
                             </iframe>
                         </Show>
