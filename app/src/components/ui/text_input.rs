@@ -1,4 +1,5 @@
 use leptos::{html::Input, prelude::*};
+use web_sys::wasm_bindgen::JsCast;
 
 #[component]
 pub fn TextInput(
@@ -80,11 +81,14 @@ pub fn TextInput(
                         on_change.try_run(val);
                     }
                 }
-                on:keydown=move |ev: leptos::ev::KeyboardEvent| {
-                    if ev.key() == "Escape" && let Some(on_cancel_change) = on_cancel_change {
-                        on_cancel_change.try_run(());
-                    } else if ev.key() == "Enter" && let Some(on_press_enter) = on_press_enter {
-                        on_press_enter.try_run(());
+                on:keydown=move |ev| {
+                    if let Ok(key_event) = ev.dyn_into::<web_sys::KeyboardEvent>() {
+                        let key = key_event.key();
+                        if key == "Escape" && let Some(on_cancel_change) = on_cancel_change {
+                            on_cancel_change.try_run(());
+                        } else if key == "Enter" && let Some(on_press_enter) = on_press_enter {
+                            on_press_enter.try_run(());
+                        }
                     }
                 }
             />
