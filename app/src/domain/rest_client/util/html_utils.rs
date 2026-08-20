@@ -3,22 +3,44 @@ use url::Url;
 pub fn make_absolute_links(html: &mut String, base_url: &str) {
     make_absolute_links_by_attr(html, base_url, "href");
     make_absolute_links_by_attr(html, base_url, "src");
+
+    make_absolute_links_by_attr_part(html, base_url, "background:url('", "'");
+    make_absolute_links_by_attr_part(html, base_url, "background:url(\"", "\"");
+    make_absolute_links_by_attr_part(html, base_url, "background: url('", "'");
+    make_absolute_links_by_attr_part(html, base_url, "background: url(\"", "\"");
+    make_absolute_links_by_attr_part(html, base_url, "background-image:url('", "'");
+    make_absolute_links_by_attr_part(html, base_url, "background-image:url(\"", "\"");
+    make_absolute_links_by_attr_part(html, base_url, "background-image: url('", "'");
+    make_absolute_links_by_attr_part(html, base_url, "background-image: url(\"", "\"");
 }
 
 fn make_absolute_links_by_attr(html: &mut String, base_url: &str, attr_name: &str) {
     let attr_part = format!("{}=\"", attr_name);
 
-    let indexes = html.match_indices(&attr_part).map(|p| p.0).collect::<Vec<usize>>();
+    make_absolute_links_by_attr_part(html, base_url, &attr_part, "\"");
+}
+
+fn make_absolute_links_by_attr_part(
+    html: &mut String,
+    base_url: &str,
+    start_attr_part: &str,
+    end_attr_part: &str,
+) {
+    let indexes = html.match_indices(&start_attr_part).map(|p| p.0).collect::<Vec<usize>>();
     let mut offset = 0;
     for i in indexes {
-        let start_index = i + attr_part.len() + offset;
-        if let Some(end_index) = find_from_byte_index(html, start_index, "\"")
+        let start_index = i + start_attr_part.len() + offset;
+        if let Some(end_index) = find_from_byte_index(html, start_index, end_attr_part)
             && let Some(href) = html.get(start_index..end_index)
-            && !is_absolute_url(href)
-            && let Some(absolute) = resolve_absolute(href, base_url)
         {
-            html.replace_range(start_index..end_index, &absolute);
-            offset += absolute.len() - (end_index - start_index)
+            if !is_absolute_url(href)
+                && let Some(absolute) = resolve_absolute(href, base_url)
+            {
+                html.replace_range(start_index..end_index, &absolute);
+                offset += absolute.len() - (end_index - start_index)
+            } else {
+
+            }
         }
     }
 }
@@ -63,5 +85,6 @@ fn resolve_absolute(relative: &str, base: &str) -> Option<String> {
 
     let base_url = Url::parse(base).ok()?;
     let resolved = base_url.join(relative).ok()?;
+
     Some(resolved.to_string())
 }
