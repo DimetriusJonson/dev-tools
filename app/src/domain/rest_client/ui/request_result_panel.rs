@@ -11,7 +11,7 @@ use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_utils::make_absolute_links;
 use crate::i18n::*;
-use crate::model::restclient::rest_client_response::RestClientResponse;
+use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use leptos::html::Div;
 use leptos::prelude::*;
 
@@ -27,7 +27,9 @@ pub fn RequestResultPanel(
 
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
-            copy_to_clipboard(&response.body);
+            if let RestClientResponseBody::Text(body) = response.body {
+                copy_to_clipboard(&body);
+            }
             show_info(t!(i18n, rest_client_response_copied_to_clipboard_msg).to_html(), messages);
         }
     };
@@ -65,7 +67,17 @@ pub fn RequestResultPanel(
                             .next()
                             .unwrap_or("html".to_owned()),
                     );
-                    set_response_body.set(response.body.to_owned());
+
+                    match &response.body {
+                        RestClientResponseBody::None => set_response_body.set("".to_owned()),
+                        RestClientResponseBody::Text(body) => {
+                            set_response_body.set(body.to_owned())
+                        }
+                        RestClientResponseBody::Attachment(file_name) => {
+                            set_response_body.set(format!("Attachment: {}", file_name))
+                        }
+                    }
+
                     set_response_headers.set(response.headers.clone());
                     set_request_raw.set(response.request_raw.to_owned());
                 }

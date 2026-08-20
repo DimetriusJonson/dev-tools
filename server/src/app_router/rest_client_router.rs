@@ -8,7 +8,7 @@ use app::model::restclient::{
     rest_client_request::RestClientRequest, rest_client_response::RestClientResponse,
 };
 use axum::{Json, extract::State};
-use http::{HeaderMap, HeaderName, HeaderValue, Method};
+use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 
 pub async fn rest_client_send_handler(
@@ -34,10 +34,30 @@ pub async fn rest_client_send_handler(
                 })
                 .collect();
 
-            if let Some(content_length) =  response.content_length() {
+            if let Some(content_length) = response.content_length() {
                 if content_length > app_state.max_content_length {
                     return Err(AppError::system_error("The response size is too large."));
                 }
+            }
+
+            let content_disposition = response
+                .headers()
+                .get(header::CONTENT_DISPOSITION)
+                .and_then(|val| val.to_str().ok());
+
+            if let Some(filename) = content_disposition.and_then(|cd| {
+                cd.split(';')
+                    .find(|part| part.trim().starts_with("filename"))
+                    .and_then(|part| part.split('=').nth(1))
+                    .map(|name| name.trim().trim_matches('"').to_string())
+            }) {
+                return Ok(Json(RestClientResponse {
+                    status_code,
+                    headers,
+                    body: RestClientResponseBody::Attachment(filename),
+                    request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+                    error: None,
+                }));
             }
 
             let body = response.text().await.map_err(AppError::system_error)?;
@@ -45,7 +65,7 @@ pub async fn rest_client_send_handler(
             Ok(Json(RestClientResponse {
                 status_code,
                 headers,
-                body,
+                body: RestClientResponseBody::Text(body),
                 request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                 error: None,
             }))
@@ -53,7 +73,7 @@ pub async fn rest_client_send_handler(
         Err(err) => Ok(Json(RestClientResponse {
             status_code: 0,
             headers: Vec::new(),
-            body: "".to_owned(),
+            body: RestClientResponseBody::None,
             request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
             error: Some(err.to_string()),
         })),
