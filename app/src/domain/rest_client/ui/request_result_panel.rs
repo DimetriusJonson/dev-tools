@@ -66,12 +66,17 @@ pub fn RequestResultPanel(
                     );
 
                     match &response.body {
-                        RestClientResponseBody::None => request_result.body.set("".to_owned()),
+                        RestClientResponseBody::None => {
+                            request_result.body.set("".to_owned());
+                            request_result.attachment.set(("".to_owned(), "".to_owned()));
+                        },
                         RestClientResponseBody::Text(body) => {
-                            request_result.body.set(body.to_owned())
+                            request_result.body.set(body.to_owned());
+                            request_result.attachment.set(("".to_owned(), "".to_owned()));
                         }
                         RestClientResponseBody::Attachment(file_name) => {
-                            request_result.body.set(format!("Attachment: {}", file_name))
+                            request_result.attachment.set((params.read_untracked().url.get_untracked(), file_name.to_owned()));
+                            request_result.body.set("".to_owned());
                         }
                     }
 
@@ -171,22 +176,29 @@ pub fn RequestResultPanel(
                         </div>
                     </div>
                     <div class="flex-1 relative flex overflow-auto w-full min-w-0"
-                        class:hidden=move || request_result.body.read().is_empty() >
+                        class:hidden=move || request_result.body.read().is_empty() && request_result.attachment.read().0.is_empty() >
                         <CodeMirrorEditor
                             element_id="response-body-code-editor".to_owned()
                             lang=request_result.lang.read_only()
                             value=request_result.body.read_only()
                             set_value=request_result.body.write_only()
                             read_only=false
-                            hidden=Box::new(move || show_preview_html.get())
+                            hidden=Box::new(move || show_preview_html.get() || !request_result.attachment.read().0.is_empty())
                         />
 
-                        <Show when=move || { show_preview_html.get() }>
+                        // Html preview
+                        <Show when=move || { show_preview_html.get() && request_result.attachment.read().0.is_empty() }>
                             <iframe class="w-full"
                                 srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups"
                             >
                             </iframe>
                         </Show>
+
+                        // Attachment
+                        <div class="flex-1 flex items-center justify-center"
+                            class:hidden=move || request_result.attachment.read().0.is_empty()>
+                            {move || request_result.attachment.get().1}
+                        </div>
 
                     </div>
                 </div>
