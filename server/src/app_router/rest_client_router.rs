@@ -142,11 +142,19 @@ fn build_to_dump_receiver_url(
 }
 
 pub async fn rest_client_attachment_download_handler(
+    State(app_state): State<AppState>,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Response<Body>, AppError> {
     build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
 
     let response = build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+
+    if let Some(content_length) = response.content_length() {
+        if content_length > app_state.max_content_length {
+            return Err(AppError::system_error("The response size is too large."));
+        }
+    }
+
     let response_status = response.status();
 
     let body = Body::from_stream(response.bytes_stream());
