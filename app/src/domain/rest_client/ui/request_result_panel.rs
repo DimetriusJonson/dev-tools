@@ -243,12 +243,12 @@ pub fn RequestResultPanel(
                             lang=request_result.lang.read_only()
                             value=request_result.body.read_only()
                             set_value=request_result.body.write_only()
-                            read_only=false
-                            hidden=Box::new(move || request_result.body.read().is_empty() || show_preview_html.get() || !request_result.attachment.read().0.is_empty() || !request_result.image.read().is_empty())
+                            read_only=true
+                            hidden=Box::new(move || request_result.body.read().is_empty() || show_preview_html.get())
                         />
 
                         // Html preview
-                        <Show when=move || { show_preview_html.get() && request_result.attachment.read().0.is_empty() && request_result.image.read().is_empty() }>
+                        <Show when=move || { show_preview_html.get() }>
                             <iframe class="w-full"
                                 srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups"
                             >
@@ -256,24 +256,25 @@ pub fn RequestResultPanel(
                         </Show>
 
                         // Attachment
-                        <div class="flex-1 flex items-center justify-center"
-                            class:hidden=move || request_result.attachment.read().0.is_empty()>
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || t_display!(i18n, rc_attachment_download_btn_label, file_name = request_result.attachment.get().1).to_string()
-                                button_width=ButtonWidth::Auto
-                                loading=move || in_progress.get() == InProgressType::AttachmentDownload
-                                on_click=on_attachment_download_click
-                                disabled=move || in_progress.get().is_active()
-                            />
-
-                        </div>
+                        <Show when=move || { !request_result.attachment.read().0.is_empty() }>
+                            <div class="flex-1 flex items-center justify-center">
+                                <Button
+                                    title=move || "".to_owned()
+                                    label=move || t_display!(i18n, rc_attachment_download_btn_label, file_name = request_result.attachment.get().1).to_string()
+                                    button_width=ButtonWidth::Auto
+                                    loading=move || in_progress.get() == InProgressType::AttachmentDownload
+                                    on_click=on_attachment_download_click
+                                    disabled=move || in_progress.get().is_active()
+                                />
+                            </div>
+                        </Show>
 
                         // Image
-                        <div class="flex-1 flex items-center justify-center gap-4"
-                            class:hidden=move || request_result.image.read().is_empty()>
-                            <image class="flex-1" src = move || request_result.image.get() />
-                        </div>
+                        <Show when=move || { !request_result.image.read().is_empty() }>
+                            <div class="flex-1 flex items-center justify-center gap-4">
+                                <img class="flex-1" src = move || request_result.image.get() alt="Image" />
+                            </div>
+                        </Show>
 
                     </div>
                 </div>
