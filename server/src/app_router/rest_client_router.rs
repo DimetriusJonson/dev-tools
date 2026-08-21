@@ -46,6 +46,22 @@ pub async fn rest_client_send_handler(
                 }
             }
 
+            if response
+                .headers()
+                .get(reqwest::header::CONTENT_TYPE)
+                .and_then(|val| val.to_str().ok())
+                .map(|content_type| content_type.starts_with("image/"))
+                .unwrap_or(false)
+            {
+                return Ok(Json(RestClientResponse {
+                    status_code,
+                    headers,
+                    body: RestClientResponseBody::Image,
+                    request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+                    error: None,
+                }));
+            }
+
             let content_disposition = response
                 .headers()
                 .get(header::CONTENT_DISPOSITION)

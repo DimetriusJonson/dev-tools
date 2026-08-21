@@ -6,6 +6,7 @@ pub enum RestClientResponseBody {
     None,
     Text(String),
     Attachment(String),
+    Image,
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]

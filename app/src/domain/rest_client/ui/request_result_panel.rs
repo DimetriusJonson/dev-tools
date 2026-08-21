@@ -64,6 +64,13 @@ pub fn RequestResultPanel(
         move |value, _prev, _| {
             set_tab_selected.set(0);
             set_show_preview_html.set(false);
+            request_result.status_code.set("".to_owned());
+            request_result.body.set("".to_owned());
+            request_result.lang.set("".to_owned());
+            request_result.headers.set(Vec::new());
+            request_result.request_raw.set("".to_owned());
+            request_result.attachment.set(("".to_owned(), "".to_owned()));
+            request_result.image.set("".to_owned());
             match value {
                 Some(response) => {
                     if let Some(error) = &response.error {
@@ -71,44 +78,36 @@ pub fn RequestResultPanel(
                     };
 
                     request_result.status_code.set(response.status_code.to_string());
-                    request_result.lang.set(
-                        response
-                            .headers
-                            .iter()
-                            .filter(|v| v.0.to_lowercase() == "content-type")
-                            .filter_map(|v| get_media_type_code(&v.1))
-                            .next()
-                            .unwrap_or("html".to_owned()),
-                    );
-
                     match &response.body {
-                        RestClientResponseBody::None => {
-                            request_result.body.set("".to_owned());
-                            request_result.attachment.set(("".to_owned(), "".to_owned()));
-                        }
                         RestClientResponseBody::Text(body) => {
-                            request_result.body.set(body.to_owned());
-                            request_result.attachment.set(("".to_owned(), "".to_owned()));
+                            request_result.lang.set(
+                                response
+                                    .headers
+                                    .iter()
+                                    .filter(|v| v.0.to_lowercase() == "content-type")
+                                    .filter_map(|v| get_media_type_code(&v.1))
+                                    .next()
+                                    .unwrap_or("html".to_owned()),
+                            );
+
+                            request_result.body.set(body.to_owned())
                         }
                         RestClientResponseBody::Attachment(file_name) => {
                             request_result.attachment.set((
                                 params.read_untracked().url.get_untracked(),
                                 file_name.to_owned(),
                             ));
-                            request_result.body.set("".to_owned());
                         }
+                        RestClientResponseBody::Image => {
+                            request_result.image.set(params.read_untracked().url.get_untracked())
+                        }
+                        RestClientResponseBody::None => (),
                     }
 
                     request_result.headers.set(response.headers.clone());
                     request_result.request_raw.set(response.request_raw.to_owned());
                 }
-                None => {
-                    request_result.status_code.set("".to_owned());
-                    request_result.body.set("".to_owned());
-                    request_result.lang.set("".to_owned());
-                    request_result.headers.set(Vec::new());
-                    request_result.request_raw.set("".to_owned());
-                }
+                None => (),
             };
 
             if params.read_untracked().formatting.get_untracked() {
@@ -238,19 +237,18 @@ pub fn RequestResultPanel(
 
                         </div>
                     </div>
-                    <div class="flex-1 relative flex overflow-auto w-full min-w-0"
-                        class:hidden=move || request_result.body.read().is_empty() && request_result.attachment.read().0.is_empty() >
+                    <div class="flex-1 relative flex overflow-auto w-full min-w-0">
                         <CodeMirrorEditor
                             element_id="response-body-code-editor".to_owned()
                             lang=request_result.lang.read_only()
                             value=request_result.body.read_only()
                             set_value=request_result.body.write_only()
                             read_only=false
-                            hidden=Box::new(move || show_preview_html.get() || !request_result.attachment.read().0.is_empty())
+                            hidden=Box::new(move || request_result.body.read().is_empty() || show_preview_html.get() || !request_result.attachment.read().0.is_empty() || !request_result.image.read().is_empty())
                         />
 
                         // Html preview
-                        <Show when=move || { show_preview_html.get() && request_result.attachment.read().0.is_empty() }>
+                        <Show when=move || { show_preview_html.get() && request_result.attachment.read().0.is_empty() && request_result.image.read().is_empty() }>
                             <iframe class="w-full"
                                 srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups"
                             >
@@ -269,6 +267,12 @@ pub fn RequestResultPanel(
                                 disabled=move || in_progress.get().is_active()
                             />
 
+                        </div>
+
+                        // Image
+                        <div class="flex-1 flex items-center justify-center gap-4"
+                            class:hidden=move || request_result.image.read().is_empty()>
+                            <image class="flex-1" src = move || request_result.image.get() />
                         </div>
 
                     </div>
