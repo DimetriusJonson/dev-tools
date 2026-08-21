@@ -67,7 +67,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
         .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
-                .level(LevelFilter::Debug)
+                .level(LevelFilter::Info)
                 .targets([
                     Target::new(TargetKind::Stdout),
                     Target::new(TargetKind::LogDir {
