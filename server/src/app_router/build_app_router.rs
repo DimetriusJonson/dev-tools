@@ -13,7 +13,7 @@ use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
-use crate::app_router::rest_client_router::rest_client_send_handler;
+use crate::app_router::rest_client_router::{rest_client_attachment_download_handler, rest_client_send_handler};
 use crate::app_router::share_file_router::{
     share_file_custom_servers_handler, share_file_download, share_file_info,
     share_file_info_ex_handler, share_file_upload,
@@ -41,6 +41,7 @@ pub async fn build_app_router(
 
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))
+        .route("/rest_client_attachment_download", post(rest_client_attachment_download_handler))
         .route("/format_xml", post(format_xml_handler))
         .route("/format_json", post(format_json_handler))
         .route("/share_local_file_upload", post(share_local_file_upload))

@@ -104,7 +104,8 @@
     "rest_client_response_html_preview": "Предпросмотр",
 
     "standalone_download_label": "Скачать приложение",
-    "standalone_download_title": "Перейти на страницу скачивания автономного приложения для Windows/Linux/MacOS."
+    "standalone_download_title": "Перейти на страницу скачивания автономного приложения для Windows/Linux/MacOS.",
 
+    "rc_attachment_download_btn_label": "Скачать {{ file_name }}"
 
 }

@@ -1,20 +1,35 @@
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::copy_to_clipboard;
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::domain::rest_client::model::request_params::RequestParams;
+use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
-use crate::domain::rest_client::model::request_result::{RequestResult};
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_utils::make_absolute_links;
 use crate::i18n::*;
+use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
+use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::prelude::*;
+use leptos::task::spawn_local;
+
+#[derive(PartialEq, Copy, Clone)]
+enum InProgressType {
+    None,
+    AttachmentDownload,
+}
+
+impl InProgressType {
+    fn is_active(self) -> bool {
+        self != InProgressType::None
+    }
+}
 
 #[component]
 pub fn RequestResultPanel(
@@ -35,6 +50,7 @@ pub fn RequestResultPanel(
         }
     };
 
+    let (in_progress, set_in_progress) = signal(InProgressType::None);
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
     let tab_headers_ref = NodeRef::<Div>::new();
@@ -69,13 +85,16 @@ pub fn RequestResultPanel(
                         RestClientResponseBody::None => {
                             request_result.body.set("".to_owned());
                             request_result.attachment.set(("".to_owned(), "".to_owned()));
-                        },
+                        }
                         RestClientResponseBody::Text(body) => {
                             request_result.body.set(body.to_owned());
                             request_result.attachment.set(("".to_owned(), "".to_owned()));
                         }
                         RestClientResponseBody::Attachment(file_name) => {
-                            request_result.attachment.set((params.read_untracked().url.get_untracked(), file_name.to_owned()));
+                            request_result.attachment.set((
+                                params.read_untracked().url.get_untracked(),
+                                file_name.to_owned(),
+                            ));
                             request_result.body.set("".to_owned());
                         }
                     }
@@ -115,6 +134,50 @@ pub fn RequestResultPanel(
         let mut html = request_result.body.get();
         make_absolute_links(&mut html, &rc_context.request.read_untracked().url);
         html
+    };
+
+    let on_attachment_download_click = move |_| {
+        spawn_local(async move {
+            let mut headers = Vec::new();
+            for header in params.read_untracked().headers.get_untracked().iter() {
+                headers.push((header.name.get_untracked(), header.value.get_untracked()));
+            }
+
+            let attachment = request_result.attachment.get_untracked();
+            let rc_request = RestClientRequest {
+                method: "GET".to_owned(),
+                url: attachment.0,
+                headers,
+                body: "".to_owned(),
+            };
+
+            set_in_progress.set(InProgressType::AttachmentDownload);
+            match Request::post("/rest_client_attachment_download").json(&rc_request) {
+                Ok(request) => match request.send().await {
+                    Ok(response) => match response.binary().await {
+                        Ok(bytes) => {
+                            let file_name = attachment.1;
+                            match save_file_to_disk(bytes.to_vec(), &file_name, "application/json")
+                            {
+                                Ok(_) => show_info(
+                                    t_display!(i18n, file_saved_file_msg, file_name).to_string(),
+                                    messages,
+                                ),
+                                Err(err) => show_error(
+                                    err.as_string().unwrap_or("Error".to_owned()),
+                                    messages,
+                                ),
+                            }
+                        }
+                        Err(err) => show_error(err.to_string(), messages),
+                    },
+                    Err(err) => show_error(err.to_string(), messages),
+                },
+                Err(err) => show_error(err.to_string(), messages),
+            }
+
+            set_in_progress.set(InProgressType::None);
+        });
     };
 
     view! {
@@ -197,7 +260,15 @@ pub fn RequestResultPanel(
                         // Attachment
                         <div class="flex-1 flex items-center justify-center"
                             class:hidden=move || request_result.attachment.read().0.is_empty()>
-                            {move || request_result.attachment.get().1}
+                            <Button
+                                title=move || "".to_owned()
+                                label=move || t_display!(i18n, rc_attachment_download_btn_label, file_name = request_result.attachment.get().1).to_string()
+                                button_width=ButtonWidth::Auto
+                                loading=move || in_progress.get() == InProgressType::AttachmentDownload
+                                on_click=on_attachment_download_click
+                                disabled=move || in_progress.get().is_active()
+                            />
+
                         </div>
 
                     </div>

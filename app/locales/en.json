@@ -105,7 +105,9 @@
     "rest_client_response_html_preview": "Preview",
 
     "standalone_download_label": "Download app",
-    "standalone_download_title": "Go to the download page for the standalone application for Windows/Linux/MacOS."
+    "standalone_download_title": "Go to the download page for the standalone application for Windows/Linux/MacOS.",
+
+    "rc_attachment_download_btn_label": "Download {{ file_name }}"
 
 
 }

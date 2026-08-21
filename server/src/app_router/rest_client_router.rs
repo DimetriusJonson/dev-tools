@@ -5,9 +5,15 @@ use crate::{
     common::{app_error::AppError, app_state::AppState},
 };
 use app::model::restclient::{
-    rest_client_request::RestClientRequest, rest_client_response::{RestClientResponse, RestClientResponseBody},
+    rest_client_request::RestClientRequest,
+    rest_client_response::{RestClientResponse, RestClientResponseBody},
 };
-use axum::{Json, extract::State};
+use axum::{
+    Json,
+    body::Body,
+    extract::State,
+    response::{IntoResponse, Response},
+};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 
@@ -133,4 +139,16 @@ fn build_to_dump_receiver_url(
     url.set_port(Some(dump_port)).unwrap();
 
     Ok((url.to_string(), old_host))
+}
+
+pub async fn rest_client_attachment_download_handler(
+    Json(request): Json<RestClientRequest>,
+) -> Result<Response<Body>, AppError> {
+    build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+
+    let response = build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+    let response_status = response.status();
+
+    let body = Body::from_stream(response.bytes_stream());
+    Ok((response_status, body).into_response())
 }
