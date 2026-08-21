@@ -10,6 +10,7 @@ use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+use tauri_plugin_updater::UpdaterExt;
 
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -66,7 +67,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
         .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
-                .level(LevelFilter::Info)
+                .level(LevelFilter::Debug)
                 .targets([
                     Target::new(TargetKind::Stdout),
                     Target::new(TargetKind::LogDir {
@@ -83,7 +84,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 let _ = window.set_focus();
             }
         }))
-        .plugin(tauri_plugin_updater::Builder::new().build()) 
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(move |app| {
             let port = port.unwrap_or(3005);
             let remote_server_url =
@@ -172,6 +173,20 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     _ => {}
                 })
                 .build(app)?;
+
+            // Spawn background task to check for update automatically on start
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Ok(Some(update)) = app_handle.updater().unwrap().check().await {
+                    // Trigger download and installation immediately
+                    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                        error!("Failed to download update: {}", e);
+                    } else {
+                        error!("Update downloaded successfully. Restarting...");
+                        app_handle.restart();
+                    }
+                }
+            });
 
             Ok(())
         })

@@ -5131,7 +5131,7 @@ dependencies = [
 
 [[package]]
 name = "webdev_useful_tools"
-version = "0.5.4"
+version = "0.5.5"
 dependencies = [
  "clap",
  "log",
