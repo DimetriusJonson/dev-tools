@@ -1,19 +1,23 @@
-
-use axum::body::Body as AxumBody;
 use app::app::{App, shell};
 use axum::Router;
+use axum::body::Body as AxumBody;
 use axum::extract::{DefaultBodyLimit, Request, State};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use leptos::config::ConfFile;
 use leptos::context::provide_context;
-use leptos_axum::{LeptosRoutes, generate_route_list, handle_server_fns_with_context, render_app_to_stream_with_context};
+use leptos_axum::{
+    LeptosRoutes, generate_route_list, handle_server_fns_with_context,
+    render_app_to_stream_with_context,
+};
 use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
-use crate::app_router::rest_client_router::{rest_client_attachment_download_handler, rest_client_send_handler};
+use crate::app_router::rest_client_router::{
+    rest_client_attachment_download_handler, rest_client_send_handler,
+};
 use crate::app_router::share_file_router::{
     share_file_custom_servers_handler, share_file_download, share_file_info,
     share_file_info_ex_handler, share_file_upload,
@@ -36,13 +40,17 @@ pub async fn build_app_router(
 
     let routes = generate_route_list(App);
 
-    let app_state =
-        AppState { leptos_options: leptos_options.clone(), pool: pool.clone(), remote_server_url, dump_port, max_content_length: rc_max_content_length };
+    let app_state = AppState {
+        leptos_options: leptos_options.clone(),
+        pool: pool.clone(),
+        remote_server_url,
+        dump_port,
+        max_content_length: rc_max_content_length,
+    };
 
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))
         .route("/rest_client_attachment_download", post(rest_client_attachment_download_handler))
-//        .route("/rest_client_get_url", get(rest_client_get_url_handler))
         .route("/format_xml", post(format_xml_handler))
         .route("/format_json", post(format_json_handler))
         .route("/share_local_file_upload", post(share_local_file_upload))
