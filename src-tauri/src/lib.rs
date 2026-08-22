@@ -42,7 +42,6 @@ fn start_backend_server(
             .env("LEPTOS_SITE_ADDR", addr.to_owned())
             .env("LEPTOS_SITE_ROOT", site_dir)
             .env("DEVTOOLS_REMOTE_SERVER_URL", remote_server_url)
-            .env("REST_CLIENT_PROXY_ALLOW_IPS", "127.0.0.1")
             .arg(format!("--addr={}", addr))
             .spawn()
         {

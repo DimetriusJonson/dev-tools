@@ -53,6 +53,7 @@ pub fn RequestResultPanel(
 
     let (in_progress, set_in_progress) = signal(InProgressType::None);
     let (proxy_allow, set_proxy_allow) = signal(false);
+    let (preview_sandbox, set_preview_sandbox) = signal("");
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
     let tab_headers_ref = NodeRef::<Div>::new();
@@ -63,7 +64,13 @@ pub fn RequestResultPanel(
 
     Effect::new(move || {
         spawn_local(async move {
-            set_proxy_allow.set(is_proxy_allow().await);
+            let allow = is_proxy_allow().await;
+            set_proxy_allow.set(allow);
+            if allow {
+                set_preview_sandbox.set("allow-scripts allow-popups allow-same-origin");
+            } else {
+                set_preview_sandbox.set("allow-scripts allow-popups");
+            }
         });
     });
 
@@ -262,7 +269,7 @@ pub fn RequestResultPanel(
                         // Html preview
                         <Show when=move || { show_preview_html.get() }>
                             <iframe class="w-full"
-                                srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups allow-same-origin"
+                                srcdoc=get_preview_src_doc sandbox=preview_sandbox
                                 on:load=move |_| {
                                     remove_cookie("rc_base_url", "/");
                                 }
