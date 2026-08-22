@@ -25,15 +25,15 @@ build-windows:
     cp target/release/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
     TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri build
 
-tauri-dev:
+tauri-dev-full:
     LEPTOS_TAILWIND_VERSION="v4.3.3" cargo leptos build
     mkdir -p src-tauri/binaries
     cp target/debug/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
     TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri dev
 
+tauri-dev:
+    TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri dev
+
 github-release version:
     git tag -f {{version}} -m release {{version}}
     git push origin -f {{version}}   
-
-
-
