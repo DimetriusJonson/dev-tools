@@ -42,6 +42,7 @@ pub async fn build_app_router(
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))
         .route("/rest_client_attachment_download", post(rest_client_attachment_download_handler))
+//        .route("/rest_client_get_url", get(rest_client_get_url_handler))
         .route("/format_xml", post(format_xml_handler))
         .route("/format_json", post(format_json_handler))
         .route("/share_local_file_upload", post(share_local_file_upload))

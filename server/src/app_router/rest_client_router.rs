@@ -11,7 +11,7 @@ use app::model::restclient::{
 use axum::{
     Json,
     body::Body,
-    extract::State,
+    extract::{State},
     response::{IntoResponse, Response},
 };
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
@@ -176,3 +176,36 @@ pub async fn rest_client_attachment_download_handler(
     let body = Body::from_stream(response.bytes_stream());
     Ok((response_status, body).into_response())
 }
+
+/*
+pub async fn rest_client_get_url_handler(
+    State(app_state): State<AppState>,
+    RawQuery(query): RawQuery,
+) -> Result<Response<Body>, AppError> {
+    let query_str = query.unwrap_or_default();
+    let params = parse_query_params(&query_str);
+
+    let request = RestClientRequest {
+        method: "GET".to_owned(),
+        url: params.get("url").unwrap_or(&"").to_string(),
+        headers: Vec::new(),
+        body: "".to_owned(),
+    };
+
+    build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+
+    let response = build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+
+    if let Some(content_length) = response.content_length() {
+        if content_length > app_state.max_content_length {
+            return Err(AppError::system_error("The response size is too large."));
+        }
+    }
+
+    let response_status = response.status();
+    let headers = response.headers().clone();
+    let body = Body::from_stream(response.bytes_stream());
+
+    Ok((response_status, headers, body).into_response())
+}
+ */

@@ -11,11 +11,10 @@ use uuid::Uuid;
 
 use crate::{
     components::layout::property_editor::KeyValueTableItem,
-    domain::rest_client::util::{
-        request_store::{RequestFieldKind, get_stored_value},
-        rest_client_utils::KeyValueVector,
-    },
+    domain::rest_client::util::request_store::{RequestFieldKind, get_stored_value},
 };
+
+type KeyValueVector = Vec<(String, String)>;
 
 #[derive(Clone, Debug)]
 pub struct RequestBodyFormValue {

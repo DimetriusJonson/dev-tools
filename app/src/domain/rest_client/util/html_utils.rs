@@ -1,33 +1,8 @@
 use url::Url;
 
-pub fn make_absolute_links(html: &mut String, base_url: &str) {
-    make_absolute_links_by_attr(html, base_url, "href");
-    make_absolute_links_by_attr(html, base_url, "src");
+pub fn add_head_base_tag(html: &mut String, url: &str) {
+    let base_url = build_base_url(url);
 
-
-    make_absolute_links_by_attr_part(html, base_url, "background:url(", ")");
-    make_absolute_links_by_attr_part(html, base_url, "background:url('", "'");
-    make_absolute_links_by_attr_part(html, base_url, "background:url(\"", "\"");
-    make_absolute_links_by_attr_part(html, base_url, "background: url(", ")");
-    make_absolute_links_by_attr_part(html, base_url, "background: url('", "'");
-    make_absolute_links_by_attr_part(html, base_url, "background: url(\"", "\"");
-
-    make_absolute_links_by_attr_part(html, base_url, "background-image:url(", ")");
-    make_absolute_links_by_attr_part(html, base_url, "background-image:url('", "'");
-    make_absolute_links_by_attr_part(html, base_url, "background-image:url(\"", "\"");
-    make_absolute_links_by_attr_part(html, base_url, "background-image: url(", ")");
-    make_absolute_links_by_attr_part(html, base_url, "background-image: url('", "'");
-    make_absolute_links_by_attr_part(html, base_url, "background-image: url(\"", "\"");
-}
-
-fn make_absolute_links_by_attr(html: &mut String, base_url: &str, attr_name: &str) {
-    make_absolute_links_by_attr_part(html, base_url, &format!("{}=\"", attr_name), "\"");
-    make_absolute_links_by_attr_part(html, base_url, &format!("{}='", attr_name), "'");
-
-    add_head_base(html, base_url);
-}
-
-fn add_head_base(html: &mut String, base_url: &str) {
     let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
     let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
     if head_start_indexes.len() == 1 && head_end_indexes.len() == 1 {
@@ -35,12 +10,56 @@ fn add_head_base(html: &mut String, base_url: &str) {
         let mut base_index = head_inner.match_indices("<base ");
         if base_index.next().is_none() {
             // insert <base>
-            if let Some(base_url) = Url::parse(base_url).ok() && let Some(host) = base_url.host_str() {
+            if let Some(base_url) = Url::parse(&base_url).ok()
+                && let Some(host) = base_url.host_str()
+            {
                 let base_url = format!("{}://{}", base_url.scheme(), host);
-                html.insert_str(head_start_indexes[0] + 6, &format!("<base href=\"{}\" target=\"_blank\">", base_url));
+                html.insert_str(
+                    head_start_indexes[0] + 6,
+                    &format!("<base href=\"{}\" target=\"_blank\">", base_url),
+                );
             }
         }
     }
+}
+
+fn build_base_url(url: &str) -> String {
+    if let Ok(mut base_url) = Url::parse(url) {
+        base_url.set_query(None);
+        base_url.to_string()
+    } else {
+        url.to_owned()
+    }
+}
+
+/*
+pub fn make_absolute_links(html: &mut String, url: &str) {
+    let base_url = build_base_url(url);
+
+    make_absolute_links_by_attr(html, &base_url, "href");
+    make_absolute_links_by_attr(html, &base_url, "src");
+
+
+    make_absolute_links_by_attr_part(html, &base_url, "background:url(", ")");
+    make_absolute_links_by_attr_part(html, &base_url, "background:url('", "'");
+    make_absolute_links_by_attr_part(html, &base_url, "background:url(\"", "\"");
+    make_absolute_links_by_attr_part(html, &base_url, "background: url(", ")");
+    make_absolute_links_by_attr_part(html, &base_url, "background: url('", "'");
+    make_absolute_links_by_attr_part(html, &base_url, "background: url(\"", "\"");
+
+    make_absolute_links_by_attr_part(html, &base_url, "background-image:url(", ")");
+    make_absolute_links_by_attr_part(html, &base_url, "background-image:url('", "'");
+    make_absolute_links_by_attr_part(html, &base_url, "background-image:url(\"", "\"");
+    make_absolute_links_by_attr_part(html, &base_url, "background-image: url(", ")");
+    make_absolute_links_by_attr_part(html, &base_url, "background-image: url('", "'");
+    make_absolute_links_by_attr_part(html, &base_url, "background-image: url(\"", "\"");
+
+    add_head_base_tag(html, &base_url);
+}
+
+fn make_absolute_links_by_attr(html: &mut String, base_url: &str, attr_name: &str) {
+    make_absolute_links_by_attr_part(html, base_url, &format!("{}=\"", attr_name), "\"");
+    make_absolute_links_by_attr_part(html, base_url, &format!("{}='", attr_name), "'");
 }
 
 fn make_absolute_links_by_attr_part(
@@ -111,3 +130,4 @@ fn resolve_absolute(relative: &str, base: &str) -> Option<String> {
 
     Some(resolved.to_string())
 }
+ */
