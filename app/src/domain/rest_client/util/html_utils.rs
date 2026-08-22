@@ -29,7 +29,7 @@ pub fn add_base_url_script(html: &mut String, base_url: &str) {
             // insert <base>
             html.insert_str(
                 head_start_indexes[0] + 6,
-                &format!("<script>document.cookie = 'rc_base_url={}';</script>", base_url),
+                &format!("<script>document.cookie = 'rc_base_url={}; max-age=30; path=/';</script>", base_url),
             );
         }
     }
