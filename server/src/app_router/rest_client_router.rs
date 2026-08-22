@@ -258,14 +258,24 @@ pub async fn rest_client_proxy_allow(
 }
 
 fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) -> bool {
-    let ip = req
+    let forwarded_for = req
         .headers()
-        .get(http::header::FORWARDED)
+        .get("x-forwarded-for")
         .and_then(|val| val.to_str().ok())
         .map(|value| value.to_string())
-        .unwrap_or(client_addr.ip().to_string());
+        .unwrap_or("".to_owned());
+    let real_ip = client_addr.ip().to_string();
 
-    debug!("IP:{} allowed={:?}", ip, app_state.rest_client_proxy_allow_ips);
+    debug!(
+        "forwarded_for={forwarded_for} real_ip={real_ip} allowed={:?}",
+        app_state.rest_client_proxy_allow_ips
+    );
 
-    app_state.rest_client_proxy_allow_ips.contains(&ip)
+    let client_ip = if !forwarded_for.is_empty() {
+        forwarded_for.split(',').nth(0).unwrap_or(&real_ip).trim().to_owned()
+    } else {
+        real_ip
+    };
+
+    app_state.rest_client_proxy_allow_ips.contains(&client_ip)
 }
