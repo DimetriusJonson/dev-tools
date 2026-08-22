@@ -199,7 +199,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
                         error!("Failed to download update: {}", e);
                     } else {
-                        error!("Update downloaded successfully. Restarting...");
+                        info!("Update downloaded successfully. Restarting...");
                         app_handle.restart();
                     }
                 }
