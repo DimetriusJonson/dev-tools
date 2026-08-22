@@ -10,12 +10,16 @@ use app::model::restclient::{
 };
 use axum::{
     Json,
-    body::Body,
-    extract::State,
+    body::{self, Body},
+    extract::{Request, State},
+    middleware::Next,
     response::{IntoResponse, Response},
 };
+use axum_extra::extract::CookieJar;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
+use serde_json::json;
+use tracing::info;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -175,4 +179,88 @@ pub async fn rest_client_attachment_download_handler(
 
     let body = Body::from_stream(response.bytes_stream());
     Ok((response_status, body).into_response())
+}
+
+pub async fn rest_client_remote_proxy(
+    State(app_state): State<AppState>,
+    req: Request,
+    next: Next,
+) -> Result<Response<Body>, AppError> {
+    //info!("rest_client_remote_proxy");
+    let cookie_jar = CookieJar::from_headers(req.headers());
+    if let Some(cookie) = cookie_jar.get("rc_base_url") {
+        let rc_base_url = cookie.value();
+
+        let uri = req.uri();
+        let query_str = match uri.query() {
+            Some(query) => format!("?{}", query),
+            None => "".to_owned(),
+        };
+
+        let rc_base_url = rc_base_url.trim_end_matches("/");
+        let mut path = uri.path().trim_end_matches("/");
+        if path.starts_with('/') {
+            path = &path[1..];
+        }
+
+        let url = format!("{}/{}{}", rc_base_url, path, query_str);
+        let method = req.method().clone();
+
+        info!("proxy url: {} {}", method, url);
+
+        let headers = req.headers().clone();
+
+        let body_stream = req.into_body();
+        let body_bytes =
+            body::to_bytes(body_stream, usize::MAX).await.map_err(AppError::system_error)?;
+
+        let mut request = Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .map_err(AppError::system_error)?
+            .request(method, url)
+            .body(reqwest::Body::from(body_bytes));
+
+        for hv in headers {
+            if let Some(name) = hv.0
+                && name != "host"
+            {
+                request = request.header(name, hv.1);
+            }
+        }
+
+        let response = request.send().await.map_err(AppError::system_error)?;
+
+        if let Some(content_length) = response.content_length() {
+            if content_length > app_state.max_content_length {
+                return Err(AppError::system_error("The response size is too large."));
+            }
+        }
+
+        let response_status = response.status();
+        let headers = response.headers().clone();
+        let body = Body::from_stream(response.bytes_stream());
+
+        //info!("rest_client_remote_proxy status={}", response_status);
+
+        return Ok((response_status, headers, body).into_response());
+    }
+
+    let response = next.run(req).await;
+    return Ok(response);
+}
+
+#[axum::debug_handler]
+pub async fn rest_client_proxy_allow(
+    State(app_state): State<AppState>,
+    req: Request,
+) -> Result<impl IntoResponse, AppError> {
+    let ip = req
+        .headers()
+        .get(http::header::FORWARDED)
+        .and_then(|val| val.to_str().ok())
+        .map(|value| value.to_string())
+        .unwrap_or("".to_owned());
+
+    Ok(Json(json! {app_state.rest_client_proxy_allow_ips.contains(&ip)}).into_response())
 }

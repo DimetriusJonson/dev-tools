@@ -1,9 +1,9 @@
 use app::app::{App, shell};
-use axum::Router;
 use axum::body::Body as AxumBody;
 use axum::extract::{DefaultBodyLimit, Request, State};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
+use axum::{Router, middleware};
 use leptos::config::ConfFile;
 use leptos::context::provide_context;
 use leptos_axum::{
@@ -16,7 +16,7 @@ use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::rest_client_router::{
-    rest_client_attachment_download_handler, rest_client_send_handler,
+    rest_client_attachment_download_handler, rest_client_proxy_allow, rest_client_remote_proxy, rest_client_send_handler,
 };
 use crate::app_router::share_file_router::{
     share_file_custom_servers_handler, share_file_download, share_file_info,
@@ -35,6 +35,7 @@ pub async fn build_app_router(
     remote_server_url: Option<String>,
     dump_port: u16,
     rc_max_content_length: u64,
+    rest_client_proxy_allow_ips: Vec<String>,
 ) -> anyhow::Result<Router> {
     let leptos_options = conf_file.leptos_options;
 
@@ -46,10 +47,12 @@ pub async fn build_app_router(
         remote_server_url,
         dump_port,
         max_content_length: rc_max_content_length,
+        rest_client_proxy_allow_ips
     };
 
     let app = Router::new()
         .route("/rest_client_send", post(rest_client_send_handler))
+        .route("/rest_client_proxy_allow", get(rest_client_proxy_allow))
         .route("/rest_client_attachment_download", post(rest_client_attachment_download_handler))
         .route("/format_xml", post(format_xml_handler))
         .route("/format_json", post(format_json_handler))
@@ -68,6 +71,7 @@ pub async fn build_app_router(
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
+        .layer(middleware::from_fn_with_state(app_state.clone(), rest_client_remote_proxy))
         .with_state(app_state);
 
     Ok(app)

@@ -14,6 +14,7 @@ pub async fn start_axum_server(
     remote_server_url: Option<String>,
     database_url: Option<String>,
     rc_max_content_length: u64,
+    rest_client_proxy_allow_ips: Vec<String>,
 ) -> anyhow::Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_ansi(true)
@@ -46,7 +47,7 @@ pub async fn start_axum_server(
 
     let (_, dump_port) = start_dump_receiver().await.unwrap();
 
-    let app = build_app_router(conf, pool, remote_server_url, dump_port, rc_max_content_length).await?;
+    let app = build_app_router(conf, pool, remote_server_url, dump_port, rc_max_content_length, rest_client_proxy_allow_ips).await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await.unwrap();

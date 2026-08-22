@@ -10,6 +10,7 @@ edition = "2024"
 
 anyhow = "1"
 axum = { version = "0.8", features = ["macros"] }
+axum-extra = { version = "0.9", features = ["cookie"] }
 axum-macros = "0.4"
 console_error_panic_hook = "0.1"
 #leptos = { version = "0.8", features = ["nightly"] }

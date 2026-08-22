@@ -161,3 +161,15 @@ pub fn safe_updating_ui_value(
         );
     }
 }
+
+pub fn remove_cookie(_name: &str, _path: &str) {
+    #[cfg(not(feature = "ssr"))]
+    {
+        use web_sys::HtmlDocument;
+        let document = gloo_utils::document().unchecked_into::<HtmlDocument>();
+
+        let cookie_str = format!("{}=''; max-age=0; path={}", _name, _path);
+
+        let _ = document.set_cookie(&cookie_str);
+    }
+}

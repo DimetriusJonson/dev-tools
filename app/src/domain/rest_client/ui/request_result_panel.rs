@@ -1,6 +1,6 @@
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, remove_cookie, save_file_to_disk};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -10,12 +10,13 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::html_utils::{add_head_base_tag};
+use crate::domain::rest_client::util::html_utils::{add_base_url_script, add_head_base_tag};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use gloo_net::http::Request;
 use leptos::html::Div;
+use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
@@ -51,6 +52,7 @@ pub fn RequestResultPanel(
     };
 
     let (in_progress, set_in_progress) = signal(InProgressType::None);
+    let (proxy_allow, set_proxy_allow) = signal(false);
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
     let tab_headers_ref = NodeRef::<Div>::new();
@@ -58,6 +60,12 @@ pub fn RequestResultPanel(
 
     let request_result = RequestResult::new();
     let (show_preview_html, set_show_preview_html) = signal(false);
+
+    Effect::new(move || {
+        spawn_local(async move {
+            set_proxy_allow.set(is_proxy_allow().await);
+        });
+    });
 
     Effect::watch(
         move || response.get(),
@@ -131,8 +139,11 @@ pub fn RequestResultPanel(
 
     let get_preview_src_doc = move || {
         let mut html = request_result.body.get();
-        //make_absolute_links(&mut html, &rc_context.request.read_untracked().url);
-        add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
+        if proxy_allow.get_untracked() {
+            add_base_url_script(&mut html, &rc_context.request.read_untracked().url);
+        } else {
+            add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
+        }
         html
     };
 
@@ -251,7 +262,10 @@ pub fn RequestResultPanel(
                         // Html preview
                         <Show when=move || { show_preview_html.get() }>
                             <iframe class="w-full"
-                                srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups"
+                                srcdoc=get_preview_src_doc sandbox="allow-scripts allow-popups allow-same-origin"
+                                on:load=move |_| {
+                                    remove_cookie("rc_base_url", "/");
+                                }
                             >
                             </iframe>
                         </Show>
@@ -304,4 +318,26 @@ fn render_headers(headers: Vec<(String, String)>) -> String {
     let list: Vec<String> =
         headers.iter().map(|h| format!("<div class=\"flex flex-row gap-4\"><div class=\"w-1/3\">{}</div><div class=\"w-full\">{}</div></div>", h.0, h.1)).collect();
     list.join("\n")
+}
+
+async fn is_proxy_allow() -> bool {
+    match Request::get("/rest_client_proxy_allow").build() {
+        Ok(request) => match request.send().await {
+            Ok(response) => match response.json::<serde_json::Value>().await {
+                Ok(value) => value.as_bool().unwrap_or(false),
+                Err(err) => {
+                    console_log(&format!("Error: {}", err));
+                    false
+                }
+            },
+            Err(err) => {
+                console_log(&format!("Error: {}", err));
+                false
+            }
+        },
+        Err(err) => {
+            console_log(&format!("Error: {}", err));
+            false
+        }
+    }
 }
