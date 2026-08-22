@@ -84,7 +84,6 @@ site-root = "site"
 assets-dir = "public"
 site-pkg-dir = "pkg"
 
-tailwind-version = "v4.3.3"
 tailwind-input-file = "style/tailwind.css"
 #style-file = "style/main.scss"
 

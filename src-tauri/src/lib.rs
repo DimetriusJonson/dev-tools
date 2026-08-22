@@ -142,23 +142,26 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .on_menu_event(move |app, event| match event.id.as_ref() {
-                    "quit" => {
-                        let mut managed_child = server_cmd_child.lock().unwrap();
-                        if let Some(cmd_child) = managed_child.take() {
-                            let _ = cmd_child.kill(); // Best effort termination
+                .on_menu_event({
+                    let server_cmd_child = server_cmd_child.clone();
+                    move |app, event| match event.id.as_ref() {
+                        "quit" => {
+                            let mut managed_child = server_cmd_child.lock().unwrap();
+                            if let Some(cmd_child) = managed_child.take() {
+                                let _ = cmd_child.kill(); // Best effort termination
+                            }
+                            app.exit(0);
                         }
-                        app.exit(0);
-                    }
-                    "open" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.unminimize();
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                        "open" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.unminimize();
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
                         }
-                    }
-                    _ => {
-                        //                        println!("menu item {:?} not handled", event.id);
+                        _ => {
+                            //                        println!("menu item {:?} not handled", event.id);
+                        }
                     }
                 })
                 .on_tray_icon_event(|tray, event| match event {
@@ -176,8 +179,22 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
 
             // Spawn background task to check for update automatically on start
             let app_handle = app.handle().clone();
+            let server_cmd_child = server_cmd_child.clone();
             tauri::async_runtime::spawn(async move {
-                if let Ok(Some(update)) = app_handle.updater().unwrap().check().await {
+                if let Ok(Some(update)) = app_handle
+                    .updater_builder()
+                    .on_before_exit(move || {
+                        let mut managed_child = server_cmd_child.lock().unwrap();
+                        if let Some(cmd_child) = managed_child.take() {
+                            info!("Terminate server...");
+                            let _ = cmd_child.kill(); // Best effort termination
+                        }
+                    })
+                    .build()
+                    .unwrap()
+                    .check()
+                    .await
+                {
                     // Trigger download and installation immediately
                     if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
                         error!("Failed to download update: {}", e);
