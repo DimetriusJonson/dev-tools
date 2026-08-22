@@ -47,9 +47,17 @@ pub async fn start_axum_server(
 
     let (_, dump_port) = start_dump_receiver().await.unwrap();
 
-    let app = build_app_router(conf, pool, remote_server_url, dump_port, rc_max_content_length, rest_client_proxy_allow_ips).await?;
+    let app = build_app_router(
+        conf,
+        pool,
+        remote_server_url,
+        dump_port,
+        rc_max_content_length,
+        rest_client_proxy_allow_ips,
+    )
+    .await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
     Ok(())
 }

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{net::SocketAddr, str::FromStr};
 
 use crate::{
     app_router::dump_receiver::DUMP_REQUEST,
@@ -9,11 +9,7 @@ use app::model::restclient::{
     rest_client_response::{RestClientResponse, RestClientResponseBody},
 };
 use axum::{
-    Json,
-    body::{self, Body},
-    extract::{Request, State},
-    middleware::Next,
-    response::{IntoResponse, Response},
+    Json, body::{self, Body}, extract::{ConnectInfo, Request, State}, middleware::Next, response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
@@ -183,12 +179,13 @@ pub async fn rest_client_attachment_download_handler(
 
 pub async fn rest_client_remote_proxy(
     State(app_state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
     //info!("rest_client_remote_proxy");
     let cookie_jar = CookieJar::from_headers(req.headers());
-    if is_proxy_allow(&req, &app_state)
+    if is_proxy_allow(&req, &app_state, addr)
         && let Some(cookie) = cookie_jar.get("rc_base_url")
     {
         let rc_base_url = cookie.value();
@@ -255,18 +252,21 @@ pub async fn rest_client_remote_proxy(
 #[axum::debug_handler]
 pub async fn rest_client_proxy_allow(
     State(app_state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: Request,
 ) -> Result<impl IntoResponse, AppError> {
-    Ok(Json(json! {is_proxy_allow(&req, &app_state) }).into_response())
+    Ok(Json(json! {is_proxy_allow(&req, &app_state, addr) }).into_response())
 }
 
-fn is_proxy_allow(req: &Request, app_state: &AppState) -> bool {
+fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) -> bool {
     let ip = req
         .headers()
         .get(http::header::FORWARDED)
         .and_then(|val| val.to_str().ok())
         .map(|value| value.to_string())
-        .unwrap_or("".to_owned());
+        .unwrap_or(client_addr.ip().to_string());
+
+    info!("IP:{} allowed={:?}", ip, app_state.rest_client_proxy_allow_ips);
 
     app_state.rest_client_proxy_allow_ips.contains(&ip)
 }
