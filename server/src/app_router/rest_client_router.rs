@@ -9,13 +9,17 @@ use app::model::restclient::{
     rest_client_response::{RestClientResponse, RestClientResponseBody},
 };
 use axum::{
-    Json, body::{self, Body}, extract::{ConnectInfo, Request, State}, middleware::Next, response::{IntoResponse, Response},
+    Json,
+    body::{self, Body},
+    extract::{ConnectInfo, Request, State},
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
-use tracing::{debug, info};
+use tracing::debug;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
