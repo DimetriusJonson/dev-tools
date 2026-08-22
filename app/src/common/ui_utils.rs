@@ -162,6 +162,24 @@ pub fn safe_updating_ui_value(
     }
 }
 
+pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: u64) {
+    #[cfg(not(feature = "ssr"))]
+    {
+        // Get the global window and document objects
+        let window = web_sys::window().expect("No global window found");
+        let document = window.document().expect("No document found on window");
+
+        // Format the standard cookie string
+        let cookie_string =
+            format!("{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax", _name, _value, _max_age_secs);
+
+        let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
+
+        // Set the cookie via the DOM
+        html_document.set_cookie(&cookie_string).expect("Failed to write cookie");
+    }
+}
+
 pub fn remove_cookie(_name: &str, _path: &str) {
     #[cfg(not(feature = "ssr"))]
     {

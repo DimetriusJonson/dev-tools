@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{copy_to_clipboard, remove_cookie, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, create_cookie, remove_cookie, save_file_to_disk};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -12,7 +12,7 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::html_utils::{add_base_url_script, add_head_base_tag};
+use crate::domain::rest_client::util::html_utils::{add_head_base_tag, build_base_url};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
@@ -149,7 +149,11 @@ pub fn RequestResultPanel(
     let get_preview_src_doc = move || {
         let mut html = request_result.body.get();
         if proxy_allow.get_untracked() {
-            add_base_url_script(&mut html, &rc_context.request.read_untracked().url);
+            create_cookie(
+                "rc_base_url",
+                &build_base_url(&rc_context.request.read_untracked().url),
+                30,
+            );
         } else {
             add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
         }

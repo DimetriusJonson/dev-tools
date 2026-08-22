@@ -205,8 +205,12 @@ pub async fn rest_client_remote_proxy(
             path = &path[1..];
         }
 
-        let url = format!("{}/{}{}", rc_base_url, path, query_str);
+        let base_url = Url::parse(rc_base_url).map_err(AppError::system_error)?;
+
+        let url = format!("{}://{}/{}{}", base_url.scheme(), base_url.host_str().unwrap_or_default(), path, query_str);
         let method = req.method().clone();
+
+        debug!("proxy url={}", url);
 
         let headers = req.headers().clone();
 

@@ -59,7 +59,7 @@ pub fn DragSplitter(
         let mut init_size =
             get_local_store_value(&local_store_prop_name_memo.get(), default_ratio.to_string())
                 .parse::<f64>()
-                .unwrap();
+                .unwrap_or(default_ratio);
 
         if init_size == 0.0 {
             if let Some(target_elem) = target_ref.get() {
