@@ -15,7 +15,7 @@ use axum_extra::extract::CookieJar;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
-use tracing::info;
+use tracing::{debug, info};
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -183,7 +183,6 @@ pub async fn rest_client_remote_proxy(
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    //info!("rest_client_remote_proxy");
     let cookie_jar = CookieJar::from_headers(req.headers());
     if is_proxy_allow(&req, &app_state, addr)
         && let Some(cookie) = cookie_jar.get("rc_base_url")
@@ -204,8 +203,6 @@ pub async fn rest_client_remote_proxy(
 
         let url = format!("{}/{}{}", rc_base_url, path, query_str);
         let method = req.method().clone();
-
-        info!("proxy url: {} {}", method, url);
 
         let headers = req.headers().clone();
 
@@ -240,8 +237,6 @@ pub async fn rest_client_remote_proxy(
         let headers = response.headers().clone();
         let body = Body::from_stream(response.bytes_stream());
 
-        //info!("rest_client_remote_proxy status={}", response_status);
-
         return Ok((response_status, headers, body).into_response());
     }
 
@@ -266,7 +261,7 @@ fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) 
         .map(|value| value.to_string())
         .unwrap_or(client_addr.ip().to_string());
 
-    info!("IP:{} allowed={:?}", ip, app_state.rest_client_proxy_allow_ips);
+    debug!("IP:{} allowed={:?}", ip, app_state.rest_client_proxy_allow_ips);
 
     app_state.rest_client_proxy_allow_ips.contains(&ip)
 }
