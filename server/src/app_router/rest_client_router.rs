@@ -188,7 +188,9 @@ pub async fn rest_client_remote_proxy(
 ) -> Result<Response<Body>, AppError> {
     //info!("rest_client_remote_proxy");
     let cookie_jar = CookieJar::from_headers(req.headers());
-    if let Some(cookie) = cookie_jar.get("rc_base_url") {
+    if is_proxy_allow(&req, &app_state)
+        && let Some(cookie) = cookie_jar.get("rc_base_url")
+    {
         let rc_base_url = cookie.value();
 
         let uri = req.uri();
@@ -255,6 +257,10 @@ pub async fn rest_client_proxy_allow(
     State(app_state): State<AppState>,
     req: Request,
 ) -> Result<impl IntoResponse, AppError> {
+    Ok(Json(json! {is_proxy_allow(&req, &app_state) }).into_response())
+}
+
+fn is_proxy_allow(req: &Request, app_state: &AppState) -> bool {
     let ip = req
         .headers()
         .get(http::header::FORWARDED)
@@ -262,5 +268,5 @@ pub async fn rest_client_proxy_allow(
         .map(|value| value.to_string())
         .unwrap_or("".to_owned());
 
-    Ok(Json(json! {app_state.rest_client_proxy_allow_ips.contains(&ip)}).into_response())
+    app_state.rest_client_proxy_allow_ips.contains(&ip)
 }
