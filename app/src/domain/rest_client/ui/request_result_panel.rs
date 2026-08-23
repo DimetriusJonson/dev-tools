@@ -274,6 +274,9 @@ pub fn RequestResultPanel(
                                 on:load=move |_| {
                                     remove_cookie("rc_base_url", "/");
                                 }
+                                on:error=move |_| {
+                                    remove_cookie("rc_base_url", "/");
+                                }
                             >
                             </iframe>
                         </Show>
