@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::Display,
     slice::{Iter, IterMut},
 };
 
@@ -91,9 +92,9 @@ impl RequestBodyFormValues {
     }
 }
 
-impl ToString for RequestBodyFormValues {
-    fn to_string(&self) -> String {
-        self.to_json()
+impl Display for RequestBodyFormValues {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_json())
     }
 }
 

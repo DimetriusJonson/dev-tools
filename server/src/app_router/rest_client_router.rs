@@ -44,10 +44,10 @@ pub async fn rest_client_send_handler(
                 })
                 .collect();
 
-            if let Some(content_length) = response.content_length() {
-                if content_length > app_state.max_content_length {
-                    return Err(AppError::system_error("The response size is too large."));
-                }
+            if let Some(content_length) = response.content_length()
+                && content_length > app_state.max_content_length
+            {
+                return Err(AppError::system_error("The response size is too large."));
             }
 
             if response
@@ -169,10 +169,10 @@ pub async fn rest_client_attachment_download_handler(
 
     let response = build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
 
-    if let Some(content_length) = response.content_length() {
-        if content_length > app_state.max_content_length {
-            return Err(AppError::system_error("The response size is too large."));
-        }
+    if let Some(content_length) = response.content_length()
+        && content_length > app_state.max_content_length
+    {
+        return Err(AppError::system_error("The response size is too large."));
     }
 
     let response_status = response.status();
@@ -207,7 +207,13 @@ pub async fn rest_client_remote_proxy(
 
         let base_url = Url::parse(rc_base_url).map_err(AppError::system_error)?;
 
-        let url = format!("{}://{}/{}{}", base_url.scheme(), base_url.host_str().unwrap_or_default(), path, query_str);
+        let url = format!(
+            "{}://{}/{}{}",
+            base_url.scheme(),
+            base_url.host_str().unwrap_or_default(),
+            path,
+            query_str
+        );
         let method = req.method().clone();
 
         debug!("proxy url={}", url);
@@ -235,10 +241,10 @@ pub async fn rest_client_remote_proxy(
 
         let response = request.send().await.map_err(AppError::system_error)?;
 
-        if let Some(content_length) = response.content_length() {
-            if content_length > app_state.max_content_length {
-                return Err(AppError::system_error("The response size is too large."));
-            }
+        if let Some(content_length) = response.content_length()
+            && content_length > app_state.max_content_length
+        {
+            return Err(AppError::system_error("The response size is too large."));
         }
 
         let response_status = response.status();
@@ -249,7 +255,7 @@ pub async fn rest_client_remote_proxy(
     }
 
     let response = next.run(req).await;
-    return Ok(response);
+    Ok(response)
 }
 
 #[axum::debug_handler]
@@ -276,7 +282,7 @@ fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) 
     );
 
     let client_ip = if !forwarded_for.is_empty() {
-        forwarded_for.split(',').nth(0).unwrap_or(&real_ip).trim().to_owned()
+        forwarded_for.split(',').next().unwrap_or(&real_ip).trim().to_owned()
     } else {
         real_ip
     };

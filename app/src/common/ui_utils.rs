@@ -148,7 +148,7 @@ pub fn get_browser_height() -> Result<f64, JsValue> {
 
 pub fn safe_updating_ui_value(
     update_lock: RwSignal<bool>,
-    update_fn: impl Fn() -> () + Send + Sync + 'static,
+    update_fn: impl Fn() + Send + Sync + 'static,
 ) {
     if !update_lock.get_untracked() {
         update_lock.set(true);
@@ -170,8 +170,10 @@ pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: u64) {
         let document = window.document().expect("No document found on window");
 
         // Format the standard cookie string
-        let cookie_string =
-            format!("{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax", _name, _value, _max_age_secs);
+        let cookie_string = format!(
+            "{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax",
+            _name, _value, _max_age_secs
+        );
 
         let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
 

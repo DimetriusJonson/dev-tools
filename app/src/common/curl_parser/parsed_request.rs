@@ -10,8 +10,8 @@ pub struct ParsedRequest {
     pub compressed: bool,
 }
 
-impl ParsedRequest {
-    pub fn new() -> Self {
+impl Default for ParsedRequest {
+    fn default() -> Self {
         Self {
             method: None,
             url: String::new(),

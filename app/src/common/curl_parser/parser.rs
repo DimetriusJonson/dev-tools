@@ -17,13 +17,13 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
     let input = win_cmd_unescape(input.trim()); // win cmd double quote unescape 
 
     let pairs = CurlParser::parse(Rule::input, &input)?;
-    let mut parsed = ParsedRequest::new();
+    let mut parsed = ParsedRequest::default();
     for pair in pairs {
         match pair.as_rule() {
             Rule::method => {
                 let s = pair.into_inner().next().expect("method string must be present").as_str();
                 let method = s.parse()?;
-                if !vec![
+                if ![
                     Method::GET,
                     Method::POST,
                     Method::PUT,

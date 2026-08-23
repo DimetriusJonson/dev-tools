@@ -75,7 +75,6 @@ pub async fn start_dump_receiver() -> Result<(JoinHandle<()>, u16), Box<dyn Erro
 
                         if let Err(e) = socket.write_all(HTTP_200.as_bytes()).await {
                             error!("Failed to write to socket {}: {}", addr, e);
-                            return;
                         }
                     });
                 }
@@ -90,7 +89,7 @@ pub async fn start_dump_receiver() -> Result<(JoinHandle<()>, u16), Box<dyn Erro
     Ok((handle, port))
 }
 
-fn find_pattern(data: &Vec<u8>, pattern: &str) -> Option<usize> {
+fn find_pattern(data: &[u8], pattern: &str) -> Option<usize> {
     let pattern = pattern.to_lowercase();
 
     let pattern_len = pattern.len();
@@ -104,7 +103,7 @@ fn find_pattern(data: &Vec<u8>, pattern: &str) -> Option<usize> {
     None
 }
 
-fn find_content_length(data: &Vec<u8>, end_index: usize) -> Option<usize> {
+fn find_content_length(data: &[u8], end_index: usize) -> Option<usize> {
     let name = "\r\ncontent-length:";
 
     if let Some(pos) = find_pattern(data, name) {

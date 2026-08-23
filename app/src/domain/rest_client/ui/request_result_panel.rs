@@ -86,43 +86,40 @@ pub fn RequestResultPanel(
             request_result.request_raw.set("".to_owned());
             request_result.attachment.set(("".to_owned(), "".to_owned()));
             request_result.image.set("".to_owned());
-            match value {
-                Some(response) => {
-                    if let Some(error) = &response.error {
-                        show_error(error.to_owned(), messages);
-                    };
+            if let Some(response) = value {
+                if let Some(error) = &response.error {
+                    show_error(error.to_owned(), messages);
+                };
 
-                    request_result.status_code.set(response.status_code.to_string());
-                    match &response.body {
-                        RestClientResponseBody::Text(body) => {
-                            request_result.lang.set(
-                                response
-                                    .headers
-                                    .iter()
-                                    .filter(|v| v.0.to_lowercase() == "content-type")
-                                    .filter_map(|v| get_media_type_code(&v.1))
-                                    .next()
-                                    .unwrap_or("html".to_owned()),
-                            );
+                request_result.status_code.set(response.status_code.to_string());
+                match &response.body {
+                    RestClientResponseBody::Text(body) => {
+                        request_result.lang.set(
+                            response
+                                .headers
+                                .iter()
+                                .filter(|v| v.0.to_lowercase() == "content-type")
+                                .filter_map(|v| get_media_type_code(&v.1))
+                                .next()
+                                .unwrap_or("html".to_owned()),
+                        );
 
-                            request_result.body.set(body.to_owned())
-                        }
-                        RestClientResponseBody::Attachment(file_name) => {
-                            request_result.attachment.set((
-                                params.read_untracked().url.get_untracked(),
-                                file_name.to_owned(),
-                            ));
-                        }
-                        RestClientResponseBody::Image => {
-                            request_result.image.set(params.read_untracked().url.get_untracked())
-                        }
-                        RestClientResponseBody::None => (),
+                        request_result.body.set(body.to_owned())
                     }
-
-                    request_result.headers.set(response.headers.clone());
-                    request_result.request_raw.set(response.request_raw.to_owned());
+                    RestClientResponseBody::Attachment(file_name) => {
+                        request_result.attachment.set((
+                            params.read_untracked().url.get_untracked(),
+                            file_name.to_owned(),
+                        ));
+                    }
+                    RestClientResponseBody::Image => {
+                        request_result.image.set(params.read_untracked().url.get_untracked())
+                    }
+                    RestClientResponseBody::None => (),
                 }
-                None => (),
+
+                request_result.headers.set(response.headers.clone());
+                request_result.request_raw.set(response.request_raw.to_owned());
             };
 
             if params.read_untracked().formatting.get_untracked() {

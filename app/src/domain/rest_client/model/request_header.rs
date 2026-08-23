@@ -1,4 +1,7 @@
-use std::slice::{Iter, IterMut};
+use std::{
+    fmt::Display,
+    slice::{Iter, IterMut},
+};
 
 use leptos::prelude::{GetUntracked, ReadSignal, RwSignal, WriteSignal};
 use uuid::Uuid;
@@ -76,13 +79,17 @@ impl RequestHeaders {
     }
 }
 
-impl ToString for RequestHeaders {
-    fn to_string(&self) -> String {
-        self.inner
-            .iter()
-            .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
-            .collect::<Vec<String>>()
-            .join("\n")
+impl Display for RequestHeaders {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.inner
+                .iter()
+                .map(|h| format!("{}:{}", h.name.get_untracked(), h.value.get_untracked()))
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
     }
 }
 
