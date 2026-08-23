@@ -205,7 +205,7 @@ fn find_proxy_base_url_in_request(req: &Request) -> Result<Option<String>, AppEr
 static PROXY_CACHE: LazyLock<RwLock<HashMap<String, String>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
-fn build_proxy_cache_key(path: &str, query: Option<&str>) -> String {
+fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> String {
     let mut query_str = query
         .map(|q| {
             q.split('&')
@@ -218,18 +218,18 @@ fn build_proxy_cache_key(path: &str, query: Option<&str>) -> String {
         query_str.insert_str(0, "?");
     }
 
-    format!("{}{}", path, query_str)
+    format!("{}:{}{}", base_url, path, query_str)
 }
 
-fn get_proxy_cached_value(path: &str, query: Option<&str>) -> Option<String> {
-    let key = build_proxy_cache_key(path, query);
+fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Option<String> {
+    let key = build_proxy_cache_key(base_url, path, query);
 
     let cache = PROXY_CACHE.read().unwrap();
     cache.get(&key).cloned()
 }
 
-fn set_proxy_cached_value(path: &str, query: Option<&str>, value: String) {
-    let key = build_proxy_cache_key(path, query);
+fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value: String) {
+    let key = build_proxy_cache_key(base_url, path, query);
 
     let mut cache = PROXY_CACHE.write().unwrap();
     cache.insert(key, value);
@@ -265,7 +265,7 @@ pub async fn rest_client_remote_proxy(
             if let Ok(referer) = urlencoding::decode(referer) {
                 if let Ok(referer) = Url::parse(&referer) {
                     if let Some(parent_base_url) =
-                        get_proxy_cached_value(referer.path(), referer.query())
+                        get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
                     {
                         if let Ok(parent_base_url) = Url::parse(&parent_base_url) {
                             base_url = parent_base_url;
@@ -313,7 +313,7 @@ pub async fn rest_client_remote_proxy(
             return Err(AppError::system_error("The response size is too large."));
         }
 
-        set_proxy_cached_value(req_uri.path(), req_uri.query(), rc_base_url.to_owned());
+        set_proxy_cached_value(rc_base_url, req_uri.path(), req_uri.query(), rc_base_url.to_owned());
 
         let response_status = response.status();
         let headers = response.headers().clone();
