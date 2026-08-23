@@ -24,7 +24,7 @@ struct Cli {
         help = "Remote server address. Only for the \"Share File\" feature and if the server is running without a database. Defaults to \"https://dev-tools-rust.vercel.app\"."
     )]
     remote_server_url: Option<String>,
-    #[arg(short, long)]
+    #[arg(long)]
     rc_preview_proxy_local: bool,
 }
 
