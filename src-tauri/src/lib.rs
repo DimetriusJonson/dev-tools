@@ -43,6 +43,7 @@ fn start_backend_server(
             .env("LEPTOS_SITE_ROOT", site_dir)
             .env("DEVTOOLS_REMOTE_SERVER_URL", remote_server_url)
             .arg(format!("--addr={}", addr))
+            .arg("--rc_preview_proxy_local")
             .spawn()
         {
             Ok(rx) => Ok(rx),

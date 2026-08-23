@@ -24,6 +24,8 @@ struct Cli {
         help = "Remote server address. Only for the \"Share File\" feature and if the server is running without a database. Defaults to \"https://dev-tools-rust.vercel.app\"."
     )]
     remote_server_url: Option<String>,
+    #[arg(short, long)]
+    rc_preview_proxy_local: bool,
 }
 
 #[tokio::main(flavor = "multi_thread")]
@@ -61,11 +63,22 @@ async fn main() -> anyhow::Result<()> {
         Err(_) => u64::MAX,
     };
 
-    let rest_client_proxy_allow_ips = match std::env::var("REST_CLIENT_PROXY_ALLOW_IPS") {
-        Ok(s) => s.split(',').map(|v|v.to_owned()).collect(),
+    let mut rest_client_proxy_allow_ips = match std::env::var("REST_CLIENT_PROXY_ALLOW_IPS") {
+        Ok(s) => s.split(',').map(|v| v.to_owned()).collect(),
         Err(_) => Vec::new(),
     };
 
+    if rest_client_proxy_allow_ips.is_empty() && cli.rc_preview_proxy_local {
+        rest_client_proxy_allow_ips.push("127.0.0.1".to_owned());
+    }
+
     info!("start_axum_server...");
-    start_axum_server(addr_v4, Some(remote_server_url), database_url, rc_max_content_length, rest_client_proxy_allow_ips).await
+    start_axum_server(
+        addr_v4,
+        Some(remote_server_url),
+        database_url,
+        rc_max_content_length,
+        rest_client_proxy_allow_ips,
+    )
+    .await
 }
