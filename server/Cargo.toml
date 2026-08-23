@@ -32,6 +32,7 @@ clap.workspace = true
 getifs.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+urlencoding.workspace=true
 
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = ["ssr"] }
