@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
 use crate::common::ui_utils::{copy_to_clipboard, create_cookie, remove_cookie, save_file_to_disk};
@@ -277,7 +275,7 @@ pub fn RequestResultPanel(
                             <iframe class="w-full"
                                 srcdoc=get_preview_src_doc sandbox=preview_sandbox
                                 on:load=move |_| {
-                                    set_timeout(move || remove_cookie("rc_base_url", "/"), Duration::from_secs(15));
+                                    remove_cookie("rc_base_url", "/");
                                 }
                             >
                             </iframe>
