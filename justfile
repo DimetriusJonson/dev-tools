@@ -35,5 +35,5 @@ tauri-dev:
     TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri dev
 
 github-release version:
-    git tag -f {{version}} -m release {{version}}
+    git tag -a {{version}} -m "release {{version}}"
     git push origin -f {{version}}   
