@@ -79,6 +79,17 @@ pub async fn get_host_name() -> String {
     leptos::prelude::window().location().hostname().unwrap_or_default()
 }
 
+pub fn get_browser_host_info() -> (String, String, u16) {
+    #[cfg(not(feature = "ssr"))]
+    {
+        let loc = leptos::prelude::window().location();
+        return (loc.protocol().unwrap(), loc.host().unwrap(), loc.port().unwrap().parse::<u16>().unwrap());
+    }
+    
+    #[cfg(feature = "ssr")]
+    ("http".to_owned(), "localhost".to_owned(), 80)
+}
+
 #[cfg(feature = "ssr")]
 pub async fn get_host_name() -> String {
     use axum::http::HeaderMap;

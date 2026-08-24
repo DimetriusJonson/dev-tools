@@ -186,22 +186,6 @@ pub async fn rest_client_attachment_download_handler(
     Ok((response_status, body).into_response())
 }
 
-fn find_proxy_base_url_in_request(req: &Request) -> Result<Option<String>, AppError> {
-    if let Some(Some(url)) = req.uri().query().map(|query_str| {
-        let params = parse_query_params(query_str);
-        params.get("rc_base_url").map(|v| v.to_owned())
-    }) {
-        let url = urlencoding::decode(url).map_err(AppError::system_error)?.into_owned();
-        return Ok(Some(url));
-    }
-
-    let cookie_jar = CookieJar::from_headers(req.headers());
-    if let Some(cookie) = cookie_jar.get("rc_base_url") {
-        return Ok(Some(cookie.value().to_owned()));
-    }
-    Ok(None)
-}
-
 static PROXY_CACHE: LazyLock<RwLock<HashMap<String, String>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
@@ -224,12 +208,15 @@ fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> Str
 fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Option<String> {
     let key = build_proxy_cache_key(base_url, path, query);
 
+    //info!("get {}", key);
     let cache = PROXY_CACHE.read().unwrap();
     cache.get(&key).cloned()
 }
 
 fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value: String) {
     let key = build_proxy_cache_key(base_url, path, query);
+
+    //info!("*** set {}", key);
 
     let mut cache = PROXY_CACHE.write().unwrap();
     cache.insert(key, value);
@@ -241,85 +228,108 @@ pub async fn rest_client_remote_proxy(
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    if is_proxy_allow(&req, &app_state, addr)
-        && let Some(rc_base_url) = find_proxy_base_url_in_request(&req)?
-    {
-        let uri = req.uri();
-        let query_str = match uri.query() {
-            Some(query) => format!("?{}", query),
-            None => "".to_owned(),
-        };
+    if is_proxy_allow(&req, &app_state, addr) {
+        let cookie_jar = CookieJar::from_headers(req.headers());
+        if let Some(cookie) = cookie_jar.get("rc_base_url") {
+            let rc_base_url = cookie.value().to_owned();
 
-        let rc_base_url = rc_base_url.trim_end_matches("/");
-        let mut path = uri.path().trim_end_matches("/");
-        if path.starts_with('/') {
-            path = &path[1..];
-        }
+            let url_param = if let Some(Some(url)) = req.uri().query().map(|query_str| {
+                let params = parse_query_params(query_str);
+                params.get("rc_base_url").map(|v| v.to_owned())
+            }) {
+                Some(urlencoding::decode(url).map_err(AppError::system_error)?.into_owned())
+            } else {
+                None
+            };
 
-        let mut base_url = Url::parse(rc_base_url).map_err(AppError::system_error)?;
+            let uri = req.uri();
+            let query_str = match uri.query() {
+                Some(query) => format!("?{}", query),
+                None => "".to_owned(),
+            };
 
-        let headers = req.headers().clone();
-        if let Some(referer) =
-            headers.get(header::REFERER).map(|hv| hv.to_str().ok().unwrap_or_default())
-        {
-            if let Ok(referer) = urlencoding::decode(referer) {
-                if let Ok(referer) = Url::parse(&referer) {
-                    if let Some(parent_base_url) =
-                        get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
-                    {
-                        if let Ok(parent_base_url) = Url::parse(&parent_base_url) {
-                            base_url = parent_base_url;
+            let rc_base_url = rc_base_url.trim_end_matches("/");
+            let mut path = uri.path().trim_end_matches("/");
+            if path.starts_with('/') {
+                path = &path[1..];
+            }
+
+            let mut base_url = Url::parse(rc_base_url).map_err(AppError::system_error)?;
+
+            let headers = req.headers().clone();
+            if let Some(referer) =
+                headers.get(header::REFERER).map(|hv| hv.to_str().ok().unwrap_or_default())
+            {
+                if let Ok(referer) = urlencoding::decode(referer) {
+                    if let Ok(referer) = Url::parse(&referer) {
+                        if let Some(parent_base_url) =
+                            get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
+                        {
+                            if let Ok(parent_base_url) = Url::parse(&parent_base_url) {
+                                base_url = parent_base_url;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        let url = format!(
-            "{}://{}/{}{}",
-            base_url.scheme(),
-            base_url.host_str().unwrap_or_default(),
-            path,
-            query_str
-        );
-        let method = req.method().clone();
+            let url = match &url_param {
+                Some(url_param) => url_param.to_owned(),
+                None => format!(
+                    "{}://{}/{}{}",
+                    base_url.scheme(),
+                    base_url.host_str().unwrap_or_default(),
+                    path,
+                    query_str
+                ),
+            };
+            let method = req.method().clone();
 
-        let req_uri = &req.uri().clone();
+            let req_uri = &req.uri().clone();
 
-        let body_stream = req.into_body();
-        let body_bytes =
-            body::to_bytes(body_stream, usize::MAX).await.map_err(AppError::system_error)?;
+            let body_stream = req.into_body();
+            let body_bytes =
+                body::to_bytes(body_stream, usize::MAX).await.map_err(AppError::system_error)?;
 
-        let mut request = Client::builder()
-            .danger_accept_invalid_certs(true)
-            .build()
-            .map_err(AppError::system_error)?
-            .request(method, url)
-            .body(reqwest::Body::from(body_bytes));
+            //info!("**** request {}", url);
+            let mut request = Client::builder()
+                .danger_accept_invalid_certs(true)
+                .build()
+                .map_err(AppError::system_error)?
+                .request(method, url)
+                .body(reqwest::Body::from(body_bytes));
 
-        for hv in headers {
-            if let Some(name) = hv.0
-                && name != "host"
-            {
-                request = request.header(name, hv.1);
+            for hv in headers {
+                if let Some(name) = hv.0
+                    && name != "host"
+                {
+                    request = request.header(name, hv.1);
+                }
             }
+
+            let response = request.send().await.map_err(AppError::system_error)?;
+
+            if let Some(content_length) = response.content_length()
+                && content_length > app_state.max_content_length
+            {
+                return Err(AppError::system_error("The response size is too large."));
+            }
+
+            if let Some(url_param) = url_param {
+                set_proxy_cached_value(
+                    rc_base_url,
+                    req_uri.path(),
+                    req_uri.query(),
+                    url_param.to_owned(),
+                );
+            }
+
+            let response_status = response.status();
+            let headers = response.headers().clone();
+            let body = Body::from_stream(response.bytes_stream());
+
+            return Ok((response_status, headers, body).into_response());
         }
-
-        let response = request.send().await.map_err(AppError::system_error)?;
-
-        if let Some(content_length) = response.content_length()
-            && content_length > app_state.max_content_length
-        {
-            return Err(AppError::system_error("The response size is too large."));
-        }
-
-        set_proxy_cached_value(rc_base_url, req_uri.path(), req_uri.query(), rc_base_url.to_owned());
-
-        let response_status = response.status();
-        let headers = response.headers().clone();
-        let body = Body::from_stream(response.bytes_stream());
-
-        return Ok((response_status, headers, body).into_response());
     }
 
     let response = next.run(req).await;
