@@ -79,15 +79,17 @@ pub async fn get_host_name() -> String {
     leptos::prelude::window().location().hostname().unwrap_or_default()
 }
 
-pub fn get_browser_host_info() -> (String, String, u16) {
+pub fn get_browser_host_info() -> (String, String, Option<u16>) {
     #[cfg(not(feature = "ssr"))]
     {
         let loc = leptos::prelude::window().location();
-        return (loc.protocol().unwrap(), loc.host().unwrap(), loc.port().unwrap().parse::<u16>().unwrap());
+        let port = loc.port().unwrap();
+        let port = if !port.is_empty() { Some(port.parse::<u16>().unwrap()) } else { None };
+        return (loc.protocol().unwrap(), loc.host().unwrap(), port);
     }
-    
+
     #[cfg(feature = "ssr")]
-    ("http".to_owned(), "localhost".to_owned(), 80)
+    ("http".to_owned(), "localhost".to_owned(), None)
 }
 
 #[cfg(feature = "ssr")]

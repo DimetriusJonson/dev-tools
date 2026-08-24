@@ -114,7 +114,7 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
 
         url.set_scheme(&host_info.0).unwrap();
         url.set_host(Some(&host_info.1)).unwrap();
-        url.set_port(Some(host_info.2)).unwrap();
+        url.set_port(host_info.2).unwrap();
         url.query_pairs_mut().append_pair("rc_base_url", src_url);
         return Some(url.to_string());
     }
