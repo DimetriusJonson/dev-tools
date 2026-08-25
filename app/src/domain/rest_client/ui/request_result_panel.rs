@@ -52,7 +52,7 @@ pub fn RequestResultPanel(
     };
 
     let (in_progress, set_in_progress) = signal(InProgressType::None);
-    let (proxy_allow, set_proxy_allow) = signal(false);
+    let (proxy_allow, set_proxy_allow) = signal(true);
     let (preview_sandbox, set_preview_sandbox) = signal("");
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
