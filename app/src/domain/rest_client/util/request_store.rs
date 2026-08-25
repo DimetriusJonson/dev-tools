@@ -128,6 +128,15 @@ pub fn set_stored_projects(projects: &Vec<RestClientProject>) {
     }
 }
 
+pub fn get_stored_current_request() -> Option<i32> {
+    let id = get_local_store_value("rc_current_request", "".to_owned());
+    if !id.is_empty() { id.parse().ok() } else { None }
+}
+
+pub fn set_stored_current_request(value: Option<i32>) {
+    set_local_store_value("rc_current_request", value.map_or("".to_owned(), |v| v.to_string()))
+}
+
 pub fn get_stored_current_project() -> String {
     get_local_store_value("rc_current_project", "".to_owned())
 }

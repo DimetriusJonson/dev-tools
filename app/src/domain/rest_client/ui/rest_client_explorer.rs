@@ -1,16 +1,13 @@
 use leptos::{html::Div, prelude::*};
 
 use crate::{
-    common::ui_utils::get_accept_language,
-    domain::rest_client::{
-        model::{request_info::RequestInfo, rest_client_context::RestClientContext},
-        ui::{
+    common::ui_utils::get_accept_language, domain::rest_client::{
+        model::{request_info::RequestInfo, rest_client_context::RestClientContext}, ui::{
             rest_client_curl_button::RestClientCUrlButton,
             rest_client_explorer_row::RestClientExplorerRow,
             rest_client_project_selector::ProjectSelector,
-        },
-    },
-    i18n::*,
+        }, util::request_store::{get_stored_current_request, set_stored_current_request},
+    }, i18n::*,
 };
 use crate::{
     components::ui::button::{Button, ButtonWidth},
@@ -77,10 +74,15 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
         move || rc_context.project.get(),
         move |value, _prev, _| {
             set_requests.set(load_requests(value));
-            if let Some(first) = requests.read_untracked().first() {
-                rc_context.request.set(first.get_untracked());
+            if let Some(saved_curr_request_id) = get_stored_current_request() &&
+                let Some(request) = requests.read_untracked().iter().find(|r|r.read_untracked().id == saved_curr_request_id) {
+                rc_context.request.set(request.get_untracked());
             } else {
-                rc_context.request.set(RequestInfo::new_empty());
+                if let Some(first) = requests.read_untracked().first() {
+                    rc_context.request.set(first.get_untracked());
+                } else {
+                    rc_context.request.set(RequestInfo::new_empty());
+                }
             }
         },
         false,
@@ -92,6 +94,7 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
             if let Some(req) =
                 requests.read_untracked().iter().find(|r| r.read_untracked().id == value.id)
             {
+                set_stored_current_request(Some(value.id));
                 req.write().url = value.url.to_owned();
                 req.write().method = value.method.to_owned();
             }
