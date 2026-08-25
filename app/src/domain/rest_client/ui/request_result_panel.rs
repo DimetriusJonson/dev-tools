@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
 use crate::common::ui_utils::{copy_to_clipboard, create_cookie, remove_cookie, save_file_to_disk};
@@ -19,6 +21,7 @@ use leptos::html::Div;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use leptos_router::components::RoutingProgress;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
@@ -61,6 +64,7 @@ pub fn RequestResultPanel(
 
     let request_result = RequestResult::new();
     let (show_preview_html, set_show_preview_html) = signal(false);
+    let (preview_loading, set_preview_loading) = signal(false);
 
     Effect::new(move || {
         spawn_local(async move {
@@ -144,6 +148,7 @@ pub fn RequestResultPanel(
     );
 
     let get_preview_src_doc = move || {
+        set_preview_loading.set(true);
         let mut html = request_result.body.get();
         if proxy_allow.get_untracked() {
             replace_absolute_links(&mut html, &rc_context.request.read_untracked().url);
@@ -275,16 +280,23 @@ pub fn RequestResultPanel(
 
                         // Html preview
                         <Show when=move || { show_preview_html.get() }>
-                            <iframe class="w-full"
-                                srcdoc=get_preview_src_doc sandbox=preview_sandbox
-                                on:load=move |_| {
-                                    remove_cookie("rc_base_url", "/");
-                                }
-                                on:error=move |_| {
-                                    remove_cookie("rc_base_url", "/");
-                                }
-                            >
-                            </iframe>
+                            <div class="flex-1 flex flex-col">
+                                <div class="progress-container pt-0 mt-0">
+                                    <RoutingProgress is_routing=preview_loading max_time=Duration::from_millis(250) />
+                                </div>
+                                <iframe class="flex-1 w-full"
+                                    srcdoc=get_preview_src_doc sandbox=preview_sandbox
+                                    on:load=move |_| {
+                                        set_preview_loading.set(false);
+                                        remove_cookie("rc_base_url", "/");
+                                    }
+                                    on:error=move |_| {
+                                        set_preview_loading.set(false);
+                                        remove_cookie("rc_base_url", "/");
+                                    }
+                                >
+                                </iframe>
+                            </div>
                         </Show>
 
                         // Attachment
