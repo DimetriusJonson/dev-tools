@@ -37,3 +37,7 @@ tauri-dev:
 github-release version:
     git tag -a {{version}} -m "release {{version}}"
     git push origin -f {{version}}   
+
+github-release-fix version:
+    git tag -f {{version}} -m "release {{version}}"
+    git push origin -f {{version}}   
