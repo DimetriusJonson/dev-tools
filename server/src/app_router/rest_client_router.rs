@@ -103,7 +103,7 @@ pub async fn rest_client_send_handler(
                 body: RestClientResponseBody::Text(body),
                 request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                 error: None,
-                size: Some(body_size)
+                size: Some(content_length.unwrap_or(body_size))
             }))
         }
         Err(err) => Ok(Json(RestClientResponse {
