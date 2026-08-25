@@ -1,6 +1,6 @@
-use std::env;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::{env, fs};
 
 use log::{LevelFilter, error, info};
 use tauri::menu::{Menu, MenuItem};
@@ -184,11 +184,16 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             tauri::async_runtime::spawn(async move {
                 if let Ok(Some(update)) = app_handle
                     .updater_builder()
-                    .on_before_exit(move || {
-                        let mut managed_child = server_cmd_child.lock().unwrap();
-                        if let Some(cmd_child) = managed_child.take() {
-                            info!("Terminate server...");
-                            let _ = cmd_child.kill(); // Best effort termination
+                    .on_before_exit({
+                        let app_handle = app_handle.clone();
+                        move || {
+                            let mut managed_child = server_cmd_child.lock().unwrap();
+                            if let Some(cmd_child) = managed_child.take() {
+                                info!("Terminate server...");
+                                let _ = cmd_child.kill().expect("Failed terminate server!");
+                                info!("Clear cache...");
+                                clear_webview_cache(&app_handle);
+                            }
                         }
                     })
                     .build()
@@ -217,4 +222,33 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn clear_webview_cache(app: &AppHandle) {
+    if let Ok(cache_dir) = app.path().app_cache_dir() {
+        // 1. Clear Chromium / WebKit Network Caches
+        let target_cache = cache_dir.join("Cache");
+        let target_code_cache = cache_dir.join("Code Cache");
+
+        if target_cache.exists() {
+            let _ = fs::remove_dir_all(target_cache);
+        }
+        if target_code_cache.exists() {
+            let _ = fs::remove_dir_all(target_code_cache);
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            let wvv2_cache = cache_dir.join("EBWebView").join("Default").join("Cache");
+            if wvv2_cache.exists() {
+                let _ = fs::remove_dir_all(wvv2_cache);
+                info!("Removed Cache");
+            }
+            let wvv2_cache_code = cache_dir.join("EBWebView").join("Default").join("Code Cache");
+            if wvv2_cache_code.exists() {
+                let _ = fs::remove_dir_all(wvv2_cache_code);
+                info!("Removed Code Cache");
+            }
+        }
+    }
 }
