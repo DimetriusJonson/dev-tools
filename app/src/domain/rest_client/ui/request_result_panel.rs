@@ -144,7 +144,7 @@ pub fn RequestResultPanel(
     let get_preview_src_doc = move || {
         let mut html = request_result.body.get();
         if proxy_allow.get_untracked() {
-            replace_absolute_links(&mut html);
+            replace_absolute_links(&mut html, &rc_context.request.read_untracked().url);
             create_cookie(
                 "rc_base_url",
                 &build_base_url(&rc_context.request.read_untracked().url),
