@@ -39,3 +39,6 @@ leptos = { workspace = true, features = ["ssr"] }
 
 [features]
 default = []
+
+[profile.dev]
+incremental = true # Compile your binary in smaller steps.

@@ -79,3 +79,6 @@ ssr = [
     "leptos_i18n/axum",
     "leptos_i18n_build/ssr",
 ]
+
+[profile.dev]
+incremental = true # Compile your binary in smaller steps.
