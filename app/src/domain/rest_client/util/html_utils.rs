@@ -29,43 +29,38 @@ pub fn build_base_url(url: &str) -> String {
 }
 
 pub fn replace_absolute_links(html: &mut String, base_url: &str) {
-    replace_absolute_links_by_attr(html, "href", Some(base_url));
-    replace_absolute_links_by_attr(html, "src", None);
+    replace_relative_a_hrefs(html, "href=\"", "\"", base_url);
+    replace_relative_a_hrefs(html, "href='", "'", base_url);
 
-    replace_absolute_links_by_attr_part(html, "background:url(", ")", None);
-    replace_absolute_links_by_attr_part(html, "background:url('", "'", None);
-    replace_absolute_links_by_attr_part(html, "background:url(\"", "\"", None);
-    replace_absolute_links_by_attr_part(html, "background: url(", ")", None);
-    replace_absolute_links_by_attr_part(html, "background: url('", "'", None);
-    replace_absolute_links_by_attr_part(html, "background: url(\"", "\"", None);
+    replace_absolute_links_by_attr_part(html, "src=\"", "\"");
+    replace_absolute_links_by_attr_part(html, "src='", "'");
 
-    replace_absolute_links_by_attr_part(html, "background-image:url(", ")", None);
-    replace_absolute_links_by_attr_part(html, "background-image:url('", "'", None);
-    replace_absolute_links_by_attr_part(html, "background-image:url(\"", "\"", None);
-    replace_absolute_links_by_attr_part(html, "background-image: url(", ")", None);
-    replace_absolute_links_by_attr_part(html, "background-image: url('", "'", None);
-    replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"", None);
+    replace_absolute_links_by_attr_part(html, "background:url(", ")");
+    replace_absolute_links_by_attr_part(html, "background:url('", "'");
+    replace_absolute_links_by_attr_part(html, "background:url(\"", "\"");
+    replace_absolute_links_by_attr_part(html, "background: url(", ")");
+    replace_absolute_links_by_attr_part(html, "background: url('", "'");
+    replace_absolute_links_by_attr_part(html, "background: url(\"", "\"");
+
+    replace_absolute_links_by_attr_part(html, "background-image:url(", ")");
+    replace_absolute_links_by_attr_part(html, "background-image:url('", "'");
+    replace_absolute_links_by_attr_part(html, "background-image:url(\"", "\"");
+    replace_absolute_links_by_attr_part(html, "background-image: url(", ")");
+    replace_absolute_links_by_attr_part(html, "background-image: url('", "'");
+    replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"");
 }
 
-fn replace_absolute_links_by_attr(html: &mut String, attr_name: &str, base_url: Option<&str>) {
-    replace_absolute_links_by_attr_part(html, &format!("{}=\"", attr_name), "\"", base_url);
-    replace_absolute_links_by_attr_part(html, &format!("{}='", attr_name), "'", base_url);
-}
-
-fn replace_absolute_links_by_attr_part(
+fn replace_relative_a_hrefs(
     html: &mut String,
     start_attr_part: &str,
     end_attr_part: &str,
-    base_url_for_a_tag: Option<&str>,
+    base_url: &str,
 ) {
     let indexes = html.match_indices(&start_attr_part).map(|p| p.0).collect::<Vec<usize>>();
     let mut offset = 0;
     for i in indexes {
         let start_index = i + start_attr_part.len() + offset;
-        if let Some(base_url_for_a_tag) = base_url_for_a_tag
-            && let Some(a_tag_index) = find_from_byte_index_backward(html, start_index, "<a ")
-        {
-            // a tag - convert relative to absolute link
+        if let Some(a_tag_index) = find_from_byte_index_backward(html, start_index, "<a ") {
             if let Some(href_start_index) = find_from_byte_index(html, a_tag_index, start_attr_part)
             {
                 let href_start_index = href_start_index + start_attr_part.len();
@@ -74,23 +69,34 @@ fn replace_absolute_links_by_attr_part(
                     && let Some(href) = html.get(href_start_index..href_end_index)
                 {
                     if !is_absolute_url(href)
-                        && let Some(absolute) = resolve_absolute(href, base_url_for_a_tag)
+                        && let Some(absolute) = resolve_absolute(href, base_url)
                     {
                         html.replace_range(href_start_index..href_end_index, &absolute);
                         offset += absolute.len() - (href_end_index - href_start_index)
                     }
                 }
             }
-        } else {
-            if let Some(end_index) = find_from_byte_index(html, start_index, end_attr_part)
-                && let Some(href) = html.get(start_index..end_index)
+        }
+    }
+}
+
+fn replace_absolute_links_by_attr_part(
+    html: &mut String,
+    start_attr_part: &str,
+    end_attr_part: &str,
+) {
+    let indexes = html.match_indices(&start_attr_part).map(|p| p.0).collect::<Vec<usize>>();
+    let mut offset = 0;
+    for i in indexes {
+        let start_index = i + start_attr_part.len() + offset;
+        if let Some(end_index) = find_from_byte_index(html, start_index, end_attr_part)
+            && let Some(href) = html.get(start_index..end_index)
+        {
+            if is_absolute_url(href)
+                && let Some(absolute) = convert_absolute_url(href)
             {
-                if is_absolute_url(href)
-                    && let Some(absolute) = convert_absolute_url(href)
-                {
-                    html.replace_range(start_index..end_index, &absolute);
-                    offset += absolute.len() - (end_index - start_index)
-                }
+                html.replace_range(start_index..end_index, &absolute);
+                offset += absolute.len() - (end_index - start_index)
             }
         }
     }
