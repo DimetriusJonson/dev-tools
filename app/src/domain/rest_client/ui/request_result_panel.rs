@@ -10,7 +10,7 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::html_utils::{add_head_base_tag, build_base_url, replace_absolute_links};
+use crate::domain::rest_client::util::html_previewer::{add_head_base_tag, build_base_url, replace_absolute_links};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
