@@ -80,6 +80,7 @@ pub fn RequestResultPanel(
             set_tab_selected.set(0);
             set_show_preview_html.set(false);
             request_result.status_code.set("".to_owned());
+            request_result.size.set(None);
             request_result.body.set("".to_owned());
             request_result.lang.set("".to_owned());
             request_result.headers.set(Vec::new());
@@ -92,6 +93,7 @@ pub fn RequestResultPanel(
                 };
 
                 request_result.status_code.set(response.status_code.to_string());
+                request_result.size.set(response.size);
                 match &response.body {
                     RestClientResponseBody::Text(body) => {
                         request_result.lang.set(
@@ -214,6 +216,9 @@ pub fn RequestResultPanel(
                 <div node_ref=tab_body_ref class="flex flex-col gap-4 w-full">
                     <div class="flex justify-between">
                         <span class="dark:text-white">{move || format!("Status: {}", request_result.status_code.get())}</span>
+                        <Show when=move || { request_result.size.read().is_some() }>
+                            <span class="dark:text-white">{move || format!("Size: {}", size::Size::from_bytes(request_result.size.get().unwrap_or_default()))}</span>
+                        </Show>
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"

@@ -38,6 +38,7 @@ pub async fn rest_client_send_handler(
     match build_request(&request, None)?.send().await {
         Ok(response) => {
             let status_code = response.status().as_u16();
+            let content_length = response.content_length();
 
             let headers: Vec<(String, String)> = response
                 .headers()
@@ -49,7 +50,7 @@ pub async fn rest_client_send_handler(
                 })
                 .collect();
 
-            if let Some(content_length) = response.content_length()
+            if let Some(content_length) = content_length
                 && content_length > app_state.max_content_length
             {
                 return Err(AppError::system_error("The response size is too large."));
@@ -68,6 +69,7 @@ pub async fn rest_client_send_handler(
                     body: RestClientResponseBody::Image,
                     request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                     error: None,
+                    size: content_length,
                 }));
             }
 
@@ -88,10 +90,12 @@ pub async fn rest_client_send_handler(
                     body: RestClientResponseBody::Attachment(filename),
                     request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                     error: None,
+                    size: content_length
                 }));
             }
 
             let body = response.text().await.map_err(AppError::system_error)?;
+            let body_size = body.as_bytes().len() as u64;
 
             Ok(Json(RestClientResponse {
                 status_code,
@@ -99,6 +103,7 @@ pub async fn rest_client_send_handler(
                 body: RestClientResponseBody::Text(body),
                 request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                 error: None,
+                size: Some(body_size)
             }))
         }
         Err(err) => Ok(Json(RestClientResponse {
@@ -107,6 +112,7 @@ pub async fn rest_client_send_handler(
             body: RestClientResponseBody::None,
             request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
             error: Some(err.to_string()),
+            size: None
         })),
     }
 }
