@@ -240,33 +240,26 @@ pub async fn rest_client_html_previewer_middleware(
     {
         let cookie_jar = CookieJar::from_headers(req.headers());
         if let Some(cookie) = cookie_jar.get("rc_base_url") {
-            let rc_base_url = cookie.value().to_owned();
+            let rc_base_url = cookie.value().trim_end_matches("/");
 
-            let url_param = if let Some(Some(url)) = req.uri().query().map(|query_str| {
-                let params = parse_query_params(query_str);
-                params.get("rc_base_url").map(|v| v.to_owned())
-            }) {
-                Some(urlencoding::decode(url).map_err(AppError::system_error)?.into_owned())
-            } else {
-                None
-            };
+            let url_param = req
+                .uri()
+                .query()
+                .map(|query_str| {
+                    parse_query_params(query_str)
+                        .get("rc_base_url")
+                        .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
+                })
+                .unwrap_or(None)
+                .unwrap_or(None);
 
-            let uri = req.uri();
-            let query_str = match uri.query() {
-                Some(query) => format!("?{}", query),
-                None => "".to_owned(),
-            };
-
-            let rc_base_url = rc_base_url.trim_end_matches("/");
-            let mut path = uri.path().trim_end_matches("/");
+            let mut path = req.uri().path().trim_end_matches("/");
             if path.starts_with('/') {
                 path = &path[1..];
             }
 
-            let mut base_url = Url::parse(rc_base_url).map_err(AppError::system_error)?;
-
-            let headers = req.headers().clone();
-            let referer = headers
+            let referer = req
+                .headers()
                 .get(header::REFERER)
                 .map(|hv| {
                     hv.to_str().ok().map(|referer| {
@@ -277,13 +270,15 @@ pub async fn rest_client_html_previewer_middleware(
                 .unwrap_or_default()
                 .unwrap_or_default();
 
-            if let Some(referer) = &referer
+            let base_url = if let Some(referer) = &referer
                 && let Some(parent_base_url) =
                     get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
                 && let Ok(parent_base_url) = Url::parse(&parent_base_url)
             {
-                base_url = parent_base_url;
-            }
+                parent_base_url
+            } else {
+                Url::parse(rc_base_url).map_err(AppError::system_error)?
+            };
 
             let url = match &url_param {
                 Some(url_param) => url_param.to_owned(),
@@ -292,45 +287,52 @@ pub async fn rest_client_html_previewer_middleware(
                     base_url.scheme(),
                     base_url.host_str().unwrap_or_default(),
                     path,
-                    query_str
+                    req.uri().query().map(|query| format!("?{}", query)).unwrap_or_default()
                 ),
             };
-            let method = req.method().clone();
 
-            let req_uri = &req.uri().clone();
+            if let Some(url_param) = url_param {
+                set_proxy_cached_value(
+                    rc_base_url,
+                    req.uri().path(),
+                    req.uri().query(),
+                    url_param.to_owned(),
+                );
+            }
 
-            let body_stream = req.into_body();
-            let body_bytes =
-                body::to_bytes(body_stream, usize::MAX).await.map_err(AppError::system_error)?;
+            let mut reqwest_headers = req.headers().clone();
+            reqwest_headers.remove(header::HOST);
+            reqwest_headers.remove(header::REFERER);
+            if let Some(referer) = &referer {
+                let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
+                reqwest_headers.append(
+                    header::REFERER,
+                    format!(
+                        "{}://{}{}{}",
+                        base_url.scheme(),
+                        base_url.host_str().unwrap_or_default(),
+                        referer.path(),
+                        referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
+                    )
+                    .parse()
+                    .map_err(AppError::system_error)?,
+                );
+            }
 
-            //info!("**** request {}", url);
-            let mut request = Client::builder()
+            let request = Client::builder()
                 .danger_accept_invalid_certs(true)
                 .build()
                 .map_err(AppError::system_error)?
-                .request(method, url.to_owned())
-                .body(reqwest::Body::from(body_bytes));
-
-            for hv in headers {
-                if let Some(name) = hv.0
-                    && name.as_str().to_lowercase() != "host"
-                    && name.as_str().to_lowercase() != "referer"
-                {
-                    request = request.header(name, hv.1);
-                }
-            }
-
-            if let Some(referer) = &referer {
-                let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
-                let referer_value = format!(
-                    "{}://{}{}{}",
-                    base_url.scheme(),
-                    base_url.host_str().unwrap_or_default(),
-                    referer.path(),
-                    referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
-                );
-                request = request.header(header::REFERER, referer_value);
-            }
+                .request(req.method().to_owned(), url.to_owned())
+                .headers(reqwest_headers)
+                .body({
+                    let body_stream = req.into_body();
+                    reqwest::Body::from(
+                        body::to_bytes(body_stream, usize::MAX)
+                            .await
+                            .map_err(AppError::system_error)?,
+                    )
+                });
 
             let response = request.send().await.map_err(AppError::system_error)?;
 
@@ -338,15 +340,6 @@ pub async fn rest_client_html_previewer_middleware(
                 && content_length > app_state.max_content_length
             {
                 return Err(AppError::system_error("The response size is too large."));
-            }
-
-            if let Some(url_param) = url_param {
-                set_proxy_cached_value(
-                    rc_base_url,
-                    req_uri.path(),
-                    req_uri.query(),
-                    url_param.to_owned(),
-                );
             }
 
             let response_status = response.status();
