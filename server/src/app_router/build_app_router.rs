@@ -16,7 +16,7 @@ use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::rest_client_router::{
-    rest_client_attachment_download_handler, rest_client_proxy_allow, rest_client_remote_proxy, rest_client_send_handler,
+    rest_client_attachment_download_handler, rest_client_proxy_allow, rest_client_html_previewer_middleware, rest_client_send_handler,
 };
 use crate::app_router::share_file_router::{
     share_file_custom_servers_handler, share_file_download, share_file_info,
@@ -71,7 +71,7 @@ pub async fn build_app_router(
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
-        .layer(middleware::from_fn_with_state(app_state.clone(), rest_client_remote_proxy))
+        .layer(middleware::from_fn_with_state(app_state.clone(), rest_client_html_previewer_middleware))
         .with_state(app_state);
 
     Ok(app)

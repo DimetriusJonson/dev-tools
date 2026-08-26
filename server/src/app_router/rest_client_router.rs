@@ -228,7 +228,7 @@ fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value
     cache.insert(key, value);
 }
 
-pub async fn rest_client_remote_proxy(
+pub async fn rest_client_html_previewer_middleware(
     State(app_state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: Request,
@@ -352,6 +352,10 @@ pub async fn rest_client_proxy_allow(
 }
 
 fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) -> bool {
+    if req.uri().path().starts_with("/rest_client") {
+        return false;
+    }
+
     let forwarded_for = req
         .headers()
         .get("x-forwarded-for")

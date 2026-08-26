@@ -1,6 +1,6 @@
 use url::Url;
 
-use crate::common::ui_utils::get_browser_host_info;
+use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cookie};
 
 pub fn add_head_base_tag(html: &mut String, url: &str) {
     let base_url = build_base_url(url);
@@ -48,6 +48,16 @@ pub fn replace_absolute_links(html: &mut String, base_url: &str) {
     replace_absolute_links_by_attr_part(html, "background-image: url(", ")");
     replace_absolute_links_by_attr_part(html, "background-image: url('", "'");
     replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"");
+}
+
+pub fn init_html_previewer(proxy_allow: bool, base_url: &str) {
+    if proxy_allow {
+        create_cookie("rc_base_url", &build_base_url(base_url), 60);
+    }
+}
+
+pub fn clear_html_previewer() {
+    remove_cookie("rc_base_url", "/");
 }
 
 fn replace_relative_a_hrefs(

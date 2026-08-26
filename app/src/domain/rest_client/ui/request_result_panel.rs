@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{copy_to_clipboard, create_cookie, remove_cookie, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -12,7 +12,9 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::html_previewer::{add_head_base_tag, build_base_url, replace_absolute_links};
+use crate::domain::rest_client::util::html_previewer::{
+    add_head_base_tag, clear_html_previewer, init_html_previewer, replace_absolute_links,
+};
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
@@ -22,6 +24,7 @@ use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::RoutingProgress;
+use leptos_router::hooks::use_location;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
@@ -44,6 +47,7 @@ pub fn RequestResultPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().unwrap();
+    let location = use_location();
 
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
@@ -66,6 +70,14 @@ pub fn RequestResultPanel(
     let (show_preview_html, set_show_preview_html) = signal(false);
     let (preview_loading, set_preview_loading) = signal(false);
 
+    Effect::watch(
+        move || location.pathname.get(),
+        move |_value, _prev, _| {
+            clear_html_previewer();
+        },
+        false,
+    );
+
     Effect::new(move || {
         spawn_local(async move {
             let allow = is_proxy_allow().await;
@@ -79,10 +91,33 @@ pub fn RequestResultPanel(
     });
 
     Effect::watch(
+        move || show_preview_html.get(),
+        move |value, _prev, _| {
+            if *value {
+                init_html_previewer(
+                    proxy_allow.get_untracked(),
+                    &rc_context.request.read_untracked().url,
+                );
+            } else {
+                clear_html_previewer();
+            }
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || rc_context.request.get(),
+        move |_value, _prev, _| {
+            set_show_preview_html.set(false);
+        },
+        false,
+    );
+
+
+    Effect::watch(
         move || response.get(),
         move |value, _prev, _| {
             set_tab_selected.set(0);
-            set_show_preview_html.set(false);
             request_result.status_code.set("".to_owned());
             request_result.size.set(None);
             request_result.body.set("".to_owned());
@@ -152,11 +187,6 @@ pub fn RequestResultPanel(
         let mut html = request_result.body.get();
         if proxy_allow.get_untracked() {
             replace_absolute_links(&mut html, &rc_context.request.read_untracked().url);
-            create_cookie(
-                "rc_base_url",
-                &build_base_url(&rc_context.request.read_untracked().url),
-                30,
-            );
         } else {
             add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
         }
@@ -288,11 +318,9 @@ pub fn RequestResultPanel(
                                     srcdoc=get_preview_src_doc sandbox=preview_sandbox
                                     on:load=move |_| {
                                         set_preview_loading.set(false);
-                                        remove_cookie("rc_base_url", "/");
                                     }
                                     on:error=move |_| {
                                         set_preview_loading.set(false);
-                                        remove_cookie("rc_base_url", "/");
                                     }
                                 >
                                 </iframe>
