@@ -234,7 +234,7 @@ pub async fn rest_client_html_previewer_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    if is_proxy_allow(&req, &app_state, addr) {
+    if !req.uri().path().starts_with("/rest_client") && is_proxy_allow(&req, &app_state, addr) {
         let cookie_jar = CookieJar::from_headers(req.headers());
         if let Some(cookie) = cookie_jar.get("rc_base_url") {
             let rc_base_url = cookie.value().to_owned();
@@ -297,12 +297,14 @@ pub async fn rest_client_html_previewer_middleware(
                 .danger_accept_invalid_certs(true)
                 .build()
                 .map_err(AppError::system_error)?
-                .request(method, url)
+                .request(method, url.to_owned())
                 .body(reqwest::Body::from(body_bytes));
+
 
             for hv in headers {
                 if let Some(name) = hv.0
-                    && name != "host"
+                    && name.as_str().to_lowercase() != "host"
+                     && name.as_str().to_lowercase() != "referer"
                 {
                     request = request.header(name, hv.1);
                 }
@@ -347,10 +349,6 @@ pub async fn rest_client_proxy_allow(
 }
 
 fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) -> bool {
-    if req.uri().path().starts_with("/rest_client") {
-        return false;
-    }
-
     let forwarded_for = req
         .headers()
         .get("x-forwarded-for")
