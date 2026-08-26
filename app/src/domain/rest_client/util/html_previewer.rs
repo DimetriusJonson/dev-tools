@@ -70,21 +70,18 @@ fn replace_relative_a_hrefs(
     let mut offset = 0;
     for i in indexes {
         let start_index = i + start_attr_part.len() + offset;
-        if let Some(a_tag_index) = find_from_byte_index_backward(html, start_index, "<a ") {
-            if let Some(href_start_index) = find_from_byte_index(html, a_tag_index, start_attr_part)
+        if let Some(a_tag_index) = find_from_byte_index_backward(html, start_index, "<a ")
+            && let Some(href_start_index) = find_from_byte_index(html, a_tag_index, start_attr_part)
+        {
+            let href_start_index = href_start_index + start_attr_part.len();
+            if let Some(href_end_index) =
+                find_from_byte_index(html, href_start_index, end_attr_part)
+                && let Some(href) = html.get(href_start_index..href_end_index)
+                && !is_absolute_url(href)
+                && let Some(absolute) = resolve_absolute(href, base_url)
             {
-                let href_start_index = href_start_index + start_attr_part.len();
-                if let Some(href_end_index) =
-                    find_from_byte_index(html, href_start_index, end_attr_part)
-                    && let Some(href) = html.get(href_start_index..href_end_index)
-                {
-                    if !is_absolute_url(href)
-                        && let Some(absolute) = resolve_absolute(href, base_url)
-                    {
-                        html.replace_range(href_start_index..href_end_index, &absolute);
-                        offset += absolute.len() - (href_end_index - href_start_index)
-                    }
-                }
+                html.replace_range(href_start_index..href_end_index, &absolute);
+                offset += absolute.len() - (href_end_index - href_start_index)
             }
         }
     }
@@ -101,13 +98,11 @@ fn replace_absolute_links_by_attr_part(
         let start_index = i + start_attr_part.len() + offset;
         if let Some(end_index) = find_from_byte_index(html, start_index, end_attr_part)
             && let Some(href) = html.get(start_index..end_index)
+            && is_absolute_url(href)
+            && let Some(absolute) = convert_absolute_url(href)
         {
-            if is_absolute_url(href)
-                && let Some(absolute) = convert_absolute_url(href)
-            {
-                html.replace_range(start_index..end_index, &absolute);
-                offset += absolute.len() - (end_index - start_index)
-            }
+            html.replace_range(start_index..end_index, &absolute);
+            offset += absolute.len() - (end_index - start_index)
         }
     }
 }
@@ -120,10 +115,7 @@ fn find_from_byte_index(haystack: &str, start_at: usize, needle: &str) -> Option
 }
 
 fn find_from_byte_index_backward(haystack: &str, start_at: usize, needle: &str) -> Option<usize> {
-    haystack
-        .get(..start_at)
-        .and_then(|sub_slice| sub_slice.rfind(needle))
-        .map(|relative_index| relative_index)
+    haystack.get(..start_at).and_then(|sub_slice| sub_slice.rfind(needle))
 }
 
 fn is_absolute_url(url_str: &str) -> bool {

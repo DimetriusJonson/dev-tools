@@ -39,7 +39,7 @@ fn start_backend_server(
     match shell.sidecar("webdev_useful_tools_server") {
         Ok(sidecar) => match sidecar
             .env("LEPTOS_OUTPUT_NAME", "dev_tools")
-            .env("LEPTOS_SITE_ADDR", addr.to_owned())
+            .env("LEPTOS_SITE_ADDR", &addr)
             .env("LEPTOS_SITE_ROOT", site_dir)
             .env("DEVTOOLS_REMOTE_SERVER_URL", remote_server_url)
             .arg(format!("--addr={}", addr))
@@ -139,7 +139,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
-                .tooltip(app_title.to_owned())
+                .tooltip(&app_title)
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
@@ -165,8 +165,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                         }
                     }
                 })
-                .on_tray_icon_event(|tray, event| match event {
-                    TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } => {
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } = event {
                         let app_handle = tray.app_handle();
                         if let Some(window) = app_handle.get_webview_window("main") {
                             let _ = window.unminimize();
@@ -174,7 +174,6 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                             let _ = window.set_focus();
                         }
                     }
-                    _ => {}
                 })
                 .build(app)?;
 
@@ -190,7 +189,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                             let mut managed_child = server_cmd_child.lock().unwrap();
                             if let Some(cmd_child) = managed_child.take() {
                                 info!("Terminate server...");
-                                let _ = cmd_child.kill().expect("Failed terminate server!");
+                                cmd_child.kill().expect("Failed terminate server!");
                                 info!("Clear cache...");
                                 clear_webview_cache(&app_handle);
                             }

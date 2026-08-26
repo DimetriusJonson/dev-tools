@@ -90,12 +90,12 @@ pub async fn rest_client_send_handler(
                     body: RestClientResponseBody::Attachment(filename),
                     request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                     error: None,
-                    size: content_length
+                    size: content_length,
                 }));
             }
 
             let body = response.text().await.map_err(AppError::system_error)?;
-            let body_size = body.as_bytes().len() as u64;
+            let body_size = body.len() as u64;
 
             Ok(Json(RestClientResponse {
                 status_code,
@@ -103,7 +103,7 @@ pub async fn rest_client_send_handler(
                 body: RestClientResponseBody::Text(body),
                 request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                 error: None,
-                size: Some(content_length.unwrap_or(body_size))
+                size: Some(content_length.unwrap_or(body_size)),
             }))
         }
         Err(err) => Ok(Json(RestClientResponse {
@@ -112,7 +112,7 @@ pub async fn rest_client_send_handler(
             body: RestClientResponseBody::None,
             request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
             error: Some(err.to_string()),
-            size: None
+            size: None,
         })),
     }
 }
@@ -205,7 +205,7 @@ fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> Str
         })
         .unwrap_or_default();
     if !query_str.is_empty() {
-        query_str.insert_str(0, "?");
+        query_str.insert(0, '?');
     }
 
     format!("{}:{}{}", base_url, path, query_str)
@@ -265,18 +265,13 @@ pub async fn rest_client_html_previewer_middleware(
             let headers = req.headers().clone();
             if let Some(referer) =
                 headers.get(header::REFERER).map(|hv| hv.to_str().ok().unwrap_or_default())
+                && let Ok(referer) = urlencoding::decode(referer)
+                && let Ok(referer) = Url::parse(&referer)
+                && let Some(parent_base_url) =
+                    get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
+                && let Ok(parent_base_url) = Url::parse(&parent_base_url)
             {
-                if let Ok(referer) = urlencoding::decode(referer) {
-                    if let Ok(referer) = Url::parse(&referer) {
-                        if let Some(parent_base_url) =
-                            get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
-                        {
-                            if let Ok(parent_base_url) = Url::parse(&parent_base_url) {
-                                base_url = parent_base_url;
-                            }
-                        }
-                    }
-                }
+                base_url = parent_base_url;
             }
 
             let url = match &url_param {
