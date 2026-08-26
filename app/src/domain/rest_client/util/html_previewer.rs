@@ -49,7 +49,7 @@ pub fn replace_absolute_links(html: &mut String, _base_url: &str) {
 
 pub fn init_html_previewer(proxy_allow: bool, base_url: &str) {
     if proxy_allow {
-        create_cookie("rc_base_url", &build_base_url(base_url), 60);
+        create_cookie("rc_base_url", &build_base_url(base_url), 300);
     }
 }
 

@@ -234,7 +234,10 @@ pub async fn rest_client_html_previewer_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    if !req.uri().path().starts_with("/rest_client") && is_proxy_allow(&req, &app_state, addr) {
+    if !req.uri().path().starts_with("/rest_client")
+        && !req.uri().path().starts_with("/pkg/")
+        && is_proxy_allow(&req, &app_state, addr)
+    {
         let cookie_jar = CookieJar::from_headers(req.headers());
         if let Some(cookie) = cookie_jar.get("rc_base_url") {
             let rc_base_url = cookie.value().to_owned();
