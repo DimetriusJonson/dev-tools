@@ -263,10 +263,18 @@ pub async fn rest_client_html_previewer_middleware(
             let mut base_url = Url::parse(rc_base_url).map_err(AppError::system_error)?;
 
             let headers = req.headers().clone();
-            if let Some(referer) =
-                headers.get(header::REFERER).map(|hv| hv.to_str().ok().unwrap_or_default())
-                && let Ok(referer) = urlencoding::decode(referer)
-                && let Ok(referer) = Url::parse(&referer)
+            let referer = headers
+                .get(header::REFERER)
+                .map(|hv| {
+                    hv.to_str().ok().map(|referer| {
+                        urlencoding::decode(referer).ok().map(|referer| Url::parse(&referer).ok())
+                    })
+                })
+                .unwrap_or_default()
+                .unwrap_or_default()
+                .unwrap_or_default();
+
+            if let Some(referer) = &referer
                 && let Some(parent_base_url) =
                     get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
                 && let Ok(parent_base_url) = Url::parse(&parent_base_url)
@@ -300,14 +308,25 @@ pub async fn rest_client_html_previewer_middleware(
                 .request(method, url.to_owned())
                 .body(reqwest::Body::from(body_bytes));
 
-
             for hv in headers {
                 if let Some(name) = hv.0
                     && name.as_str().to_lowercase() != "host"
-                     && name.as_str().to_lowercase() != "referer"
+                    && name.as_str().to_lowercase() != "referer"
                 {
                     request = request.header(name, hv.1);
                 }
+            }
+
+            if let Some(referer) = &referer {
+                let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
+                let referer_value = format!(
+                    "{}://{}{}{}",
+                    base_url.scheme(),
+                    base_url.host_str().unwrap_or_default(),
+                    referer.path(),
+                    referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
+                );
+                request = request.header(header::REFERER, referer_value);
             }
 
             let response = request.send().await.map_err(AppError::system_error)?;
