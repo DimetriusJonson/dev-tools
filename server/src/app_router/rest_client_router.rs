@@ -237,8 +237,6 @@ pub async fn rest_client_html_previewer_middleware(
 ) -> Result<Response<Body>, AppError> {
     if !routes_paths.contains(&req.uri().path().to_owned())
         && req.uri().path() != "/"
-        && !req.uri().path().starts_with("/codemirror.min.js")
-        && !req.uri().path().starts_with("/pkg/")
         && is_proxy_allow(&req, &app_state, addr)
     {
         let cookie_jar = CookieJar::from_headers(req.headers());
