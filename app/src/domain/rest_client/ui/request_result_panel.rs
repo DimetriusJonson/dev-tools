@@ -79,6 +79,7 @@ pub fn RequestResultPanel(
     );
 
     Effect::new(move || {
+        clear_html_previewer();
         spawn_local(async move {
             let allow = is_proxy_allow().await;
             set_proxy_allow.set(allow);

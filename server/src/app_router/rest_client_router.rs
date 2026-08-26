@@ -235,6 +235,7 @@ pub async fn rest_client_html_previewer_middleware(
     next: Next,
 ) -> Result<Response<Body>, AppError> {
     if !req.uri().path().starts_with("/rest_client")
+        && !req.uri().path().starts_with("/codemirror.min.js")
         && !req.uri().path().starts_with("/pkg/")
         && is_proxy_allow(&req, &app_state, addr)
     {
