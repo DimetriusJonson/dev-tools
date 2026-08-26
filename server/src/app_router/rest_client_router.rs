@@ -231,10 +231,12 @@ fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value
 pub async fn rest_client_html_previewer_middleware(
     State(app_state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    routes_paths: Vec<String>,
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    if !req.uri().path().starts_with("/rest_client")
+    if !routes_paths.contains(&req.uri().path().to_owned())
+        && req.uri().path() != "/"
         && !req.uri().path().starts_with("/codemirror.min.js")
         && !req.uri().path().starts_with("/pkg/")
         && is_proxy_allow(&req, &app_state, addr)
@@ -351,7 +353,11 @@ pub async fn rest_client_html_previewer_middleware(
         }
     }
 
-    let response = next.run(req).await;
+    let mut response = next.run(req).await;
+    response.headers_mut().insert(
+        header::SET_COOKIE,
+        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/").unwrap(),
+    );
     Ok(response)
 }
 

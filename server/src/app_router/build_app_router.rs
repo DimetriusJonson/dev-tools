@@ -16,7 +16,8 @@ use tower_http::trace::TraceLayer;
 
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::rest_client_router::{
-    rest_client_attachment_download_handler, rest_client_proxy_allow, rest_client_html_previewer_middleware, rest_client_send_handler,
+    rest_client_attachment_download_handler, rest_client_html_previewer_middleware,
+    rest_client_proxy_allow, rest_client_send_handler,
 };
 use crate::app_router::share_file_router::{
     share_file_custom_servers_handler, share_file_download, share_file_info,
@@ -40,6 +41,7 @@ pub async fn build_app_router(
     let leptos_options = conf_file.leptos_options;
 
     let routes = generate_route_list(App);
+    let routes_paths: Vec<String> = routes.iter().map(|r| r.path().to_owned()).collect();
 
     let app_state = AppState {
         leptos_options: leptos_options.clone(),
@@ -47,7 +49,7 @@ pub async fn build_app_router(
         remote_server_url,
         dump_port,
         max_content_length: rc_max_content_length,
-        rest_client_proxy_allow_ips
+        rest_client_proxy_allow_ips,
     };
 
     let app = Router::new()
@@ -71,7 +73,18 @@ pub async fn build_app_router(
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
-        .layer(middleware::from_fn_with_state(app_state.clone(), rest_client_html_previewer_middleware))
+        .layer(middleware::from_fn_with_state(
+            app_state.clone(),
+            move |app_state, connect_info, req, next| {
+                rest_client_html_previewer_middleware(
+                    app_state,
+                    connect_info,
+                    routes_paths.clone(),
+                    req,
+                    next,
+                )
+            },
+        ))
         .with_state(app_state);
 
     Ok(app)
