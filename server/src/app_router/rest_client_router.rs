@@ -24,7 +24,6 @@ use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
-use tracing::debug;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -380,11 +379,6 @@ fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) 
         .map(|value| value.to_string())
         .unwrap_or("".to_owned());
     let real_ip = client_addr.ip().to_string();
-
-    /*debug!(
-        "forwarded_for={forwarded_for} real_ip={real_ip} allowed={:?}",
-        app_state.rest_client_proxy_allow_ips
-    );*/
 
     let client_ip = if !forwarded_for.is_empty() {
         forwarded_for.split(',').next().unwrap_or(&real_ip).trim().to_owned()
