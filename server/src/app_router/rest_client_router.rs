@@ -235,8 +235,21 @@ pub async fn rest_client_html_previewer_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    if !routes_paths.contains(&req.uri().path().to_owned())
-        && req.uri().path() != "/"
+    let referer = req
+        .headers()
+        .get(header::REFERER)
+        .map(|hv| {
+            hv.to_str().ok().map(|referer| {
+                urlencoding::decode(referer).ok().map(|referer| Url::parse(&referer).ok())
+            })
+        })
+        .unwrap_or_default()
+        .unwrap_or_default()
+        .unwrap_or_default();
+
+    if (!routes_paths.contains(&req.uri().path().to_owned())
+        || (referer.is_some()
+            && !routes_paths.contains(&referer.to_owned().unwrap().path().to_owned())))
         && is_proxy_allow(&req, &app_state, addr)
     {
         let cookie_jar = CookieJar::from_headers(req.headers());
@@ -258,18 +271,6 @@ pub async fn rest_client_html_previewer_middleware(
             if path.starts_with('/') {
                 path = &path[1..];
             }
-
-            let referer = req
-                .headers()
-                .get(header::REFERER)
-                .map(|hv| {
-                    hv.to_str().ok().map(|referer| {
-                        urlencoding::decode(referer).ok().map(|referer| Url::parse(&referer).ok())
-                    })
-                })
-                .unwrap_or_default()
-                .unwrap_or_default()
-                .unwrap_or_default();
 
             let base_url = if let Some(referer) = &referer
                 && let Some(parent_base_url) =
