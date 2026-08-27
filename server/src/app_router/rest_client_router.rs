@@ -381,10 +381,10 @@ fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) 
         .unwrap_or("".to_owned());
     let real_ip = client_addr.ip().to_string();
 
-    debug!(
+    /*debug!(
         "forwarded_for={forwarded_for} real_ip={real_ip} allowed={:?}",
         app_state.rest_client_proxy_allow_ips
-    );
+    );*/
 
     let client_ip = if !forwarded_for.is_empty() {
         forwarded_for.split(',').next().unwrap_or(&real_ip).trim().to_owned()
