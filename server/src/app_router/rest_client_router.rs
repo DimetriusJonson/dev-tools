@@ -20,7 +20,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use axum_extra::extract::CookieJar;
+use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
@@ -345,7 +345,10 @@ pub async fn rest_client_html_previewer_middleware(
             }
 
             let response_status = response.status();
-            let headers = response.headers().clone();
+
+            let mut headers = response.headers().clone();
+            replace_cookies_domain(&mut headers);
+
             let body = Body::from_stream(response.bytes_stream());
 
             return Ok((response_status, headers, body).into_response());
@@ -390,4 +393,29 @@ fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) 
     };
 
     app_state.rest_client_proxy_allow_ips.contains(&client_ip)
+}
+
+fn replace_cookies_domain(headers: &mut HeaderMap) {
+    let set_cookies = headers
+        .get_all(header::SET_COOKIE)
+        .into_iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(';'))
+        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok());
+
+    let mut new_set_cookies = Vec::new();
+    for cookie in set_cookies {
+        let mut new_cookie = cookie.clone();
+        if let Some(_) = new_cookie.domain() {
+            new_cookie.set_domain("");
+        }
+        new_set_cookies.push(new_cookie);
+    }
+
+    headers.remove(header::SET_COOKIE);
+    for cookie in new_set_cookies.iter() {
+        if let Ok(header_value) = cookie.encoded().to_string().parse() {
+            headers.append(header::SET_COOKIE, header_value);
+        }
+    }
 }
