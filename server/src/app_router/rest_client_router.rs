@@ -260,7 +260,7 @@ pub async fn rest_client_html_previewer_middleware(
                 .query()
                 .map(|query_str| {
                     parse_query_params(query_str)
-                        .get("rc_base_url")
+                        .get("rc_src_url")
                         .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 })
                 .unwrap_or(None)

@@ -2,6 +2,21 @@ use url::Url;
 
 use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cookie};
 
+pub static FETCH_WRAPPER_JS: &[u8] = include_bytes!("fetchWrapper.js");
+
+pub fn add_preview_scripts(html: &mut String) {
+    let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
+    let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
+    if head_start_indexes.len() == 1 && head_end_indexes.len() == 1 {
+        let script_text = String::from_utf8_lossy(FETCH_WRAPPER_JS).to_string();
+
+        html.insert_str(
+            head_start_indexes[0] + 6,
+            &format!("<script lang=\"javascript\">{}</script>", script_text),
+        );
+    }
+}
+
 pub fn add_head_base_tag(html: &mut String, url: &str) {
     let base_url = build_base_url(url);
     let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
@@ -117,7 +132,7 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
         url.set_scheme(&host_info.0).unwrap();
         url.set_host(Some(&host_info.1)).unwrap();
         url.set_port(host_info.2).unwrap();
-        url.query_pairs_mut().append_pair("rc_base_url", src_url);
+        url.query_pairs_mut().append_pair("rc_src_url", src_url);
         return Some(url.to_string());
     }
 

@@ -13,7 +13,7 @@ use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_previewer::{
-    add_head_base_tag, clear_html_previewer, init_html_previewer, replace_absolute_links,
+    add_head_base_tag, add_preview_scripts, clear_html_previewer, init_html_previewer, replace_absolute_links,
 };
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
@@ -187,6 +187,7 @@ pub fn RequestResultPanel(
         set_preview_loading.set(true);
         let mut html = request_result.body.get();
         if proxy_allow.get_untracked() {
+            add_preview_scripts(&mut html);
             replace_absolute_links(&mut html, &rc_context.request.read_untracked().url);
         } else {
             add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
