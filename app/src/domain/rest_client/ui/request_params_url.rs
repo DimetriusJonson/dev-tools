@@ -4,7 +4,6 @@ use crate::domain::rest_client::model::request_body_kind::RequestBodyKind;
 use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
-use crate::domain::rest_client::util::html_previewer::clear_html_previewer;
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
@@ -47,7 +46,6 @@ pub fn RequestParamsUrl(
     let on_send_click = move |_| {
         spawn_local(async move {
             set_in_progress.set(true);
-            clear_html_previewer();
 
             let params = params.read_untracked();
             let method = params.method.get_untracked();

@@ -20,7 +20,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use axum_extra::extract::{CookieJar, cookie::Cookie};
+use axum_extra::extract::cookie::Cookie;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
@@ -194,32 +194,25 @@ pub async fn rest_client_attachment_download_handler(
 static PROXY_CACHE: LazyLock<RwLock<HashMap<String, String>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
-fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> String {
-    let mut query_str = query
-        .map(|q| {
-            q.split('&')
-                .filter(|qv| !qv.starts_with("rc_base_url="))
-                .collect::<Vec<&str>>()
-                .join("&")
-        })
-        .unwrap_or_default();
-    if !query_str.is_empty() {
-        query_str.insert(0, '?');
-    }
+fn build_proxy_cache_key(path: &str, query: Option<&str>) -> String {
+    let query_str = match query {
+        Some(str) => normalize_query(str),
+        None => "".to_owned(),
+    };
 
-    format!("{}:{}{}", base_url, path, query_str)
+    format!("{}{}", path, query_str)
 }
 
-fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Option<String> {
-    let key = build_proxy_cache_key(base_url, path, query);
+fn get_proxy_cached_value(path: &str, query: Option<&str>) -> Option<String> {
+    let key = build_proxy_cache_key(path, query);
 
     //info!("get {}", key);
     let cache = PROXY_CACHE.read().unwrap();
     cache.get(&key).cloned()
 }
 
-fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value: String) {
-    let key = build_proxy_cache_key(base_url, path, query);
+fn set_proxy_cached_value(path: &str, query: Option<&str>, value: String) {
+    let key = build_proxy_cache_key(path, query);
 
     //info!("*** set {}", key);
 
@@ -230,37 +223,44 @@ fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value
 pub async fn rest_client_html_previewer_middleware(
     State(app_state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    routes_paths: Vec<String>,
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    let referer = req
-        .headers()
-        .get(header::REFERER)
-        .map(|hv| {
-            hv.to_str().ok().map(|referer| {
-                urlencoding::decode(referer).ok().map(|referer| Url::parse(&referer).ok())
+    if is_proxy_allow(&req, &app_state, addr) {
+        //info!("request uri={:?}", req.uri());
+
+        let referer = req
+            .headers()
+            .get(header::REFERER)
+            .map(|hv| {
+                hv.to_str().ok().map(|referer| {
+                    urlencoding::decode(referer).ok().map(|referer| Url::parse(&referer).ok())
+                })
             })
-        })
-        .unwrap_or_default()
-        .unwrap_or_default()
-        .unwrap_or_default();
+            .unwrap_or_default()
+            .unwrap_or_default()
+            .unwrap_or_default();
 
-    if (!routes_paths.contains(&req.uri().path().to_owned())
-        || (referer.is_some()
-            && !routes_paths.contains(&referer.to_owned().unwrap().path().to_owned())))
-        && is_proxy_allow(&req, &app_state, addr)
-    {
-        let cookie_jar = CookieJar::from_headers(req.headers());
-        if let Some(cookie) = cookie_jar.get("rc_base_url") {
-            let rc_base_url = cookie.value().trim_end_matches("/");
+        let base_url = if let Some(referer) = &referer
+            && let Some(parent_base_url) = get_proxy_cached_value(referer.path(), referer.query())
+            && let Ok(parent_base_url) = Url::parse(&parent_base_url)
+        {
+            Some(parent_base_url)
+        } else {
+            if let Some(rc_base_url) = extract_rc_base_url(&req) {
+                Some(Url::parse(&rc_base_url).map_err(AppError::system_error)?)
+            } else {
+                None
+            }
+        };
 
-            let url_param = req
+        if let Some(base_url) = base_url {
+            let src_url_param = req
                 .uri()
                 .query()
                 .map(|query_str| {
                     parse_query_params(query_str)
-                        .get("rc_base_url")
+                        .get("rc_src_url")
                         .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 })
                 .unwrap_or(None)
@@ -271,34 +271,25 @@ pub async fn rest_client_html_previewer_middleware(
                 path = &path[1..];
             }
 
-            let base_url = if let Some(referer) = &referer
-                && let Some(parent_base_url) =
-                    get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
-                && let Ok(parent_base_url) = Url::parse(&parent_base_url)
-            {
-                parent_base_url
-            } else {
-                Url::parse(rc_base_url).map_err(AppError::system_error)?
-            };
-
-            let url = match &url_param {
+            let url = match &src_url_param {
                 Some(url_param) => url_param.to_owned(),
-                None => format!(
-                    "{}://{}/{}{}",
-                    base_url.scheme(),
-                    base_url.host_str().unwrap_or_default(),
-                    path,
-                    req.uri().query().map(|query| format!("?{}", query)).unwrap_or_default()
-                ),
+                None => {
+                    let url_str = format!(
+                        "{}://{}/{}{}",
+                        base_url.scheme(),
+                        base_url.host_str().unwrap_or_default(),
+                        path,
+                        normalize_query(req.uri().query().unwrap_or_default())
+                    );
+
+                    url_str
+                }
             };
 
-            if let Some(url_param) = url_param {
-                set_proxy_cached_value(
-                    rc_base_url,
-                    req.uri().path(),
-                    req.uri().query(),
-                    url_param.to_owned(),
-                );
+            if let Some(url_param) = src_url_param {
+                set_proxy_cached_value(req.uri().path(), req.uri().query(), url_param.to_owned());
+            } else {
+                set_proxy_cached_value(req.uri().path(), req.uri().query(), url.to_string());
             }
 
             let mut reqwest_headers = req.headers().clone();
@@ -319,6 +310,9 @@ pub async fn rest_client_html_previewer_middleware(
                     .map_err(AppError::system_error)?,
                 );
             }
+
+            //info!("url={}", url);
+            //sleep(Duration::from_secs(2)).await;
 
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)
@@ -354,12 +348,44 @@ pub async fn rest_client_html_previewer_middleware(
         }
     }
 
-    let mut response = next.run(req).await;
-    response.headers_mut().insert(
-        header::SET_COOKIE,
-        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/").unwrap(),
-    );
+    let response = next.run(req).await;
     Ok(response)
+}
+
+fn normalize_query(query_str: &str) -> String {
+    let mut query_params = parse_query_params(query_str);
+    query_params.remove("rc_base_url");
+    query_params.remove("rc_src_url");
+    if !query_params.is_empty() {
+        format!(
+            "?{}",
+            query_params
+                .iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect::<Vec<String>>()
+                .join("&")
+        )
+    } else {
+        "".to_owned()
+    }
+}
+
+fn extract_rc_base_url(req: &Request) -> Option<String> {
+    if let Some(base_url_param) = req
+        .uri()
+        .query()
+        .map(|query_str| {
+            parse_query_params(query_str)
+                .get("rc_base_url")
+                .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
+        })
+        .unwrap_or(None)
+        .unwrap_or(None)
+    {
+        return Some(base_url_param);
+    }
+
+    None
 }
 
 #[axum::debug_handler]
@@ -379,6 +405,11 @@ fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) 
         .map(|value| value.to_string())
         .unwrap_or("".to_owned());
     let real_ip = client_addr.ip().to_string();
+
+    /*debug!(
+        "forwarded_for={forwarded_for} real_ip={real_ip} allowed={:?}",
+        app_state.rest_client_proxy_allow_ips
+    );*/
 
     let client_ip = if !forwarded_for.is_empty() {
         forwarded_for.split(',').next().unwrap_or(&real_ip).trim().to_owned()

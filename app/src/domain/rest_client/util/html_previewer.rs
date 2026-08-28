@@ -1,6 +1,22 @@
 use url::Url;
 
-use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cookie};
+use crate::common::ui_utils::get_browser_host_info;
+
+pub static FETCH_WRAPPER_JS: &[u8] = include_bytes!("fetchWrapper.js");
+
+pub fn add_preview_scripts(html: &mut String, url: &str) {
+    let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
+    let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
+    if head_start_indexes.len() == 1 && head_end_indexes.len() == 1 {
+        let mut script_text = String::from_utf8_lossy(FETCH_WRAPPER_JS).to_string();
+        script_text = script_text.replace("${RC_BASE_URL}", url);
+
+        html.insert_str(
+            head_start_indexes[0] + 6,
+            &format!("<script lang=\"javascript\">{}</script>", script_text),
+        );
+    }
+}
 
 pub fn add_head_base_tag(html: &mut String, url: &str) {
     let base_url = build_base_url(url);
@@ -28,39 +44,33 @@ pub fn build_base_url(url: &str) -> String {
     }
 }
 
-pub fn replace_absolute_links(html: &mut String, _base_url: &str) {
-    replace_absolute_links_by_attr_part(html, "src=\"", "\"");
-    replace_absolute_links_by_attr_part(html, "src='", "'");
+pub fn replace_absolute_links(html: &mut String, base_url: &str) {
+    replace_absolute_links_by_attr_part(html, "href=\"", "\"", base_url);
+    replace_absolute_links_by_attr_part(html, "href='", "'", base_url);
 
-    replace_absolute_links_by_attr_part(html, "background:url(", ")");
-    replace_absolute_links_by_attr_part(html, "background:url('", "'");
-    replace_absolute_links_by_attr_part(html, "background:url(\"", "\"");
-    replace_absolute_links_by_attr_part(html, "background: url(", ")");
-    replace_absolute_links_by_attr_part(html, "background: url('", "'");
-    replace_absolute_links_by_attr_part(html, "background: url(\"", "\"");
+    replace_absolute_links_by_attr_part(html, "src=\"", "\"", base_url);
+    replace_absolute_links_by_attr_part(html, "src='", "'", base_url);
 
-    replace_absolute_links_by_attr_part(html, "background-image:url(", ")");
-    replace_absolute_links_by_attr_part(html, "background-image:url('", "'");
-    replace_absolute_links_by_attr_part(html, "background-image:url(\"", "\"");
-    replace_absolute_links_by_attr_part(html, "background-image: url(", ")");
-    replace_absolute_links_by_attr_part(html, "background-image: url('", "'");
-    replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"");
-}
+    replace_absolute_links_by_attr_part(html, "background:url(", ")", base_url);
+    replace_absolute_links_by_attr_part(html, "background:url('", "'", base_url);
+    replace_absolute_links_by_attr_part(html, "background:url(\"", "\"", base_url);
+    replace_absolute_links_by_attr_part(html, "background: url(", ")", base_url);
+    replace_absolute_links_by_attr_part(html, "background: url('", "'", base_url);
+    replace_absolute_links_by_attr_part(html, "background: url(\"", "\"", base_url);
 
-pub fn init_html_previewer(proxy_allow: bool, base_url: &str) {
-    if proxy_allow {
-        create_cookie("rc_base_url", &build_base_url(base_url), None);
-    }
-}
-
-pub fn clear_html_previewer() {
-    remove_cookie("rc_base_url", "/");
+    replace_absolute_links_by_attr_part(html, "background-image:url(", ")", base_url);
+    replace_absolute_links_by_attr_part(html, "background-image:url('", "'", base_url);
+    replace_absolute_links_by_attr_part(html, "background-image:url(\"", "\"", base_url);
+    replace_absolute_links_by_attr_part(html, "background-image: url(", ")", base_url);
+    replace_absolute_links_by_attr_part(html, "background-image: url('", "'", base_url);
+    replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"", base_url);
 }
 
 fn replace_absolute_links_by_attr_part(
     html: &mut String,
     start_attr_part: &str,
     end_attr_part: &str,
+    base_url: &str,
 ) {
     let indexes = html.match_indices(&start_attr_part).map(|p| p.0).collect::<Vec<usize>>();
     let mut offset = 0;
@@ -68,13 +78,31 @@ fn replace_absolute_links_by_attr_part(
         let start_index = i + start_attr_part.len() + offset;
         if let Some(end_index) = find_from_byte_index(html, start_index, end_attr_part)
             && let Some(href) = html.get(start_index..end_index)
-            && is_absolute_url(href)
-            && let Some(absolute) = convert_absolute_url(href)
+            && let Some(url) = convert_url(href, base_url)
         {
-            html.replace_range(start_index..end_index, &absolute);
-            offset += absolute.len() - (end_index - start_index)
+            html.replace_range(start_index..end_index, &url);
+            offset += url.len() - (end_index - start_index)
         }
     }
+}
+
+fn convert_url(url: &str, base_url: &str) -> Option<String> {
+    //console_log(&format!("convert_url={}", url));
+    let mut url = url.to_owned();
+    if is_absolute_url(&url) {
+        if let Some(converted_url) = convert_absolute_url(&url) {
+            url = converted_url;
+        }
+    } else if is_special_url(&url) {
+        return None;
+    }
+
+    return Some(format!(
+        "{}{}rc_base_url={}",
+        url,
+        if url.contains("?") { "&" } else { "?" },
+        urlencoding::encode(base_url)
+    ));
 }
 
 fn find_from_byte_index(haystack: &str, start_at: usize, needle: &str) -> Option<usize> {
@@ -101,13 +129,7 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
         return Some(src_url.to_owned());
     }
 
-    // Special URLs
-    if src_url.starts_with("data:")
-        || src_url.starts_with("javascript:")
-        || src_url.starts_with("mailto:")
-        || src_url.starts_with("tel:")
-        || src_url.starts_with('#')
-    {
+    if is_special_url(&src_url) {
         return Some(src_url.to_owned());
     }
 
@@ -117,9 +139,19 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
         url.set_scheme(&host_info.0).unwrap();
         url.set_host(Some(&host_info.1)).unwrap();
         url.set_port(host_info.2).unwrap();
-        url.query_pairs_mut().append_pair("rc_base_url", src_url);
+        url.query_pairs_mut().append_pair("rc_src_url", src_url);
         return Some(url.to_string());
     }
 
     Some(src_url.to_owned())
+}
+
+fn is_special_url(url: &str) -> bool {
+    url.starts_with("'")
+        || url.starts_with("\"")
+        || url.starts_with("data:")
+        || url.starts_with("javascript:")
+        || url.starts_with("mailto:")
+        || url.starts_with("tel:")
+        || url.starts_with('#')
 }
