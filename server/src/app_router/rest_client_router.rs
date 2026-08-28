@@ -267,7 +267,7 @@ pub async fn rest_client_html_previewer_middleware(
                 .unwrap_or(None)
                 .unwrap_or(None);
 
-            let mut path = req.uri().path().trim_end_matches("/");
+            let mut path = req.uri().path();
             if path.starts_with('/') {
                 path = &path[1..];
             }
@@ -305,6 +305,7 @@ pub async fn rest_client_html_previewer_middleware(
             let mut reqwest_headers = req.headers().clone();
             reqwest_headers.remove(header::HOST);
             reqwest_headers.remove(header::REFERER);
+
             if let Some(referer) = &referer {
                 let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
                 reqwest_headers.append(
@@ -321,14 +322,14 @@ pub async fn rest_client_html_previewer_middleware(
                 );
             }
 
-            info!("{} {}", req.method(), url);
-            info!("headers: {:?}", reqwest_headers);
+            //info!("{} {}", req.method(), url);
+            //info!("headers: {:?}", reqwest_headers);
 
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)
                 .build()
                 .map_err(AppError::system_error)?
-                .request(req.method().to_owned(), url.to_owned())
+                .request(req.method().to_owned(), &url)
                 .headers(reqwest_headers)
                 .body({
                     let body_stream = req.into_body();
@@ -339,7 +340,11 @@ pub async fn rest_client_html_previewer_middleware(
                     )
                 });
 
-            let response = request.send().await.map_err(AppError::system_error)?;
+            let response = request.send().await.map_err(|e| { 
+                info!("error {} for {}", e, url);
+                AppError::system_error(e)
+            })?;
+//            info!("response {} for {}", response.status(), url);
 
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
