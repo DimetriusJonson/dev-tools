@@ -106,11 +106,20 @@ fn convert_url(url: &str, base_url: &str) -> Option<String> {
 
     if !url.starts_with("/") {
         if let Ok(base_url) = Url::parse(base_url) {
-            return Some(format!("{}{}", base_url.path(), url));
+            if let Ok(url) = base_url.join(url) {
+                return Some(format!(
+                    "{}{}",
+                    url.path(),
+                    match url.query() {
+                        Some(query) => format!("?{}", query),
+                        None => "".to_owned(),
+                    }
+                ));
+            }
         }
     }
 
-    Some(url.to_string())
+    None
 }
 
 fn find_from_byte_index(haystack: &str, start_at: usize, needle: &str) -> Option<usize> {

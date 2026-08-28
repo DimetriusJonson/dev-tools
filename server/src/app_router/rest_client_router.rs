@@ -24,6 +24,7 @@ use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
+use tracing::info;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -319,6 +320,9 @@ pub async fn rest_client_html_previewer_middleware(
                     .map_err(AppError::system_error)?,
                 );
             }
+
+            info!("{} {}", req.method(), url);
+            info!("headers: {:?}", reqwest_headers);
 
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)

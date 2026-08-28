@@ -13,18 +13,20 @@ use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_previewer::{
-    add_head_base_tag, add_preview_scripts, clear_html_previewer, init_html_previewer, replace_absolute_links,
+    add_head_base_tag, add_preview_scripts, clear_html_previewer, init_html_previewer,
+    replace_absolute_links,
 };
 use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use gloo_net::http::Request;
-use leptos::html::Div;
+use leptos::html::{Div};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::RoutingProgress;
 use leptos_router::hooks::use_location;
+use web_sys::HtmlIFrameElement;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
@@ -113,7 +115,6 @@ pub fn RequestResultPanel(
         },
         false,
     );
-
 
     Effect::watch(
         move || response.get(),
@@ -318,7 +319,16 @@ pub fn RequestResultPanel(
                                 </div>
                                 <iframe class="flex-1 w-full"
                                     srcdoc=get_preview_src_doc sandbox=preview_sandbox
-                                    on:load=move |_| {
+                                    on:load=move |event| {
+                                        let elem = event_target::<HtmlIFrameElement>(&event);
+                                        if let Some(cw) = elem.content_window() && 
+                                            let Ok(href) = cw.location().href() &&
+                                            let Ok(base_url) = url::Url::parse(&rc_context.request.read_untracked().url) &&
+                                            let Ok(mut href_url) = url::Url::parse(&href) &&
+                                            href_url.set_scheme(base_url.scheme()).is_ok() &&
+                                            href_url.set_host(base_url.host_str()).is_ok() {
+                                            init_html_previewer(true, &href_url.to_string());
+                                        }
                                         set_preview_loading.set(false);
                                     }
                                     on:error=move |_| {
