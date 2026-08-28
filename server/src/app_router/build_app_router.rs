@@ -41,6 +41,7 @@ pub async fn build_app_router(
     let leptos_options = conf_file.leptos_options;
 
     let routes = generate_route_list(App);
+    let routes_paths: Vec<String> = routes.iter().map(|r| r.path().to_owned()).collect();
 
     let app_state = AppState {
         leptos_options: leptos_options.clone(),
@@ -74,7 +75,15 @@ pub async fn build_app_router(
         .layer(TraceLayer::new_for_http())
         .layer(middleware::from_fn_with_state(
             app_state.clone(),
-            rest_client_html_previewer_middleware,
+            move |app_state, connect_info, req, next| {
+                rest_client_html_previewer_middleware(
+                    app_state,
+                    connect_info,
+                    routes_paths.clone(),
+                    req,
+                    next,
+                )
+            },
         ))
         .with_state(app_state);
 
