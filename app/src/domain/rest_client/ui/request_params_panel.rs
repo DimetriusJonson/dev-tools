@@ -10,6 +10,7 @@ use crate::domain::rest_client::model::request_body_kind::RequestBodyKind;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_body_form_panel::RequestBodyFormPanel;
+use crate::domain::rest_client::ui::request_cookies_panel::RequestCookiesPanel;
 use crate::domain::rest_client::ui::request_headers_panel::RequestHeadersPanel;
 use crate::domain::rest_client::ui::request_query_panel::RequestQueryPanel;
 use crate::domain::rest_client::util::request_store::build_request_stored_key;
@@ -37,6 +38,7 @@ pub fn RequestParamsPanel(
     let (body_lang, set_body_lang) = signal("text".to_owned());
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_query_ref = NodeRef::<Div>::new();
+    let tab_cookies_ref = NodeRef::<Div>::new();
 
     Effect::watch(
         move || params.read_untracked().body_type.get(),
@@ -108,6 +110,7 @@ pub fn RequestParamsPanel(
                         items=move || vec![
                             TabItem::new_simple(t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
                             TabItem::new_simple(t_string!(i18n, rest_client_query_tab), tab_query_ref),
+                            TabItem::new_simple(t_string!(i18n, rest_client_cookies_tab), tab_cookies_ref),
                         ] />
 
                     <div node_ref=tab_headers_ref class="flex-1 flex flex-col overflow-y-auto gap-y-2 pt-4">
@@ -116,6 +119,10 @@ pub fn RequestParamsPanel(
 
                     <div node_ref=tab_query_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
                         <RequestQueryPanel params />
+                    </div>
+
+                    <div node_ref=tab_cookies_ref class="flex-1 flex flex-col overflow-y-auto pt-4 gap-4">
+                        <RequestCookiesPanel params />
                     </div>
                 </div>
 

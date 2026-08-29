@@ -11,3 +11,4 @@ pub mod rest_client_curl_button;
 pub mod request_params_url;
 pub mod request_query_panel;
 pub mod request_raw_panel;
+pub mod request_cookies_panel;

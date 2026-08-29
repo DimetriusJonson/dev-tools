@@ -79,6 +79,8 @@
     
     "rest_client_param_name_placeholder": "Parameter name",
     "rest_client_param_value_placeholder": "Parameter value",
+    "rest_client_cookie_name_placeholder": "Cookie name",
+    "rest_client_cookie_value_placeholder": "Cookie value",
     "rest_client_curl_import_title": "Import cUrl command from clipboard.",
     "rest_client_project_select_label": "Project",
     "rest_client_project_not_selected": "Not selected",
@@ -98,6 +100,7 @@
 
     "rest_client_headers_tab": "Headers",
     "rest_client_query_tab": "Query",
+    "rest_client_cookies_tab": "Cookies",
 
     "rest_client_curl_copied": "The cURL command has been copied to the clipboard.",
     "rest_client_curl_build_btn_title": "Copy the cURL command to the clipboard.",

@@ -78,6 +78,9 @@
     
     "rest_client_param_name_placeholder": "Название параметра",
     "rest_client_param_value_placeholder": "Значение параметра",
+    "rest_client_cookie_name_placeholder": "Название Cookie",
+    "rest_client_cookie_value_placeholder": "Значение Cookie",
+
     "rest_client_curl_import_title": "Импорт команды cUrl из буфера обмена.",
 
     "rest_client_project_select_label": "Проект",
@@ -97,6 +100,7 @@
     "add_btn": "Добавить",
     "rest_client_headers_tab": "Заголовки",
     "rest_client_query_tab": "Запрос",
+    "rest_client_cookies_tab": "Cookies",
 
     "rest_client_curl_copied": "Команда cURL скопирована в буфер обмена.",
     "rest_client_curl_build_btn_title": "Скопировать в буфер обмена cURL команду.",
