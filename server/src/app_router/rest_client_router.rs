@@ -24,7 +24,6 @@ use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
-use tracing::info;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
