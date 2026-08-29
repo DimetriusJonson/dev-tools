@@ -134,7 +134,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "app"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
@@ -6465,7 +6465,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "anyhow",
  "app",
@@ -8716,7 +8716,7 @@ dependencies = [
 
 [[package]]
 name = "webdev_useful_tools"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "clap",
  "log",
