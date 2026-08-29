@@ -21,9 +21,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
-use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
+use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
+use tracing::info;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -213,7 +214,7 @@ fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> Str
 fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Option<String> {
     let key = build_proxy_cache_key(base_url, path, query);
 
-    //info!("get {}", key);
+    //info!("get cache {}", key);
     let cache = PROXY_CACHE.read().unwrap();
     cache.get(&key).cloned()
 }
@@ -221,7 +222,7 @@ fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Op
 fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value: String) {
     let key = build_proxy_cache_key(base_url, path, query);
 
-    //info!("*** set {}", key);
+    //info!("*** set cache {}", key);
 
     let mut cache = PROXY_CACHE.write().unwrap();
     cache.insert(key, value);
@@ -234,17 +235,15 @@ pub async fn rest_client_html_previewer_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
-    let referer = req
-        .headers()
-        .get(header::REFERER)
-        .map(|hv| {
-            hv.to_str().ok().map(|referer| {
-                urlencoding::decode(referer).ok().map(|referer| Url::parse(&referer).ok())
-            })
+    let referer_raw =
+        req.headers().get(header::REFERER).map(|hv| hv.to_str().ok()).unwrap_or_default();
+    let referer_uri = referer_raw.map(|referer| Uri::from_str(referer).ok()).unwrap_or_default();
+
+    let referer = referer_raw
+        .map(|referer_raw| {
+            urlencoding::decode(referer_raw).ok().map(|referer| Url::parse(&referer).ok())
         })
-        .unwrap_or_default()
-        .unwrap_or_default()
-        .unwrap_or_default();
+        .unwrap_or_default().unwrap_or_default();
 
     if (!routes_paths.contains(&req.uri().path().to_owned())
         || (referer.is_some()
@@ -271,7 +270,7 @@ pub async fn rest_client_html_previewer_middleware(
                 path = &path[1..];
             }
 
-            let base_url = if let Some(referer) = &referer
+            let base_url = if let Some(referer) = &referer_uri
                 && let Some(parent_base_url) =
                     get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
                 && let Ok(parent_base_url) = Url::parse(&parent_base_url)
