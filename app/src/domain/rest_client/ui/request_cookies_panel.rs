@@ -4,6 +4,7 @@ use crate::domain::rest_client::model::request_header::RequestHeaders;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
+use cookie::Cookie;
 use leptos::prelude::*;
 use uuid::Uuid;
 
@@ -89,7 +90,9 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 let cookie_value = value
                     .iter()
                     .map(|item| {
-                        format!("{}={}", &item.name.read_untracked(), &item.value.read_untracked())
+                        Cookie::new(item.name.get_untracked(), item.value.get_untracked())
+                            .encoded()
+                            .to_string()
                     })
                     .collect::<Vec<String>>()
                     .join("; ");
@@ -157,12 +160,13 @@ impl KeyValueTableItem for CookiesItem {
     }
 }
 
-fn parse_cookies(cookie_header: &str) -> Vec<(String, String)> {
-    cookie_header
+fn parse_cookies(cookie_value: &str) -> Vec<(String, String)> {
+    cookie_value
         .split(';')
         .filter_map(|s| {
-            let mut parts = s.trim().splitn(2, '=');
-            Some((parts.next()?.to_string(), parts.next()?.to_string()))
+            Cookie::parse_encoded(s)
+                .ok()
+                .map(|cookie| (cookie.name().to_owned(), cookie.value_trimmed().to_owned()))
         })
         .collect()
 }

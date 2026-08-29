@@ -73,6 +73,7 @@ strum = "0.28"
 strum_macros = "0.28"
 url = "2.5.8"
 size = "0.5.0"
+cookie = "0.18.2"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
