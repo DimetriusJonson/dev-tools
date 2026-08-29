@@ -24,7 +24,6 @@ use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
-use tracing::info;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -340,11 +339,8 @@ pub async fn rest_client_html_previewer_middleware(
                     )
                 });
 
-            let response = request.send().await.map_err(|e| { 
-                info!("error {} for {}", e, url);
-                AppError::system_error(e)
-            })?;
-//            info!("response {} for {}", response.status(), url);
+            let response = request.send().await.map_err(AppError::system_error)?;
+            //            info!("response {} for {}", response.status(), url);
 
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
