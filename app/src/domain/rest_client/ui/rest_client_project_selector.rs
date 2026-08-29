@@ -31,6 +31,7 @@ pub fn ProjectSelector(
     let (old_project, set_old_project) = signal("".to_owned());
     let (projects, set_projects) = signal(Vec::new());
     let (popup_menu_show, set_popup_menu_show) = signal(false);
+    let (popup_menu_bottom, _set_popup_menu_bottom) = signal(false);
     let (edit_name_mode, set_edit_name_mode) = signal(false);
     let (edit_name, set_edit_name) = signal("".to_owned());
     let edit_name_ref = NodeRef::<Input>::new();
@@ -116,7 +117,7 @@ pub fn ProjectSelector(
                         />
 
                         <Show when=move || popup_menu_show.get()>
-                            <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
+                            <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned() is_bottom=popup_menu_bottom
                                 items=move || {vec![
                                         ("create", t_string!(i18n, rest_client_explorer_create_project), false),
                                         ("rename", t_string!(i18n, rest_client_explorer_rename_project), true),

@@ -4,10 +4,13 @@ use leptos::prelude::*;
 pub fn RequestPopupMenu(
     #[prop(optional)] class_name: String,
     items: impl Fn() -> Vec<(&'static str, &'static str, bool)> + Send + Sync + 'static,
+    is_bottom: ReadSignal<bool>,
     #[prop(into)] on_selected: Callback<(&'static str, &'static str)>,
 ) -> impl IntoView {
     view! {
-        <div class={format!("flex flex-col bg-gray-800 rounded-xl shadow-2xl text-gray-300 w-fit h-fit whitespace-nowrap p-2 items-center {}", class_name)}>
+        <div class={format!("flex flex-col bg-gray-800 rounded-xl shadow-2xl text-gray-300 w-fit h-fit whitespace-nowrap p-2 items-center {}", class_name)}
+            class=(["-top-60"], move || is_bottom.get())
+        >
             {move || 
                 items().into_iter()
                   .map(|item| {

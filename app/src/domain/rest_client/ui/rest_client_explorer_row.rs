@@ -3,8 +3,10 @@ use std::time::Duration;
 use leptos::html::Div;
 use leptos::{ev, leptos_dom};
 use leptos::{html::Input, prelude::*};
+use web_sys::HtmlElement;
 use web_sys::wasm_bindgen::JsCast;
 
+use crate::common::ui_utils::get_browser_height;
 use crate::components::layout::message_banner::{Messages, show_error};
 use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
@@ -33,6 +35,7 @@ pub fn RestClientExplorerRow(
     let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (popup_menu_show, set_popup_menu_show) = signal(0);
+    let (popup_menu_bottom, set_popup_menu_bottom) = signal(false);
     let (edit_name_mode, set_edit_name_mode) = signal(false);
     let (edit_name, set_edit_name) = signal("".to_owned());
     let menu_ref = NodeRef::<Div>::new();
@@ -77,6 +80,11 @@ pub fn RestClientExplorerRow(
                 }
             }
             on:contextmenu=move|e| {e.prevent_default();
+                let target = event_target::<HtmlElement>(&e);
+                let rect = target.get_bounding_client_rect();
+                let screen_height = get_browser_height().unwrap();
+                set_popup_menu_bottom.set((screen_height - rect.y()) < 250.0);
+
                 if rc_context.request.read_untracked().id != request.read_untracked().id {
                     rc_context.request.set(request.get());
                     set_edit_name_mode.set(false);
@@ -86,7 +94,6 @@ pub fn RestClientExplorerRow(
                 }
             }
             >
-
             <Show when=move || request.read().id == rc_context.request.read().id && edit_name_mode.get()
                 fallback=move || view!{
                         <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(&request.read().method))}>{request.read().method.to_owned()}</span>
@@ -103,7 +110,11 @@ pub fn RestClientExplorerRow(
                                     text_size=ButtonTextSize::Sm
                                     color=ButtonColor::Custom
                                     loading=move || false
-                                    on_click=move |_|{
+                                    on_click=move |e|{
+                                        let target = event_target::<HtmlElement>(&e);
+                                        let rect = target.get_bounding_client_rect();
+                                        let screen_height = get_browser_height().unwrap();
+                                        set_popup_menu_bottom.set((screen_height - rect.y()) < 250.0);
                                         if rc_context.request.read_untracked().id != request.read_untracked().id {
                                             rc_context.request.set(request.get());
                                             set_timeout(move || set_popup_menu_show.set(request.read_untracked().id), Duration::from_millis(250));
@@ -115,7 +126,7 @@ pub fn RestClientExplorerRow(
                                 />
 
                                 <Show when=move || popup_menu_show.get() == request.read().id>
-                                    <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned()
+                                    <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned() is_bottom=popup_menu_bottom
                                         items=move || {vec![
                                                 ("run", t_string!(i18n, rest_client_explorer_run_request), true),
                                                 ("copyCUrl", t_string!(i18n, rest_client_explorer_copy_curl), false),
