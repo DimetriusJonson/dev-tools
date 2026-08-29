@@ -1,6 +1,8 @@
 use crate::common::ui_utils::safe_updating_ui_value;
 use crate::components::layout::property_editor::{KeyValueTableItem, PropertyEditor};
+use crate::domain::rest_client::model::request_header::RequestHeaders;
 use crate::domain::rest_client::model::request_params::RequestParams;
+use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
 use leptos::prelude::*;
 use uuid::Uuid;
@@ -17,45 +19,57 @@ struct CookiesItem {
 #[component]
 pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let i18n = use_i18n();
+    let rc_context = use_context::<RestClientContext>().unwrap();
 
     let (items, set_items) = signal(Vec::<CookiesItem>::new());
     let update_lock = RwSignal::new(false);
 
+    let update_items = move |prev: Option<&RequestHeaders>, value: &RequestHeaders| {
+        let prev_cookie = prev
+            .map(|prev| prev.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie"))
+            .unwrap_or_default();
+        let actual_cookie =
+            value.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie");
+
+        if prev_cookie.is_none()
+            || (prev_cookie.is_some()
+                && actual_cookie.is_some()
+                && prev_cookie.unwrap().value.get_untracked()
+                    != actual_cookie.unwrap().value.get_untracked())
+        {
+            let actual_cookies =
+                parse_cookies(&actual_cookie.map(|h| h.value.get_untracked()).unwrap_or_default());
+
+            safe_updating_ui_value(update_lock, move || {
+                let mut cookies_items = Vec::new();
+                for (cookie_name, cookie_value) in &actual_cookies {
+                    let (name, set_name) = signal(cookie_name.to_owned());
+                    let (value, set_value) = signal(cookie_value.to_owned());
+                    cookies_items.push(CookiesItem {
+                        id: Uuid::new_v4().to_string(),
+                        name,
+                        set_name,
+                        value,
+                        set_value,
+                    });
+                }
+                set_items.set(cookies_items)
+            });
+        }
+    };
+
+    Effect::watch(
+        move || rc_context.request.get(),
+        move |_value, _prev, _| {
+            update_items(None, &params.read_untracked().headers.read_untracked());
+        },
+        false,
+    );
+
     Effect::watch(
         move || params.read_untracked().headers.get(),
         move |value, prev, _| {
-            if let Some(prev) = prev {
-                let prev_cookie =
-                    prev.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie");
-                let actual_cookie =
-                    value.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie");
-
-                if prev_cookie.is_none()
-                    || (prev_cookie.is_some()
-                        && actual_cookie.is_some()
-                        && prev_cookie.unwrap().value.get_untracked()
-                            != actual_cookie.unwrap().value.get_untracked())
-                {
-                    let actual_cookies =
-                        parse_cookies(&actual_cookie.unwrap().value.read_untracked());
-
-                    safe_updating_ui_value(update_lock, move || {
-                        let mut cookies_items = Vec::new();
-                        for (cookie_name, cookie_value) in &actual_cookies {
-                            let (name, set_name) = signal(cookie_name.to_owned());
-                            let (value, set_value) = signal(cookie_value.to_owned());
-                            cookies_items.push(CookiesItem {
-                                id: Uuid::new_v4().to_string(),
-                                name,
-                                set_name,
-                                value,
-                                set_value,
-                            });
-                        }
-                        set_items.set(cookies_items)
-                    });
-                }
-            }
+            update_items(prev, value);
         },
         false,
     );
