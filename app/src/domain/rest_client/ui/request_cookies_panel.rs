@@ -1,6 +1,6 @@
 use crate::common::ui_utils::safe_updating_ui_value;
 use crate::components::layout::property_editor::{KeyValueTableItem, PropertyEditor};
-use crate::domain::rest_client::model::request_header::RequestHeaders;
+use crate::domain::rest_client::model::request_header::{RequestHeader, RequestHeaders};
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::i18n::*;
@@ -78,15 +78,7 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     Effect::watch(
         move || items.get(),
         move |value, _prev, _| {
-            if !update_lock.get_untracked()
-                && let Some(actual_cookie_header) = params
-                    .get_untracked()
-                    .headers
-                    .get_untracked()
-                    .iter()
-                    .find(|h| h.name.read_untracked().to_lowercase() == "cookie")
-                    .map(|h| h.clone())
-            {
+            if !update_lock.get_untracked() {
                 let cookie_value = value
                     .iter()
                     .map(|item| {
@@ -97,9 +89,33 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     .collect::<Vec<String>>()
                     .join("; ");
 
-                if actual_cookie_header.value.get_untracked() != cookie_value {
+                let cookie_header = params
+                    .get_untracked()
+                    .headers
+                    .get_untracked()
+                    .iter()
+                    .find(|h| h.name.read_untracked().to_lowercase() == "cookie")
+                    .map(|h| h.clone());
+
+                if let Some(cookie_header) = cookie_header {
+                    if !cookie_value.is_empty() {
+                        if cookie_header.value.get_untracked() != cookie_value {
+                            safe_updating_ui_value(update_lock, move || {
+                                cookie_header.value.set(cookie_value.to_owned())
+                            });
+                        }
+                    } else {
+                        safe_updating_ui_value(update_lock, move || {
+                            params.read_untracked().headers.write().remove_by_name("cookie");
+                        });
+                    }
+                } else {
                     safe_updating_ui_value(update_lock, move || {
-                        actual_cookie_header.value.set(cookie_value.to_owned())
+                        params
+                            .read_untracked()
+                            .headers
+                            .write()
+                            .push(RequestHeader::new("cookie".to_owned(), cookie_value.to_owned()));
                     });
                 }
             }
