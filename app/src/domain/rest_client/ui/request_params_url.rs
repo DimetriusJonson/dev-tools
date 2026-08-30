@@ -10,7 +10,6 @@ use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
 use gloo_net::http::Request;
 use leptos::html::Button;
-use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use web_sys::AbortController;
@@ -32,10 +31,16 @@ pub fn RequestParamsUrl(
     let send_btn_node_ref = NodeRef::<Button>::new();
 
     let (in_progress, set_in_progress) = signal(false);
+    let cancel_signal: RwSignal<Option<AbortController>> = RwSignal::new(None);
 
     Effect::watch(
         move || rc_context.request.get(),
         move |value, _prev, _| {
+            if let Some(cancel_controller) = cancel_signal.get_untracked() {
+                cancel_controller.abort();
+                return;
+            }
+
             if value.command == RequestCommand::Run
                 && let Some(send_btn) = send_btn_node_ref.get_untracked()
             {
@@ -46,11 +51,8 @@ pub fn RequestParamsUrl(
         false,
     );
 
-    let cancel_signal: RwSignal<Option<AbortController>> = RwSignal::new(None);
-
     let on_send_click = move |_| {
         if let Some(cancel_controller) = cancel_signal.get_untracked() {
-            console_log("try abort");
             cancel_controller.abort();
             return;
         }
