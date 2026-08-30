@@ -10,8 +10,10 @@ use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::RestClientResponse;
 use gloo_net::http::Request;
 use leptos::html::Button;
+use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use web_sys::AbortController;
 
 use crate::common::ui_utils::single_select_option;
 use crate::components::ui::select_input::SelectInput;
@@ -44,7 +46,15 @@ pub fn RequestParamsUrl(
         false,
     );
 
+    let cancel_signal: RwSignal<Option<AbortController>> = RwSignal::new(None);
+
     let on_send_click = move |_| {
+        if let Some(cancel_controller) = cancel_signal.get_untracked() {
+            console_log("try abort");
+            cancel_controller.abort();
+            return;
+        }
+
         spawn_local(async move {
             set_in_progress.set(true);
             clear_html_previewer();
@@ -90,7 +100,11 @@ pub fn RequestParamsUrl(
                 body,
             };
 
-            match Request::post("/rest_client_send").json(&rc_request) {
+            cancel_signal.set(Some(AbortController::new().unwrap()));
+            match Request::post("/rest_client_send")
+                .abort_signal(Some(&cancel_signal.get_untracked().unwrap().signal()))
+                .json(&rc_request)
+            {
                 Ok(request) => match request.send().await {
                     Ok(response) => match response.json::<RestClientResponse>().await {
                         Ok(resp) => {
@@ -104,6 +118,7 @@ pub fn RequestParamsUrl(
             }
 
             set_in_progress.set(false);
+            cancel_signal.set(None);
         });
     };
 
@@ -146,7 +161,7 @@ pub fn RequestParamsUrl(
                 title=move || t_string!(i18n, rest_client_send_btn_label).to_owned()
                 loading=move || in_progress.get()
                 on_click=on_send_click
-                disabled=move || in_progress.get()
+                disabled=move || false
             />
 
         </div>

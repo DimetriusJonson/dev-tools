@@ -28,7 +28,7 @@ pub fn ButtonWorld(
             title=move || {title_memo.get()}
             aria-label=move || {title_memo.get()}
             class=move || format!("{} {} {}", base_classes,
-                match loading_memo.get() || disabled_memo.get() {
+                match disabled_memo.get() {
                     true => "cursor-not-allowed".to_owned(),
                     false => "cursor-pointer".to_owned(),
                 }, class_name)
