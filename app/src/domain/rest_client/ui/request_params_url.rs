@@ -31,7 +31,7 @@ pub fn RequestParamsUrl(
     let send_btn_node_ref = NodeRef::<Button>::new();
 
     let (in_progress, set_in_progress) = signal(false);
-    let cancel_signal: RwSignal<Option<AbortController>> = RwSignal::new(None);
+    let cancel_signal = RwSignal::<Option<AbortController>>::new(None);
 
     Effect::watch(
         move || rc_context.request.get(),
