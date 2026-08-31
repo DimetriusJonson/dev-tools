@@ -90,7 +90,17 @@ fn replace_absolute_links_by_attr_part(
             && let Some(url) = convert_url(href, base_url)
         {
             html.replace_range(start_index..end_index, &url);
-            offset += url.len() - (end_index - start_index)
+            let delta = url.len() as i32 - (end_index - start_index) as i32;
+            if delta >= 0 {
+                offset += delta as usize
+            } else {
+                let delta = delta.abs();
+                if offset as i32 - delta > 0 {
+                    offset -= delta as usize
+                } else {
+                    offset = 0;
+                }
+            }
         }
     }
 }
