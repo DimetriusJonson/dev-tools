@@ -1,4 +1,4 @@
-use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::layout::message_banner::{Messages, show_error, show_warning};
 use crate::components::ui::button_world::ButtonWorld;
 use crate::domain::rest_client::model::request_body_kind::RequestBodyKind;
 use crate::domain::rest_client::model::request_info::RequestCommand;
@@ -114,7 +114,17 @@ pub fn RequestParamsUrl(
                         }
                         Err(err) => show_error(format!("Cant get response: {}", err), messages),
                     },
-                    Err(err) => show_error(format!("Failed send request: {}", err), messages),
+                    Err(err) => {
+                        let error_str = err.to_string();
+                        if error_str.contains("AbortError") {
+                            show_warning(
+                                t_display!(i18n, rest_client_request_cancelled).to_string(),
+                                messages,
+                            )
+                        } else {
+                            show_error(format!("Failed send request: {}", err), messages)
+                        }
+                    }
                 },
                 Err(err) => show_error(format!("Failed build request: {}", err), messages),
             }

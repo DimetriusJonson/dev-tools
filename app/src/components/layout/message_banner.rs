@@ -98,6 +98,10 @@ pub fn show_info(msg: String, messages: Messages) {
     show_message(msg, "INFO".to_string(), Duration::from_millis(5000), messages);
 }
 
+pub fn show_warning(msg: String, messages: Messages) {
+    show_message(msg, "WARNING".to_string(), Duration::from_millis(5000), messages);
+}
+
 pub fn show_error(msg: String, messages: Messages) {
     show_message(msg, "ERROR".to_string(), Duration::from_millis(30000), messages);
 }
@@ -146,6 +150,10 @@ fn set_message_state(state: MessageBannerState, id: &str, messages: Messages) {
 fn msg_style(msg: &MessageBannerItem) -> String {
     if msg.kind == "INFO" {
         return "bg-emerald-800/75 text-white".to_owned();
+    }
+
+    if msg.kind == "WARNING" {
+        return "bg-orange-800/75 text-white".to_owned();
     }
 
     "bg-red-800/75 text-white".to_owned()

@@ -110,7 +110,7 @@
     "standalone_download_label": "Download app",
     "standalone_download_title": "Go to the download page for the standalone application for Windows/Linux/MacOS.",
 
-    "rc_attachment_download_btn_label": "Download {{ file_name }}"
+    "rc_attachment_download_btn_label": "Download {{ file_name }}",
 
-
+    "rest_client_request_cancelled": "Request cancelled"
 }
