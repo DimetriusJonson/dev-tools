@@ -153,7 +153,7 @@ fn msg_style(msg: &MessageBannerItem) -> String {
     }
 
     if msg.kind == "WARNING" {
-        return "bg-orange-800/75 text-white".to_owned();
+        return "bg-primary text-black".to_owned();
     }
 
     "bg-red-800/75 text-white".to_owned()
