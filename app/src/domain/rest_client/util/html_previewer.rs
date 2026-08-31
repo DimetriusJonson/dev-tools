@@ -82,25 +82,15 @@ fn replace_absolute_links_by_attr_part(
     base_url: &str,
 ) {
     let indexes = html.match_indices(&start_attr_part).map(|p| p.0).collect::<Vec<usize>>();
-    let mut offset = 0;
+    let mut offset: i32 = 0;
     for i in indexes {
-        let start_index = i + start_attr_part.len() + offset;
+        let start_index = (i as i32 + start_attr_part.len() as i32 + offset) as usize;
         if let Some(end_index) = find_from_byte_index(html, start_index, end_attr_part)
             && let Some(href) = html.get(start_index..end_index)
             && let Some(url) = convert_url(href, base_url)
         {
             html.replace_range(start_index..end_index, &url);
-            let delta = url.len() as i32 - (end_index - start_index) as i32;
-            if delta >= 0 {
-                offset += delta as usize
-            } else {
-                let delta = delta.abs();
-                if offset as i32 - delta > 0 {
-                    offset -= delta as usize
-                } else {
-                    offset = 0;
-                }
-            }
+            offset += url.len() as i32 - (end_index - start_index) as i32
         }
     }
 }
