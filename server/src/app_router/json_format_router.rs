@@ -18,7 +18,7 @@ pub async fn format_json_handler(
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    let body = process_json_data(body, ident).await;
+    let body = process_json_data(body, ident).await.map_err(AppError::system_error)?;
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
@@ -30,21 +30,21 @@ pub async fn format_json_handler(
 }
 
 #[cfg(not(target_os = "windows"))]
-async fn process_json_data(body: Body, ident: usize) -> Body {
+async fn process_json_data(body: Body, ident: usize) -> Result<Body, anyhow::Error> {
     let mut formatter = app::common::json_formatter::JsonFormatter::new(ident);
     let output_stream = body.into_data_stream().map(move |result| match result {
         Ok(data) => Ok(formatter.format_bytes(data)),
         Err(err) => Err(std::io::Error::other(err)),
     });
 
-    Body::from_stream(output_stream)
+    Ok(Body::from_stream(output_stream))
 }
 
 #[cfg(target_os = "windows")]
-async fn process_json_data(body: Body, ident: usize) -> Body {
+async fn process_json_data(body: Body, ident: usize) -> Result<Body, anyhow::Error> {
     use app::common::json_formatter::JsonFormatter;
 
-    let request_body_bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+    let request_body_bytes = axum::body::to_bytes(body, usize::MAX).await?;
 
     let mut formatter = JsonFormatter::new(ident);
     let output_stream = tokio_util::io::ReaderStream::new(std::io::Cursor::new(request_body_bytes))
@@ -53,5 +53,5 @@ async fn process_json_data(body: Body, ident: usize) -> Body {
             Err(err) => Err(std::io::Error::other(err)),
         });
 
-    Body::from_stream(output_stream)
+    Ok(Body::from_stream(output_stream))
 }

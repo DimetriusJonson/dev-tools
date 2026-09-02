@@ -156,16 +156,16 @@ fn build_request(
 fn build_to_dump_receiver_url(
     url_str: String,
     dump_port: u16,
-) -> Result<(String, String), AppError> {
-    let mut url = Url::parse(&url_str).map_err(AppError::system_error)?;
+) -> anyhow::Result<(String, String)> {
+    let mut url = Url::parse(&url_str)?;
     let old_port = match url.port() {
         Some(port) => format!(":{}", port),
         None => "".to_owned(),
     };
-    let old_host = format!("{}{}", url.host_str().unwrap().to_owned(), old_port);
+    let old_host = format!("{}{}", url.host_str().unwrap_or_default().to_owned(), old_port);
 
     url.set_scheme("http").unwrap();
-    url.set_host(Some("127.0.0.1")).map_err(AppError::system_error)?;
+    url.set_host(Some("127.0.0.1")).unwrap();
     url.set_port(Some(dump_port)).unwrap();
 
     Ok((url.to_string(), old_host))

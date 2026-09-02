@@ -39,15 +39,17 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
 
     let url = Url::create_object_url_with_blob(&blob)?;
 
-    let window = web_sys::window().unwrap();
-    let document = window.document().unwrap();
-    let anchor = document.create_element("a")?.dyn_into::<HtmlAnchorElement>()?;
+    if let Some(window) = web_sys::window()
+        && let Some(document) = window.document()
+    {
+        let anchor = document.create_element("a")?.dyn_into::<HtmlAnchorElement>()?;
 
-    anchor.set_href(&url);
-    anchor.set_download(filename);
-    anchor.click();
+        anchor.set_href(&url);
+        anchor.set_download(filename);
+        anchor.click();
 
-    Url::revoke_object_url(&url)?;
+        Url::revoke_object_url(&url)?;
+    }
 
     Ok(())
 }
@@ -79,17 +81,30 @@ pub async fn get_host_name() -> String {
     leptos::prelude::window().location().hostname().unwrap_or_default()
 }
 
-pub fn get_browser_host_info() -> (String, String, Option<u16>) {
+pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> {
     #[cfg(not(feature = "ssr"))]
     {
         let loc = leptos::prelude::window().location();
-        let port = loc.port().unwrap();
-        let port = if !port.is_empty() { Some(port.parse::<u16>().unwrap()) } else { None };
-        return (loc.protocol().unwrap(), loc.host().unwrap(), port);
+        let port = loc
+            .port()
+            .map_err(|err| err.as_string().unwrap_or("Failed get location port".to_owned()))?;
+        let port = if !port.is_empty() {
+            Some(port.parse::<u16>().map_err(|err| err.to_string())?)
+        } else {
+            None
+        };
+        return Ok((
+            loc.protocol().map_err(|err| {
+                err.as_string().unwrap_or("Failed get location protocol".to_owned())
+            })?,
+            loc.host()
+                .map_err(|err| err.as_string().unwrap_or("Failed get location host".to_owned()))?,
+            port,
+        ));
     }
 
     #[cfg(feature = "ssr")]
-    ("http".to_owned(), "localhost".to_owned(), None)
+    Ok(("http".to_owned(), "localhost".to_owned(), None))
 }
 
 #[cfg(feature = "ssr")]
@@ -126,18 +141,19 @@ pub fn single_select_option(value: &str) -> (Option<String>, String) {
 }
 
 #[cfg(feature = "ssr")]
-pub fn get_browser_width() -> Result<f64, JsValue> {
+pub fn get_browser_width() -> Result<f64, String> {
     Ok(1024.0)
 }
 
 #[cfg(not(feature = "ssr"))]
-pub fn get_browser_width() -> Result<f64, JsValue> {
-    let window = web_sys::window().ok_or_else(|| JsValue::from_str("No global window found"))?;
+pub fn get_browser_width() -> Result<f64, String> {
+    let window = web_sys::window().ok_or_else(|| "No global window found")?;
 
     let width = window
-        .inner_width()?
+        .inner_width()
+        .map_err(|err| err.as_string().unwrap_or("Failed get window width".to_owned()))?
         .as_f64()
-        .ok_or_else(|| JsValue::from_str("Could not convert inner_width to f64"))?;
+        .ok_or_else(|| "Could not convert inner_width to f64")?;
 
     Ok(width)
 }
@@ -189,10 +205,10 @@ pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) {
             format!("{}={}; Path=/; Secure; SameSite=Lax", _name, _value)
         };
 
-        let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
-
-        // Set the cookie via the DOM
-        html_document.set_cookie(&cookie_string).expect("Failed to write cookie");
+        if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
+            // Set the cookie via the DOM
+            html_document.set_cookie(&cookie_string).expect("Failed to write cookie");
+        }
     }
 }
 

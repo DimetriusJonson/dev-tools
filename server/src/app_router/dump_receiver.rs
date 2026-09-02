@@ -108,7 +108,7 @@ fn find_content_length(data: &[u8], end_index: usize) -> Option<usize> {
 
     if let Some(pos) = find_pattern(data, name) {
         let len_str = String::from_utf8_lossy(&data[pos + name.len()..end_index]).to_string();
-        let len = len_str.trim().parse::<usize>().unwrap();
+        let len = len_str.trim().parse::<usize>().unwrap_or(0);
         return Some(len);
     }
 

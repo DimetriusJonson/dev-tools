@@ -33,7 +33,7 @@ pub fn ButtonWorld(
                     false => "cursor-pointer".to_owned(),
                 }, class_name)
             on:click=on_click
-            on:mouseup=move |_| if let Some(button) = button_element.get() { button.blur().unwrap(); }
+            on:mouseup=move |_| if let Some(button) = button_element.get() { button.blur(); }
             disabled=disabled_memo
            >
 

@@ -13,9 +13,9 @@ pub mod share_file_router;
 pub mod share_local_file_router;
 pub mod xml_format_router;
 
+pub mod dump_receiver;
 pub mod rest_client_router;
 pub mod test_json_router;
-pub mod dump_receiver;
 
 pub async fn proxy_request_to_remote(
     remote_server_url: String,
@@ -52,9 +52,10 @@ pub async fn proxy_request_to_remote(
 
     let mut response = (response_status, body).into_response();
     *response.headers_mut() = response_headers;
-    response
-        .headers_mut()
-        .insert("remote-server-url", HeaderValue::from_str(&remote_server_url).unwrap());
+    response.headers_mut().insert(
+        "remote-server-url",
+        HeaderValue::from_str(&remote_server_url).map_err(AppError::system_error)?,
+    );
 
     Ok(response)
 }

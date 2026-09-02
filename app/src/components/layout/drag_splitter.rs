@@ -1,7 +1,7 @@
 use leptos::{
     ev,
     html::Div,
-    leptos_dom::{self},
+    leptos_dom::{self, logging::console_log},
     prelude::*,
 };
 use web_sys::HtmlDivElement;
@@ -27,7 +27,7 @@ pub fn DragSplitter(
     #[prop(optional)] allow_hidden: bool,
 ) -> impl IntoView {
     let (dragging, set_dragging) = signal(false);
-    let (mobile, set_mobile) = signal(get_browser_width().unwrap() < MOBILE_WIDTH);
+    let (mobile, set_mobile) = signal(get_browser_width().unwrap_or(1024.0) < MOBILE_WIDTH);
     let dragbar_ref = NodeRef::<Div>::new();
     let local_store_prop_name_memo = Memo::new(move |_| local_store_prop_name());
 
@@ -43,16 +43,25 @@ pub fn DragSplitter(
         (*target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", new_size))
-            .unwrap();
+            .map_err(|err| {
+                console_log(
+                    &err.as_string().unwrap_or(format!("Failed set target property {prop_name}")),
+                )
+            });
 
         (*second_target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", 100.0 - new_size))
-            .unwrap();
+            .map_err(|err| {
+                console_log(
+                    &err.as_string()
+                        .unwrap_or(format!("Failed set second target property {prop_name}")),
+                )
+            });
     };
 
     let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
-        set_mobile.set(get_browser_width().unwrap() < MOBILE_WIDTH);
+        set_mobile.set(get_browser_width().unwrap_or(1024.0) < MOBILE_WIDTH);
     });
 
     Effect::new(move || {
@@ -63,7 +72,9 @@ pub fn DragSplitter(
 
         if init_size == 0.0 {
             if let Some(target_elem) = target_ref.get() {
-                target_elem.class_list().add_1("hidden").unwrap();
+                target_elem.class_list().add_1("hidden").map_err(|err| {
+                    console_log(&err.as_string().unwrap_or(format!("Failed add class 'hidden' to target")))
+                });
             }
         } else if init_size > max_ratio {
             init_size = default_ratio;
@@ -84,54 +95,70 @@ pub fn DragSplitter(
             && let Some(Some(second_target_elem)) = second_target_ref.try_get()
             && (!mobile.get_untracked() || allow_mobile)
         {
-            let parent_rect = target_elem.parent_element().unwrap().get_bounding_client_rect();
-            let target_rect = target_elem.get_bounding_client_rect();
+            if let Some(parent_elem) = target_elem.parent_element() {
+                let parent_rect = parent_elem.get_bounding_client_rect();
+                let target_rect = target_elem.get_bounding_client_rect();
 
-            let (old_size, new_size) = if horizontal {
-                (
-                    target_rect.height(),
-                    ((ev.client_y() as f64 - target_rect.top()) / parent_rect.height()) * 100.0,
-                )
-            } else {
-                (
-                    target_rect.width(),
-                    ((ev.client_x() as f64 - target_rect.left()) / parent_rect.width()) * 100.0,
-                )
-            };
+                let (old_size, new_size) = if horizontal {
+                    (
+                        target_rect.height(),
+                        ((ev.client_y() as f64 - target_rect.top()) / parent_rect.height()) * 100.0,
+                    )
+                } else {
+                    (
+                        target_rect.width(),
+                        ((ev.client_x() as f64 - target_rect.left()) / parent_rect.width()) * 100.0,
+                    )
+                };
 
-            if allow_hidden && old_size > 0.0 && new_size < min_ratio {
-                if (old_size - new_size) > min_ratio / 2.0 {
-                    if !target_elem.class_list().contains("hidden") {
-                        target_elem.class_list().add_1("hidden").unwrap();
+                if allow_hidden && old_size > 0.0 && new_size < min_ratio {
+                    if (old_size - new_size) > min_ratio / 2.0 {
+                        if !target_elem.class_list().contains("hidden") {
+                            target_elem.class_list().add_1("hidden").map_err(|err| {
+                                console_log(
+                                    &err.as_string()
+                                        .unwrap_or(format!("Failed add class 'hidden' to target")),
+                                )
+                            });
+                        }
+                        set_size.set(0.0);
+                        set_element_size(
+                            target_elem,
+                            second_target_elem,
+                            prop_name,
+                            size.get_untracked(),
+                        );
+                        set_local_store_value(
+                            &local_store_prop_name_memo.get(),
+                            size.get_untracked().to_string(),
+                        );
                     }
-                    set_size.set(0.0);
-                    set_element_size(
-                        target_elem,
-                        second_target_elem,
-                        prop_name,
-                        size.get_untracked(),
-                    );
-                    set_local_store_value(
-                        &local_store_prop_name_memo.get(),
-                        size.get_untracked().to_string(),
-                    );
-                }
-            } else if new_size <= max_ratio && new_size >= min_ratio {
-                if old_size == 0.0 && new_size > min_ratio / 2.0 {
-                    if target_elem.class_list().contains("hidden") {
-                        target_elem.class_list().remove_1("hidden").unwrap();
+                } else if new_size <= max_ratio && new_size >= min_ratio {
+                    if old_size == 0.0 && new_size > min_ratio / 2.0 {
+                        if target_elem.class_list().contains("hidden") {
+                            target_elem.class_list().remove_1("hidden").map_err(|err| {
+                                console_log(
+                                    &err.as_string().unwrap_or(format!(
+                                        "Failed remove class 'hidden' from target"
+                                    )),
+                                )
+                            });
+                        }
+
+                        set_element_size(target_elem, second_target_elem, prop_name, new_size);
+
+                        set_size.set(new_size);
+                        set_local_store_value(
+                            &local_store_prop_name_memo.get(),
+                            new_size.to_string(),
+                        );
+                        return;
                     }
 
                     set_element_size(target_elem, second_target_elem, prop_name, new_size);
-
                     set_size.set(new_size);
                     set_local_store_value(&local_store_prop_name_memo.get(), new_size.to_string());
-                    return;
                 }
-
-                set_element_size(target_elem, second_target_elem, prop_name, new_size);
-                set_size.set(new_size);
-                set_local_store_value(&local_store_prop_name_memo.get(), new_size.to_string());
             }
         }
     });

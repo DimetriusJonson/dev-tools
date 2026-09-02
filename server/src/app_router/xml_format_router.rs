@@ -23,7 +23,7 @@ pub async fn format_xml_handler(
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    let body = Body::from_stream(create_stream(body, ident).await);
+    let body = Body::from_stream(create_stream(body, ident).await.map_err(AppError::system_error)?);
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
@@ -34,10 +34,13 @@ pub async fn format_xml_handler(
     Ok(response)
 }
 
-async fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<Bytes, anyhow::Error>> {
-    let mut input_xml_reader = build_reader(body).await;
+async fn create_stream(
+    body: Body,
+    ident: usize,
+) -> Result<impl Stream<Item = Result<Bytes, anyhow::Error>>, anyhow::Error> {
+    let mut input_xml_reader = build_reader(body).await?;
 
-    try_stream! {
+    Ok(try_stream! {
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::<u8>::new()), b' ', ident);
         let mut read_buffer = Vec::<u8>::new();
         loop {
@@ -50,11 +53,11 @@ async fn create_stream(body: Body, ident: usize) -> impl Stream<Item = Result<By
                 },
             }
         }
-    }
+    })
 }
 
 #[cfg(not(target_os = "windows"))]
-async fn build_reader(body: Body) -> Reader<impl AsyncBufRead + Unpin> {
+async fn build_reader(body: Body) -> Result<Reader<impl AsyncBufRead + Unpin>, anyhow::Error> {
     use futures_util::StreamExt;
 
     let request_body_stream =
@@ -62,16 +65,16 @@ async fn build_reader(body: Body) -> Reader<impl AsyncBufRead + Unpin> {
     let mut input_xml_reader =
         Reader::from_reader(BufReader::new(tokio_util::io::StreamReader::new(request_body_stream)));
     input_xml_reader.config_mut().trim_text(false);
-    input_xml_reader
+    Ok(input_xml_reader)
 }
 
 #[cfg(target_os = "windows")]
-async fn build_reader(body: Body) -> Reader<impl AsyncBufRead + Unpin> {
-    let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
+async fn build_reader(body: Body) -> Result<Reader<impl AsyncBufRead + Unpin>, anyhow::Error> {
+    let bytes = axum::body::to_bytes(body, usize::MAX).await?;
 
     let mut input_xml_reader = Reader::from_reader(BufReader::new(Cursor::new(bytes)));
     input_xml_reader.config_mut().trim_text(false);
-    input_xml_reader
+    Ok(input_xml_reader)
 }
 
 async fn format_chunk<R>(

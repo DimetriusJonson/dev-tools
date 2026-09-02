@@ -62,7 +62,9 @@ where
                     input_style=AutocompleteInputStyle::Compact
                     options={value_options.clone()}
                     on_press_enter=move |_| {
-                        on_add_click(MouseEvent::new("click").unwrap())
+                        if let Ok(mouse_event) = MouseEvent::new("click") {
+                            on_add_click(mouse_event)
+                        }
                     }
                     value=value
                     set_value=set_value
