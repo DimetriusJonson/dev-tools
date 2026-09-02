@@ -105,7 +105,7 @@ pub fn Button(
                     false => "cursor-pointer".to_owned(),
                 }, class_name)
             on:click=on_click
-            on:mouseup=move |_| if let Some(button) = button_element.get() { button.blur(); }
+            on:mouseup=move |_| if let Some(button) = button_element.get() { button.blur().expect("Failed button blur"); }
             disabled=disabled_memo
            >
 

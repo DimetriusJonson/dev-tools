@@ -1,7 +1,7 @@
 use leptos::{
     ev,
     html::Div,
-    leptos_dom::{self, logging::console_log},
+    leptos_dom::{self},
     prelude::*,
 };
 use web_sys::HtmlDivElement;
@@ -43,21 +43,12 @@ pub fn DragSplitter(
         (*target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", new_size))
-            .map_err(|err| {
-                console_log(
-                    &err.as_string().unwrap_or(format!("Failed set target property {prop_name}")),
-                )
-            });
+            .expect(&format!("Failed set target property {prop_name}"));
 
         (*second_target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", 100.0 - new_size))
-            .map_err(|err| {
-                console_log(
-                    &err.as_string()
-                        .unwrap_or(format!("Failed set second target property {prop_name}")),
-                )
-            });
+            .expect(&format!("Failed set second target property {prop_name}"));
     };
 
     let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
@@ -72,9 +63,10 @@ pub fn DragSplitter(
 
         if init_size == 0.0 {
             if let Some(target_elem) = target_ref.get() {
-                target_elem.class_list().add_1("hidden").map_err(|err| {
-                    console_log(&err.as_string().unwrap_or(format!("Failed add class 'hidden' to target")))
-                });
+                target_elem
+                    .class_list()
+                    .add_1("hidden")
+                    .expect("Failed add class 'hidden' to target");
             }
         } else if init_size > max_ratio {
             init_size = default_ratio;
@@ -114,12 +106,10 @@ pub fn DragSplitter(
                 if allow_hidden && old_size > 0.0 && new_size < min_ratio {
                     if (old_size - new_size) > min_ratio / 2.0 {
                         if !target_elem.class_list().contains("hidden") {
-                            target_elem.class_list().add_1("hidden").map_err(|err| {
-                                console_log(
-                                    &err.as_string()
-                                        .unwrap_or(format!("Failed add class 'hidden' to target")),
-                                )
-                            });
+                            target_elem
+                                .class_list()
+                                .add_1("hidden")
+                                .expect("Failed add class 'hidden' to target");
                         }
                         set_size.set(0.0);
                         set_element_size(
@@ -136,13 +126,10 @@ pub fn DragSplitter(
                 } else if new_size <= max_ratio && new_size >= min_ratio {
                     if old_size == 0.0 && new_size > min_ratio / 2.0 {
                         if target_elem.class_list().contains("hidden") {
-                            target_elem.class_list().remove_1("hidden").map_err(|err| {
-                                console_log(
-                                    &err.as_string().unwrap_or(format!(
-                                        "Failed remove class 'hidden' from target"
-                                    )),
-                                )
-                            });
+                            target_elem
+                                .class_list()
+                                .remove_1("hidden")
+                                .expect("Failed remove class 'hidden' from target");
                         }
 
                         set_element_size(target_elem, second_target_elem, prop_name, new_size);
