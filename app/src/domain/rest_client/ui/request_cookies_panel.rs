@@ -20,7 +20,7 @@ struct CookiesItem {
 #[component]
 pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let (items, set_items) = signal(Vec::<CookiesItem>::new());
     let update_lock = RwSignal::new(false);

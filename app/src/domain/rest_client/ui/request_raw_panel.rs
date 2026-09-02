@@ -19,7 +19,7 @@ pub fn RequestRawPanel(
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let on_build_c_url = move |_| {
         let cmd = build_curl_bash_cmd(&params.read_untracked());

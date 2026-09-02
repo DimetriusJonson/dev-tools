@@ -18,7 +18,7 @@ use crate::domain::rest_client::ui::{
 #[component]
 pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let (params, _set_params) = signal(RequestParams::new(rc_context.clone()));
     let response = RequestResponse::new(params, rc_context.clone());

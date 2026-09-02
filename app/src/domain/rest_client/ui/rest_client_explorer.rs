@@ -20,7 +20,7 @@ use crate::{
 #[component]
 pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let (requests, set_requests) = signal(Vec::<RwSignal<RequestInfo>>::new());
 
@@ -30,7 +30,7 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
             let request = RequestInfo::new(
                 generate_request_id(rc_context.project.read_only()),
                 rc_context.project_id(),
-                format!("http://{}/test_json", window().location().host().unwrap()),
+                format!("http://{}/test_json", window().location().host().unwrap_or("localhost".to_owned())),
                 "".to_owned(),
                 "GET".to_owned(),
             );

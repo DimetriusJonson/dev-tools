@@ -26,7 +26,7 @@ pub fn RequestParamsUrl(
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let send_btn_node_ref = NodeRef::<Button>::new();
 

@@ -24,7 +24,7 @@ pub fn RestClientCUrlButton(
     let i18n = use_i18n();
 
     let on_import_c_url = move |_| {
-        let rc_context = use_context::<RestClientContext>().unwrap();
+        let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
         spawn_local(async move {
             if let Some(curl_cmd) = paste_from_clipboard().await {
                 match parse_curl_cmd(&curl_cmd) {

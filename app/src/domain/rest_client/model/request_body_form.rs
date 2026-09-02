@@ -84,17 +84,17 @@ impl RequestBodyFormValues {
         serde_urlencoded::to_string(&map)
     }
 
-    pub fn to_json(&self) -> String {
+    pub fn to_json(&self) -> Result<String, String> {
         let list: KeyValueVector =
             self.iter().map(|h| (h.name.get_untracked(), h.value.get_untracked())).collect();
 
-        serde_json::to_string(&list).unwrap()
+        Ok(serde_json::to_string(&list).map_err(|err| err.to_string())?)
     }
 }
 
 impl Display for RequestBodyFormValues {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_json())
+        write!(f, "{}", self.to_json().unwrap_err())
     }
 }
 

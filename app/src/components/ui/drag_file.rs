@@ -75,7 +75,7 @@ fn active_drop_zone_handler(event: DragEvent) {
 
     if event.target() == event.current_target() {
         let drop_zone = event_target::<HtmlDivElement>(&event);
-        drop_zone.class_list().add_1("scale-102").unwrap();
+        drop_zone.class_list().add_1("scale-102").expect("Failed add class to active drop zone");
     }
 }
 
@@ -85,6 +85,6 @@ fn deactive_drop_zone_handler(event: DragEvent) {
 
     if event.target() == event.current_target() {
         let drop_zone = event_target::<HtmlDivElement>(&event);
-        drop_zone.class_list().remove_1("scale-102").unwrap();
+        drop_zone.class_list().remove_1("scale-102").expect("Failed remove class from active drop zone");
     }
 }

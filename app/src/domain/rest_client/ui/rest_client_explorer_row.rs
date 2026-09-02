@@ -32,7 +32,7 @@ pub fn RestClientExplorerRow(
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let (popup_menu_show, set_popup_menu_show) = signal(0);
     let (popup_menu_bottom, set_popup_menu_bottom) = signal(false);
@@ -151,7 +151,7 @@ pub fn RestClientExplorerRow(
 
                                                     set_timeout(move || {
                                                         if let Some(input) = edit_name_ref.get() {
-                                                            input.focus().unwrap();
+                                                            input.focus().expect("Failed focus explorer input");
                                                             input.select();
                                                             set_popup_menu_show.set(0);
                                                         }

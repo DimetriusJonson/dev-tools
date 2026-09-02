@@ -26,7 +26,7 @@ pub fn ProjectSelector(
 ) -> impl IntoView {
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let (old_project, set_old_project) = signal("".to_owned());
     let (projects, set_projects) = signal(Vec::new());
@@ -134,7 +134,7 @@ pub fn ProjectSelector(
 
                                                 set_timeout(move || {
                                                     if let Some(input) = edit_name_ref.get() {
-                                                        input.focus().unwrap();
+                                                        input.focus().expect("Failed focus project selector input");
                                                         input.select();
                                                         set_popup_menu_show.set(false);
                                                     }
@@ -148,7 +148,7 @@ pub fn ProjectSelector(
                                                         set_old_project.set(rc_context.project.get());
                                                         set_timeout(move || {
                                                             if let Some(input) = edit_name_ref.get() {
-                                                                input.focus().unwrap();
+                                                                input.focus().expect("Failed focus project selector input");
                                                                 input.select();
                                                                 set_popup_menu_show.set(false);
                                                             }

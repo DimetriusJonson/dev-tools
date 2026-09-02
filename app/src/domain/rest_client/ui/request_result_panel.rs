@@ -48,7 +48,7 @@ pub fn RequestResultPanel(
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().unwrap();
+    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
     let location = use_location();
 
     let on_copy_click = move |_| {
