@@ -21,23 +21,26 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
     for pair in pairs {
         match pair.as_rule() {
             Rule::method => {
-                let s = pair.into_inner().next().expect("method string must be present").as_str();
-                let method = s.parse()?;
-                if ![
-                    Method::GET,
-                    Method::POST,
-                    Method::PUT,
-                    Method::DELETE,
-                    Method::PATCH,
-                    Method::HEAD,
-                    Method::OPTIONS,
-                ]
-                .contains(&method)
-                {
-                    return Err(format!("Unknown request method {}.", method).into());
-                };
+                if let Some(pair) = pair.into_inner().next() {
+                    let method = pair.as_str().parse()?;
+                    if ![
+                        Method::GET,
+                        Method::POST,
+                        Method::PUT,
+                        Method::DELETE,
+                        Method::PATCH,
+                        Method::HEAD,
+                        Method::OPTIONS,
+                    ]
+                    .contains(&method)
+                    {
+                        return Err(format!("Unknown request method {}.", method).into());
+                    };
 
-                parsed.method = Some(method);
+                    parsed.method = Some(method);
+                } else {
+                    return Err("method value must be present".into());
+                }
             }
             Rule::url => {
                 let url = pair.into_inner().as_str();
@@ -56,48 +59,58 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 parsed.url = url;
             }
             Rule::location => {
-                let s = pair.into_inner().next().expect("location string must be present").as_str();
-                let location = s.to_string();
-                parsed.url = location;
+                if let Some(pair) = pair.into_inner().next() {
+                    parsed.url = pair.to_string();
+                } else {
+                    return Err("location value must be present".into());
+                }
             }
             Rule::header => {
-                let s = pair.into_inner().next().expect("header string must be present").as_str();
-
-                // Use split_once for better performance
-                if let Some((name, value)) = s.split_once(':') {
-                    let header_value = unescape_string(value.trim());
-                    parsed.headers.insert(
-                        HeaderName::from_str(name.trim())?,
-                        HeaderValue::from_str(&header_value)?,
-                    );
+                if let Some(pair) = pair.into_inner().next() {
+                    // Use split_once for better performance
+                    if let Some((name, value)) = pair.as_str().split_once(':') {
+                        let header_value = unescape_string(value.trim());
+                        parsed.headers.insert(
+                            HeaderName::from_str(name.trim())?,
+                            HeaderValue::from_str(&header_value)?,
+                        );
+                    } else {
+                        // Fallback for malformed headers (should be rare)
+                        let mut kv = pair.as_str().splitn(2, ':');
+                        let name = kv.next().expect("key must present").trim();
+                        let value = kv.next().expect("value must present").trim();
+                        let header_value = unescape_string(value);
+                        parsed.headers.insert(
+                            HeaderName::from_str(name)?,
+                            HeaderValue::from_str(&header_value)?,
+                        );
+                    }
                 } else {
-                    // Fallback for malformed headers (should be rare)
-                    let mut kv = s.splitn(2, ':');
-                    let name = kv.next().expect("key must present").trim();
-                    let value = kv.next().expect("value must present").trim();
-                    let header_value = unescape_string(value);
-                    parsed
-                        .headers
-                        .insert(HeaderName::from_str(name)?, HeaderValue::from_str(&header_value)?);
+                    return Err("header value must be present".into());
                 }
             }
             Rule::cookie => {
-                let cookie_value =
-                    pair.into_inner().next().expect("cookie string must be present").as_str();
-
-                let header_value = unescape_string(cookie_value.trim());
-                parsed
-                    .headers
-                    .insert(HeaderName::from_str("Cookie")?, HeaderValue::from_str(&header_value)?);
+                if let Some(pair) = pair.into_inner().next() {
+                    let header_value = unescape_string(pair.as_str().trim());
+                    parsed.headers.insert(
+                        HeaderName::from_str("Cookie")?,
+                        HeaderValue::from_str(&header_value)?,
+                    );
+                } else {
+                    return Err("cookie value must be present".into());
+                }
             }
             Rule::auth => {
-                let s = pair.into_inner().next().expect("header string must be present").as_str();
-                let encoded = STANDARD.encode(s.as_bytes());
-                // Pre-allocate with known prefix length
-                let mut basic_auth = String::with_capacity(6 + encoded.len()); // "Basic " + encoded
-                basic_auth.push_str("Basic ");
-                basic_auth.push_str(&encoded);
-                parsed.headers.insert(AUTHORIZATION, basic_auth.parse()?);
+                if let Some(pair) = pair.into_inner().next() {
+                    let encoded = STANDARD.encode(pair.as_str().as_bytes());
+                    // Pre-allocate with known prefix length
+                    let mut basic_auth = String::with_capacity(6 + encoded.len()); // "Basic " + encoded
+                    basic_auth.push_str("Basic ");
+                    basic_auth.push_str(&encoded);
+                    parsed.headers.insert(AUTHORIZATION, basic_auth.parse()?);
+                } else {
+                    return Err("auth value must be present".into());
+                }
             }
             Rule::body => {
                 let s = pair.as_str().trim();
@@ -105,11 +118,11 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 parsed.body.push(s.into());
             }
             Rule::data_raw => {
-                let data_raw_value =
-                    pair.into_inner().next().expect("data-raw string must be present").as_str();
-                let data_raw_value = data_raw_value.replace("\\r\\n", "\r\n");
-                let data_raw_value = data_raw_value.replace("\\n", "\n");
-                parsed.body.push(data_raw_value);
+                if let Some(pair) = pair.into_inner().next() {
+                    parsed.body.push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                } else {
+                    return Err("data-raw value must be present".into());
+                }
             }
             Rule::ssl_verify_option => {
                 parsed.insecure = true;
@@ -125,12 +138,14 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             | Rule::silent_option
             | Rule::show_headers_option => {}
             Rule::user_agent => {
-                let name =
-                    pair.into_inner().next().expect("header string must be present").as_str();
-                parsed.headers.insert(USER_AGENT, name.parse()?);
+                if let Some(pair) = pair.into_inner().next() {
+                    parsed.headers.insert(USER_AGENT, pair.as_str().parse()?);
+                } else {
+                    return Err("user-agent value must be present".into());
+                }
             }
             Rule::EOI => break,
-            _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
+            _ => return Err(format!("Unexpected rule: {:?}", pair.as_rule()).into()),
         }
     }
 
