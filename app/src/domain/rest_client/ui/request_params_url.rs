@@ -172,7 +172,7 @@ pub fn RequestParamsUrl(
                 name="url".to_owned()
                 input_type="text".to_owned()
                 class_name="w-full".to_owned()
-                placeholder=move || {t!(i18n, rest_client_url_placeholder).to_html()}
+                placeholder=move || {t_string!(i18n, rest_client_url_placeholder).to_owned()}
                 value=params.read_untracked().url.read_only()
                 set_value=params.read_untracked().url.write_only()
                 on_press_enter=move |_| {

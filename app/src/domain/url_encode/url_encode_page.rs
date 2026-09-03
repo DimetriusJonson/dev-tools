@@ -54,7 +54,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_url.get());
-        show_info(t!(i18n, url_page_copied_to_clipboard_msg).to_html(), messages);
+        show_info(t_string!(i18n, url_page_copied_to_clipboard_msg).to_owned(), messages);
     };
 
     view! {
@@ -62,7 +62,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
             <TextArea
                 name="url".to_owned()
                 class_name="md:flex-1 h-[27dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                placeholder=move || t!(i18n, url_page_src_placeholder).to_html()
+                placeholder=move || t_string!(i18n, url_page_src_placeholder).to_owned()
                 value=url
                 set_value=set_url
                 on_change=move |_| {
@@ -73,7 +73,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
             <div class="flex flex-col gap-4 items-center justify-center">
                 <Button
                     title=move || "".to_owned()
-                    label=move || t!(i18n, url_page_encode_btn_label).to_html()
+                    label=move || t_string!(i18n, url_page_encode_btn_label).to_owned()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get() == InProgressType::Encode
                     on_click=on_encode_click
@@ -81,7 +81,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 />
                 <Button
                     title=move || "".to_owned()
-                    label=move || t!(i18n, url_page_decode_btn_label).to_html()
+                    label=move || t_string!(i18n, url_page_decode_btn_label).to_owned()
                     button_width=ButtonWidth::Lg
                     loading=move || in_progress.get() == InProgressType::Decode
                     on_click=on_decode_click
@@ -99,7 +99,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
 
                 <Button
                     title=move || "".to_owned()
-                    label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                    label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
                     button_width=ButtonWidth::Auto
                     loading=move || false
                     on_click=on_copy_click

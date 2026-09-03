@@ -56,7 +56,7 @@ pub fn RequestResultPanel(
             if let RestClientResponseBody::Text(body) = response.body {
                 copy_to_clipboard(&body);
             }
-            show_info(t!(i18n, rest_client_response_copied_to_clipboard_msg).to_html(), messages);
+            show_info(t_string!(i18n, rest_client_response_copied_to_clipboard_msg).to_owned(), messages);
         }
     };
 
@@ -288,7 +288,7 @@ pub fn RequestResultPanel(
 
                             <Button
                                 label=move || "⧉".to_owned()
-                                title=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                                title=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
                                 class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
                                 button_width=ButtonWidth::Custom
                                 button_height=ButtonHeight::Custom

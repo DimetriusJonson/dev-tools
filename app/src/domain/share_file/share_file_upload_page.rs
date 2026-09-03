@@ -47,7 +47,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&shared_url.get());
-        show_info(t!(i18n, share_file_upload_page_copied_to_clipboard_msg).to_html(), messages);
+        show_info(t_string!(i18n, share_file_upload_page_copied_to_clipboard_msg).to_owned(), messages);
     };
 
     let custom_servers_resource = LocalResource::new(async move || {
@@ -99,7 +99,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 }/>
                 <Button
                     title=move || "".to_owned()
-                    label=move || t!(i18n, share_file_upload_page_upload_btn_label).to_html()
+                    label=move || t_string!(i18n, share_file_upload_page_upload_btn_label).to_owned()
                     button_width=ButtonWidth::Md
                     loading=move || in_progress.get()
                     on_click=on_upload_file_click
@@ -112,7 +112,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     view! {
                         <div class="flex items-center"
                             class:hidden=hidden>
-                            <label for="server_addr" title=move || {t!(i18n, share_file_upload_page_server_addr_title).to_html()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
+                            <label for="server_addr" title=move || {t_string!(i18n, share_file_upload_page_server_addr_title).to_owned()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
                             <SelectInput
                                 class_name="px-2".to_owned()
                                 name={"server_addr".to_owned()}
@@ -120,7 +120,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                                 set_value={set_custom_server}
                                 label=move || "Server addr".to_owned()
                                 options=move || custom_servers.clone()
-                                not_selected_text={move || t!(i18n, share_file_upload_page_server_addr_not_selected).to_html()}
+                                not_selected_text={move || t_string!(i18n, share_file_upload_page_server_addr_not_selected).to_owned()}
                                 on_change=move |_| {}
                             />
                         </div>
@@ -142,7 +142,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
                     <Button
                         title=move || "".to_owned()
-                        label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                        label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
                         button_width=ButtonWidth::Auto
                         loading=move || in_progress.get()
                         on_click=on_copy_click
@@ -229,7 +229,7 @@ fn upload_file(
                             }
                             result = true;
 
-                            show_info(t!(i18n, share_file_upload_success).to_html(), messages);
+                            show_info(t_string!(i18n, share_file_upload_success).to_owned(), messages);
                         } else {
                             show_error(response.status_text(), messages);
                         }
@@ -239,7 +239,7 @@ fn upload_file(
                 Err(err) => show_error(err.to_string(), messages),
             }
         } else {
-            show_error(t!(i18n, share_file_upload_exceed_file_size).to_html(), messages)
+            show_error(t_string!(i18n, share_file_upload_exceed_file_size).to_owned(), messages)
         }
 
         set_in_progress.set(false);

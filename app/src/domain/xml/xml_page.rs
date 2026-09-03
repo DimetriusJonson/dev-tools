@@ -130,7 +130,7 @@ pub fn XmlPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_xml.get());
-        show_info(t!(i18n, xml_page_copied_to_clipboard_msg).to_html(), messages);
+        show_info(t_string!(i18n, xml_page_copied_to_clipboard_msg).to_owned(), messages);
     };
 
     view! {
@@ -141,7 +141,7 @@ pub fn XmlPage() -> impl IntoView {
                     <TextArea
                         name="xml".to_owned()
                         class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                        placeholder=move || {t!(i18n, xml_page_src_placeholder).to_html()}
+                        placeholder=move || {t_string!(i18n, xml_page_src_placeholder).to_owned()}
                         value=xml
                         set_value=set_xml
                         on_change=move |_| {
@@ -152,7 +152,7 @@ pub fn XmlPage() -> impl IntoView {
                         <FileInput node_ref=file_input_ref />
                         <Button
                             title=move || "".to_owned()
-                            label=move || t!(i18n, xml_page_format_btn_label).to_html()
+                            label=move || t_string!(i18n, xml_page_format_btn_label).to_owned()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::FormatFile
                             on_click=on_format_file_click
@@ -165,12 +165,12 @@ pub fn XmlPage() -> impl IntoView {
                     <div class="flex flex-row md:flex-col gap-4">
                         <SelectInput
                             name="ident".to_owned()
-                            label=move || t!(i18n, ident_label).to_html()
+                            label=move || t_string!(i18n, ident_label).to_owned()
                             not_selected_text=move || "".to_owned()
                             options=move || {vec![
-                                (Some("2".to_owned()), t!(i18n, ident_option_label_2).to_html()),
-                                (Some("3".to_owned()), t!(i18n, ident_option_label_3).to_html()),
-                                (Some("4".to_owned()), t!(i18n, ident_option_label_4).to_html())
+                                (Some("2".to_owned()), t_string!(i18n, ident_option_label_2).to_owned()),
+                                (Some("3".to_owned()), t_string!(i18n, ident_option_label_3).to_owned()),
+                                (Some("4".to_owned()), t_string!(i18n, ident_option_label_4).to_owned())
                                 ]}
                             on_change=move |value| {
                                 set_local_store_value("xml_ident", value);
@@ -181,7 +181,7 @@ pub fn XmlPage() -> impl IntoView {
 
                         <Button
                             title=move || "".to_owned()
-                            label=move || t!(i18n, xml_page_format_btn_label).to_html()
+                            label=move || t_string!(i18n, xml_page_format_btn_label).to_owned()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Format
                             on_click=on_format_click
@@ -192,7 +192,7 @@ pub fn XmlPage() -> impl IntoView {
                     <div class="flex flex-row md:flex-col gap-4 md:py-8">
                         <Button
                             title=move || "".to_owned()
-                            label=move || t!(i18n, xml_page_unescape_btn_label).to_html()
+                            label=move || t_string!(i18n, xml_page_unescape_btn_label).to_owned()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Unescape
                             on_click=on_unescape_click
@@ -201,7 +201,7 @@ pub fn XmlPage() -> impl IntoView {
 
                         <Button
                             title=move || "".to_owned()
-                            label=move || t!(i18n, xml_page_escape_btn_label).to_html()
+                            label=move || t_string!(i18n, xml_page_escape_btn_label).to_owned()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Escape
                             on_click=on_escape_click
@@ -237,7 +237,7 @@ pub fn XmlPage() -> impl IntoView {
 
                 <Button
                     title=move || "".to_owned()
-                    label=move || t!(i18n, copy_to_clipboard_btn_label).to_html()
+                    label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
                     button_width=ButtonWidth::Auto
                     loading=move || false
                     on_click=on_copy_click
