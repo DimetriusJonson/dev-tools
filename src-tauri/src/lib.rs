@@ -148,10 +148,10 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     let server_cmd_child = server_cmd_child.clone();
                     move |app, event| match event.id.as_ref() {
                         "quit" => {
-                            if let Ok(mut managed_child) = server_cmd_child.lock() {
-                                if let Some(cmd_child) = managed_child.take() {
-                                    let _ = cmd_child.kill();
-                                }
+                            if let Ok(mut managed_child) = server_cmd_child.lock()
+                                && let Some(cmd_child) = managed_child.take()
+                            {
+                                let _ = cmd_child.kill();
                             }
                             app.exit(0);
                         }
@@ -186,13 +186,13 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     .on_before_exit({
                         let app_handle = app_handle.clone();
                         move || {
-                            if let Ok(mut managed_child) = server_cmd_child.lock() {
-                                if let Some(cmd_child) = managed_child.take() {
-                                    info!("Terminate server...");
-                                    if let Err(err) = cmd_child.kill() {
-                                        error!("Failed terminate server: {}", err)
-                                    };
-                                }
+                            if let Ok(mut managed_child) = server_cmd_child.lock()
+                                && let Some(cmd_child) = managed_child.take()
+                            {
+                                info!("Terminate server...");
+                                if let Err(err) = cmd_child.kill() {
+                                    error!("Failed terminate server: {}", err)
+                                };
                             }
                             info!("Clear cache...");
                             clear_webview_cache(&app_handle);

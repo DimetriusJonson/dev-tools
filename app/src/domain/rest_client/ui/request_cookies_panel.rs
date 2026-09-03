@@ -95,7 +95,7 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     .get_untracked()
                     .iter()
                     .find(|h| h.name.read_untracked().to_lowercase() == "cookie")
-                    .map(|h| h.clone());
+                    .cloned();
 
                 if let Some(cookie_header) = cookie_header {
                     if !cookie_value.is_empty() {

@@ -55,7 +55,7 @@ impl RequestHeaders {
     }
 
     pub fn remove_by_name(&mut self, name: &str) {
-        self.inner.retain(|h| &h.name.read_untracked().to_lowercase() != &name.to_lowercase());
+        self.inner.retain(|h| h.name.read_untracked().to_lowercase() != name.to_lowercase());
     }
 
     pub fn vec_owned(&self) -> Vec<RequestHeader> {

@@ -153,10 +153,7 @@ fn build_request(
         .body(reqwest::Body::from(request.body.to_owned())))
 }
 
-fn build_to_dump_receiver_url(
-    url_str: String,
-    dump_port: u16,
-) -> anyhow::Result<(String, String)> {
+fn build_to_dump_receiver_url(url_str: String, dump_port: u16) -> anyhow::Result<(String, String)> {
     let mut url = Url::parse(&url_str)?;
     let old_port = match url.port() {
         Some(port) => format!(":{}", port),
@@ -166,7 +163,7 @@ fn build_to_dump_receiver_url(
 
     url.set_scheme("http").expect("Cant set url http scheme");
     url.set_host(Some("127.0.0.1")).expect("Cant set url 127.0.0.1 host");
-    url.set_port(Some(dump_port)).expect(&format!("Cant set url port {}", dump_port));
+    url.set_port(Some(dump_port)).unwrap_or_else(|_| panic!("Cant set url port {}", dump_port));
 
     Ok((url.to_string(), old_host))
 }
@@ -215,7 +212,7 @@ fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Op
 
     //info!("get cache {}", key);
     if let Ok(cache) = PROXY_CACHE.read() {
-        return cache.get(&key).cloned()
+        return cache.get(&key).cloned();
     }
     None
 }
@@ -245,7 +242,8 @@ pub async fn rest_client_html_previewer_middleware(
         .map(|referer_raw| {
             urlencoding::decode(referer_raw).ok().map(|referer| Url::parse(&referer).ok())
         })
-        .unwrap_or_default().unwrap_or_default();
+        .unwrap_or_default()
+        .unwrap_or_default();
 
     if (!routes_paths.contains(&req.uri().path().to_owned())
         || (referer.is_some()
@@ -363,7 +361,8 @@ pub async fn rest_client_html_previewer_middleware(
     let mut response = next.run(req).await;
     response.headers_mut().insert(
         header::SET_COOKIE,
-        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/").expect("Cant create header value"),
+        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/")
+            .expect("Cant create header value"),
     );
     Ok(response)
 }
@@ -406,7 +405,7 @@ fn replace_cookies_domain(headers: &mut HeaderMap) {
     let mut new_set_cookies = Vec::new();
     for cookie in set_cookies {
         let mut new_cookie = cookie.clone();
-        if let Some(_) = new_cookie.domain() {
+        if new_cookie.domain().is_some() {
             new_cookie.set_domain("");
         }
         new_set_cookies.push(new_cookie);

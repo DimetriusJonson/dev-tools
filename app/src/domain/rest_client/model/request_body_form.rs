@@ -88,7 +88,7 @@ impl RequestBodyFormValues {
         let list: KeyValueVector =
             self.iter().map(|h| (h.name.get_untracked(), h.value.get_untracked())).collect();
 
-        Ok(serde_json::to_string(&list).map_err(|err| err.to_string())?)
+        serde_json::to_string(&list).map_err(|err| err.to_string())
     }
 }
 

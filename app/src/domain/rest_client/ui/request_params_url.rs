@@ -136,7 +136,7 @@ pub fn RequestParamsUrl(
                 Err(err) => show_error(
                     format!(
                         "Failed build request: {}",
-                        err.as_string().unwrap_or("Failed create abort controller".to_owned())
+                        err.as_string().unwrap_or_else(|| "Unknown JS error".into())
                     ),
                     messages,
                 ),

@@ -98,27 +98,26 @@ fn replace_absolute_links_by_attr_part(
 }
 
 fn convert_url(url: &str, base_url: &str) -> Option<String> {
-    if is_absolute_url(&url) {
-        if let Some(converted_url) = convert_absolute_url(&url) {
+    if is_absolute_url(url) {
+        if let Some(converted_url) = convert_absolute_url(url) {
             return Some(converted_url);
         }
-    } else if is_special_url(&url) {
+    } else if is_special_url(url) {
         return None;
     }
 
-    if !url.starts_with("/") {
-        if let Ok(base_url) = Url::parse(base_url) {
-            if let Ok(url) = base_url.join(url) {
-                return Some(format!(
-                    "{}{}",
-                    url.path(),
-                    match url.query() {
-                        Some(query) => format!("?{}", query),
-                        None => "".to_owned(),
-                    }
-                ));
+    if !url.starts_with("/")
+        && let Ok(base_url) = Url::parse(base_url)
+        && let Ok(url) = base_url.join(url)
+    {
+        return Some(format!(
+            "{}{}",
+            url.path(),
+            match url.query() {
+                Some(query) => format!("?{}", query),
+                None => "".to_owned(),
             }
-        }
+        ));
     }
 
     None
@@ -149,18 +148,20 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
     }
 
     // Special URLs
-    if is_special_url(&src_url) {
+    if is_special_url(src_url) {
         return Some(src_url.to_owned());
     }
 
-    if let Ok(mut url) = Url::parse(src_url) {
-        if let Ok(host_info) = get_browser_host_info() {
-            url.set_scheme(&host_info.0).expect(&format!("Cant set url scheme {}", host_info.0));
-            url.set_host(Some(&host_info.1)).expect(&format!("Cant set url host {} ", host_info.1));
-            url.set_port(host_info.2).expect(&format!("Cant set url port {:?}", host_info.2));
-            url.query_pairs_mut().append_pair("rc_src_url", src_url);
-            return Some(url.to_string());
-        }
+    if let Ok(mut url) = Url::parse(src_url)
+        && let Ok(host_info) = get_browser_host_info()
+    {
+        url.set_scheme(&host_info.0)
+            .unwrap_or_else(|_| panic!("Cant set url scheme {}", host_info.0));
+        url.set_host(Some(&host_info.1))
+            .unwrap_or_else(|_| panic!("Cant set url host {} ", host_info.1));
+        url.set_port(host_info.2).unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
+        url.query_pairs_mut().append_pair("rc_src_url", src_url);
+        return Some(url.to_string());
     }
 
     Some(src_url.to_owned())

@@ -43,12 +43,22 @@ pub fn DragSplitter(
         (*target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", new_size))
-            .expect(&format!("Failed set target property {prop_name}"));
+            .unwrap_or_else(|err| {
+                panic!(
+                    "Failed set target property {prop_name}: {}",
+                    err.as_string().unwrap_or_else(|| "Unknown JS error".into())
+                )
+            });
 
         (*second_target_elem)
             .style()
             .set_property(prop_name, &format!("calc({}% - 0.5px)", 100.0 - new_size))
-            .expect(&format!("Failed set second target property {prop_name}"));
+            .unwrap_or_else(|err| {
+                panic!(
+                    "Failed set second target property {prop_name}: {}",
+                    err.as_string().unwrap_or_else(|| "Unknown JS error".into())
+                )
+            });
     };
 
     let _ = leptos_dom::helpers::window_event_listener(ev::resize, move |_ev| {
@@ -86,8 +96,7 @@ pub fn DragSplitter(
             && let Some(Some(target_elem)) = target_ref.try_get()
             && let Some(Some(second_target_elem)) = second_target_ref.try_get()
             && (!mobile.get_untracked() || allow_mobile)
-        {
-            if let Some(parent_elem) = target_elem.parent_element() {
+            && let Some(parent_elem) = target_elem.parent_element() {
                 let parent_rect = parent_elem.get_bounding_client_rect();
                 let target_rect = target_elem.get_bounding_client_rect();
 
@@ -147,7 +156,6 @@ pub fn DragSplitter(
                     set_local_store_value(&local_store_prop_name_memo.get(), new_size.to_string());
                 }
             }
-        }
     });
 
     let _ = leptos_dom::helpers::window_event_listener(ev::mouseup, move |_ev| {

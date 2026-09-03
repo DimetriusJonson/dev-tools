@@ -36,20 +36,20 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
     let options = BlobPropertyBag::new();
     options.set_type(mime_type);
     let blob = Blob::new_with_u8_array_sequence_and_options(&js_array, &options)
-        .map_err(|err| err.as_string().unwrap_or("Cant create blob for save file".to_owned()))?;
+        .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
 
     let url = Url::create_object_url_with_blob(&blob)
-        .map_err(|err| err.as_string().unwrap_or("Cant create url with blob".to_owned()))?;
+        .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
 
     if let Some(window) = web_sys::window()
         && let Some(document) = window.document()
     {
         let anchor = document
             .create_element("a")
-            .map_err(|err| err.as_string().unwrap_or("Cant create anchor element".to_owned()))?
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?
             .dyn_into::<HtmlAnchorElement>()
             .map_err(|err| {
-                err.as_string().unwrap_or("Failed cast to HtmlAnchorElement element".to_owned())
+                err.as_string().unwrap_or_else(|| "Unknown JS error".into())
             })?;
 
         anchor.set_href(&url);
@@ -57,7 +57,7 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
         anchor.click();
 
         Url::revoke_object_url(&url)
-            .map_err(|err| err.as_string().unwrap_or("Cant revoke object url".to_owned()))?;
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
     }
 
     Ok(())
@@ -99,7 +99,7 @@ pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> 
         let loc = leptos::prelude::window().location();
         let port = loc
             .port()
-            .map_err(|err| err.as_string().unwrap_or("Failed get location port".to_owned()))?;
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
         let port = if !port.is_empty() {
             Some(port.parse::<u16>().map_err(|err| err.to_string())?)
         } else {
@@ -107,10 +107,10 @@ pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> 
         };
         return Ok((
             loc.protocol().map_err(|err| {
-                err.as_string().unwrap_or("Failed get location protocol".to_owned())
+                err.as_string().unwrap_or_else(|| "Unknown JS error".into())
             })?,
             loc.host()
-                .map_err(|err| err.as_string().unwrap_or("Failed get location host".to_owned()))?,
+                .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?,
             port,
         ));
     }
@@ -163,7 +163,7 @@ pub fn get_browser_width() -> Result<f64, String> {
 
     let width = window
         .inner_width()
-        .map_err(|err| err.as_string().unwrap_or("Failed get window width".to_owned()))?
+        .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?
         .as_f64()
         .ok_or_else(|| "Could not convert inner_width to f64")?;
 
@@ -223,7 +223,7 @@ pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) -> R
             if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
                 // Set the cookie via the DOM
                 html_document.set_cookie(&cookie_string).map_err(|err| {
-                    err.as_string().unwrap_or(format!("Cant create cookie {}", cookie_string))
+                    err.as_string().unwrap_or_else(|| "Unknown JS error".into())
                 })?;
             }
         }

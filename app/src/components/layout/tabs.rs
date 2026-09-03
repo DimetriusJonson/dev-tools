@@ -29,10 +29,10 @@ pub fn Tabs(
             {
                 let tabs = items();
                 move |value, prev, _| {
-                    if prev.is_none() || value != prev.unwrap() {
-                        if let Err(err) = update_selected(&tabs.clone(), *value) {
-                            console_log(&err.to_string());
-                        }
+                    if (prev.is_none() || value != prev.unwrap())
+                        && let Err(err) = update_selected(&tabs.clone(), *value)
+                    {
+                        console_log(&err.to_string());
                     }
                 }
             },
@@ -76,12 +76,14 @@ pub fn Tabs(
 fn update_selected(tabs: &[TabItem], tab_selected: usize) -> Result<(), String> {
     for tab in tabs.iter() {
         if let Some(tab_elem) = tab.node_ref.get_untracked() {
-            tab_elem.class_list().add_1("hidden").map_err(|err| {
-                err.as_string().unwrap_or("Failed add hidden to tab element".to_owned())
-            })?;
-            tab_elem.class_list().remove_1("block").map_err(|err| {
-                err.as_string().unwrap_or("Failed remove block from tab element".to_owned())
-            })?;
+            tab_elem
+                .class_list()
+                .add_1("hidden")
+                .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
+            tab_elem
+                .class_list()
+                .remove_1("block")
+                .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
         }
     }
 
@@ -93,12 +95,14 @@ fn update_selected(tabs: &[TabItem], tab_selected: usize) -> Result<(), String> 
         .next()
         && let Some(tab_elem) = tab_node.get_untracked()
     {
-        tab_elem.class_list().add_1("block").map_err(|err| {
-            err.as_string().unwrap_or("Failed add block to tab element".to_owned())
-        })?;
-        tab_elem.class_list().remove_1("hidden").map_err(|err| {
-            err.as_string().unwrap_or("Failed remove hidden from tab element".to_owned())
-        })?;
+        tab_elem
+            .class_list()
+            .add_1("block")
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
+        tab_elem
+            .class_list()
+            .remove_1("hidden")
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
     }
 
     Ok(())
