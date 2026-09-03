@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::thread;
 
+use anyhow::anyhow;
 use leptos::prelude::*;
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
@@ -24,7 +25,7 @@ pub async fn start_axum_server(
         .with_env_filter(EnvFilter::from_default_env())
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber).expect("Could not set subscriber");
+    tracing::subscriber::set_global_default(subscriber)?;
 
     match thread::available_parallelism() {
         Ok(n) => info!("Available parallelism: {}", n),
@@ -45,7 +46,10 @@ pub async fn start_axum_server(
         None => None,
     };
 
-    let (_, dump_port) = start_dump_receiver().await.expect("Cant start dump receiver");
+    let dump_port = match start_dump_receiver().await {
+        Ok(r) => r.1,
+        Err(err) => return Err(anyhow!("Cant start dump receiver: {}", err)),
+    };
 
     let app = build_app_router(
         conf,
@@ -58,6 +62,8 @@ pub async fn start_axum_server(
     .await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.expect("Cant create axum service with connect info");
-    Ok(())
+    match axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await {
+        Ok(_) => Ok(()),
+        Err(err) => Err(anyhow!("Cant create axum server: {}", err)),
+    }
 }

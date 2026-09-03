@@ -77,13 +77,20 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     } else {
                         // Fallback for malformed headers (should be rare)
                         let mut kv = pair.as_str().splitn(2, ':');
-                        let name = kv.next().expect("key must present").trim();
-                        let value = kv.next().expect("value must present").trim();
-                        let header_value = unescape_string(value);
-                        parsed.headers.insert(
-                            HeaderName::from_str(name)?,
-                            HeaderValue::from_str(&header_value)?,
-                        );
+
+                        if let Some(name) = kv.next() {
+                            if let Some(value) = kv.next() {
+                                let header_value = unescape_string(value.trim());
+                                parsed.headers.insert(
+                                    HeaderName::from_str(name.trim())?,
+                                    HeaderValue::from_str(&header_value)?,
+                                );
+                            } else {
+                                return Err("value must present".into());
+                            }
+                        } else {
+                            return Err("key must present".into());
+                        }
                     }
                 } else {
                     return Err("header value must be present".into());

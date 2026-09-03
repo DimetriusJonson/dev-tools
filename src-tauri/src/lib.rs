@@ -14,11 +14,6 @@ use tauri_plugin_updater::UpdaterExt;
 
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[tauri::command]
-fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
-    app_handle.path().resource_dir().expect("Cant get resource dir")
-}
-
 fn start_backend_server(
     app_handle: &AppHandle,
     port: u16,
@@ -63,7 +58,7 @@ fn start_backend_server(
 pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server: bool) {
     let server_cmd_child = Arc::new(Mutex::new(None));
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
         .plugin(tauri_plugin_shell::init())
         .plugin(
@@ -91,52 +86,54 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             let remote_server_url =
                 remote_server_url.unwrap_or("https://dev-tools-rust.vercel.app".to_owned());
 
-            let resource_dir = get_resource_dir(app.app_handle());
+            let resource_dir = app.app_handle().path().resource_dir()?;
 
             let server_url;
-            if !no_start_server {
+            if no_start_server {
+                server_url = remote_server_url.to_owned();
+            } else {
+                server_url = format!("http://127.0.0.1:{}", port);
+
                 let server_descr =
                     start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
-                *server_cmd_child.lock().expect("Failed lock server_cmd_child") =
-                    Some(server_descr.1);
 
-                tauri::async_runtime::spawn(async move {
-                    let mut rx = server_descr.0;
-                    while let Some(received) = rx.recv().await {
-                        match received {
-                            tauri_plugin_shell::process::CommandEvent::Stderr(items) => {
-                                error!("server: {}", String::from_utf8_lossy(&items))
+                if let Ok(mut managed_child) = server_cmd_child.lock() {
+                    *managed_child = Some(server_descr.1);
+
+                    tauri::async_runtime::spawn(async move {
+                        let mut rx = server_descr.0;
+                        while let Some(received) = rx.recv().await {
+                            match received {
+                                tauri_plugin_shell::process::CommandEvent::Stderr(items) => {
+                                    error!("server: {}", String::from_utf8_lossy(&items))
+                                }
+                                tauri_plugin_shell::process::CommandEvent::Stdout(items) => {
+                                    info!("server: {}", String::from_utf8_lossy(&items))
+                                }
+                                tauri_plugin_shell::process::CommandEvent::Error(err) => {
+                                    error!("Error: {}", err)
+                                }
+                                tauri_plugin_shell::process::CommandEvent::Terminated(_) => break,
+                                _ => break,
                             }
-                            tauri_plugin_shell::process::CommandEvent::Stdout(items) => {
-                                info!("server: {}", String::from_utf8_lossy(&items))
-                            }
-                            tauri_plugin_shell::process::CommandEvent::Error(err) => {
-                                error!("Error: {}", err)
-                            }
-                            tauri_plugin_shell::process::CommandEvent::Terminated(_) => break,
-                            _ => break,
                         }
-                    }
-                });
-                server_url = format!("http://127.0.0.1:{}", port);
-            } else {
-                server_url = remote_server_url.to_owned();
+                    });
+                }
             }
 
             let app_title = format!(
                 "{} {}",
-                app.config().product_name.as_ref().expect("Cant get product name"),
+                app.config().product_name.as_ref().ok_or("No product name in config!")?,
                 APP_VERSION
             );
 
-            let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
+            let target_url = Url::parse(&server_url)?;
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(target_url))
                 .title(app_title.to_owned())
                 .inner_size(1500.0, 1000.0)
                 .enable_clipboard_access()
                 .disable_drag_drop_handler()
-                .build()
-                .expect("Failed to build dynamic window");
+                .build()?;
 
             let quit_i = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
             let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
@@ -144,17 +141,17 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
 
             let _tray = TrayIconBuilder::new()
                 .tooltip(&app_title)
-                .icon(app.default_window_icon().expect("Failed get default window icon").clone())
+                .icon(app.default_window_icon().ok_or("Failed get default window icon")?.clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event({
                     let server_cmd_child = server_cmd_child.clone();
                     move |app, event| match event.id.as_ref() {
                         "quit" => {
-                            let mut managed_child =
-                                server_cmd_child.lock().expect("Failed lock server_cmd_child");
-                            if let Some(cmd_child) = managed_child.take() {
-                                let _ = cmd_child.kill(); // Best effort termination
+                            if let Ok(mut managed_child) = server_cmd_child.lock() {
+                                if let Some(cmd_child) = managed_child.take() {
+                                    let _ = cmd_child.kill();
+                                }
                             }
                             app.exit(0);
                         }
@@ -165,9 +162,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                                 let _ = window.set_focus();
                             }
                         }
-                        _ => {
-                            //                        println!("menu item {:?} not handled", event.id);
-                        }
+                        _ => {}
                     }
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -191,14 +186,16 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                     .on_before_exit({
                         let app_handle = app_handle.clone();
                         move || {
-                            let mut managed_child =
-                                server_cmd_child.lock().expect("Failed lock server_cmd_child");
-                            if let Some(cmd_child) = managed_child.take() {
-                                info!("Terminate server...");
-                                cmd_child.kill().expect("Failed terminate server!");
-                                info!("Clear cache...");
-                                clear_webview_cache(&app_handle);
+                            if let Ok(mut managed_child) = server_cmd_child.lock() {
+                                if let Some(cmd_child) = managed_child.take() {
+                                    info!("Terminate server...");
+                                    if let Err(err) = cmd_child.kill() {
+                                        error!("Failed terminate server: {}", err)
+                                    };
+                                }
                             }
+                            info!("Clear cache...");
+                            clear_webview_cache(&app_handle);
                         }
                     })
                     .build()
@@ -226,9 +223,12 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 //let _ = window.minimize();
                 let _ = window.hide();
             }
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        });
+
+    match app.run(tauri::generate_context!()) {
+        Ok(_) => (),
+        Err(err) => error!("error while running tauri application: {}", err),
+    };
 }
 
 fn clear_webview_cache(app: &AppHandle) {

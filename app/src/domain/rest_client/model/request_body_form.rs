@@ -94,7 +94,10 @@ impl RequestBodyFormValues {
 
 impl Display for RequestBodyFormValues {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_json().unwrap_err())
+        match self.to_json() {
+            Ok(json) => write!(f, "{}", json),
+            Err(err) => write!(f, "Parse json error: {}", err),
+        }
     }
 }
 

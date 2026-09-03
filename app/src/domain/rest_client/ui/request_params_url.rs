@@ -51,6 +51,9 @@ pub fn RequestParamsUrl(
         false,
     );
 
+    let cancelled_msg_memo =
+        Memo::new(move |_| t_string!(i18n, rest_client_request_cancelled).to_owned());
+
     let on_send_click = move |_| {
         if let Some(cancel_controller) = cancel_signal.get_untracked() {
             cancel_controller.abort();
@@ -121,10 +124,7 @@ pub fn RequestParamsUrl(
                             Err(err) => {
                                 let error_str = err.to_string();
                                 if error_str.contains("AbortError") {
-                                    show_warning(
-                                        t_display!(i18n, rest_client_request_cancelled).to_string(),
-                                        messages,
-                                    )
+                                    show_warning(cancelled_msg_memo.get_untracked(), messages)
                                 } else {
                                     show_error(format!("Failed send request: {}", err), messages)
                                 }
@@ -133,7 +133,13 @@ pub fn RequestParamsUrl(
                         Err(err) => show_error(format!("Failed build request: {}", err), messages),
                     }
                 }
-                Err(err) => show_error(format!("Failed build request: {}", err.as_string().unwrap_or("Failed create abort controller".to_owned())), messages),
+                Err(err) => show_error(
+                    format!(
+                        "Failed build request: {}",
+                        err.as_string().unwrap_or("Failed create abort controller".to_owned())
+                    ),
+                    messages,
+                ),
             }
 
             set_in_progress.set(false);

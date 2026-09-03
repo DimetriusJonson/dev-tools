@@ -224,7 +224,7 @@ pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) -> R
                 // Set the cookie via the DOM
                 html_document.set_cookie(&cookie_string).map_err(|err| {
                     err.as_string().unwrap_or(format!("Cant create cookie {}", cookie_string))
-                });
+                })?;
             }
         }
     }
