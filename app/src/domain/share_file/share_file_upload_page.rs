@@ -203,10 +203,11 @@ fn upload_file(
                         if response.status() == 200 {
                             let server_url =
                                 response.headers().get("remote-server-url").unwrap_or_else(|| {
-                                    let window =
-                                        web_sys::window().expect("No global window exists");
-                                    let location = window.location();
-                                    location.origin().to_owned().unwrap_or_default()
+                                    if let Some(window) = web_sys::window() {
+                                        let location = window.location();
+                                        return location.origin().to_owned().unwrap_or_default();
+                                    }
+                                    "".to_owned()
                                 });
 
                             if !custom_server_url.is_empty() {

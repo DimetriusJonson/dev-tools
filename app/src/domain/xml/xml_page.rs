@@ -50,8 +50,10 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Format);
 
-            match format_xml(xml.read_untracked().as_str(), ident.get_untracked().parse().unwrap_or(4))
-            {
+            match format_xml(
+                xml.read_untracked().as_str(),
+                ident.get_untracked().parse().unwrap_or(4),
+            ) {
                 Ok(formatted_xml) => set_dst_xml.set(formatted_xml),
                 Err(err) => show_error(err.to_string(), messages),
             };
@@ -64,8 +66,8 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::FormatFile);
 
-            let file_input = file_input_ref.get_untracked().expect("input to exist");
-            if let Some(files) = file_input.files()
+            if let Some(file_input) = file_input_ref.get_untracked()
+                && let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
                 match Request::post("/format_xml")
@@ -105,8 +107,7 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Unescape);
 
-            match escape_xml(xml.read_untracked().as_str(), false)
-            {
+            match escape_xml(xml.read_untracked().as_str(), false) {
                 Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
                 Err(err) => show_error(err.to_string(), messages),
             };
@@ -119,8 +120,7 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Escape);
 
-            match escape_xml(xml.read_untracked().as_str(), true)
-            {
+            match escape_xml(xml.read_untracked().as_str(), true) {
                 Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
                 Err(err) => show_error(err.to_string(), messages),
             };
@@ -211,13 +211,13 @@ pub fn XmlPage() -> impl IntoView {
                 </div>
             </div>
 
-            <DragSplitter 
+            <DragSplitter
                 target_ref=left_panel_ref
                 second_target_ref=right_panel_ref
                 class_name="hidden md:block".to_owned()
                 local_store_prop_name=move || "xml_left_panel_width".to_owned()
-                min_ratio={25.0} 
-                max_ratio={75.0} 
+                min_ratio={25.0}
+                max_ratio={75.0}
                 default_ratio={50.0}/>
 
             // RIGHT SIDE

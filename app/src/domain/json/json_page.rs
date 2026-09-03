@@ -65,8 +65,8 @@ pub fn JsonPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::FormatFile);
 
-            let file_input = file_input_ref.get_untracked().expect("input to exist");
-            if let Some(files) = file_input.files()
+            if let Some(file_input) = file_input_ref.get_untracked()
+                && let Some(files) = file_input.files()
                 && let Some(file) = files.get(0)
             {
                 match Request::post("/format_json")

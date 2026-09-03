@@ -1,4 +1,4 @@
-use leptos::{html::Div, prelude::*};
+use leptos::{html::Div, leptos_dom::logging::console_log, prelude::*};
 
 #[derive(Clone, Debug)]
 pub struct TabItem {
@@ -18,7 +18,9 @@ pub fn Tabs(
         Effect::new({
             let tabs = items();
             move |_| {
-                update_selected(&tabs, tab_selected.get());
+                if let Err(err) = update_selected(&tabs, tab_selected.get()) {
+                    console_log(&err.to_string());
+                }
             }
         });
 
@@ -28,7 +30,9 @@ pub fn Tabs(
                 let tabs = items();
                 move |value, prev, _| {
                     if prev.is_none() || value != prev.unwrap() {
-                        update_selected(&tabs.clone(), *value);
+                        if let Err(err) = update_selected(&tabs.clone(), *value) {
+                            console_log(&err.to_string());
+                        }
                     }
                 }
             },
@@ -54,7 +58,9 @@ pub fn Tabs(
                          on:click={let tabs = tabs2.clone();
                             move |_event| {
                                 set_tab_selected.set(idx.get());
-                                update_selected(&tabs, idx.get());
+                                if let Err(err) = update_selected(&tabs, idx.get()) {
+                                    console_log(&err.to_string());
+                                }
                             }
                         }
                      >
@@ -67,11 +73,15 @@ pub fn Tabs(
     }
 }
 
-fn update_selected(tabs: &[TabItem], tab_selected: usize) {
+fn update_selected(tabs: &[TabItem], tab_selected: usize) -> Result<(), String> {
     for tab in tabs.iter() {
         if let Some(tab_elem) = tab.node_ref.get_untracked() {
-            tab_elem.class_list().add_1("hidden").expect("Failed add hidden to tab element");
-            tab_elem.class_list().remove_1("block").expect("Failed remove block from tab element");
+            tab_elem.class_list().add_1("hidden").map_err(|err| {
+                err.as_string().unwrap_or("Failed add hidden to tab element".to_owned())
+            })?;
+            tab_elem.class_list().remove_1("block").map_err(|err| {
+                err.as_string().unwrap_or("Failed remove block from tab element".to_owned())
+            })?;
         }
     }
 
@@ -83,9 +93,15 @@ fn update_selected(tabs: &[TabItem], tab_selected: usize) {
         .next()
         && let Some(tab_elem) = tab_node.get_untracked()
     {
-        tab_elem.class_list().add_1("block").expect("Failed add block to tab element");
-        tab_elem.class_list().remove_1("hidden").expect("Failed remove hidden from tab element");
+        tab_elem.class_list().add_1("block").map_err(|err| {
+            err.as_string().unwrap_or("Failed add block to tab element".to_owned())
+        })?;
+        tab_elem.class_list().remove_1("hidden").map_err(|err| {
+            err.as_string().unwrap_or("Failed remove hidden from tab element".to_owned())
+        })?;
     }
+
+    Ok(())
 }
 
 impl TabItem {

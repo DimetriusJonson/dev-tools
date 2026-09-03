@@ -214,8 +214,10 @@ fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Op
     let key = build_proxy_cache_key(base_url, path, query);
 
     //info!("get cache {}", key);
-    let cache = PROXY_CACHE.read().expect("Cant lock proxy cache");
-    cache.get(&key).cloned()
+    if let Ok(cache) = PROXY_CACHE.read() {
+        return cache.get(&key).cloned()
+    }
+    None
 }
 
 fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value: String) {
@@ -223,8 +225,9 @@ fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value
 
     //info!("*** set cache {}", key);
 
-    let mut cache = PROXY_CACHE.write().expect("Cant lock proxy cache");
-    cache.insert(key, value);
+    if let Ok(mut cache) = PROXY_CACHE.write() {
+        cache.insert(key, value);
+    }
 }
 
 pub async fn rest_client_html_previewer_middleware(
