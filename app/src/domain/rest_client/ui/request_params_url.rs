@@ -102,31 +102,38 @@ pub fn RequestParamsUrl(
                 body,
             };
 
-            cancel_signal.set(Some(AbortController::new().unwrap()));
-            match Request::post("/rest_client_send")
-                .abort_signal(Some(&cancel_signal.get_untracked().unwrap().signal()))
-                .json(&rc_request)
-            {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.json::<RestClientResponse>().await {
-                        Ok(resp) => {
-                            set_response.set(Some(resp));
-                        }
-                        Err(err) => show_error(format!("Cant get response: {}", err), messages),
-                    },
-                    Err(err) => {
-                        let error_str = err.to_string();
-                        if error_str.contains("AbortError") {
-                            show_warning(
-                                t_display!(i18n, rest_client_request_cancelled).to_string(),
-                                messages,
-                            )
-                        } else {
-                            show_error(format!("Failed send request: {}", err), messages)
-                        }
+            match AbortController::new() {
+                Ok(abort_controller) => {
+                    cancel_signal.set(Some(abort_controller.clone()));
+                    match Request::post("/rest_client_send")
+                        .abort_signal(Some(&abort_controller.signal()))
+                        .json(&rc_request)
+                    {
+                        Ok(request) => match request.send().await {
+                            Ok(response) => match response.json::<RestClientResponse>().await {
+                                Ok(resp) => {
+                                    set_response.set(Some(resp));
+                                }
+                                Err(err) => {
+                                    show_error(format!("Cant get response: {}", err), messages)
+                                }
+                            },
+                            Err(err) => {
+                                let error_str = err.to_string();
+                                if error_str.contains("AbortError") {
+                                    show_warning(
+                                        t_display!(i18n, rest_client_request_cancelled).to_string(),
+                                        messages,
+                                    )
+                                } else {
+                                    show_error(format!("Failed send request: {}", err), messages)
+                                }
+                            }
+                        },
+                        Err(err) => show_error(format!("Failed build request: {}", err), messages),
                     }
-                },
-                Err(err) => show_error(format!("Failed build request: {}", err), messages),
+                }
+                Err(err) => show_error(format!("Failed build request: {}", err.as_string().unwrap_or("Failed create abort controller".to_owned())), messages),
             }
 
             set_in_progress.set(false);

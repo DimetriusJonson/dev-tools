@@ -16,7 +16,7 @@ const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tauri::command]
 fn get_resource_dir(app_handle: &AppHandle) -> PathBuf {
-    app_handle.path().resource_dir().unwrap()
+    app_handle.path().resource_dir().expect("Cant get resource dir")
 }
 
 fn start_backend_server(
@@ -97,7 +97,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             if !no_start_server {
                 let server_descr =
                     start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
-                *server_cmd_child.lock().unwrap() = Some(server_descr.1);
+                *server_cmd_child.lock().expect("Failed lock server_cmd_child") =
+                    Some(server_descr.1);
 
                 tauri::async_runtime::spawn(async move {
                     let mut rx = server_descr.0;
@@ -122,8 +123,11 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 server_url = remote_server_url.to_owned();
             }
 
-            let app_title =
-                format!("{} {}", app.config().product_name.as_ref().unwrap(), APP_VERSION);
+            let app_title = format!(
+                "{} {}",
+                app.config().product_name.as_ref().expect("Cant get product name"),
+                APP_VERSION
+            );
 
             let target_url = Url::parse(&server_url).expect("Failed to parse server URL");
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(target_url))
@@ -140,14 +144,15 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
 
             let _tray = TrayIconBuilder::new()
                 .tooltip(&app_title)
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(app.default_window_icon().expect("Failed get default window icon").clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event({
                     let server_cmd_child = server_cmd_child.clone();
                     move |app, event| match event.id.as_ref() {
                         "quit" => {
-                            let mut managed_child = server_cmd_child.lock().unwrap();
+                            let mut managed_child =
+                                server_cmd_child.lock().expect("Failed lock server_cmd_child");
                             if let Some(cmd_child) = managed_child.take() {
                                 let _ = cmd_child.kill(); // Best effort termination
                             }
@@ -181,12 +186,13 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             let app_handle = app.handle().clone();
             let server_cmd_child = server_cmd_child.clone();
             tauri::async_runtime::spawn(async move {
-                if let Ok(Some(update)) = app_handle
+                match app_handle
                     .updater_builder()
                     .on_before_exit({
                         let app_handle = app_handle.clone();
                         move || {
-                            let mut managed_child = server_cmd_child.lock().unwrap();
+                            let mut managed_child =
+                                server_cmd_child.lock().expect("Failed lock server_cmd_child");
                             if let Some(cmd_child) = managed_child.take() {
                                 info!("Terminate server...");
                                 cmd_child.kill().expect("Failed terminate server!");
@@ -196,18 +202,20 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                         }
                     })
                     .build()
-                    .unwrap()
-                    .check()
-                    .await
                 {
-                    // Trigger download and installation immediately
-                    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                        error!("Failed to download update: {}", e);
-                    } else {
-                        info!("Update downloaded successfully. Restarting...");
-                        app_handle.restart();
+                    Ok(updater) => {
+                        if let Ok(Some(update)) = updater.check().await {
+                            // Trigger download and installation immediately
+                            if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                                error!("Failed to download update: {}", e);
+                            } else {
+                                info!("Update downloaded successfully. Restarting...");
+                                app_handle.restart();
+                            }
+                        }
                     }
-                }
+                    Err(err) => error!("Cant build updater {}", err),
+                };
             });
 
             Ok(())

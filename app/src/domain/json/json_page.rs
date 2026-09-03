@@ -87,10 +87,7 @@ pub fn JsonPage() -> impl IntoView {
                                             .to_string(),
                                         messages,
                                     ),
-                                    Err(err) => show_error(
-                                        err.as_string().unwrap_or("Error".to_owned()),
-                                        messages,
-                                    ),
+                                    Err(err) => show_error(err, messages),
                                 }
                             }
                             Err(err) => show_error(err.to_string(), messages),

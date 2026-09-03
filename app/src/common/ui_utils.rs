@@ -28,27 +28,36 @@ pub async fn paste_from_clipboard() -> Option<String> {
     None
 }
 
-pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Result<(), JsValue> {
+pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Result<(), String> {
     let js_array = js_sys::Array::new();
     let uint8_array = unsafe { js_sys::Uint8Array::view(&bytes) };
     js_array.push(&uint8_array);
 
     let options = BlobPropertyBag::new();
     options.set_type(mime_type);
-    let blob = Blob::new_with_u8_array_sequence_and_options(&js_array, &options)?;
+    let blob = Blob::new_with_u8_array_sequence_and_options(&js_array, &options)
+        .map_err(|err| err.as_string().unwrap_or("Cant create blob for save file".to_owned()))?;
 
-    let url = Url::create_object_url_with_blob(&blob)?;
+    let url = Url::create_object_url_with_blob(&blob)
+        .map_err(|err| err.as_string().unwrap_or("Cant create url with blob".to_owned()))?;
 
     if let Some(window) = web_sys::window()
         && let Some(document) = window.document()
     {
-        let anchor = document.create_element("a")?.dyn_into::<HtmlAnchorElement>()?;
+        let anchor = document
+            .create_element("a")
+            .map_err(|err| err.as_string().unwrap_or("Cant create anchor element".to_owned()))?
+            .dyn_into::<HtmlAnchorElement>()
+            .map_err(|err| {
+                err.as_string().unwrap_or("Failed cast to HtmlAnchorElement element".to_owned())
+            })?;
 
         anchor.set_href(&url);
         anchor.set_download(filename);
         anchor.click();
 
-        Url::revoke_object_url(&url)?;
+        Url::revoke_object_url(&url)
+            .map_err(|err| err.as_string().unwrap_or("Cant revoke object url".to_owned()))?;
     }
 
     Ok(())
@@ -61,19 +70,22 @@ pub fn get_browser_language() -> String {
 
 #[cfg(not(feature = "ssr"))]
 pub fn get_browser_language() -> String {
-    let window = web_sys::window().expect("window should exist");
-    let navigator = window.navigator();
+    if let Some(window) = web_sys::window() {
+        let navigator = window.navigator();
 
-    let languages = navigator.languages();
-    let mut best_lang = "en".to_string();
+        let languages = navigator.languages();
+        let mut best_lang = "en".to_string();
 
-    if languages.length() > 0 {
-        if let Some(lang) = languages.get(0).as_string() {
-            best_lang = lang;
+        if languages.length() > 0 {
+            if let Some(lang) = languages.get(0).as_string() {
+                best_lang = lang;
+            }
         }
+
+        if best_lang.starts_with("ru") { return "ru".to_string() } else { return "en".to_string() }
     }
 
-    if best_lang.starts_with("ru") { "ru".to_string() } else { "en".to_string() }
+    "en".to_string()
 }
 
 #[cfg(not(feature = "ssr"))]
@@ -191,25 +203,33 @@ pub fn safe_updating_ui_value(
     }
 }
 
-pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) {
+pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) -> Result<(), String> {
     #[cfg(not(feature = "ssr"))]
     {
         // Get the global window and document objects
-        let window = web_sys::window().expect("No global window found");
-        let document = window.document().expect("No document found on window");
+        if let Some(window) = web_sys::window()
+            && let Some(document) = window.document()
+        {
+            // Format the standard cookie string
+            let cookie_string = if let Some(_max_age_secs) = _max_age_secs {
+                format!(
+                    "{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax",
+                    _name, _value, _max_age_secs
+                )
+            } else {
+                format!("{}={}; Path=/; Secure; SameSite=Lax", _name, _value)
+            };
 
-        // Format the standard cookie string
-        let cookie_string = if let Some(_max_age_secs) = _max_age_secs {
-            format!("{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax", _name, _value, _max_age_secs)
-        } else {
-            format!("{}={}; Path=/; Secure; SameSite=Lax", _name, _value)
-        };
-
-        if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
-            // Set the cookie via the DOM
-            html_document.set_cookie(&cookie_string).expect("Failed to write cookie");
+            if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
+                // Set the cookie via the DOM
+                html_document.set_cookie(&cookie_string).map_err(|err| {
+                    err.as_string().unwrap_or(format!("Cant create cookie {}", cookie_string))
+                });
+            }
         }
     }
+
+    Ok(())
 }
 
 pub fn remove_cookie(_name: &str, _path: &str) {

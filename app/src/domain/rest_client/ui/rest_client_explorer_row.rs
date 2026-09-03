@@ -82,7 +82,7 @@ pub fn RestClientExplorerRow(
             on:contextmenu=move|e| {e.prevent_default();
                 let target = event_target::<HtmlElement>(&e);
                 let rect = target.get_bounding_client_rect();
-                let screen_height = get_browser_height().unwrap();
+                let screen_height = get_browser_height().unwrap_or(768.0);
                 set_popup_menu_bottom.set((screen_height - rect.y()) < 250.0);
 
                 if rc_context.request.read_untracked().id != request.read_untracked().id {
@@ -113,7 +113,7 @@ pub fn RestClientExplorerRow(
                                     on_click=move |e|{
                                         let target = event_target::<HtmlElement>(&e);
                                         let rect = target.get_bounding_client_rect();
-                                        let screen_height = get_browser_height().unwrap();
+                                        let screen_height = get_browser_height().unwrap_or(768.0);
                                         set_popup_menu_bottom.set((screen_height - rect.y()) < 250.0);
                                         if rc_context.request.read_untracked().id != request.read_untracked().id {
                                             rc_context.request.set(request.get());

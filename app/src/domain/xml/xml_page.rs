@@ -50,7 +50,7 @@ pub fn XmlPage() -> impl IntoView {
         spawn_local(async move {
             set_in_progress.set(InProgressType::Format);
 
-            match format_xml(xml.read_untracked().as_str(), ident.get_untracked().parse().unwrap())
+            match format_xml(xml.read_untracked().as_str(), ident.get_untracked().parse().unwrap_or(4))
             {
                 Ok(formatted_xml) => set_dst_xml.set(formatted_xml),
                 Err(err) => show_error(err.to_string(), messages),
@@ -86,7 +86,7 @@ pub fn XmlPage() -> impl IntoView {
                                             .to_string(),
                                         messages,
                                     ),
-                                    Err(err) => show_error(err.as_string().unwrap(), messages),
+                                    Err(err) => show_error(err, messages),
                                 }
                             }
                             Err(err) => show_error(err.to_string(), messages),

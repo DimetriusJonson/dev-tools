@@ -164,9 +164,9 @@ fn build_to_dump_receiver_url(
     };
     let old_host = format!("{}{}", url.host_str().unwrap_or_default().to_owned(), old_port);
 
-    url.set_scheme("http").unwrap();
-    url.set_host(Some("127.0.0.1")).unwrap();
-    url.set_port(Some(dump_port)).unwrap();
+    url.set_scheme("http").expect("Cant set url http scheme");
+    url.set_host(Some("127.0.0.1")).expect("Cant set url 127.0.0.1 host");
+    url.set_port(Some(dump_port)).expect(&format!("Cant set url port {}", dump_port));
 
     Ok((url.to_string(), old_host))
 }
@@ -214,7 +214,7 @@ fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Op
     let key = build_proxy_cache_key(base_url, path, query);
 
     //info!("get cache {}", key);
-    let cache = PROXY_CACHE.read().unwrap();
+    let cache = PROXY_CACHE.read().expect("Cant lock proxy cache");
     cache.get(&key).cloned()
 }
 
@@ -223,7 +223,7 @@ fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value
 
     //info!("*** set cache {}", key);
 
-    let mut cache = PROXY_CACHE.write().unwrap();
+    let mut cache = PROXY_CACHE.write().expect("Cant lock proxy cache");
     cache.insert(key, value);
 }
 
@@ -360,7 +360,7 @@ pub async fn rest_client_html_previewer_middleware(
     let mut response = next.run(req).await;
     response.headers_mut().insert(
         header::SET_COOKIE,
-        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/").unwrap(),
+        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/").expect("Cant create header value"),
     );
     Ok(response)
 }

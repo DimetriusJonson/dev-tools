@@ -40,7 +40,7 @@ pub fn DragFile(
                     if let Some(data) = event.clipboard_data() && let Some(files) = data.files() && let Some(file) = files.get(0){
                         let mime_type = file.type_().to_string();
                         if mime_type.starts_with("image/") {
-                            set_img_url.set(Url::create_object_url_with_blob(&file).unwrap());
+                            set_img_url.set(Url::create_object_url_with_blob(&file).expect("Failed create url with blob"));
                             on_paste_file.run(file);
                         }
                     }

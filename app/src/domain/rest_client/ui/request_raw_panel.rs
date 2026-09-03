@@ -39,9 +39,9 @@ pub fn RequestRawPanel(
         move || rc_context.request.get(),
         move |value, _prev, _| {
             match value.command {
-                RequestCommand::CopyCUrl => on_build_c_url(MouseEvent::new("click").unwrap()),
+                RequestCommand::CopyCUrl => on_build_c_url(MouseEvent::new("click").expect("Failed create mouse event click")),
                 RequestCommand::CopyCUrlWin => {
-                    on_build_c_url_win(MouseEvent::new("click").unwrap())
+                    on_build_c_url_win(MouseEvent::new("click").expect("Failed create mouse event click"))
                 }
                 _ => (),
             }

@@ -70,8 +70,8 @@ pub fn Tabs(
 fn update_selected(tabs: &[TabItem], tab_selected: usize) {
     for tab in tabs.iter() {
         if let Some(tab_elem) = tab.node_ref.get_untracked() {
-            tab_elem.class_list().add_1("hidden").unwrap();
-            tab_elem.class_list().remove_1("block").unwrap();
+            tab_elem.class_list().add_1("hidden").expect("Failed add hidden to tab element");
+            tab_elem.class_list().remove_1("block").expect("Failed remove block from tab element");
         }
     }
 
@@ -83,8 +83,8 @@ fn update_selected(tabs: &[TabItem], tab_selected: usize) {
         .next()
         && let Some(tab_elem) = tab_node.get_untracked()
     {
-        tab_elem.class_list().add_1("block").unwrap();
-        tab_elem.class_list().remove_1("hidden").unwrap();
+        tab_elem.class_list().add_1("block").expect("Failed add block to tab element");
+        tab_elem.class_list().remove_1("hidden").expect("Failed remove hidden from tab element");
     }
 }
 

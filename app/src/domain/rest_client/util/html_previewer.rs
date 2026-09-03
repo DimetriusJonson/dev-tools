@@ -65,10 +65,12 @@ pub fn replace_absolute_links(html: &mut String, base_url: &str) {
     replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"", base_url);
 }
 
-pub fn init_html_previewer(proxy_allow: bool, base_url: &str) {
+pub fn init_html_previewer(proxy_allow: bool, base_url: &str) -> Result<(), String> {
     if proxy_allow {
-        create_cookie("rc_base_url", &build_base_url(base_url), None);
+        create_cookie("rc_base_url", &build_base_url(base_url), None)?;
     }
+
+    Ok(())
 }
 
 pub fn clear_html_previewer() {
@@ -153,9 +155,9 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
 
     if let Ok(mut url) = Url::parse(src_url) {
         if let Ok(host_info) = get_browser_host_info() {
-            url.set_scheme(&host_info.0).unwrap();
-            url.set_host(Some(&host_info.1)).unwrap();
-            url.set_port(host_info.2).unwrap();
+            url.set_scheme(&host_info.0).expect(&format!("Cant set url scheme {}", host_info.0));
+            url.set_host(Some(&host_info.1)).expect(&format!("Cant set url host {} ", host_info.1));
+            url.set_port(host_info.2).expect(&format!("Cant set url port {:?}", host_info.2));
             url.query_pairs_mut().append_pair("rc_src_url", src_url);
             return Some(url.to_string());
         }

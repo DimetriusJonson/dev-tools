@@ -20,7 +20,7 @@ use crate::i18n::*;
 use crate::model::restclient::rest_client_request::RestClientRequest;
 use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use gloo_net::http::Request;
-use leptos::html::{Div};
+use leptos::html::Div;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -97,10 +97,12 @@ pub fn RequestResultPanel(
         move || show_preview_html.get(),
         move |value, _prev, _| {
             if *value {
-                init_html_previewer(
+                if let Err(err) = init_html_previewer(
                     proxy_allow.get_untracked(),
                     &rc_context.request.read_untracked().url,
-                );
+                ) {
+                    show_error(err, messages)
+                }
             } else {
                 clear_html_previewer();
             }
@@ -223,10 +225,7 @@ pub fn RequestResultPanel(
                                     t_display!(i18n, file_saved_file_msg, file_name).to_string(),
                                     messages,
                                 ),
-                                Err(err) => show_error(
-                                    err.as_string().unwrap_or("Error".to_owned()),
-                                    messages,
-                                ),
+                                Err(err) => show_error(err, messages),
                             }
                         }
                         Err(err) => show_error(err.to_string(), messages),
@@ -321,13 +320,15 @@ pub fn RequestResultPanel(
                                     srcdoc=get_preview_src_doc sandbox=preview_sandbox
                                     on:load=move |event| {
                                         let elem = event_target::<HtmlIFrameElement>(&event);
-                                        if let Some(cw) = elem.content_window() && 
+                                        if let Some(cw) = elem.content_window() &&
                                             let Ok(href) = cw.location().href() &&
                                             let Ok(base_url) = url::Url::parse(&rc_context.request.read_untracked().url) &&
                                             let Ok(mut href_url) = url::Url::parse(&href) &&
                                             href_url.set_scheme(base_url.scheme()).is_ok() &&
                                             href_url.set_host(base_url.host_str()).is_ok() {
-                                            init_html_previewer(true, &href_url.to_string());
+                                            if let Err(err) = init_html_previewer(true, &href_url.to_string()) {
+                                                show_error(err, messages);
+                                            }
                                         }
                                         set_preview_loading.set(false);
                                     }

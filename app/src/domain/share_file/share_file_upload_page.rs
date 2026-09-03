@@ -36,7 +36,9 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 move |success| {
                     if success {
                         selected_file.set(None);
-                        file_input_ref.write().as_mut().unwrap().set_files(None);
+                        if let Some(input_ref) = file_input_ref.write().as_mut() {
+                            input_ref.set_files(None);
+                        }
                     }
                 },
             );
@@ -77,7 +79,9 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                     upload_file(file, set_in_progress, set_shared_url, messages, custom_server.get(), i18n, move |success| {
                         if success {
                             selected_file.set(None);
-                            file_input_ref.write().as_mut().unwrap().set_files(None);
+                            if let Some(input_ref) = file_input_ref.write().as_mut() {
+                                input_ref.set_files(None);
+                            }
                         }
                     });
                 }
@@ -206,17 +210,21 @@ fn upload_file(
                                 });
 
                             if !custom_server_url.is_empty() {
-                                set_shared_url.set(format!(
-                                    "{}/share_file/view?id={}&local=true",
-                                    custom_server_url,
-                                    response.text().await.unwrap()
-                                ));
+                                match response.text().await {
+                                    Ok(resp_text) => set_shared_url.set(format!(
+                                        "{}/share_file/view?id={}&local=true",
+                                        custom_server_url, resp_text
+                                    )),
+                                    Err(err) => show_error(err.to_string(), messages),
+                                }
                             } else {
-                                set_shared_url.set(format!(
-                                    "{}/share_file/view?id={}",
-                                    server_url,
-                                    response.text().await.unwrap()
-                                ));
+                                match response.text().await {
+                                    Ok(resp_text) => set_shared_url.set(format!(
+                                        "{}/share_file/view?id={}",
+                                        server_url, resp_text
+                                    )),
+                                    Err(err) => show_error(err.to_string(), messages),
+                                }
                             }
                             result = true;
 

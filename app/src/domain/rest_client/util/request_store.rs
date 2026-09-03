@@ -111,7 +111,7 @@ pub fn get_stored_requests_ids(project_id: &str) -> Vec<i32> {
         get_local_store_value(&build_project_stored_key(project_id, "requests_ids"), "".to_owned());
 
     if !requests_ids.is_empty() {
-        requests_ids.split(",").map(|s| s.parse::<i32>().unwrap()).collect()
+        requests_ids.split(",").map(|s| s.parse::<i32>().unwrap_or(0)).collect()
     } else {
         vec![]
     }
