@@ -47,7 +47,7 @@ pub async fn share_file_upload(
 ) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
-    let file_name = params.get("file_name").unwrap_or(&"unknown_file");
+    let file_name = params.get("file_name").ok_or(AppError::system_error("parameter 'file_name' is empty".to_owned()))?;
 
     match app_state.pool {
         Some(pool) => {
@@ -127,8 +127,8 @@ pub async fn share_file_download(
 ) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
-    let external_id = params.get("id").unwrap_or(&"");
-    let thumbnail = params.get("thumbnail").unwrap_or(&"false").parse::<bool>().unwrap_or(false);
+    let external_id = params.get("id").ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
+    let thumbnail = params.get("thumbnail").map(|v| v.parse::<bool>().ok()).unwrap_or_default().unwrap_or_default();
 
     match app_state.pool {
         Some(pool) => {
@@ -201,12 +201,13 @@ pub async fn share_file_info(
     RawQuery(query): RawQuery,
     request: Request,
 ) -> Result<impl IntoResponse, AppError> {
-    let query_str = query.unwrap_or_default();
-    let params = parse_query_params(&query_str);
-    let external_id = params.get("id").unwrap_or(&"");
-
     match app_state.pool {
         Some(pool) => {
+            let query_str = query.unwrap_or_default();
+            let params = parse_query_params(&query_str);
+            let external_id = params
+                .get("id")
+                .ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
             let share_file_info = get_share_file_info_from_db(external_id, &pool).await?;
             let is_image = is_mime_image(&share_file_info.mime_type);
             Ok(Json(ShareFileInfoDto {
@@ -254,8 +255,10 @@ pub async fn share_file_info_ex_handler(
 ) -> Result<impl IntoResponse, AppError> {
     let query_str = query.unwrap_or_default();
     let params = parse_query_params(&query_str);
-    let id = params.get("id").unwrap_or(&"");
-    let local = params.get("local").unwrap_or(&"false").parse::<bool>().unwrap_or(false);
+    let id =
+        params.get("id").ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
+    let local =
+        params.get("local").map(|v| v.parse::<bool>().ok()).unwrap_or_default().unwrap_or_default();
 
     let site_addr = app_state.leptos_options.site_addr;
 
@@ -266,13 +269,12 @@ pub async fn share_file_info_ex_handler(
             .await
             .map_err(AppError::system_error)?;
 
-    if response.status() == 200 {
+    if response.status().is_success() {
         let share_file_info_dto =
             response.json::<ShareFileInfoDto>().await.map_err(AppError::system_error)?;
         Ok(Json(share_file_info_dto).into_response())
     } else {
         let response_text = response.text().await.map_err(AppError::system_error)?;
-
         Err(AppError::system_error(response_text))?
     }
 }
