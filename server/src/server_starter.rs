@@ -46,10 +46,8 @@ pub async fn start_axum_server(
         None => None,
     };
 
-    let dump_port = match start_dump_receiver().await {
-        Ok(r) => r.1,
-        Err(err) => return Err(anyhow!("Cant start dump receiver: {}", err)),
-    };
+    let (_, dump_port) =
+        start_dump_receiver().await.map_err(|err| anyhow!("Cant start dump receiver: {}", err))?;
 
     let app = build_app_router(
         conf,
@@ -62,8 +60,8 @@ pub async fn start_axum_server(
     .await?;
     info!("listening on http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    match axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await {
-        Ok(_) => Ok(()),
-        Err(err) => Err(anyhow!("Cant create axum server: {}", err)),
-    }
+
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .map_err(|err| anyhow!(err))
 }

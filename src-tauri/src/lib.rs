@@ -202,12 +202,12 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 {
                     Ok(updater) => {
                         if let Ok(Some(update)) = updater.check().await {
-                            // Trigger download and installation immediately
-                            if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                                error!("Failed to download update: {}", e);
-                            } else {
-                                info!("Update downloaded successfully. Restarting...");
-                                app_handle.restart();
+                            match update.download_and_install(|_, _| {}, || {}).await {
+                                Ok(_) => {
+                                    info!("Update downloaded successfully. Restarting...");
+                                    app_handle.restart();
+                                }
+                                Err(err) => error!("Failed to download update: {}", err),
                             }
                         }
                     }
@@ -225,10 +225,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
             }
         });
 
-    match app.run(tauri::generate_context!()) {
-        Ok(_) => (),
-        Err(err) => error!("error while running tauri application: {}", err),
-    };
+    app.run(tauri::generate_context!())
+        .unwrap_or_else(|err| error!("error while running tauri application: {}", err));
 }
 
 fn clear_webview_cache(app: &AppHandle) {
