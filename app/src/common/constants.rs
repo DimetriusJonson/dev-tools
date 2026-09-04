@@ -96,3 +96,7 @@ pub const MEDIA_TYPES_AUTOCOMPLETE: [&str; 23] = [
     "text/plain",
     "text/xml",
 ];
+
+pub const RC_BASE_URL_COOKIE_NAME: &str = "__rc_base_url";
+pub const RC_SRC_URL_PARAM_NAME: &str = "__rc_src_url";
+

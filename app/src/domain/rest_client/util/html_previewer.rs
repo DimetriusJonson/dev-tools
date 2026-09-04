@@ -1,10 +1,8 @@
 use url::Url;
 
-use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cookie};
+use crate::common::{constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME}, ui_utils::{create_cookie, get_browser_host_info, remove_cookie}};
 
 pub static FETCH_WRAPPER_JS: &[u8] = include_bytes!("fetchWrapper.js");
-const BASE_URL_COOKIE_NAME: &str = "__rc_base_url";
-const SRC_URL_PARAM_NAME: &str = "__rc_src_url";
 
 pub fn add_preview_scripts(html: &mut String) {
     let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
@@ -69,14 +67,14 @@ pub fn replace_absolute_links(html: &mut String, base_url: &str) {
 
 pub fn init_html_previewer(proxy_allow: bool, base_url: &str) -> Result<(), String> {
     if proxy_allow {
-        create_cookie(BASE_URL_COOKIE_NAME, &build_base_url(base_url), None)?;
+        create_cookie(RC_BASE_URL_COOKIE_NAME, &build_base_url(base_url), None)?;
     }
 
     Ok(())
 }
 
 pub fn clear_html_previewer() {
-    remove_cookie(BASE_URL_COOKIE_NAME, "/");
+    remove_cookie(RC_BASE_URL_COOKIE_NAME, "/");
 }
 
 fn replace_absolute_links_by_attr_part(
@@ -162,7 +160,7 @@ fn convert_absolute_url(src_url: &str) -> Option<String> {
         url.set_host(Some(&host_info.1))
             .unwrap_or_else(|_| panic!("Cant set url host {} ", host_info.1));
         url.set_port(host_info.2).unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
-        url.query_pairs_mut().append_pair(SRC_URL_PARAM_NAME, src_url);
+        url.query_pairs_mut().append_pair(RC_SRC_URL_PARAM_NAME, src_url);
         return Some(url.to_string());
     }
 
