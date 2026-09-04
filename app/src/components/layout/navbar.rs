@@ -1,7 +1,5 @@
+use crate::components::layout::language_selector::LanguageSelector;
 use crate::i18n::*;
-use crate::{
-    common::ui_utils::get_host_name, components::layout::language_selector::LanguageSelector,
-};
 use leptos::prelude::*;
 use leptos_router::hooks::use_location;
 
@@ -11,8 +9,17 @@ use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLink
 pub fn Navbar() -> impl IntoView {
     let i18n = use_i18n();
     let location = use_location();
-
-    let host_name_resource = OnceResource::new(get_host_name());
+    let dev_tools_site = RwSignal::new(false);
+    let _ = Effect::new(move || {
+        dev_tools_site.set(
+            window()
+                .location()
+                .hostname()
+                .map(|h| h.contains("dev-tools"))
+                .ok()
+                .unwrap_or_default(),
+        );
+    });
 
     view! {
         <nav class="w-full relative bg-primary">
@@ -35,23 +42,15 @@ pub fn Navbar() -> impl IntoView {
                     </div>
 
                     <div class="flex gap-4">
-                        <Transition>
-                            {move || Suspend::new(async move {
-                                let host_name = host_name_resource.await;
-                                view! {
-                                    <Show when=move || { host_name.contains("dev-tools") }>
-                                        <ButtonLink 
-                                            class_name="hidden md:block".to_owned()
-                                            label=move || t_string!(i18n, standalone_download_label).to_owned() 
-                                            title=Box::new(move || t_string!(i18n, standalone_download_title).to_owned())
-                                            href="https://github.com/DimetriusJonson/dev-tools/releases".to_owned() attr:target="_blank"
-                                            button_width=ButtonLinkWidth::Auto
-                                            color=move || ButtonLinkColor::Brown />
-                                    </Show>
-                                }
-                            })}
-                        </Transition>                            
-
+                        <Show when=move || dev_tools_site.get() >
+                            <ButtonLink
+                                class_name="hidden md:block".to_owned()
+                                label=move || t_string!(i18n, standalone_download_label).to_owned()
+                                title=Box::new(move || t_string!(i18n, standalone_download_title).to_owned())
+                                href="https://github.com/DimetriusJonson/dev-tools/releases".to_owned() attr:target="_blank"
+                                button_width=ButtonLinkWidth::Auto
+                                color=move || ButtonLinkColor::Brown />
+                        </Show>
                         <LanguageSelector />
                     </div>
 

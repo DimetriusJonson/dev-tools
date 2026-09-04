@@ -88,11 +88,6 @@ pub fn get_browser_language() -> String {
     "en".to_string()
 }
 
-#[cfg(not(feature = "ssr"))]
-pub async fn get_host_name() -> String {
-    leptos::prelude::window().location().hostname().unwrap_or_default()
-}
-
 pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> {
     #[cfg(not(feature = "ssr"))]
     {
@@ -117,25 +112,6 @@ pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> 
 
     #[cfg(feature = "ssr")]
     Ok(("http".to_owned(), "localhost".to_owned(), None))
-}
-
-#[cfg(feature = "ssr")]
-pub async fn get_host_name() -> String {
-    use axum::http::HeaderMap;
-    use leptos_axum::extract;
-
-    let host = match extract::<HeaderMap>().await {
-        Ok(headers) => headers.get("host").and_then(|h| h.to_str().ok()).map(|s| s.to_string()),
-        Err(_) => None,
-    };
-
-    match host {
-        Some(host) => host,
-        None => match extract::<axum::http::request::Parts>().await {
-            Ok(parts) => parts.uri.authority().map(|a| a.host().to_owned()).unwrap_or_default(),
-            Err(err) => err.to_string(),
-        },
-    }
 }
 
 pub fn get_accept_language() -> String {
