@@ -25,6 +25,9 @@ use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
 
+const BASE_URL_COOKIE_NAME: &str = "__rc_base_url";
+const SRC_URL_PARAM_NAME: &str = "__rc_src_url";
+
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
     Json(request): Json<RestClientRequest>,
@@ -195,7 +198,7 @@ fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> Str
     let mut query_str = query
         .map(|q| {
             q.split('&')
-                .filter(|qv| !qv.starts_with("rc_base_url="))
+                .filter(|qv| !qv.starts_with(&format!("{}=", BASE_URL_COOKIE_NAME)))
                 .collect::<Vec<&str>>()
                 .join("&")
         })
@@ -251,7 +254,7 @@ pub async fn rest_client_html_previewer_middleware(
         && is_proxy_allow(&req, &app_state, addr)
     {
         let cookie_jar = CookieJar::from_headers(req.headers());
-        if let Some(cookie) = cookie_jar.get("rc_base_url") {
+        if let Some(cookie) = cookie_jar.get(BASE_URL_COOKIE_NAME) {
             let rc_base_url = cookie.value().trim_end_matches("/");
 
             let url_param = req
@@ -259,7 +262,7 @@ pub async fn rest_client_html_previewer_middleware(
                 .query()
                 .map(|query_str| {
                     parse_query_params(query_str)
-                        .get("rc_src_url")
+                        .get(SRC_URL_PARAM_NAME)
                         .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 })
                 .unwrap_or(None)
@@ -361,7 +364,7 @@ pub async fn rest_client_html_previewer_middleware(
     let mut response = next.run(req).await;
     response.headers_mut().insert(
         header::SET_COOKIE,
-        HeaderValue::from_str("rc_base_url=''; max-age=0; path=/")
+        HeaderValue::from_str(&format!("{}=''; max-age=0; path=/", BASE_URL_COOKIE_NAME))
             .expect("Cant create header value"),
     );
     Ok(response)
