@@ -1,7 +1,7 @@
 function convertAbsoluteUrl(url) {
     if (url.startsWith("http://") || url.startsWith("https://")) {
         let parsedUrl = URL.parse(url);
-        return parsedUrl.pathname + "?rc_src_url=" + encodeURIComponent(url);
+        return parsedUrl.pathname + "?__rc_src_url=" + encodeURIComponent(url);
     }
     return url;
 }
