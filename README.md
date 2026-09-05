@@ -32,10 +32,4 @@ For example, <br>
     webdev_useful_tools.exe --no-start-server<br>
 The application will work with the server specified in the --remote-server-url option.
 
-Useful commands:
-
-Build standolone app:
-
-just build-windows<br>
-just build-linux<br>
-just build-macos<br>
+Build standolone app: just build

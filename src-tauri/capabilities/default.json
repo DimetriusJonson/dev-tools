@@ -6,14 +6,6 @@
     "updater:default",
     "autostart:allow-enable",
     "autostart:allow-disable",
-    "autostart:allow-is-enabled",
-    {
-      "identifier": "shell:allow-spawn",
-      "allow": [
-        {
-          "name": "binaries/webdev_useful_tools_server"
-        }
-      ]
-    }
+    "autostart:allow-is-enabled"
   ]
 }

@@ -1,26 +1,30 @@
+use std::net::SocketAddr;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 use std::{env, fs};
 
 use log::{LevelFilter, error, info};
+use server::server_starter::start_axum_server;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_log::{Target, TargetKind};
-use tauri_plugin_shell::ShellExt;
-use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_updater::UpdaterExt;
 
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+struct ServerTask(tauri::async_runtime::JoinHandle<()>);
 
 fn start_backend_server(
     app_handle: &AppHandle,
     port: u16,
     resource_dir: PathBuf,
     remote_server_url: String,
-) -> Result<(tokio::sync::mpsc::Receiver<CommandEvent>, CommandChild), String> {
+) -> Result<(), String> {
     let addr = format!("0.0.0.0:{}", port);
+    let addr_v4 = match addr.parse::<SocketAddr>() {
+        Ok(addr) => Some(addr),
+        Err(err) => Err(err.to_string())?,
+    };
 
     info!("Backend server starting up on {}...", addr);
 
@@ -29,38 +33,43 @@ fn start_backend_server(
     site_dir.push("site");
 
     let app_handle = app_handle.clone();
-    let shell = app_handle.shell();
 
-    match shell.sidecar("webdev_useful_tools_server") {
-        Ok(sidecar) => match sidecar
-            .env("LEPTOS_OUTPUT_NAME", "dev_tools")
-            .env("LEPTOS_SITE_ADDR", &addr)
-            .env("LEPTOS_SITE_ROOT", site_dir)
-            .env("DEVTOOLS_REMOTE_SERVER_URL", remote_server_url)
-            .arg(format!("--addr={}", addr))
-            .arg("--rc-preview-proxy-local")
-            .spawn()
-        {
-            Ok(rx) => Ok(rx),
-            Err(err) => {
-                error!("Error: {}", err);
-                Err(err.to_string())
+    unsafe {
+        std::env::set_var("LEPTOS_OUTPUT_NAME", "dev_tools");
+        std::env::set_var("LEPTOS_SITE_ADDR", &addr);
+        std::env::set_var("LEPTOS_SITE_ROOT", site_dir);
+    };
+
+    let server_task = tauri::async_runtime::spawn(async move {
+        start_axum_server(
+            addr_v4,
+            Some(remote_server_url),
+            None,
+            u64::MAX,
+            vec!["127.0.0.1".to_owned()],
+        )
+        .await
+        .unwrap();
+    });
+    app_handle.manage(ServerTask(server_task));
+
+    // Wait for the server to be ready before navigating
+    tauri::async_runtime::block_on(async {
+        for _ in 0..50 {
+            if tokio::net::TcpStream::connect(&addr).await.is_ok() {
+                break;
             }
-        },
-        Err(err) => {
-            error!("Error: {}", err);
-            Err(err.to_string())
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         }
-    }
+    });
+
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server: bool) {
-    let server_cmd_child = Arc::new(Mutex::new(None));
-
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
-        .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(LevelFilter::Info)
@@ -93,32 +102,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 server_url = remote_server_url.to_owned();
             } else {
                 server_url = format!("http://127.0.0.1:{}", port);
-
-                let server_descr =
-                    start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
-
-                if let Ok(mut managed_child) = server_cmd_child.lock() {
-                    *managed_child = Some(server_descr.1);
-
-                    tauri::async_runtime::spawn(async move {
-                        let mut rx = server_descr.0;
-                        while let Some(received) = rx.recv().await {
-                            match received {
-                                tauri_plugin_shell::process::CommandEvent::Stderr(items) => {
-                                    error!("server: {}", String::from_utf8_lossy(&items))
-                                }
-                                tauri_plugin_shell::process::CommandEvent::Stdout(items) => {
-                                    info!("server: {}", String::from_utf8_lossy(&items))
-                                }
-                                tauri_plugin_shell::process::CommandEvent::Error(err) => {
-                                    error!("Error: {}", err)
-                                }
-                                tauri_plugin_shell::process::CommandEvent::Terminated(_) => break,
-                                _ => break,
-                            }
-                        }
-                    });
-                }
+                start_backend_server(app.app_handle(), port, resource_dir, remote_server_url)?;
             }
 
             let app_title = format!(
@@ -145,14 +129,8 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event({
-                    let server_cmd_child = server_cmd_child.clone();
                     move |app, event| match event.id.as_ref() {
                         "quit" => {
-                            if let Ok(mut managed_child) = server_cmd_child.lock()
-                                && let Some(cmd_child) = managed_child.take()
-                            {
-                                let _ = cmd_child.kill();
-                            }
                             app.exit(0);
                         }
                         "open" => {
@@ -179,20 +157,15 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
 
             // Spawn background task to check for update automatically on start
             let app_handle = app.handle().clone();
-            let server_cmd_child = server_cmd_child.clone();
             tauri::async_runtime::spawn(async move {
                 match app_handle
                     .updater_builder()
                     .on_before_exit({
                         let app_handle = app_handle.clone();
                         move || {
-                            if let Ok(mut managed_child) = server_cmd_child.lock()
-                                && let Some(cmd_child) = managed_child.take()
-                            {
-                                info!("Terminate server...");
-                                if let Err(err) = cmd_child.kill() {
-                                    error!("Failed terminate server: {}", err)
-                                };
+                            if let Some(task) = app_handle.try_state::<ServerTask>() {
+                                task.0.abort();
+                                println!("Backend server terminated successfully.");
                             }
                             info!("Clear cache...");
                             clear_webview_cache(&app_handle);
@@ -220,6 +193,10 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
+                if let Some(task) = window.try_state::<ServerTask>() {
+                    task.0.abort();
+                    println!("Backend server terminated successfully.");
+                }
                 //let _ = window.minimize();
                 let _ = window.hide();
             }

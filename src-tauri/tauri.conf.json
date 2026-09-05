@@ -4,6 +4,7 @@
   "identifier": "com.shz.app.WebDevUsefulTools",
   "build": {
     "beforeDevCommand": "cargo leptos watch",
+    "beforeBuildCommand": "cargo leptos build --release",
     "devUrl": "http://localhost:3000",
     "removeUnusedCommands": true
   },
@@ -35,9 +36,6 @@
     "resources": [
       "../site/pkg/",
       "../site/codemirror.min.js"
-    ],
-    "externalBin": [
-      "binaries/webdev_useful_tools_server"
     ],
     "windows": {
       "digestAlgorithm": "sha256",

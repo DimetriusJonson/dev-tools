@@ -7,32 +7,11 @@ set dotenv-load := true
 default:
     @just --list
 
-build-macos:
-    LEPTOS_TAILWIND_VERSION="v4.3.3" cargo leptos build --release -vv
-    mkdir -p src-tauri/binaries
-    cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-apple-darwin
-    TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri build
-
-build-linux:
-    LEPTOS_TAILWIND_VERSION="v4.3.3" cargo leptos build --release -vv
-    mkdir -p src-tauri/binaries
-    cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-unknown-linux-gnu
-    TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri build
-
-build-windows:
-    LEPTOS_TAILWIND_VERSION="v4.3.3" cargo leptos build --release -vv
-    mkdir -p src-tauri/binaries
-    cp target/release/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
-    TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri build
-
-tauri-dev-full:
-    LEPTOS_TAILWIND_VERSION="v4.3.3" cargo leptos build
-    mkdir -p src-tauri/binaries
-    cp target/debug/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
-    TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri dev
+build:
+    LEPTOS_TAILWIND_VERSION="v4.3.3" TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri build
 
 tauri-dev:
-    TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri dev
+    LEPTOS_TAILWIND_VERSION="v4.3.3" TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/dev-tools.key) cargo tauri dev
 
 github-release version:
     git tag -a {{version}} -m "release {{version}}"
