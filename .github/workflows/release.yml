@@ -61,30 +61,6 @@ jobs:
       - name: Install frontend dependencies
         run: npm install 
 
-      - name: Build App binaries
-        env:
-          LEPTOS_TAILWIND_VERSION: 'v4.3.3'
-        run: cargo leptos build --release -vv
-
-      - name: create directory binaries
-        run: mkdir -p src-tauri/binaries
-
-      - name: Copy App binaries Linux
-        if: ${{ matrix.platform == 'ubuntu-latest' }}
-        run: cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-unknown-linux-gnu
-
-      - name: Copy App binaries Mac x86_64
-        if: ${{ matrix.args == '--target x86_64-apple-darwin' }}
-        run: cp target/release/server src-tauri/binaries/webdev_useful_tools_server-x86_64-apple-darwin
-
-      - name: Copy App binaries Mac Arm
-        if: ${{ matrix.args == '--target aarch64-apple-darwin' }}
-        run: cp target/release/server src-tauri/binaries/webdev_useful_tools_server-aarch64-apple-darwin
-
-      - name: Copy App binaries Windows
-        if: ${{ matrix.platform == 'windows-latest' }}
-        run: cp target/release/server.exe src-tauri/binaries/webdev_useful_tools_server-x86_64-pc-windows-msvc.exe
-
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
