@@ -22,7 +22,6 @@ quick-xml.workspace = true
 async-stream.workspace = true
 dotenvy.workspace = true
 tokio-util.workspace = true
-sqlx.workspace = true
 http.workspace = true
 nanoid.workspace = true
 image.workspace = true
@@ -34,8 +33,11 @@ serde.workspace = true
 serde_json.workspace = true
 urlencoding.workspace=true
 
+sqlx = { workspace = true, optional = true }
+
 app = { path = "../app", default-features = false, features = ["ssr"] }
 leptos = { workspace = true, features = ["ssr"] }
 
 [features]
-default = []
+default = ["sharefiledb"]
+sharefiledb = ["dep:sqlx"]

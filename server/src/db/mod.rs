@@ -1,9 +1,18 @@
 pub mod share_files_db;
 
-use tracing::info;
+#[cfg(feature = "sharefiledb")]
 use sqlx::{Pool, Postgres};
 
-pub async fn create_pool(database_url: String) -> Pool<Postgres> {
+#[cfg(feature = "sharefiledb")]
+pub type DbPool = Pool<Postgres>;
+
+#[cfg(not(feature = "sharefiledb"))]
+pub type DbPool = ();
+
+#[cfg(feature = "sharefiledb")]
+pub async fn create_pool(database_url: String) -> DbPool {
+    use tracing::info;
+
     info!("Connect to database...");
     let pool = sqlx::postgres::PgPoolOptions::new()
         .min_connections(1)

@@ -1,11 +1,12 @@
 use axum::extract::FromRef;
 use leptos::prelude::LeptosOptions;
-use sqlx::{Pool, Postgres};
+
+use crate::db::DbPool;
 
 #[derive(FromRef, Debug, Clone)]
 pub struct AppState {
     pub leptos_options: LeptosOptions,
-    pub pool: Option<Pool<Postgres>>,
+    pub pool: Option<DbPool>,
     pub remote_server_url: Option<String>,
     pub dump_port: u16,
     pub max_content_length: u64,

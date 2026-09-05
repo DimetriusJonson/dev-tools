@@ -10,7 +10,6 @@ use leptos_axum::{
     LeptosRoutes, generate_route_list, handle_server_fns_with_context,
     render_app_to_stream_with_context,
 };
-use sqlx::{Pool, Postgres};
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
@@ -29,10 +28,11 @@ use crate::app_router::share_local_file_router::{
 use crate::app_router::test_json_router::test_json_handler;
 use crate::app_router::xml_format_router::format_xml_handler;
 use crate::common::app_state::AppState;
+use crate::db::DbPool;
 
 pub async fn build_app_router(
     conf_file: ConfFile,
-    pool: Option<Pool<Postgres>>,
+    pool: Option<DbPool>,
     remote_server_url: Option<String>,
     dump_port: u16,
     rc_max_content_length: u64,

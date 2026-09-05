@@ -8,12 +8,11 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use crate::app_router::build_app_router::build_app_router;
 use crate::app_router::dump_receiver::start_dump_receiver;
-use crate::db::create_pool;
 
 pub async fn start_axum_server(
     custom_addr: Option<SocketAddr>,
     remote_server_url: Option<String>,
-    database_url: Option<String>,
+    _database_url: Option<String>,
     rc_max_content_length: u64,
     rest_client_proxy_allow_ips: Vec<String>,
 ) -> anyhow::Result<()> {
@@ -41,11 +40,14 @@ pub async fn start_axum_server(
 
     info!("conf={:?}", conf);
 
-    let pool = match database_url {
-        Some(database_url) => Some(create_pool(database_url).await),
-        None => None,
+    let pool = match _database_url {
+        #[cfg(not(feature = "sharefiledb"))]
+        Some(database_url) => {
+            Some(crate::db::create_pool(database_url).await) 
+        },
+        _ => None,
     };
-
+    
     let (_, dump_port) =
         start_dump_receiver().await.map_err(|err| anyhow!("Cant start dump receiver: {}", err))?;
 
