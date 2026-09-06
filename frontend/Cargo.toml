@@ -11,6 +11,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 app = { path = "../app", default-features = false, features = ["csr"] }
 leptos = { workspace = true, features = [ "csr" ] }
-
+web-sys.workspace = true
 console_error_panic_hook.workspace = true
 wasm-bindgen.workspace = true
