@@ -1,9 +1,11 @@
 use leptos::prelude::{Effect, Get, ReadSignal, ReadUntracked, RwSignal, Set, WriteSignal};
+use model::restclient::rest_client_response::RestClientResponse;
 
-use crate::{
-    domain::rest_client::{
-        model::{request_params::RequestParams, rest_client_context::RestClientContext}, util::request_store::{RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value},
-    }, model::restclient::rest_client_response::RestClientResponse,
+use crate::domain::rest_client::{
+    model::{request_params::RequestParams, rest_client_context::RestClientContext},
+    util::request_store::{
+        RequestFieldKind, delete_stored_value, get_stored_value, set_stored_value,
+    },
 };
 
 #[derive(Clone, Debug)]
@@ -49,10 +51,7 @@ impl RequestResponse {
         signal
     }
 
-    pub fn read_from_store(&self,
-        rc_context: RestClientContext,
-        request_id: i32,
-    ) {
+    pub fn read_from_store(&self, rc_context: RestClientContext, request_id: i32) {
         let data_str = get_stored_value(
             RequestFieldKind::SaveResponseData,
             "".to_owned(),

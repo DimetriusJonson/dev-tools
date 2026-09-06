@@ -3,9 +3,9 @@ use std::{
     net::SocketAddr,
 };
 
-use app::common::constants::REMOTE_SERVER_HOST;
 use clap::Parser;
 use dotenvy::dotenv;
+use model::constants::REMOTE_SERVER_HOST;
 use server::server_starter::start_axum_server;
 use tracing::info;
 

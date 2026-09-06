@@ -17,8 +17,6 @@ use crate::domain::rest_client::util::html_previewer::{
     replace_absolute_links,
 };
 use crate::i18n::*;
-use crate::model::restclient::rest_client_request::RestClientRequest;
-use crate::model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::leptos_dom::logging::console_log;
@@ -26,6 +24,8 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::RoutingProgress;
 use leptos_router::hooks::use_location;
+use model::restclient::rest_client_request::RestClientRequest;
+use model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use web_sys::HtmlIFrameElement;
 
 #[derive(PartialEq, Copy, Clone)]

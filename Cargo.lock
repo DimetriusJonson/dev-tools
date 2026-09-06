@@ -157,6 +157,7 @@ dependencies = [
  "leptos_i18n_macro 0.2.3",
  "leptos_meta",
  "leptos_router",
+ "model",
  "pest",
  "pest_derive",
  "quick-xml 0.40.1",
@@ -4292,6 +4293,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "model"
+version = "0.5.8"
+dependencies = [
+ "bytes",
+ "serde",
+]
+
+[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6407,6 +6416,7 @@ dependencies = [
  "image",
  "leptos",
  "leptos_axum",
+ "model",
  "nanoid",
  "quick-xml 0.40.1",
  "reqwest 0.12.28",

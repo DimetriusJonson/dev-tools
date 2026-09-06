@@ -1,6 +1,7 @@
+use model::constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME};
 use url::Url;
 
-use crate::common::{constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME}, ui_utils::{create_cookie, get_browser_host_info, remove_cookie}};
+use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cookie};
 
 pub static FETCH_WRAPPER_JS: &[u8] = include_bytes!("fetchWrapper.js");
 

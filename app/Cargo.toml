@@ -52,6 +52,8 @@ js-sys = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
 reqwest = { workspace = true, optional = true }
 
+model = { path = "../model" }
+
 [build-dependencies]
 leptos_i18n_build.workspace = true
 

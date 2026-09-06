@@ -9,10 +9,6 @@ use crate::{
     app_router::dump_receiver::DUMP_REQUEST,
     common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params},
 };
-use app::{common::constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME}, model::restclient::{
-    rest_client_request::RestClientRequest,
-    rest_client_response::{RestClientResponse, RestClientResponseBody},
-}};
 use axum::{
     Json,
     body::{self, Body},
@@ -22,6 +18,7 @@ use axum::{
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
+use model::{constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME}, restclient::{rest_client_request::RestClientRequest, rest_client_response::{RestClientResponse, RestClientResponseBody}}};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
 

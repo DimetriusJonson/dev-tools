@@ -3,7 +3,6 @@ pub mod app;
 pub mod components;
 pub mod domain;
 pub mod common;
-pub mod model;
 pub mod code_mirror;
 
 include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
