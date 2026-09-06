@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["app", "model", "server", "src-tauri"]
+members = ["app", "frontend", "model", "server", "src-tauri"]
 
 [workspace.package]
 version = "0.5.8"
@@ -82,7 +82,7 @@ output-name = "dev_tools"
 name = "dev_tools"
 
 bin-package = "server"
-lib-package = "app"
+lib-package = "frontend"
 site-root = "site"
 assets-dir = "public"
 site-pkg-dir = "pkg"
@@ -95,7 +95,8 @@ reload-port = 3001
 browserquery = "defaults"
 bin-features = []
 bin-default-features = true
-lib-features = ["hydrate"]
+#lib-features = ["hydrate"]
+lib-features = []
 lib-default-features = false
 lib-profile-release = "wasm-release"
 

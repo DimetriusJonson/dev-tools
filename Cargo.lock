@@ -2068,6 +2068,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "frontend"
+version = "0.5.8"
+dependencies = [
+ "app",
+ "console_error_panic_hook",
+ "leptos",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6401,7 +6411,6 @@ name = "server"
 version = "0.5.8"
 dependencies = [
  "anyhow",
- "app",
  "async-stream",
  "axum 0.8.9",
  "axum-extra",
