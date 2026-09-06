@@ -1,18 +1,17 @@
-use std::path::PathBuf;
-
 use axum::body::Body as AxumBody;
 use axum::extract::{DefaultBodyLimit, Request, State};
 use axum::response::Response as AxumResponse;
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, get_service, post};
+use axum::routing::{get, post};
 use axum::{Router, middleware};
 use http::{StatusCode, Uri};
 use leptos::prelude::*;
 use tower::ServiceExt;
 use tower_http::compression::CompressionLayer;
-use tower_http::services::{ServeDir, ServeFile};
+use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
+use crate::app_router::index_router::index_handler;
 use crate::app_router::json_format_router::format_json_handler;
 use crate::app_router::rest_client_router::{
     rest_client_attachment_download_handler, rest_client_html_previewer_middleware,
@@ -29,35 +28,6 @@ use crate::app_router::test_json_router::test_json_handler;
 use crate::app_router::xml_format_router::format_xml_handler;
 use crate::common::app_state::AppState;
 use crate::db::DbPool;
-
-pub fn shell(options: LeptosOptions) -> impl IntoView {
-    view! {
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <meta charset="utf-8"/>
-                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                    <AutoReload options=options.clone() />
-                    <HydrationScripts options/>
-                    <link rel="manifest" href="/manifest.json"/>
-                    <link rel="stylesheet" href="/pkg/dev_tools.css"/>
-
-                    <script src="/codemirror.min.js"></script>
-                </head>
-                <body class="bg-white dark:bg-dark-bg">
-                    <div class="flex flex-col items-center justify-center min-h-screen w-full dark:text-white">
-                        <div class="flex flex-col items-center space-y-4">
-                            <div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-primary dark:border-slate-700 dark:border-t-primary"></div>
-                            
-                            <p class="text-sm font-medium tracking-wide animate-pulse">
-                                Loading application...
-                            </p>
-                        </div>
-                    </div>
-                </body>
-            </html>
-        }
-}
 
 pub async fn build_app_router(
     conf_file: ConfFile,
@@ -78,15 +48,9 @@ pub async fn build_app_router(
         rest_client_proxy_allow_ips,
     };
 
-    let index_path = PathBuf::from(&*leptos_options.site_root).join("index.html");
-
-    tokio::fs::write(index_path.to_owned(), shell(leptos_options.clone()).to_html())
-        .await
-        .expect("could not write index.html");
-
-    let index_service = get_service(ServeFile::new(index_path));
-
     let app = Router::new()
+        .route("/", get(index_handler))
+        .route("/index.html", get(index_handler))
         .route("/rest_client_send", post(rest_client_send_handler))
         .route("/rest_client_proxy_allow", get(rest_client_proxy_allow))
         .route("/rest_client_attachment_download", post(rest_client_attachment_download_handler))
@@ -102,13 +66,13 @@ pub async fn build_app_router(
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
         .route("/test_json", get(test_json_handler))
-        .route("/urlEncoder", index_service.clone())
-        .route("/json", index_service.clone())
-        .route("/share_file", index_service.clone())
-        .route("/share_file/view", index_service.clone())
-        .route("/compare_text", index_service.clone())
-        .route("/rest_client", index_service.clone())
-        .route("/rest_client_info", index_service.clone())
+        .route("/urlEncoder", get(index_handler))
+        .route("/json", get(index_handler))
+        .route("/share_file", get(index_handler))
+        .route("/share_file/view", get(index_handler))
+        .route("/compare_text", get(index_handler))
+        .route("/rest_client", get(index_handler))
+        .route("/rest_client_info", get(index_handler))
         .fallback(file_and_error_handler)
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
@@ -142,19 +106,11 @@ pub async fn file_and_error_handler(
     State(options): State<LeptosOptions>,
 ) -> AxumResponse {
     let root = options.site_root.clone();
-    match get_static_file(uri.clone(), &root).await {
-        Ok(res) => res.into_response(),
-        Err(_) => get_static_file(Uri::from_static("/index.html"), &root)
-            .await
-            .expect("could not find index.html")
-            .into_response(),
-    }
+    get_static_file(uri.clone(), &root).await.into_response()
 }
 
 async fn get_static_file(uri: Uri, root: &str) -> Result<Response<AxumBody>, (StatusCode, String)> {
     let req = Request::builder().uri(uri.clone()).body(AxumBody::empty()).unwrap();
-    // `ServeDir` implements `tower::Service` so we can call it with `tower::ServiceExt::oneshot`
-    // This path is relative to the cargo root
     match ServeDir::new(root).oneshot(req).await {
         Ok(res) => Ok(res.map(AxumBody::new)),
         Err(err) => {
