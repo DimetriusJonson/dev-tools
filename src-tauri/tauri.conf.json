@@ -4,7 +4,7 @@
   "identifier": "com.shz.app.WebDevUsefulTools",
   "build": {
     "beforeDevCommand": "cargo leptos watch",
-    "beforeBuildCommand": "cargo leptos build --release",
+    "beforeBuildCommand": "cargo leptos build --frontend-only --release",
     "devUrl": "http://localhost:3000",
     "removeUnusedCommands": true
   },
