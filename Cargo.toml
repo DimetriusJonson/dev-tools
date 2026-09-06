@@ -14,7 +14,7 @@ axum-extra = { version = "0.9", features = ["cookie"] }
 axum-macros = "0.4"
 console_error_panic_hook = "0.1"
 #leptos = { version = "0.8", features = ["nightly"] }
-leptos = { version = "0.8"}
+leptos = { version = "0.8", default-features = false}
 leptos_axum = { version = "0.8", default-features = false, features = ["default"] }
 leptos_meta = "0.8"
 #leptos_router = { version = "0.8", features = ["nightly"] }
