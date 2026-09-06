@@ -64,19 +64,3 @@ hydrate = [
     "dep:js-sys", 
     "leptos_i18n/hydrate", 
     "leptos_i18n_build/hydrate",]
-ssr = [
-    "dep:axum",
-    "dep:leptos_axum",
-    "dep:tokio",
-    "dep:tower",
-    "dep:tower-http",
-    "dep:tracing",
-    "dep:anyhow",
-    "dep:sqlx",
-    "dep:reqwest",
-    "leptos/ssr",
-    "leptos_meta/ssr",
-    "leptos_router/ssr",
-    "leptos_i18n/axum",
-    "leptos_i18n_build/ssr",
-]

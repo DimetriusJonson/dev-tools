@@ -7,7 +7,6 @@ use web_sys::{
 };
 
 pub fn copy_to_clipboard(_data: &str) {
-    #[cfg(not(feature = "ssr"))]
     if let Some(window) = web_sys::window() {
         let navigator = window.navigator();
         let clipboard = navigator.clipboard();
@@ -16,7 +15,6 @@ pub fn copy_to_clipboard(_data: &str) {
 }
 
 pub async fn paste_from_clipboard() -> Option<String> {
-    #[cfg(not(feature = "ssr"))]
     if let Some(window) = web_sys::window() {
         let navigator = window.navigator();
         let clipboard = navigator.clipboard();
@@ -48,9 +46,7 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
             .create_element("a")
             .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?
             .dyn_into::<HtmlAnchorElement>()
-            .map_err(|err| {
-                err.as_string().unwrap_or_else(|| "Unknown JS error".into())
-            })?;
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
 
         anchor.set_href(&url);
         anchor.set_download(filename);
@@ -63,12 +59,6 @@ pub fn save_file_to_disk(bytes: Vec<u8>, filename: &str, mime_type: &str) -> Res
     Ok(())
 }
 
-#[cfg(feature = "ssr")]
-pub fn get_browser_language() -> String {
-    "en".to_owned()
-}
-
-#[cfg(not(feature = "ssr"))]
 pub fn get_browser_language() -> String {
     if let Some(window) = web_sys::window() {
         let navigator = window.navigator();
@@ -89,37 +79,24 @@ pub fn get_browser_language() -> String {
 }
 
 pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> {
-    #[cfg(not(feature = "ssr"))]
-    {
-        let loc = leptos::prelude::window().location();
-        let port = loc
-            .port()
-            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
-        let port = if !port.is_empty() {
-            Some(port.parse::<u16>().map_err(|err| err.to_string())?)
-        } else {
-            None
-        };
-        return Ok((
-            loc.protocol().map_err(|err| {
-                err.as_string().unwrap_or_else(|| "Unknown JS error".into())
-            })?,
-            loc.host()
-                .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?,
-            port,
-        ));
-    }
-
-    #[cfg(feature = "ssr")]
-    Ok(("http".to_owned(), "localhost".to_owned(), None))
+    let loc = leptos::prelude::window().location();
+    let port =
+        loc.port().map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
+    let port = if !port.is_empty() {
+        Some(port.parse::<u16>().map_err(|err| err.to_string())?)
+    } else {
+        None
+    };
+    return Ok((
+        loc.protocol()
+            .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?,
+        loc.host().map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?,
+        port,
+    ));
 }
 
 pub fn get_accept_language() -> String {
-    #[cfg(not(feature = "ssr"))]
     let val = leptos::prelude::window().navigator().language().unwrap_or("en-US".to_owned());
-
-    #[cfg(feature = "ssr")]
-    let val = "en-US".to_owned();
 
     val
 }
@@ -128,12 +105,6 @@ pub fn single_select_option(value: &str) -> (Option<String>, String) {
     (Some(value.to_owned()), value.to_owned())
 }
 
-#[cfg(feature = "ssr")]
-pub fn get_browser_width() -> Result<f64, String> {
-    Ok(1024.0)
-}
-
-#[cfg(not(feature = "ssr"))]
 pub fn get_browser_width() -> Result<f64, String> {
     let window = web_sys::window().ok_or_else(|| "No global window found")?;
 
@@ -146,12 +117,6 @@ pub fn get_browser_width() -> Result<f64, String> {
     Ok(width)
 }
 
-#[cfg(feature = "ssr")]
-pub fn get_browser_height() -> Result<f64, JsValue> {
-    Ok(768.0)
-}
-
-#[cfg(not(feature = "ssr"))]
 pub fn get_browser_height() -> Result<f64, JsValue> {
     let window = web_sys::window().ok_or_else(|| JsValue::from_str("No global window found"))?;
 
@@ -180,28 +145,22 @@ pub fn safe_updating_ui_value(
 }
 
 pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) -> Result<(), String> {
-    #[cfg(not(feature = "ssr"))]
+    // Get the global window and document objects
+    if let Some(window) = web_sys::window()
+        && let Some(document) = window.document()
     {
-        // Get the global window and document objects
-        if let Some(window) = web_sys::window()
-            && let Some(document) = window.document()
-        {
-            // Format the standard cookie string
-            let cookie_string = if let Some(_max_age_secs) = _max_age_secs {
-                format!(
-                    "{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax",
-                    _name, _value, _max_age_secs
-                )
-            } else {
-                format!("{}={}; Path=/; Secure; SameSite=Lax", _name, _value)
-            };
+        // Format the standard cookie string
+        let cookie_string = if let Some(_max_age_secs) = _max_age_secs {
+            format!("{}={}; Path=/; Max-Age={}; Secure; SameSite=Lax", _name, _value, _max_age_secs)
+        } else {
+            format!("{}={}; Path=/; Secure; SameSite=Lax", _name, _value)
+        };
 
-            if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
-                // Set the cookie via the DOM
-                html_document.set_cookie(&cookie_string).map_err(|err| {
-                    err.as_string().unwrap_or_else(|| "Unknown JS error".into())
-                })?;
-            }
+        if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
+            // Set the cookie via the DOM
+            html_document
+                .set_cookie(&cookie_string)
+                .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?;
         }
     }
 
@@ -209,13 +168,10 @@ pub fn create_cookie(_name: &str, _value: &str, _max_age_secs: Option<u64>) -> R
 }
 
 pub fn remove_cookie(_name: &str, _path: &str) {
-    #[cfg(not(feature = "ssr"))]
-    {
-        use web_sys::HtmlDocument;
-        let document = gloo_utils::document().unchecked_into::<HtmlDocument>();
+    use web_sys::HtmlDocument;
+    let document = gloo_utils::document().unchecked_into::<HtmlDocument>();
 
-        let cookie_str = format!("{}=''; max-age=0; path={}", _name, _path);
+    let cookie_str = format!("{}=''; max-age=0; path={}", _name, _path);
 
-        let _ = document.set_cookie(&cookie_str);
-    }
+    let _ = document.set_cookie(&cookie_str);
 }
