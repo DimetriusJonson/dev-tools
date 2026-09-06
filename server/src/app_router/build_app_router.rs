@@ -39,12 +39,12 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                     <meta name="viewport" content="width=device-width, initial-scale=1"/>
                     <AutoReload options=options.clone() />
                     <HydrationScripts options/>
-    //                <MetaTags/>
                     <link rel="manifest" href="/manifest.json"/>
+                    <link rel="stylesheet" href="/pkg/dev_tools.css"/>
 
                     <script src="/codemirror.min.js"></script>
                 </head>
-                <body>
+                <body class="bg-white dark:bg-dark-bg">
                 </body>
             </html>
         }
