@@ -53,16 +53,6 @@ fn start_backend_server(
     });
     app_handle.manage(ServerTask(server_task));
 
-    // Wait for the server to be ready before navigating
-    tauri::async_runtime::block_on(async {
-        for _ in 0..50 {
-            if tokio::net::TcpStream::connect(&addr).await.is_ok() {
-                break;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
-        }
-    });
-
     Ok(())
 }
 
