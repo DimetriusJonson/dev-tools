@@ -15,8 +15,7 @@ use tokio::io::{AsyncBufRead, BufReader};
 use crate::common::dev_utils::extract_uri_query_params;
 
 pub async fn format_xml_handler(request: Request) -> Result<impl IntoResponse, AppError> {
-    let uri = request.uri().clone();
-    let params = extract_uri_query_params(&uri);
+    let params = extract_uri_query_params(request.uri());
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 

@@ -37,8 +37,7 @@ pub async fn share_local_file_upload(request: Request) -> Result<impl IntoRespon
 
 #[axum::debug_handler]
 pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse, AppError> {
-    let uri = request.uri().clone();
-    let params = extract_uri_query_params(&uri);
+    let params = extract_uri_query_params(request.uri());
     let external_id = params.get("id").unwrap_or(&"");
 
     let local_db = LOCAL_SHARE_DB.lock().map_err(AppError::system_error)?;
@@ -57,8 +56,7 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
 
 #[axum::debug_handler]
 pub async fn share_local_file_download(request: Request) -> Result<impl IntoResponse, AppError> {
-    let uri = request.uri().clone();
-    let params = extract_uri_query_params(&uri);
+    let params = extract_uri_query_params(request.uri());
     let external_id = params.get("id").unwrap_or(&"");
     let thumbnail = params
         .get("thumbnail")

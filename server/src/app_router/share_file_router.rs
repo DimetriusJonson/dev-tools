@@ -125,8 +125,7 @@ pub async fn share_file_download(
         Some(pool) => {
             use crate::common::compress_utils::decompress_bytes;
 
-            let uri = request.uri().clone();
-            let params = extract_uri_query_params(&uri);
+            let params = extract_uri_query_params(request.uri());
             let external_id = params
                 .get("id")
                 .ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
@@ -209,8 +208,7 @@ pub async fn share_file_info(
     match app_state.pool {
         #[cfg(feature = "db")]
         Some(pool) => {
-            let uri = request.uri().clone();
-            let params = extract_uri_query_params(&uri);
+            let params = extract_uri_query_params(request.uri());
             let external_id = params
                 .get("id")
                 .ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
@@ -261,8 +259,7 @@ pub async fn share_file_info_ex_handler(
     State(app_state): State<AppState>,
     request: Request,
 ) -> Result<impl IntoResponse, AppError> {
-    let uri = request.uri().clone();
-    let params = extract_uri_query_params(&uri);
+    let params = extract_uri_query_params(request.uri());
     let id =
         params.get("id").ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
     let local =
