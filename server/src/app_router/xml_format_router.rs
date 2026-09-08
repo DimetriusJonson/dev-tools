@@ -3,7 +3,7 @@ use std::io::Cursor;
 use crate::common::app_error::AppError;
 use async_stream::try_stream;
 use axum::body::Body;
-use axum::extract::RawQuery;
+use axum::extract::Request;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use bytes::Bytes;
@@ -12,18 +12,17 @@ use quick_xml::events::{BytesText, Event};
 use quick_xml::{Reader, Writer};
 use tokio::io::{AsyncBufRead, BufReader};
 
-use crate::common::dev_utils::parse_query_params;
+use crate::common::dev_utils::extract_uri_query_params;
 
-pub async fn format_xml_handler(
-    RawQuery(query): RawQuery,
-    body: Body,
-) -> Result<impl IntoResponse, AppError> {
-    let query_str = query.unwrap_or_default();
-    let params = parse_query_params(&query_str);
+pub async fn format_xml_handler(request: Request) -> Result<impl IntoResponse, AppError> {
+    let uri = request.uri().clone();
+    let params = extract_uri_query_params(&uri);
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    let body = Body::from_stream(create_stream(body, ident).await.map_err(AppError::system_error)?);
+    let body = Body::from_stream(
+        create_stream(request.into_body(), ident).await.map_err(AppError::system_error)?,
+    );
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)

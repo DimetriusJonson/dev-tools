@@ -1,11 +1,7 @@
 use std::sync::LazyLock;
 
 use crate::common::app_error::AppError;
-use axum::{
-    Json,
-    extract::{RawQuery, Request},
-    response::IntoResponse,
-};
+use axum::{Json, extract::Request, response::IntoResponse};
 use http::{HeaderMap, header};
 use model::share_file::share_file_info_dto::ShareFileInfoDto;
 use std::collections::HashMap;
@@ -17,7 +13,7 @@ use crate::{
     },
     common::{
         compress_utils::decompress_bytes,
-        dev_utils::{is_mime_image, parse_query_params},
+        dev_utils::{is_mime_image, extract_uri_query_params},
     },
 };
 
@@ -25,17 +21,12 @@ static LOCAL_SHARE_DB: LazyLock<Mutex<HashMap<String, ShareFileUploadData>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[axum::debug_handler]
-pub async fn share_local_file_upload(
-    RawQuery(query): RawQuery,
-    headers: HeaderMap,
-    request: Request,
-) -> Result<impl IntoResponse, AppError> {
-    let query_str = query.unwrap_or_default();
-    let params = parse_query_params(&query_str);
+pub async fn share_local_file_upload(request: Request) -> Result<impl IntoResponse, AppError> {
+    let uri = request.uri().clone();
+    let params = extract_uri_query_params(&uri);
     let file_name = params.get("file_name").unwrap_or(&"unknown_file");
 
-    let prepared_data =
-        share_file_prepare_for_upload(request, headers, file_name, usize::MAX).await?;
+    let prepared_data = share_file_prepare_for_upload(request, file_name, usize::MAX).await?;
 
     let mut local_db = LOCAL_SHARE_DB.lock().map_err(AppError::system_error)?;
     let external_id = prepared_data.external_id.to_owned();
@@ -45,11 +36,9 @@ pub async fn share_local_file_upload(
 }
 
 #[axum::debug_handler]
-pub async fn share_local_file_info(
-    RawQuery(query): RawQuery,
-) -> Result<impl IntoResponse, AppError> {
-    let query_str = query.unwrap_or_default();
-    let params = parse_query_params(&query_str);
+pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse, AppError> {
+    let uri = request.uri().clone();
+    let params = extract_uri_query_params(&uri);
     let external_id = params.get("id").unwrap_or(&"");
 
     let local_db = LOCAL_SHARE_DB.lock().map_err(AppError::system_error)?;
@@ -67,11 +56,9 @@ pub async fn share_local_file_info(
 }
 
 #[axum::debug_handler]
-pub async fn share_local_file_download(
-    RawQuery(query): RawQuery,
-) -> Result<impl IntoResponse, AppError> {
-    let query_str = query.unwrap_or_default();
-    let params = parse_query_params(&query_str);
+pub async fn share_local_file_download(request: Request) -> Result<impl IntoResponse, AppError> {
+    let uri = request.uri().clone();
+    let params = extract_uri_query_params(&uri);
     let external_id = params.get("id").unwrap_or(&"");
     let thumbnail = params
         .get("thumbnail")

@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     app_router::dump_receiver::DUMP_REQUEST,
-    common::{app_error::AppError, app_state::AppState, dev_utils::parse_query_params},
+    common::{app_error::AppError, app_state::AppState, dev_utils::extract_uri_query_params},
 };
 use axum::{
     Json,
@@ -18,7 +18,13 @@ use axum::{
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
-use model::{constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME}, restclient::{rest_client_request::RestClientRequest, rest_client_response::{RestClientResponse, RestClientResponseBody}}};
+use model::{
+    constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME},
+    restclient::{
+        rest_client_request::RestClientRequest,
+        rest_client_response::{RestClientResponse, RestClientResponseBody},
+    },
+};
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
 
@@ -251,15 +257,9 @@ pub async fn rest_client_html_previewer_middleware(
         if let Some(cookie) = cookie_jar.get(RC_BASE_URL_COOKIE_NAME) {
             let rc_base_url = cookie.value().trim_end_matches("/");
 
-            let url_param = req
-                .uri()
-                .query()
-                .map(|query_str| {
-                    parse_query_params(query_str)
-                        .get(RC_SRC_URL_PARAM_NAME)
-                        .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
-                })
-                .unwrap_or(None)
+            let url_param = extract_uri_query_params(req.uri())
+                .get(RC_SRC_URL_PARAM_NAME)
+                .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 .unwrap_or(None);
 
             let mut path = req.uri().path();

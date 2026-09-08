@@ -1,27 +1,26 @@
-pub mod share_files_db;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "db")] {
+        pub mod share_files_db;
 
-#[cfg(feature = "sharefiledb")]
-use sqlx::{Pool, Postgres};
+        use sqlx::{Pool, Postgres};
+        pub type DbPool = Pool<Postgres>;
 
-#[cfg(feature = "sharefiledb")]
-pub type DbPool = Pool<Postgres>;
+        pub async fn create_pool(database_url: String) -> DbPool {
+            use tracing::info;
 
-#[cfg(not(feature = "sharefiledb"))]
-pub type DbPool = ();
+            info!("Connect to database...");
+            let pool = sqlx::postgres::PgPoolOptions::new()
+                .min_connections(1)
+                .max_connections(3)
+                .connect(database_url.as_str())
+                .await
+                .expect("could not connect to database_url");
 
-#[cfg(feature = "sharefiledb")]
-pub async fn create_pool(database_url: String) -> DbPool {
-    use tracing::info;
+            //sqlx::migrate!("./migrations").run(&pool).await.expect("migrations failed");
 
-    info!("Connect to database...");
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .min_connections(1)
-        .max_connections(3)
-        .connect(database_url.as_str())
-        .await
-        .expect("could not connect to database_url");
-
-    //sqlx::migrate!("./migrations").run(&pool).await.expect("migrations failed");
-
-    pool
+            pool
+        }
+    } else {
+        pub type DbPool = ();
+    }
 }

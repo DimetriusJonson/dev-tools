@@ -40,5 +40,5 @@ model = { path = "../model" }
 leptos = { workspace = true, features = ["ssr"] }
 
 [features]
-default = ["sharefiledb"]
-sharefiledb = ["dep:sqlx"]
+default = ["db"]
+db = ["dep:sqlx"]

@@ -1,24 +1,22 @@
 use crate::common::app_error::AppError;
 use axum::{
     body::Body,
-    extract::RawQuery,
+    extract::Request,
     http::{StatusCode, header},
     response::IntoResponse,
 };
 use futures_util::StreamExt;
 
-use crate::common::dev_utils::parse_query_params;
+use crate::common::dev_utils::extract_uri_query_params;
 
-pub async fn format_json_handler(
-    RawQuery(query): RawQuery,
-    body: Body,
-) -> Result<impl IntoResponse, AppError> {
-    let query_str = query.unwrap_or_default();
-    let params = parse_query_params(&query_str);
+pub async fn format_json_handler(request: Request) -> Result<impl IntoResponse, AppError> {
+    let uri = request.uri().clone();
+    let params = extract_uri_query_params(&uri);
     let ident: usize =
         params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
 
-    let body = process_json_data(body, ident).await.map_err(AppError::system_error)?;
+    let body =
+        process_json_data(request.into_body(), ident).await.map_err(AppError::system_error)?;
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)

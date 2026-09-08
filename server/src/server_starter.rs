@@ -41,7 +41,7 @@ pub async fn start_axum_server(
     info!("conf={:?}", conf);
 
     let pool = match _database_url {
-        #[cfg(feature = "sharefiledb")]
+        #[cfg(feature = "db")]
         Some(database_url) => {
             Some(crate::db::create_pool(database_url).await) 
         },
