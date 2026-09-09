@@ -30,7 +30,7 @@ async fn process_json_data(body: Body, ident: usize) -> Result<Body, anyhow::Err
     let mut formatter = model::util::json_formatter::JsonFormatter::new(ident);
     let output_stream = body.into_data_stream().map(move |result| match result {
         Ok(data) => Ok(formatter.format_bytes(data)),
-        Err(err) => Err(std::io::Error::other(err)),
+        Err(err) => Err(err),
     });
 
     Ok(Body::from_stream(output_stream))
@@ -46,7 +46,7 @@ async fn process_json_data(body: Body, ident: usize) -> Result<Body, anyhow::Err
     let output_stream = tokio_util::io::ReaderStream::new(std::io::Cursor::new(request_body_bytes))
         .map(move |result| match result {
             Ok(data) => Ok(formatter.format_bytes(data)),
-            Err(err) => Err(std::io::Error::other(err)),
+            Err(err) => Err(err),
         });
 
     Ok(Body::from_stream(output_stream))

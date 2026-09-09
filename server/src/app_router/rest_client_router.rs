@@ -27,6 +27,7 @@ use model::{
 };
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
+use url::ParseError;
 
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
@@ -145,7 +146,7 @@ fn build_request(
         .body(reqwest::Body::from(request.body.to_owned())))
 }
 
-fn build_to_dump_receiver_url(url_str: String, dump_port: u16) -> anyhow::Result<(String, String)> {
+fn build_to_dump_receiver_url(url_str: String, dump_port: u16) -> Result<(String, String), ParseError> {
     let mut url = Url::parse(&url_str)?;
     let old_port = match url.port() {
         Some(port) => format!(":{}", port),
