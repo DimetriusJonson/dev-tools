@@ -59,7 +59,6 @@ fn start_backend_server(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server: bool) {
     let app = tauri::Builder::default()
-        .plugin(tauri_plugin_autostart::Builder::new().args(["--autostart"]).build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(LevelFilter::Info)

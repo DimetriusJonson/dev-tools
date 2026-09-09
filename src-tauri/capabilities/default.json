@@ -1,11 +1,8 @@
 {
-  "identifier": "autostart", 
+  "identifier": "default", 
   "permissions": [
     "core:default",
     "log:default",
-    "updater:default",
-    "autostart:allow-enable",
-    "autostart:allow-disable",
-    "autostart:allow-is-enabled"
+    "updater:default"
   ]
 }
