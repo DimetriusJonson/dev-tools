@@ -52,7 +52,7 @@ pub async fn rest_client_send_handler(
             if let Some(content_length) = content_length
                 && content_length > app_state.max_content_length
             {
-                return Err("The response size is too large.".into());
+                return Err(AppError::BadRequest("The response size is too large.".to_owned()));
             }
 
             if response
@@ -171,7 +171,7 @@ pub async fn rest_client_attachment_download_handler(
     if let Some(content_length) = response.content_length()
         && content_length > app_state.max_content_length
     {
-        return Err("The response size is too large.".into());
+        return Err(AppError::BadRequest("The response size is too large.".to_owned()));
     }
 
     let response_status = response.status();
@@ -323,7 +323,7 @@ pub async fn rest_client_html_previewer_middleware(
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
             {
-                return Err("The response size is too large.".into());
+                return Err(AppError::BadRequest("The response size is too large.".to_owned()));
             }
 
             let response_status = response.status();

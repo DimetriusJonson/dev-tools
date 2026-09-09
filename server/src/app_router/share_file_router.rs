@@ -46,7 +46,7 @@ pub async fn share_file_upload(
             let uri = request.uri().clone();
             let params = extract_uri_query_params(&uri);
             let file_name =
-                params.get("file_name").ok_or(AppError::from("parameter 'file_name' is empty"))?;
+                params.get("file_name").ok_or(AppError::BadRequest("parameter 'file_name' is empty".to_owned()))?;
 
             let prepared_data =
                 share_file_prepare_for_upload(request, file_name, 5 * 1024 * 1024).await?;
@@ -66,7 +66,7 @@ pub async fn share_file_upload(
             if let Some(remote_server_url) = app_state.remote_server_url {
                 proxy_request_to_remote(remote_server_url, request).await
             } else {
-                Err("remote_server_url is empty".into())
+                Err(AppError::SystemError("remote_server_url is empty".to_owned()))
             }
         }
     }
@@ -119,7 +119,7 @@ pub async fn share_file_download(
             use crate::common::compress_utils::decompress_bytes;
 
             let params = extract_uri_query_params(request.uri());
-            let external_id = params.get("id").ok_or(AppError::from("parameter 'id' is empty"))?;
+            let external_id = params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
             let thumbnail = params
                 .get("thumbnail")
                 .map(|v| v.parse::<bool>().ok())
@@ -168,7 +168,7 @@ pub async fn share_file_download(
             if let Some(remote_server_url) = app_state.remote_server_url {
                 proxy_request_to_remote(remote_server_url, request).await
             } else {
-                Err("remote_server_url empty".into())
+                Err(AppError::SystemError("remote_server_url empty".to_owned()))
             }
         }
     }
@@ -183,7 +183,7 @@ pub async fn share_file_info(
         #[cfg(feature = "db")]
         Some(pool) => {
             let params = extract_uri_query_params(request.uri());
-            let external_id = params.get("id").ok_or(AppError::from("parameter 'id' is empty"))?;
+            let external_id = params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
             let share_file_info =
                 crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?;
             let is_image = is_mime_image(&share_file_info.mime_type);
@@ -198,7 +198,7 @@ pub async fn share_file_info(
             if let Some(remote_server_url) = app_state.remote_server_url {
                 proxy_request_to_remote(remote_server_url, request).await
             } else {
-                Err("remote_server_url empty".into())
+                Err(AppError::SystemError("remote_server_url empty".to_owned()))
             }
         }
     }
@@ -232,7 +232,7 @@ pub async fn share_file_info_ex_handler(
     request: Request,
 ) -> Result<Json<ShareFileInfoDto>, AppError> {
     let params = extract_uri_query_params(request.uri());
-    let id = params.get("id").ok_or(AppError::from("parameter 'id' is empty"))?;
+    let id = params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
     let local =
         params.get("local").map(|v| v.parse::<bool>().ok()).unwrap_or_default().unwrap_or_default();
 
@@ -247,6 +247,6 @@ pub async fn share_file_info_ex_handler(
     if response.status().is_success() {
         Ok(Json(response.json::<ShareFileInfoDto>().await?))
     } else {
-        Err(AppError::from(response.text().await?))?
+        Err(AppError::SystemError(response.text().await?))?
     }
 }

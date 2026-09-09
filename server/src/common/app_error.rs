@@ -6,13 +6,6 @@ pub enum AppError {
     BadRequest(String),
 }
 
-impl AppError {
-    /*    pub fn system_error(msg: impl ToString) -> Self {
-           AppError::SystemError(msg.to_string())
-       }
-    */
-}
-
 impl Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -25,18 +18,6 @@ impl Display for AppError {
 impl From<reqwest::Error> for AppError {
     fn from(value: reqwest::Error) -> Self {
         Self::SystemError(value.to_string())
-    }
-}
-
-impl From<&str> for AppError {
-    fn from(value: &str) -> Self {
-        Self::BadRequest(value.to_owned())
-    }
-}
-
-impl From<String> for AppError {
-    fn from(value: String) -> Self {
-        Self::BadRequest(value)
     }
 }
 
