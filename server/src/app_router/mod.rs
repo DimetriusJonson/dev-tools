@@ -1,4 +1,4 @@
-use crate::common::app_error::AppError;
+use crate::common::{app_error::AppError, app_state::AppState};
 use axum::{
     body::Body,
     extract::Request,
@@ -14,14 +14,18 @@ pub mod share_local_file_router;
 pub mod xml_format_router;
 
 pub mod dump_receiver;
+pub mod index_router;
 pub mod rest_client_router;
 pub mod test_json_router;
-pub mod index_router;
 
 pub async fn proxy_request_to_remote(
-    remote_server_url: String,
     request: Request,
+    app_state: AppState,
 ) -> Result<Response<Body>, AppError> {
+    let remote_server_url = app_state
+        .remote_server_url
+        .ok_or(AppError::SystemError("remote_server_url empty".to_owned()))?;
+
     let target_url = format!(
         "{}{}",
         remote_server_url,
@@ -53,10 +57,7 @@ pub async fn proxy_request_to_remote(
 
     let mut response = (response_status, body).into_response();
     *response.headers_mut() = response_headers;
-    response.headers_mut().insert(
-        "remote-server-url",
-        HeaderValue::from_str(&remote_server_url)?,
-    );
+    response.headers_mut().insert("remote-server-url", HeaderValue::from_str(&remote_server_url)?);
 
     Ok(response)
 }
