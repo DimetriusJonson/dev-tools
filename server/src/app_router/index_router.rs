@@ -48,8 +48,7 @@ fn shell(options: LeptosOptions) -> impl IntoView {
     }
 }
 
-static INDEX_HTML: LazyLock<RwLock<Box<String>>> =
-    LazyLock::new(|| RwLock::new(Box::new("".to_owned())));
+static INDEX_HTML: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".to_owned()));
 
 pub async fn index_handler(State(app_state): State<AppState>) -> Result<Response<Body>, AppError> {
     if let Ok(index_html) = INDEX_HTML.read() {
@@ -62,7 +61,7 @@ pub async fn index_handler(State(app_state): State<AppState>) -> Result<Response
 
     let html = shell(app_state.leptos_options.clone()).to_html();
     if let Ok(mut index_html) = INDEX_HTML.write() {
-        **index_html = html.to_owned();
+        *index_html = html.to_owned();
     }
     let body = Body::from(html);
     Ok((StatusCode::OK, body).into_response())

@@ -66,10 +66,10 @@ pub fn get_browser_language() -> String {
         let languages = navigator.languages();
         let mut best_lang = "en".to_string();
 
-        if languages.length() > 0 {
-            if let Some(lang) = languages.get(0).as_string() {
-                best_lang = lang;
-            }
+        if languages.length() > 0
+            && let Some(lang) = languages.get(0).as_string()
+        {
+            best_lang = lang;
         }
 
         if best_lang.starts_with("ru") { return "ru".to_string() } else { return "en".to_string() }
@@ -87,18 +87,16 @@ pub fn get_browser_host_info() -> Result<(String, String, Option<u16>), String> 
     } else {
         None
     };
-    return Ok((
+    Ok((
         loc.protocol()
             .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?,
         loc.host().map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?,
         port,
-    ));
+    ))
 }
 
 pub fn get_accept_language() -> String {
-    let val = leptos::prelude::window().navigator().language().unwrap_or("en-US".to_owned());
-
-    val
+    leptos::prelude::window().navigator().language().unwrap_or("en-US".to_owned())
 }
 
 pub fn single_select_option(value: &str) -> (Option<String>, String) {
@@ -106,13 +104,13 @@ pub fn single_select_option(value: &str) -> (Option<String>, String) {
 }
 
 pub fn get_browser_width() -> Result<f64, String> {
-    let window = web_sys::window().ok_or_else(|| "No global window found")?;
+    let window = web_sys::window().ok_or("No global window found")?;
 
     let width = window
         .inner_width()
         .map_err(|err| err.as_string().unwrap_or_else(|| "Unknown JS error".into()))?
         .as_f64()
-        .ok_or_else(|| "Could not convert inner_width to f64")?;
+        .ok_or("Could not convert inner_width to f64")?;
 
     Ok(width)
 }
