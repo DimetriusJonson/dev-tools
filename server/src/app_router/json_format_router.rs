@@ -12,16 +12,15 @@ use crate::common::dev_utils::extract_uri_query_params;
 pub async fn format_json_handler(request: Request) -> Result<impl IntoResponse, AppError> {
     let params = extract_uri_query_params(request.uri());
     let ident: usize =
-        params.get("ident").unwrap_or(&"4").parse().map_err(AppError::system_error)?;
+        params.get("ident").unwrap_or(&"4").parse()?;
 
     let body =
-        process_json_data(request.into_body(), ident).await.map_err(AppError::system_error)?;
+        process_json_data(request.into_body(), ident).await?;
 
     let response = axum::http::Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "application/json")
-        .body(body)
-        .map_err(AppError::system_error)?;
+        .body(body)?;
 
     Ok(response)
 }

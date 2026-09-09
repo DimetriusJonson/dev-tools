@@ -16,7 +16,7 @@ use crate::{
         app_error::AppError,
         app_state::AppState,
         compress_utils::compress_bytes,
-        dev_utils::{is_mime_image, extract_uri_query_params},
+        dev_utils::{extract_uri_query_params, is_mime_image},
         image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
         net_utils::get_local_addrs,
     },
@@ -45,9 +45,8 @@ pub async fn share_file_upload(
 
             let uri = request.uri().clone();
             let params = extract_uri_query_params(&uri);
-            let file_name = params
-                .get("file_name")
-                .ok_or(AppError::system_error("parameter 'file_name' is empty".to_owned()))?;
+            let file_name =
+                params.get("file_name").ok_or(AppError::from("parameter 'file_name' is empty"))?;
 
             let prepared_data =
                 share_file_prepare_for_upload(request, file_name, 5 * 1024 * 1024).await?;
@@ -67,7 +66,7 @@ pub async fn share_file_upload(
             if let Some(remote_server_url) = app_state.remote_server_url {
                 proxy_request_to_remote(remote_server_url, request).await
             } else {
-                Err(AppError::system_error("remote_server_url is empty"))
+                Err("remote_server_url is empty".into())
             }
         }
     }
@@ -79,29 +78,23 @@ pub async fn share_file_prepare_for_upload(
     max_file_size: usize,
 ) -> Result<ShareFileUploadData, AppError> {
     let headers = request.headers().clone();
-    let bytes =
-        to_bytes(request.into_body(), max_file_size).await.map_err(AppError::system_error)?;
+    let bytes = to_bytes(request.into_body(), max_file_size).await?;
     let mut file_data = bytes.to_vec();
     let image_thumbnail;
 
     let default_content_type = HeaderValue::from_static(DEFAULT_CONTENT_TYPE);
-    let mut content_type = headers
-        .get("content-type")
-        .unwrap_or(&default_content_type)
-        .to_str()
-        .map_err(AppError::system_error)?
-        .to_owned();
+    let mut content_type =
+        headers.get("content-type").unwrap_or(&default_content_type).to_str()?.to_owned();
 
     if is_mime_image(&content_type) {
-        image_thumbnail =
-            Some(create_image_thumbnail(&file_data, 300, 300).map_err(AppError::system_error)?);
+        image_thumbnail = Some(create_image_thumbnail(&file_data, 300, 300)?);
         if content_type != MIME_IMAGE_JPG {
-            file_data = convert_image_data_to_jpg(&file_data).map_err(AppError::system_error)?;
+            file_data = convert_image_data_to_jpg(&file_data)?;
             content_type = MIME_IMAGE_JPG.to_owned();
         }
     } else {
         image_thumbnail = None;
-        file_data = compress_bytes(&file_data).map_err(AppError::system_error)?;
+        file_data = compress_bytes(&file_data)?;
     }
 
     let external_id = nanoid!();
@@ -126,9 +119,7 @@ pub async fn share_file_download(
             use crate::common::compress_utils::decompress_bytes;
 
             let params = extract_uri_query_params(request.uri());
-            let external_id = params
-                .get("id")
-                .ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
+            let external_id = params.get("id").ok_or(AppError::from("parameter 'id' is empty"))?;
             let thumbnail = params
                 .get("thumbnail")
                 .map(|v| v.parse::<bool>().ok())
@@ -136,25 +127,16 @@ pub async fn share_file_download(
                 .unwrap_or_default();
             if thumbnail {
                 let mut headers = http::HeaderMap::new();
-                headers.insert(
-                    http::header::CACHE_CONTROL,
-                    "public, max-age=3600".parse().map_err(AppError::system_error)?,
-                );
+                headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
 
                 let image_thumbnail =
                     crate::db::share_files_db::get_share_file_thumbnail_from_db(external_id, &pool)
                         .await?;
                 if let Some(image_thumbnail) = image_thumbnail {
-                    headers.insert(
-                        http::header::CONTENT_TYPE,
-                        MIME_IMAGE_JPG.parse().map_err(AppError::system_error)?,
-                    );
+                    headers.insert(http::header::CONTENT_TYPE, MIME_IMAGE_JPG.parse()?);
                     Ok((headers, image_thumbnail).into_response())
                 } else {
-                    headers.insert(
-                        http::header::CONTENT_TYPE,
-                        DEFAULT_CONTENT_TYPE.parse().map_err(AppError::system_error)?,
-                    );
+                    headers.insert(http::header::CONTENT_TYPE, DEFAULT_CONTENT_TYPE.parse()?);
                     Ok((headers, vec![]).into_response())
                 }
             } else {
@@ -168,23 +150,15 @@ pub async fn share_file_download(
 
                 let mut file_data = share_file.file_data;
                 if !is_mime_image(&mime_type) {
-                    file_data = decompress_bytes(file_data).map_err(AppError::system_error)?;
+                    file_data = decompress_bytes(file_data)?;
                 }
 
                 let mut headers = http::HeaderMap::new();
-                headers.insert(
-                    http::header::CACHE_CONTROL,
-                    "public, max-age=3600".parse().map_err(AppError::system_error)?,
-                );
-                headers.insert(
-                    http::header::CONTENT_TYPE,
-                    mime_type.parse().map_err(AppError::system_error)?,
-                );
+                headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
+                headers.insert(http::header::CONTENT_TYPE, mime_type.parse()?);
                 headers.insert(
                     http::header::CONTENT_DISPOSITION,
-                    format!("attachment; filename=\"{}\"", share_file.file_name)
-                        .parse()
-                        .map_err(AppError::system_error)?,
+                    format!("attachment; filename=\"{}\"", share_file.file_name).parse()?,
                 );
 
                 Ok((headers, file_data).into_response())
@@ -194,7 +168,7 @@ pub async fn share_file_download(
             if let Some(remote_server_url) = app_state.remote_server_url {
                 proxy_request_to_remote(remote_server_url, request).await
             } else {
-                Err(AppError::system_error("remote_server_url empty"))
+                Err("remote_server_url empty".into())
             }
         }
     }
@@ -209,9 +183,7 @@ pub async fn share_file_info(
         #[cfg(feature = "db")]
         Some(pool) => {
             let params = extract_uri_query_params(request.uri());
-            let external_id = params
-                .get("id")
-                .ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
+            let external_id = params.get("id").ok_or(AppError::from("parameter 'id' is empty"))?;
             let share_file_info =
                 crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?;
             let is_image = is_mime_image(&share_file_info.mime_type);
@@ -226,7 +198,7 @@ pub async fn share_file_info(
             if let Some(remote_server_url) = app_state.remote_server_url {
                 proxy_request_to_remote(remote_server_url, request).await
             } else {
-                Err(AppError::system_error("remote_server_url empty"))
+                Err("remote_server_url empty".into())
             }
         }
     }
@@ -240,7 +212,7 @@ pub async fn share_file_custom_servers_handler(
         return Ok(Json(Vec::new()));
     }
 
-    let addrs = get_local_addrs().map_err(AppError::system_error)?;
+    let addrs = get_local_addrs()?;
     let site_addr = app_state.leptos_options.site_addr;
 
     Ok(Json(
@@ -258,10 +230,9 @@ pub async fn share_file_custom_servers_handler(
 pub async fn share_file_info_ex_handler(
     State(app_state): State<AppState>,
     request: Request,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<Json<ShareFileInfoDto>, AppError> {
     let params = extract_uri_query_params(request.uri());
-    let id =
-        params.get("id").ok_or(AppError::system_error("parameter 'id' is empty".to_owned()))?;
+    let id = params.get("id").ok_or(AppError::from("parameter 'id' is empty"))?;
     let local =
         params.get("local").map(|v| v.parse::<bool>().ok()).unwrap_or_default().unwrap_or_default();
 
@@ -271,15 +242,11 @@ pub async fn share_file_info_ex_handler(
 
     let response =
         reqwest::get(&format!("http://127.0.0.1:{}/{}?id={}", site_addr.port(), srv_name, id))
-            .await
-            .map_err(AppError::system_error)?;
+            .await?;
 
     if response.status().is_success() {
-        let share_file_info_dto =
-            response.json::<ShareFileInfoDto>().await.map_err(AppError::system_error)?;
-        Ok(Json(share_file_info_dto).into_response())
+        Ok(Json(response.json::<ShareFileInfoDto>().await?))
     } else {
-        let response_text = response.text().await.map_err(AppError::system_error)?;
-        Err(AppError::system_error(response_text))?
+        Err(AppError::from(response.text().await?))?
     }
 }

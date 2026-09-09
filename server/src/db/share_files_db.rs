@@ -26,7 +26,7 @@ pub async fn create_share_file_in_db(
             .bind(image_thumbnail)
             .fetch_one(pool)
             .await
-            .map_err(AppError::system_error)?;
+            ?;
 
     Ok(row.get("id"))
 }
@@ -34,8 +34,7 @@ pub async fn create_share_file_in_db(
 pub async fn delete_old_share_files_in_db(pool: &DbPool) -> Result<(), AppError> {
     sqlx::query("delete from share_files where created_at < now() - INTERVAL '3 day'")
         .execute(pool)
-        .await
-        .map_err(AppError::system_error)?;
+        .await?;
     Ok(())
 }
 
@@ -46,8 +45,7 @@ pub async fn get_share_file_thumbnail_from_db(
     let row = sqlx::query("SELECT image_thumbnail FROM share_files WHERE external_id=$1")
         .bind(external_id)
         .fetch_one(pool)
-        .await
-        .map_err(AppError::system_error)?;
+        .await?;
 
     Ok(row.get("image_thumbnail"))
 }
@@ -60,8 +58,7 @@ pub async fn get_share_file_from_db(
         sqlx::query("SELECT file_name, mime_type, file_data FROM share_files WHERE external_id=$1")
             .bind(external_id)
             .fetch_one(pool)
-            .await
-            .map_err(AppError::system_error)?;
+            .await?;
 
     Ok(ShareFile {
         file_name: row.get("file_name"),
@@ -77,8 +74,7 @@ pub async fn get_share_file_info_from_db(
     let row = sqlx::query("SELECT file_name, mime_type FROM share_files WHERE external_id=$1")
         .bind(external_id)
         .fetch_one(pool)
-        .await
-        .map_err(AppError::system_error)?;
+        .await?;
 
     Ok(ShareFile {
         file_name: row.get("file_name"),

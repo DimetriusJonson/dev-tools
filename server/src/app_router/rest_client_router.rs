@@ -32,10 +32,7 @@ pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Json<RestClientResponse>, AppError> {
-    build_request(&request, Some(app_state.dump_port))?
-        .send()
-        .await
-        .map_err(AppError::system_error)?;
+    build_request(&request, Some(app_state.dump_port))?.send().await?;
 
     match build_request(&request, None)?.send().await {
         Ok(response) => {
@@ -55,7 +52,7 @@ pub async fn rest_client_send_handler(
             if let Some(content_length) = content_length
                 && content_length > app_state.max_content_length
             {
-                return Err(AppError::system_error("The response size is too large."));
+                return Err("The response size is too large.".into());
             }
 
             if response
@@ -96,7 +93,7 @@ pub async fn rest_client_send_handler(
                 }));
             }
 
-            let body = response.text().await.map_err(AppError::system_error)?;
+            let body = response.text().await?;
             let body_size = body.len() as u64;
 
             Ok(Json(RestClientResponse {
@@ -123,25 +120,18 @@ fn build_request(
     request: &RestClientRequest,
     dump_port: Option<u16>,
 ) -> Result<RequestBuilder, AppError> {
-    let method = Method::from_str(&request.method).map_err(AppError::system_error)?;
+    let method = Method::from_str(&request.method)?;
     let mut headers = HeaderMap::new();
     for (name, value) in &request.headers {
-        headers.insert(
-            HeaderName::from_str(name).map_err(AppError::system_error)?,
-            HeaderValue::from_str(value).map_err(AppError::system_error)?,
-        );
+        headers.insert(HeaderName::from_str(name)?, HeaderValue::from_str(value)?);
     }
 
     let url;
     if let Some(dump_port) = dump_port {
-        let (new_url, old_host) = build_to_dump_receiver_url(request.url.to_owned(), dump_port)
-            .map_err(AppError::system_error)?;
+        let (new_url, old_host) = build_to_dump_receiver_url(request.url.to_owned(), dump_port)?;
         url = new_url;
         if !headers.contains_key(http::header::HOST) {
-            headers.insert(
-                http::header::HOST,
-                HeaderValue::from_str(&old_host).map_err(AppError::system_error)?,
-            );
+            headers.insert(http::header::HOST, HeaderValue::from_str(&old_host)?);
         }
     } else {
         url = request.url.to_owned();
@@ -149,8 +139,7 @@ fn build_request(
 
     Ok(Client::builder()
         .danger_accept_invalid_certs(true)
-        .build()
-        .map_err(AppError::system_error)?
+        .build()?
         .request(method, url)
         .headers(headers)
         .body(reqwest::Body::from(request.body.to_owned())))
@@ -175,14 +164,14 @@ pub async fn rest_client_attachment_download_handler(
     State(app_state): State<AppState>,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Response<Body>, AppError> {
-    build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+    build_request(&request, None)?.send().await?;
 
-    let response = build_request(&request, None)?.send().await.map_err(AppError::system_error)?;
+    let response = build_request(&request, None)?.send().await?;
 
     if let Some(content_length) = response.content_length()
         && content_length > app_state.max_content_length
     {
-        return Err(AppError::system_error("The response size is too large."));
+        return Err("The response size is too large.".into());
     }
 
     let response_status = response.status();
@@ -249,8 +238,7 @@ pub async fn rest_client_html_previewer_middleware(
         .unwrap_or_default();
 
     if (!routes_paths.contains(&req.uri().path())
-        || (referer.is_some()
-            && !routes_paths.contains(&referer.to_owned().unwrap().path())))
+        || (referer.is_some() && !routes_paths.contains(&referer.to_owned().unwrap().path())))
         && is_proxy_allow(&req, &app_state, addr)
     {
         let cookie_jar = CookieJar::from_headers(req.headers());
@@ -274,7 +262,7 @@ pub async fn rest_client_html_previewer_middleware(
             {
                 parent_base_url
             } else {
-                Url::parse(rc_base_url).map_err(AppError::system_error)?
+                Url::parse(rc_base_url)?
             };
 
             let url = match &url_param {
@@ -312,8 +300,7 @@ pub async fn rest_client_html_previewer_middleware(
                         referer.path(),
                         referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
                     )
-                    .parse()
-                    .map_err(AppError::system_error)?,
+                    .parse()?,
                 );
             }
 
@@ -322,26 +309,21 @@ pub async fn rest_client_html_previewer_middleware(
 
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)
-                .build()
-                .map_err(AppError::system_error)?
+                .build()?
                 .request(req.method().to_owned(), &url)
                 .headers(reqwest_headers)
                 .body({
                     let body_stream = req.into_body();
-                    reqwest::Body::from(
-                        body::to_bytes(body_stream, usize::MAX)
-                            .await
-                            .map_err(AppError::system_error)?,
-                    )
+                    reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)
                 });
 
-            let response = request.send().await.map_err(AppError::system_error)?;
+            let response = request.send().await?;
             //            info!("response {} for {}", response.status(), url);
 
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
             {
-                return Err(AppError::system_error("The response size is too large."));
+                return Err("The response size is too large.".into());
             }
 
             let response_status = response.status();

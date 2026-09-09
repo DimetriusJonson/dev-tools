@@ -44,7 +44,7 @@ pub async fn proxy_request_to_remote(
         }
     }
 
-    let upstream_response = upstream_req.send().await.map_err(AppError::system_error)?;
+    let upstream_response = upstream_req.send().await?;
 
     let response_status = upstream_response.status();
     let response_headers = upstream_response.headers().clone();
@@ -55,7 +55,7 @@ pub async fn proxy_request_to_remote(
     *response.headers_mut() = response_headers;
     response.headers_mut().insert(
         "remote-server-url",
-        HeaderValue::from_str(&remote_server_url).map_err(AppError::system_error)?,
+        HeaderValue::from_str(&remote_server_url)?,
     );
 
     Ok(response)

@@ -13,7 +13,7 @@ use crate::{
     },
     common::{
         compress_utils::decompress_bytes,
-        dev_utils::{is_mime_image, extract_uri_query_params},
+        dev_utils::{extract_uri_query_params, is_mime_image},
     },
 };
 
@@ -28,7 +28,7 @@ pub async fn share_local_file_upload(request: Request) -> Result<impl IntoRespon
 
     let prepared_data = share_file_prepare_for_upload(request, file_name, usize::MAX).await?;
 
-    let mut local_db = LOCAL_SHARE_DB.lock().map_err(AppError::system_error)?;
+    let mut local_db = LOCAL_SHARE_DB.lock().unwrap();
     let external_id = prepared_data.external_id.to_owned();
     local_db.insert(external_id.to_owned(), prepared_data);
 
@@ -40,7 +40,7 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
     let params = extract_uri_query_params(request.uri());
     let external_id = params.get("id").unwrap_or(&"");
 
-    let local_db = LOCAL_SHARE_DB.lock().map_err(AppError::system_error)?;
+    let local_db = LOCAL_SHARE_DB.lock().unwrap();
     if let Some(data) = local_db.get(external_id.to_owned()) {
         let is_image = is_mime_image(&data.mime_type);
         Ok(Json(ShareFileInfoDto {
@@ -58,32 +58,19 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
 pub async fn share_local_file_download(request: Request) -> Result<impl IntoResponse, AppError> {
     let params = extract_uri_query_params(request.uri());
     let external_id = params.get("id").unwrap_or(&"");
-    let thumbnail = params
-        .get("thumbnail")
-        .unwrap_or(&"false")
-        .parse::<bool>()
-        .map_err(AppError::system_error)?;
+    let thumbnail = params.get("thumbnail").unwrap_or(&"false").parse::<bool>()?;
 
-    let local_db = LOCAL_SHARE_DB.lock().map_err(AppError::system_error)?;
+    let local_db = LOCAL_SHARE_DB.lock().unwrap();
     if let Some(data) = local_db.get(external_id.to_owned()) {
         if thumbnail {
             let mut headers = HeaderMap::new();
-            headers.insert(
-                header::CACHE_CONTROL,
-                "public, max-age=3600".parse().map_err(AppError::system_error)?,
-            );
+            headers.insert(header::CACHE_CONTROL, "public, max-age=3600".parse()?);
 
             if let Some(image_thumbnail) = &data.image_thumbnail {
-                headers.insert(
-                    header::CONTENT_TYPE,
-                    MIME_IMAGE_JPG.parse().map_err(AppError::system_error)?,
-                );
+                headers.insert(header::CONTENT_TYPE, MIME_IMAGE_JPG.parse()?);
                 Ok((headers, image_thumbnail.clone()).into_response())
             } else {
-                headers.insert(
-                    header::CONTENT_TYPE,
-                    DEFAULT_CONTENT_TYPE.parse().map_err(AppError::system_error)?,
-                );
+                headers.insert(header::CONTENT_TYPE, DEFAULT_CONTENT_TYPE.parse()?);
                 Ok((headers, vec![]).into_response())
             }
         } else {
@@ -94,21 +81,15 @@ pub async fn share_local_file_download(request: Request) -> Result<impl IntoResp
 
             let mut file_data = data.file_data.clone();
             if !is_mime_image(&mime_type) {
-                file_data = decompress_bytes(file_data).map_err(AppError::system_error)?;
+                file_data = decompress_bytes(file_data)?;
             }
 
             let mut headers = HeaderMap::new();
-            headers.insert(
-                header::CACHE_CONTROL,
-                "public, max-age=3600".parse().map_err(AppError::system_error)?,
-            );
-            headers
-                .insert(header::CONTENT_TYPE, mime_type.parse().map_err(AppError::system_error)?);
+            headers.insert(header::CACHE_CONTROL, "public, max-age=3600".parse()?);
+            headers.insert(header::CONTENT_TYPE, mime_type.parse()?);
             headers.insert(
                 header::CONTENT_DISPOSITION,
-                format!("attachment; filename=\"{}\"", data.file_name)
-                    .parse()
-                    .map_err(AppError::system_error)?,
+                format!("attachment; filename=\"{}\"", data.file_name).parse()?,
             );
 
             Ok((headers, file_data).into_response())
