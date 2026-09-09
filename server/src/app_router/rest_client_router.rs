@@ -233,7 +233,7 @@ fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value
 pub async fn rest_client_html_previewer_middleware(
     State(app_state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    routes_paths: Vec<String>,
+    routes_paths: Vec<&str>,
     req: Request,
     next: Next,
 ) -> Result<Response<Body>, AppError> {
@@ -248,9 +248,9 @@ pub async fn rest_client_html_previewer_middleware(
         .unwrap_or_default()
         .unwrap_or_default();
 
-    if (!routes_paths.contains(&req.uri().path().to_owned())
+    if (!routes_paths.contains(&req.uri().path())
         || (referer.is_some()
-            && !routes_paths.contains(&referer.to_owned().unwrap().path().to_owned())))
+            && !routes_paths.contains(&referer.to_owned().unwrap().path())))
         && is_proxy_allow(&req, &app_state, addr)
     {
         let cookie_jar = CookieJar::from_headers(req.headers());

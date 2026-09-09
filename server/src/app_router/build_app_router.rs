@@ -48,7 +48,17 @@ pub async fn build_app_router(
         rest_client_proxy_allow_ips,
     };
 
-    let app = Router::new()
+    let leptos_paths = vec![
+        "/urlEncoder",
+        "/json",
+        "/share_file",
+        "/share_file/view",
+        "/compare_text",
+        "/rest_client",
+        "/rest_client_info",
+    ];
+
+    let mut app_routes = Router::new()
         .route("/", get(index_handler))
         .route("/index.html", get(index_handler))
         .route("/rest_client_send", post(rest_client_send_handler))
@@ -65,14 +75,13 @@ pub async fn build_app_router(
         .route("/share_file_info_ex", get(share_file_info_ex_handler))
         .route("/share_local_file_info", get(share_local_file_info))
         .route("/share_local_file_download", get(share_local_file_download))
-        .route("/test_json", get(test_json_handler))
-        .route("/urlEncoder", get(index_handler))
-        .route("/json", get(index_handler))
-        .route("/share_file", get(index_handler))
-        .route("/share_file/view", get(index_handler))
-        .route("/compare_text", get(index_handler))
-        .route("/rest_client", get(index_handler))
-        .route("/rest_client_info", get(index_handler))
+        .route("/test_json", get(test_json_handler));
+
+    for path in &leptos_paths {
+        app_routes = app_routes.route(path, get(index_handler));
+    }
+
+    let app = app_routes
         .fallback(file_and_error_handler)
         .layer(CompressionLayer::new().gzip(true))
         .layer(TraceLayer::new_for_http())
@@ -82,15 +91,7 @@ pub async fn build_app_router(
                 rest_client_html_previewer_middleware(
                     app_state,
                     connect_info,
-                    vec![
-                        "/urlEncoder".to_owned(),
-                        "/json".to_owned(),
-                        "/share_file".to_owned(),
-                        "/share_file/view".to_owned(),
-                        "/compare_text".to_owned(),
-                        "/rest_client".to_owned(),
-                        "/rest_client_info".to_owned(),
-                    ],
+                    leptos_paths.clone(),
                     req,
                     next,
                 )
