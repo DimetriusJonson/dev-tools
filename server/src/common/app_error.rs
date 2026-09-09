@@ -93,6 +93,7 @@ impl From<std::io::Error> for AppError {
     }
 }
 
+#[cfg(feature = "db")]
 impl From<sqlx::Error> for AppError {
     fn from(value: sqlx::Error) -> Self {
         Self::SystemError(value.to_string())

@@ -4,7 +4,7 @@ use std::{env, fs};
 
 use log::{LevelFilter, error, info};
 use server::server_starter::start_axum_server;
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri::{Url, WebviewUrl, WebviewWindowBuilder};
@@ -108,9 +108,10 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 .disable_drag_drop_handler()
                 .build()?;
 
-            let quit_i = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
-            let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
+            let open_item = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
+            let sep_item = PredefinedMenuItem::separator(app)?;                
+            let quit_item = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&open_item, &sep_item, &quit_item])?;
 
             let _tray = TrayIconBuilder::new()
                 .tooltip(&app_title)
