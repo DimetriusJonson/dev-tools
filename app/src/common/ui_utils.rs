@@ -1,7 +1,8 @@
-use std::time::Duration;
-
 use cookie::Cookie;
-use leptos::prelude::{GetUntracked, RwSignal, Set, set_timeout};
+use leptos::{
+    prelude::{GetUntracked, RwSignal, Set},
+    task::spawn_local,
+};
 use web_sys::{
     Blob, BlobPropertyBag, HtmlAnchorElement, Url, js_sys,
     wasm_bindgen::{JsCast, JsValue},
@@ -133,13 +134,10 @@ pub fn safe_updating_ui_value(
 ) {
     if !update_lock.get_untracked() {
         update_lock.set(true);
-        set_timeout(
-            move || {
-                update_fn();
-                set_timeout(move || update_lock.set(false), Duration::from_millis(1));
-            },
-            Duration::from_millis(1),
-        );
+        spawn_local(async move {
+            update_fn();
+            spawn_local(async move { update_lock.set(false) });
+        });
     }
 }
 

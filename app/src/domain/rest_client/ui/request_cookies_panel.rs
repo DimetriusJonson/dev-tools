@@ -101,7 +101,13 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     if !cookie_value.is_empty() {
                         if cookie_header.value.get_untracked() != cookie_value {
                             safe_updating_ui_value(update_lock, move || {
-                                cookie_header.value.set(cookie_value.to_owned())
+                                params
+                                    .read_untracked()
+                                    .headers
+                                    .write()
+                                    .iter_mut()
+                                    .filter(|h| h.id == cookie_header.id)
+                                    .for_each(|h| h.value.set(cookie_value.to_owned()));
                             });
                         }
                     } else {
