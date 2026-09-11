@@ -1,3 +1,4 @@
+use cookie::Cookie;
 use model::constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME};
 use url::Url;
 
@@ -85,9 +86,19 @@ pub fn replace_absolute_links(html: &mut String, base_url: &str) {
     replace_absolute_links_by_attr_part(html, "background-image: url(\"", "\"", base_url);
 }
 
-pub fn init_html_previewer(proxy_allow: bool, base_url: &str) -> Result<(), String> {
+pub fn init_html_previewer(
+    proxy_allow: bool,
+    base_url: &str,
+    headers: &Vec<(String, String)>,
+) -> Result<(), String> {
     if proxy_allow {
         create_cookie(RC_BASE_URL_COOKIE_NAME, &build_base_url(base_url), None)?;
+    }
+
+    for cookie in headers.iter().filter(|h| h.0.to_lowercase() == "set-cookie").map(|h| &h.1) {
+        if let Ok(cookie) = Cookie::parse_encoded(cookie) {
+            create_cookie(cookie.name(), cookie.value(), None)?;
+        }
     }
 
     Ok(())

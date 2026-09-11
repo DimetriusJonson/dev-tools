@@ -100,6 +100,7 @@ pub fn RequestResultPanel(
                 if let Err(err) = init_html_previewer(
                     proxy_allow.get_untracked(),
                     &rc_context.request.read_untracked().url,
+                    &request_result.headers.read_untracked()
                 ) {
                     show_error(err, messages)
                 }
@@ -326,7 +327,7 @@ pub fn RequestResultPanel(
                                             let Ok(mut href_url) = url::Url::parse(&href) &&
                                             href_url.set_scheme(base_url.scheme()).is_ok() &&
                                             href_url.set_host(base_url.host_str()).is_ok()
-                                            && let Err(err) = init_html_previewer(true, href_url.as_ref()) {
+                                            && let Err(err) = init_html_previewer(true, href_url.as_ref(), &request_result.headers.read_untracked()) {
                                                 show_error(err, messages);
                                             }
                                         set_preview_loading.set(false);
