@@ -121,7 +121,6 @@ pub fn RequestResultPanel(
     Effect::watch(
         move || response.get(),
         move |value, _prev, _| {
-            set_tab_selected.set(0);
             request_result.status_code.set("".to_owned());
             request_result.size.set(None);
             request_result.body.set("".to_owned());
