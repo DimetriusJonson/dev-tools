@@ -146,7 +146,10 @@ fn build_request(
         .body(reqwest::Body::from(request.body.to_owned())))
 }
 
-fn build_to_dump_receiver_url(url_str: String, dump_port: u16) -> Result<(String, String), ParseError> {
+fn build_to_dump_receiver_url(
+    url_str: String,
+    dump_port: u16,
+) -> Result<(String, String), ParseError> {
     let mut url = Url::parse(&url_str)?;
     let old_port = match url.port() {
         Some(port) => format!(":{}", port),
@@ -305,8 +308,12 @@ pub async fn rest_client_html_previewer_middleware(
                 );
             }
 
-            //info!("{} {}", req.method(), url);
-            //info!("headers: {:?}", reqwest_headers);
+            if reqwest_headers.get(header::ORIGIN).is_some() {
+                reqwest_headers.remove(header::ORIGIN);
+                if let Ok(header_value) = base_url.origin().ascii_serialization().parse() {
+                    reqwest_headers.append(header::ORIGIN, header_value);
+                }
+            }
 
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)
