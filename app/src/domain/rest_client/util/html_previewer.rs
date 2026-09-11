@@ -6,13 +6,27 @@ use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cooki
 pub static FETCH_WRAPPER_JS: &[u8] = include_bytes!("fetchWrapper.js");
 
 pub fn add_preview_scripts(html: &mut String) {
-    let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
+    let mut head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
+    if head_start_indexes.is_empty() {
+        head_start_indexes = html.match_indices("<head ").map(|p| p.0).collect::<Vec<usize>>();
+        if !head_start_indexes.is_empty() {
+            if let Some(end_index) = find_from_byte_index(html, head_start_indexes[0], ">") {
+                head_start_indexes.clear();
+                head_start_indexes.push(end_index + 1);
+            }
+        }
+    } else {
+        head_start_indexes.clear();
+        head_start_indexes.push(head_start_indexes[0] + 6);
+    }
+
     let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
+
     if head_start_indexes.len() == 1 && head_end_indexes.len() == 1 {
         let script_text = String::from_utf8_lossy(FETCH_WRAPPER_JS).to_string();
 
         html.insert_str(
-            head_start_indexes[0] + 6,
+            head_start_indexes[0],
             &format!("<script lang=\"javascript\">{}</script>", script_text),
         );
     }
@@ -22,6 +36,7 @@ pub fn add_head_base_tag(html: &mut String, url: &str) {
     let base_url = build_base_url(url);
     let head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
     let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
+
     if head_start_indexes.len() == 1 && head_end_indexes.len() == 1 {
         let head_inner = &html[head_start_indexes[0]..head_end_indexes[0]];
         let mut base_index = head_inner.match_indices("<base ");
