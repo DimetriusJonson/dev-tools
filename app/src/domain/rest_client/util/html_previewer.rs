@@ -12,6 +12,8 @@ pub fn add_preview_scripts(html: &mut String) {
         if !head_start_indexes.is_empty() {
             if let Some(end_index) = find_from_byte_index(html, head_start_indexes[0], ">") {
                 head_start_indexes[0] = end_index + 1;
+            } else {
+                head_start_indexes.clear();
             }
         }
     } else {
