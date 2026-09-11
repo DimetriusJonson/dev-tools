@@ -131,6 +131,13 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     return Err("data-raw value must be present".into());
                 }
             }
+            Rule::data_binary => {
+                if let Some(pair) = pair.into_inner().next() {
+                    parsed.body.push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                } else {
+                    return Err("data-binary value must be present".into());
+                }
+            }
             Rule::ssl_verify_option => {
                 parsed.insecure = true;
             }
