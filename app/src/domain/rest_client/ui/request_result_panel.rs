@@ -121,6 +121,7 @@ pub fn RequestResultPanel(
     Effect::watch(
         move || response.get(),
         move |value, _prev, _| {
+            set_show_preview_html.set(false);
             request_result.status_code.set("".to_owned());
             request_result.size.set(None);
             request_result.body.set("".to_owned());

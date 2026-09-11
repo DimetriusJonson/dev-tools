@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-use leptos::prelude::{GetUntracked, RwSignal, Set, set_timeout};
+use cookie::Cookie;
+use leptos::{leptos_dom::logging::console_log, prelude::{GetUntracked, RwSignal, Set, set_timeout}};
 use web_sys::{
     Blob, BlobPropertyBag, HtmlAnchorElement, Url, js_sys,
     wasm_bindgen::{JsCast, JsValue},
@@ -172,4 +173,18 @@ pub fn remove_cookie(_name: &str, _path: &str) {
     let cookie_str = format!("{}=''; max-age=0; path={}", _name, _path);
 
     let _ = document.set_cookie(&cookie_str);
+}
+
+pub fn remove_all_cookies() {
+    use web_sys::HtmlDocument;
+    let document = gloo_utils::document().unchecked_into::<HtmlDocument>();
+
+    let cookie_str = document.cookie().unwrap_or_default();
+    for cookie in cookie_str.split(';') {
+        if let Some(cookie) = Cookie::parse_encoded(cookie.to_owned()).ok() {
+            let delete_expr = format!("{}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/", cookie.name());
+            let _ = document.set_cookie(&delete_expr);
+            console_log(&delete_expr);
+        }
+    }
 }

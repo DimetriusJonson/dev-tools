@@ -315,6 +315,8 @@ pub async fn rest_client_html_previewer_middleware(
                 }
             }
 
+            remove_base_cookie(&mut reqwest_headers);
+
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)
                 .build()?
@@ -403,5 +405,26 @@ fn replace_cookies_domain(headers: &mut HeaderMap) {
         if let Ok(header_value) = cookie.encoded().to_string().parse() {
             headers.append(header::SET_COOKIE, header_value);
         }
+    }
+}
+
+fn remove_base_cookie(headers: &mut HeaderMap) {
+    let cookies = headers
+        .get_all(header::COOKIE)
+        .into_iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(';'))
+        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok());
+
+    let new_cookies: String = cookies
+        .filter(|c| c.name() != RC_BASE_URL_COOKIE_NAME)
+        .map(|c| c.encoded().to_string())
+        .collect::<Vec<String>>().join(";");
+
+    headers.remove(header::COOKIE);
+    if !new_cookies.is_empty()
+        && let Ok(header_value) = new_cookies.parse()
+    {
+        headers.append(header::COOKIE, header_value);
     }
 }
