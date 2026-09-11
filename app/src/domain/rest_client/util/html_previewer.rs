@@ -11,13 +11,11 @@ pub fn add_preview_scripts(html: &mut String) {
         head_start_indexes = html.match_indices("<head ").map(|p| p.0).collect::<Vec<usize>>();
         if !head_start_indexes.is_empty() {
             if let Some(end_index) = find_from_byte_index(html, head_start_indexes[0], ">") {
-                head_start_indexes.clear();
-                head_start_indexes.push(end_index + 1);
+                head_start_indexes[0] = end_index + 1;
             }
         }
     } else {
-        head_start_indexes.clear();
-        head_start_indexes.push(head_start_indexes[0] + 6);
+        head_start_indexes[0] = head_start_indexes[0] + 6;
     }
 
     let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
