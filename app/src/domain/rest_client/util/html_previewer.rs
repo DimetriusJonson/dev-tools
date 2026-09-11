@@ -6,27 +6,31 @@ use crate::common::ui_utils::{create_cookie, get_browser_host_info, remove_cooki
 pub static FETCH_WRAPPER_JS: &[u8] = include_bytes!("fetchWrapper.js");
 
 pub fn add_preview_scripts(html: &mut String) {
-    let mut head_start_indexes = html.match_indices("<head>").map(|p| p.0).collect::<Vec<usize>>();
-    if head_start_indexes.is_empty() {
-        head_start_indexes = html.match_indices("<head ").map(|p| p.0).collect::<Vec<usize>>();
-        if !head_start_indexes.is_empty() {
-            if let Some(end_index) = find_from_byte_index(html, head_start_indexes[0], ">") {
-                head_start_indexes[0] = end_index + 1;
+    let head_start_index = match html.match_indices("<head>").map(|p| p.0).next() {
+        Some(head_start_index) => Some(head_start_index + 6),
+        None => {
+            let head_start_index = html.match_indices("<head ").map(|p| p.0).next();
+            if let Some(head_start_index) = head_start_index {
+                if let Some(end_index) = find_from_byte_index(html, head_start_index, ">") {
+                    Some(end_index + 1)
+                } else {
+                    None
+                }
             } else {
-                head_start_indexes.clear();
+                None
             }
         }
-    } else {
-        head_start_indexes[0] = head_start_indexes[0] + 6;
-    }
+    };
 
-    let head_end_indexes = html.match_indices("</head>").map(|p| p.0).collect::<Vec<usize>>();
+    let head_end_index = html.match_indices("</head>").map(|p| p.0).next();
 
-    if head_start_indexes.len() == 1 && head_end_indexes.len() == 1 {
+    if let Some(head_start_index) = head_start_index
+        && head_end_index.is_some()
+    {
         let script_text = String::from_utf8_lossy(FETCH_WRAPPER_JS).to_string();
 
         html.insert_str(
-            head_start_indexes[0],
+            head_start_index,
             &format!("<script lang=\"javascript\">{}</script>", script_text),
         );
     }
