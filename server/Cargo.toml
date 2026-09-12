@@ -31,8 +31,8 @@ clap.workspace = true
 getifs.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-urlencoding.workspace=true
-cfg-if.workspace=true
+urlencoding.workspace = true
+cfg-if.workspace = true
 url.workspace = true
 
 sqlx = { workspace = true, optional = true }

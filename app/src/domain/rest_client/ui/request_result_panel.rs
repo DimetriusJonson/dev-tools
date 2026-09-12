@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, get_browser_host_info, save_file_to_disk};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -13,8 +13,7 @@ use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::util::html_previewer::{
-    add_head_base_tag, add_preview_scripts, clear_html_previewer, init_html_previewer,
-    replace_absolute_links,
+    add_head_base_tag, clear_html_previewer, init_html_previewer,
 };
 use crate::i18n::*;
 use gloo_net::http::Request;
@@ -24,8 +23,10 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::RoutingProgress;
 use leptos_router::hooks::use_location;
+use model::constants::RC_SRC_URL_PARAM_NAME;
 use model::restclient::rest_client_request::RestClientRequest;
 use model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
+use url::Url;
 use web_sys::HtmlIFrameElement;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -56,21 +57,26 @@ pub fn RequestResultPanel(
             if let RestClientResponseBody::Text(body) = response.body {
                 copy_to_clipboard(&body);
             }
-            show_info(t_string!(i18n, rest_client_response_copied_to_clipboard_msg).to_owned(), messages);
+            show_info(
+                t_string!(i18n, rest_client_response_copied_to_clipboard_msg).to_owned(),
+                messages,
+            );
         }
     };
 
     let (in_progress, set_in_progress) = signal(InProgressType::None);
+
     let (proxy_allow, set_proxy_allow) = signal(true);
     let (preview_sandbox, set_preview_sandbox) = signal("");
+    let (show_preview_html, set_show_preview_html) = signal(false);
+    let (preview_loading, set_preview_loading) = signal(false);
+
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_request_raw_ref = NodeRef::<Div>::new();
 
     let request_result = RequestResult::new();
-    let (show_preview_html, set_show_preview_html) = signal(false);
-    let (preview_loading, set_preview_loading) = signal(false);
 
     Effect::watch(
         move || location.pathname.get(),
@@ -100,7 +106,6 @@ pub fn RequestResultPanel(
                 if let Err(err) = init_html_previewer(
                     proxy_allow.get_untracked(),
                     &rc_context.request.read_untracked().url,
-                    &request_result.headers.read_untracked()
                 ) {
                     show_error(err, messages)
                 }
@@ -191,12 +196,34 @@ pub fn RequestResultPanel(
         set_preview_loading.set(true);
         let mut html = request_result.body.get();
         if proxy_allow.get_untracked() {
-            add_preview_scripts(&mut html);
-            replace_absolute_links(&mut html, &rc_context.request.read_untracked().url);
+            None
         } else {
             add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
+            Some(html)
         }
-        html
+    };
+
+    let get_preview_src = move || {
+        set_preview_loading.set(true);
+        if proxy_allow.get_untracked() {
+            if let Ok(mut url) = Url::parse(&rc_context.request.get_untracked().url)
+                && let Ok(host_info) = get_browser_host_info()
+            {
+                url.set_scheme(&host_info.0)
+                    .unwrap_or_else(|_| panic!("Cant set url scheme {}", host_info.0));
+                url.set_host(Some(&host_info.1))
+                    .unwrap_or_else(|_| panic!("Cant set url host {} ", host_info.1));
+                url.set_port(host_info.2)
+                    .unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
+                url.query_pairs_mut()
+                    .append_pair(RC_SRC_URL_PARAM_NAME, &rc_context.request.get_untracked().url);
+                Some(url.to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     };
 
     let on_attachment_download_click = move |_| {
@@ -318,7 +345,9 @@ pub fn RequestResultPanel(
                                     <RoutingProgress is_routing=preview_loading max_time=Duration::from_millis(250) />
                                 </div>
                                 <iframe class="flex-1 w-full"
-                                    srcdoc=get_preview_src_doc sandbox=preview_sandbox
+                                    src=get_preview_src
+                                    srcdoc=get_preview_src_doc
+                                    sandbox=preview_sandbox
                                     on:load=move |event| {
                                         let elem = event_target::<HtmlIFrameElement>(&event);
                                         if let Some(cw) = elem.content_window() &&
@@ -327,7 +356,7 @@ pub fn RequestResultPanel(
                                             let Ok(mut href_url) = url::Url::parse(&href) &&
                                             href_url.set_scheme(base_url.scheme()).is_ok() &&
                                             href_url.set_host(base_url.host_str()).is_ok()
-                                            && let Err(err) = init_html_previewer(true, href_url.as_ref(), &request_result.headers.read_untracked()) {
+                                            && let Err(err) = init_html_previewer(true, href_url.as_ref()) {
                                                 show_error(err, messages);
                                             }
                                         set_preview_loading.set(false);

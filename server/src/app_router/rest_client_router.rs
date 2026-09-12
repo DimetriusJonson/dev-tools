@@ -7,7 +7,12 @@ use std::{
 
 use crate::{
     app_router::dump_receiver::DUMP_REQUEST,
-    common::{app_error::AppError, app_state::AppState, dev_utils::extract_uri_query_params},
+    common::{
+        app_error::AppError,
+        app_state::AppState,
+        dev_utils::extract_uri_query_params,
+        html_previewer::{add_preview_scripts, replace_absolute_links},
+    },
 };
 use axum::{
     Json,
@@ -292,6 +297,7 @@ pub async fn rest_client_html_previewer_middleware(
             let mut reqwest_headers = req.headers().clone();
             reqwest_headers.remove(header::HOST);
             reqwest_headers.remove(header::REFERER);
+            reqwest_headers.remove(header::ACCEPT_ENCODING);
 
             if let Some(referer) = &referer {
                 let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
@@ -341,7 +347,23 @@ pub async fn rest_client_html_previewer_middleware(
             let mut headers = response.headers().clone();
             replace_cookies_domain(&mut headers);
 
-            let body = Body::from_stream(response.bytes_stream());
+            let body;
+            if let Some(content_type) = response.headers().get(http::header::CONTENT_TYPE)
+                && let Ok(content_type) = content_type.to_str()
+                && content_type == "text/html" && 
+                let Some(referer) = referer
+            {
+                let mut html = response.text().await?;
+                add_preview_scripts(&mut html);
+
+                replace_absolute_links(&mut html, &rc_base_url, referer.as_str());
+
+                body = Body::from(html);
+                headers.remove(header::CONTENT_ENCODING);
+                headers.remove(header::TRANSFER_ENCODING);
+            } else {
+                body = Body::from_stream(response.bytes_stream());
+            }
 
             return Ok((response_status, headers, body).into_response());
         }

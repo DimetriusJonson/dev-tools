@@ -55,7 +55,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "time", "macr
 http = "1"
 nanoid = "0.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "webp"] }
-reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls", "json", "cookies"] }
+reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls", "json", "cookies", "gzip"] }
 flate2 = "1.0"
 getifs = "0.6"
 difference = "2.0"
