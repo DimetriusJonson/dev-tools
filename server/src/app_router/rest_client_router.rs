@@ -45,10 +45,14 @@ fn get_send_cached_value(url: &str, addr: SocketAddr) -> Option<(HeaderMap, Stri
     None
 }
 
-fn set_send_cached_value(url: &str, addr: SocketAddr, value: (HeaderMap, String)) {
+fn set_send_cached_value(url: &str, addr: SocketAddr, value: Option<(HeaderMap, String)>) {
     let key = format!("{}:{}", addr, url);
     if let Ok(mut cache) = SEND_CACHE.write() {
-        cache.insert(key, value);
+        if let Some(value) = value {
+            cache.insert(key, value);
+        } else {
+            cache.remove(&key);
+        }
     }
 }
 
@@ -122,7 +126,7 @@ pub async fn rest_client_send_handler(
             let body = response.text().await?;
             let body_size = body.len() as u64;
 
-            set_send_cached_value(&request.url, addr, (resp_headers.clone(), body.clone()));
+            set_send_cached_value(&request.url, addr, Some((resp_headers.clone(), body.clone())));
 
             Ok(Json(RestClientResponse {
                 status_code,
@@ -288,6 +292,7 @@ pub async fn rest_client_html_previewer_middleware(
 
             if from_cache_param && let Some(url_param) = &url_param {
                 if let Some(value) = get_send_cached_value(url_param, addr) {
+                    set_send_cached_value(url_param, addr, None);
                     let body = Body::from(value.1);
                     let mut headers = value.0;
                     headers.remove(header::CONTENT_LENGTH);
