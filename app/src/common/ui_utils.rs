@@ -179,7 +179,7 @@ pub fn remove_all_cookies() {
 
     let cookie_str = document.cookie().unwrap_or_default();
     for cookie in cookie_str.split(';') {
-        if let Some(cookie) = Cookie::parse_encoded(cookie.to_owned()).ok() {
+        if let Ok(cookie) = Cookie::parse_encoded(cookie.to_owned()) {
             let delete_expr =
                 format!("{}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/", cookie.name());
             let _ = document.set_cookie(&delete_expr);

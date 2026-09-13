@@ -356,7 +356,7 @@ pub async fn rest_client_html_previewer_middleware(
                 let mut html = response.text().await?;
                 add_preview_scripts(&mut html);
 
-                replace_absolute_links(&mut html, &rc_base_url, referer.as_str());
+                replace_absolute_links(&mut html, rc_base_url, referer.as_str());
 
                 body = Body::from(html);
                 headers.remove(header::CONTENT_ENCODING);

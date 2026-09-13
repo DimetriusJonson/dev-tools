@@ -9,11 +9,7 @@ pub fn add_preview_scripts(html: &mut String) {
         None => {
             let head_start_index = html.match_indices("<head ").map(|p| p.0).next();
             if let Some(head_start_index) = head_start_index {
-                if let Some(end_index) = find_from_byte_index(html, head_start_index, ">") {
-                    Some(end_index + 1)
-                } else {
-                    None
-                }
+                find_from_byte_index(html, head_start_index, ">").map(|end_index| end_index + 1)
             } else {
                 None
             }
