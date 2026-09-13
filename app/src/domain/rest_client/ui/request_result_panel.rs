@@ -8,6 +8,7 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
+use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
@@ -23,7 +24,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::RoutingProgress;
 use leptos_router::hooks::use_location;
-use model::constants::RC_SRC_URL_PARAM_NAME;
+use model::constants::{RC_FROM_CACHE_PARAM_NAME, RC_SRC_URL_PARAM_NAME};
 use model::restclient::rest_client_request::RestClientRequest;
 use model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
 use url::Url;
@@ -70,6 +71,7 @@ pub fn RequestResultPanel(
     let (preview_sandbox, set_preview_sandbox) = signal("");
     let (show_preview_html, set_show_preview_html) = signal(false);
     let (preview_loading, set_preview_loading) = signal(false);
+    let (show_proxy_preview_started, set_show_proxy_preview_started) = signal(false);
 
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
@@ -171,6 +173,11 @@ pub fn RequestResultPanel(
 
                 request_result.headers.set(response.headers.clone());
                 request_result.request_raw.set(response.request_raw.to_owned());
+
+                if show_proxy_preview_started.get_untracked() {
+                    set_show_proxy_preview_started.set(false);
+                    set_show_preview_html.set(true)
+                }
             };
 
             if params.read_untracked().formatting.get_untracked() {
@@ -217,6 +224,7 @@ pub fn RequestResultPanel(
                     .unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
                 url.query_pairs_mut()
                     .append_pair(RC_SRC_URL_PARAM_NAME, &rc_context.request.get_untracked().url);
+                url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, "true");
                 Some(url.to_string())
             } else {
                 None
@@ -311,7 +319,14 @@ pub fn RequestResultPanel(
                                 color=ButtonColor::Custom
                                 loading=move || false
                                 disabled=move || false
-                                on_click=move |_| {set_show_preview_html.set(!show_preview_html.get_untracked())}
+                                on_click=move |_| {
+                                    if !show_preview_html.get_untracked() && proxy_allow.get_untracked() {
+                                        rc_context.request.write().command = RequestCommand::Run;
+                                        set_show_proxy_preview_started.set(true);
+                                    } else {
+                                        set_show_preview_html.set(!show_preview_html.get_untracked())
+                                    }
+                                }
                             />
 
                             <Button

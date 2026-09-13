@@ -22,9 +22,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
-use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
+use http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri, header};
 use model::{
-    constants::{RC_BASE_URL_COOKIE_NAME, RC_SRC_URL_PARAM_NAME},
+    constants::{RC_BASE_URL_COOKIE_NAME, RC_FROM_CACHE_PARAM_NAME, RC_SRC_URL_PARAM_NAME},
     restclient::{
         rest_client_request::RestClientRequest,
         rest_client_response::{RestClientResponse, RestClientResponseBody},
@@ -34,8 +34,27 @@ use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
 use url::ParseError;
 
+static SEND_CACHE: LazyLock<RwLock<HashMap<String, (HeaderMap, String)>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
+
+fn get_send_cached_value(url: &str, addr: SocketAddr) -> Option<(HeaderMap, String)> {
+    let key = format!("{}:{}", addr, url);
+    if let Ok(cache) = SEND_CACHE.read() {
+        return cache.get(&key).cloned();
+    }
+    None
+}
+
+fn set_send_cached_value(url: &str, addr: SocketAddr, value: (HeaderMap, String)) {
+    let key = format!("{}:{}", addr, url);
+    if let Ok(mut cache) = SEND_CACHE.write() {
+        cache.insert(key, value);
+    }
+}
+
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Json<RestClientResponse>, AppError> {
     build_request(&request, Some(app_state.dump_port))?.send().await?;
@@ -99,8 +118,11 @@ pub async fn rest_client_send_handler(
                 }));
             }
 
+            let resp_headers = &response.headers().clone();
             let body = response.text().await?;
             let body_size = body.len() as u64;
+
+            set_send_cached_value(&request.url, addr, (resp_headers.clone(), body.clone()));
 
             Ok(Json(RestClientResponse {
                 status_code,
@@ -259,6 +281,21 @@ pub async fn rest_client_html_previewer_middleware(
                 .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 .unwrap_or(None);
 
+            let from_cache_param = extract_uri_query_params(req.uri())
+                .get(RC_FROM_CACHE_PARAM_NAME)
+                .map(|str| str.parse::<bool>().unwrap_or(false))
+                .unwrap_or(false);
+
+            if from_cache_param && let Some(url_param) = &url_param {
+                if let Some(value) = get_send_cached_value(url_param, addr) {
+                    let body = Body::from(value.1);
+                    let mut headers = value.0;
+                    headers.remove(header::CONTENT_LENGTH);
+                    headers.remove(header::CONTENT_ENCODING);
+                    return Ok((StatusCode::OK, headers, body).into_response());
+                }
+            }
+
             let mut path = req.uri().path();
             if path.starts_with('/') {
                 path = &path[1..];
@@ -350,8 +387,8 @@ pub async fn rest_client_html_previewer_middleware(
             let body;
             if let Some(content_type) = response.headers().get(http::header::CONTENT_TYPE)
                 && let Ok(content_type) = content_type.to_str()
-                && content_type == "text/html" && 
-                let Some(referer) = referer
+                && content_type == "text/html"
+                && let Some(referer) = referer
             {
                 let mut html = response.text().await?;
                 add_preview_scripts(&mut html);
@@ -359,6 +396,7 @@ pub async fn rest_client_html_previewer_middleware(
                 replace_absolute_links(&mut html, rc_base_url, referer.as_str());
 
                 body = Body::from(html);
+                headers.remove(header::CONTENT_LENGTH);
                 headers.remove(header::CONTENT_ENCODING);
                 headers.remove(header::TRANSFER_ENCODING);
             } else {
