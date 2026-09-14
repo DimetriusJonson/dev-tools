@@ -1,6 +1,6 @@
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
+use crate::common::ui_utils::copy_to_clipboard;
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -11,6 +11,7 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
+use crate::domain::rest_client::ui::request_result_attachment::RequestResultAttachment;
 use crate::domain::rest_client::ui::request_result_previewer::RequestResultPreviewer;
 use crate::i18n::*;
 use gloo_net::http::Request;
@@ -18,20 +19,7 @@ use leptos::html::Div;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use model::restclient::rest_client_request::RestClientRequest;
 use model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
-
-#[derive(PartialEq, Copy, Clone)]
-enum InProgressType {
-    None,
-    AttachmentDownload,
-}
-
-impl InProgressType {
-    fn is_active(self) -> bool {
-        self != InProgressType::None
-    }
-}
 
 #[component]
 pub fn RequestResultPanel(
@@ -55,7 +43,6 @@ pub fn RequestResultPanel(
         }
     };
 
-    let (in_progress, set_in_progress) = signal(InProgressType::None);
     let show_preview_html = RwSignal::new(false);
     let (show_proxy_preview_started, set_show_proxy_preview_started) = signal(false);
     let (proxy_allow, set_proxy_allow) = signal(true);
@@ -146,47 +133,6 @@ pub fn RequestResultPanel(
         false,
     );
 
-    let on_attachment_download_click = move |_| {
-        spawn_local(async move {
-            let mut headers = Vec::new();
-            for header in params.read_untracked().headers.get_untracked().iter() {
-                headers.push((header.name.get_untracked(), header.value.get_untracked()));
-            }
-
-            let attachment = request_result.attachment.get_untracked();
-            let rc_request = RestClientRequest {
-                method: "GET".to_owned(),
-                url: attachment.0,
-                headers,
-                body: "".to_owned(),
-            };
-
-            set_in_progress.set(InProgressType::AttachmentDownload);
-            match Request::post("/rest_client_attachment_download").json(&rc_request) {
-                Ok(request) => match request.send().await {
-                    Ok(response) => match response.binary().await {
-                        Ok(bytes) => {
-                            let file_name = attachment.1;
-                            match save_file_to_disk(bytes.to_vec(), &file_name, "application/json")
-                            {
-                                Ok(_) => show_info(
-                                    t_display!(i18n, file_saved_file_msg, file_name).to_string(),
-                                    messages,
-                                ),
-                                Err(err) => show_error(err, messages),
-                            }
-                        }
-                        Err(err) => show_error(err.to_string(), messages),
-                    },
-                    Err(err) => show_error(err.to_string(), messages),
-                },
-                Err(err) => show_error(err.to_string(), messages),
-            }
-
-            set_in_progress.set(InProgressType::None);
-        });
-    };
-
     view! {
         <div node_ref=node_ref class="overflow-y-auto flex flex-col gap-4">
 
@@ -267,19 +213,7 @@ pub fn RequestResultPanel(
 
                         <RequestResultPreviewer params show_preview_html proxy_allow body={request_result.body.read_only()} />
 
-                        // Attachment
-                        <Show when=move || { !request_result.attachment.read().0.is_empty() }>
-                            <div class="flex-1 flex items-center justify-center">
-                                <Button
-                                    title=move || "".to_owned()
-                                    label=move || t_display!(i18n, rc_attachment_download_btn_label, file_name = request_result.attachment.get().1).to_string()
-                                    button_width=ButtonWidth::Auto
-                                    loading=move || in_progress.get() == InProgressType::AttachmentDownload
-                                    on_click=on_attachment_download_click
-                                    disabled=move || in_progress.get().is_active()
-                                />
-                            </div>
-                        </Show>
+                        <RequestResultAttachment params attachment={request_result.attachment.read_only()} />
 
                         // Image
                         <Show when=move || { !request_result.image.read().is_empty() }>
