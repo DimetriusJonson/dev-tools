@@ -6,10 +6,8 @@ use crate::components::layout::message_banner::{Messages, show_error, show_info}
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
-use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
-use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::ui::request_result_attachment::RequestResultAttachment;
 use crate::domain::rest_client::ui::request_result_previewer::RequestResultPreviewer;
@@ -29,7 +27,6 @@ pub fn RequestResultPanel(
 ) -> impl IntoView {
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
-    let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
 
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
@@ -172,12 +169,7 @@ pub fn RequestResultPanel(
                                 loading=move || false
                                 disabled=move || false
                                 on_click=move |_| {
-                                    if !show_preview_html.get_untracked() && proxy_allow.get_untracked() {
-                                        rc_context.request.write().command = RequestCommand::Run;
-                                        show_preview_html.set(true)
-                                    } else {
-                                        show_preview_html.set(!show_preview_html.get_untracked())
-                                    }
+                                    show_preview_html.set(!show_preview_html.get_untracked())
                                 }
                             />
 
