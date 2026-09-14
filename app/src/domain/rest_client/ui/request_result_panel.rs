@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{copy_to_clipboard, get_browser_host_info, save_file_to_disk};
+use crate::common::ui_utils::{
+    copy_to_clipboard, get_browser_host_info, is_dev_tools_site, save_file_to_disk,
+};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -67,6 +69,7 @@ pub fn RequestResultPanel(
 
     let (in_progress, set_in_progress) = signal(InProgressType::None);
 
+    let (dev_tools_site, set_dev_tools_site) = signal(false);
     let (proxy_allow, set_proxy_allow) = signal(true);
     let (preview_sandbox, set_preview_sandbox) = signal("");
     let (show_preview_html, set_show_preview_html) = signal(false);
@@ -89,6 +92,7 @@ pub fn RequestResultPanel(
     );
 
     Effect::new(move || {
+        set_dev_tools_site.set(is_dev_tools_site());
         clear_html_previewer();
         spawn_local(async move {
             let allow = is_proxy_allow().await;
@@ -224,7 +228,33 @@ pub fn RequestResultPanel(
                     .unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
                 url.query_pairs_mut()
                     .append_pair(RC_SRC_URL_PARAM_NAME, &rc_context.request.get_untracked().url);
-                url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, "true");
+
+                if /*dev_tools_site.get_untracked()*/true {
+                    let request = match params.read_untracked().get_body() {
+                        Ok(body) => RestClientRequest {
+                        method: rc_context.request.get_untracked().method,
+                        url: "".to_owned(),
+                        headers: params
+                            .read_untracked()
+                            .headers
+                            .read_untracked()
+                            .iter()
+                            .map(|h| (h.name.get_untracked(), h.value.get_untracked()))
+                            .collect::<Vec<(String, String)>>(),
+                        body,
+                    },
+                        Err(err) => {
+                            return;
+                        },
+                    };
+
+                    if let Ok(json) = serde_json::to_string(&request).map_err(|err| err.to_string()) {
+                        url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, &json);
+                    }
+                } else {
+                    url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, "true");
+                }
+
                 Some(url.to_string())
             } else {
                 None

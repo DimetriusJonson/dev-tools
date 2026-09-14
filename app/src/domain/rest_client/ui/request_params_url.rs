@@ -1,6 +1,5 @@
 use crate::components::layout::message_banner::{Messages, show_error, show_warning};
 use crate::components::ui::button_world::ButtonWorld;
-use crate::domain::rest_client::model::request_body_kind::RequestBodyKind;
 use crate::domain::rest_client::model::request_info::RequestCommand;
 use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
@@ -83,18 +82,11 @@ pub fn RequestParamsUrl(
                 headers.push((header.name.get_untracked(), header.value.get_untracked()));
             }
 
-            let body = match params.body_type.get_untracked() {
-                RequestBodyKind::Formencoded => {
-                    match params.body_formencoded.get_untracked().to_urlencoded_string() {
-                        Ok(url) => url,
-                        Err(err) => {
-                            show_error(format!("Error: {}", err), messages);
-                            return;
-                        }
-                    }
-                }
-                RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => {
-                    params.body.get_untracked()
+            let body = match params.get_body() {
+                Ok(body) => body,
+                Err(err) => {
+                    show_error(format!("Error: {}", err), messages);
+                    return;
                 }
             };
 

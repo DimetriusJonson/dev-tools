@@ -1,4 +1,4 @@
-use crate::components::layout::language_selector::LanguageSelector;
+use crate::{common::ui_utils::is_dev_tools_site, components::layout::language_selector::LanguageSelector};
 use crate::i18n::*;
 use leptos::prelude::*;
 use leptos_router::hooks::use_location;
@@ -11,14 +11,7 @@ pub fn Navbar() -> impl IntoView {
     let location = use_location();
     let dev_tools_site = RwSignal::new(false);
     let _ = Effect::new(move || {
-        dev_tools_site.set(
-            window()
-                .location()
-                .hostname()
-                .map(|h| h.contains("dev-tools"))
-                .ok()
-                .unwrap_or_default(),
-        );
+        dev_tools_site.set(is_dev_tools_site());
     });
 
     view! {

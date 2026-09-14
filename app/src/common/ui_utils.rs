@@ -1,7 +1,6 @@
 use cookie::Cookie;
 use leptos::{
-    prelude::{GetUntracked, RwSignal, Set},
-    task::spawn_local,
+    prelude::{GetUntracked, RwSignal, Set, window}, task::spawn_local,
 };
 use web_sys::{
     Blob, BlobPropertyBag, HtmlAnchorElement, Url, js_sys,
@@ -185,4 +184,8 @@ pub fn remove_all_cookies() {
             let _ = document.set_cookie(&delete_expr);
         }
     }
+}
+
+pub fn is_dev_tools_site() -> bool {
+    window().location().hostname().map(|h| h.contains("dev-tools")).ok().unwrap_or_default()
 }

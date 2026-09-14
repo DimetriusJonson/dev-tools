@@ -295,20 +295,24 @@ pub async fn rest_client_html_previewer_middleware(
                 .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 .unwrap_or(None);
 
-            let from_cache_param = extract_uri_query_params(req.uri())
-                .get(RC_FROM_CACHE_PARAM_NAME)
-                .map(|str| str.parse::<bool>().unwrap_or(false))
-                .unwrap_or(false);
-
             let client_ip = &resolve_request_ip(req.headers(), addr);
-            let cached_request = if from_cache_param
-                && let Some(url_param) = &url_param
-                && let Some(value) = get_send_cached_value(url_param, client_ip)
-            {
-                Some(value)
+
+            let cached_request = if let Some(url_param) = &url_param {
+                match extract_uri_query_params(req.uri()).get(RC_FROM_CACHE_PARAM_NAME) {
+                    Some(value) => {
+                        if *value == "true" {
+                            get_send_cached_value(url_param, client_ip)
+                        } else {
+                            Some(serde_json::from_str(&urlencoding::decode(value)?.to_string())?)
+                        }
+                    }
+                    None => None,
+                }
             } else {
                 None
             };
+
+            debug!("url_param={:?} cached_request={:?}", url_param, cached_request);
 
             let mut path = req.uri().path();
             if path.starts_with('/') {

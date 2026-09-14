@@ -114,6 +114,17 @@ impl RequestParams {
             .unwrap_or(false),
         );
     }
+
+    pub fn get_body(&self) -> Result<String, serde_urlencoded::ser::Error> {
+        Ok(match self.body_type.get_untracked() {
+            RequestBodyKind::Formencoded => {
+                self.body_formencoded.get_untracked().to_urlencoded_string()?
+            }
+            RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => {
+                self.body.get_untracked()
+            }
+        })
+    }
 }
 
 fn create_signal<T>(value: T, field: RequestFieldKind, rc_context: RestClientContext) -> RwSignal<T>
