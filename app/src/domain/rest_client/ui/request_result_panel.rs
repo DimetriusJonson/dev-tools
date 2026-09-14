@@ -1,10 +1,6 @@
-use std::time::Duration;
-
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
-use crate::common::ui_utils::{
-    copy_to_clipboard, get_browser_host_info, is_dev_tools_site, save_file_to_disk,
-};
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::common::xml_processor::format_xml;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
@@ -15,22 +11,15 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
-use crate::domain::rest_client::util::html_previewer::{
-    add_head_base_tag, clear_html_previewer, init_html_previewer,
-};
+use crate::domain::rest_client::ui::request_result_previewer::RequestResultPreviewer;
 use crate::i18n::*;
 use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use leptos_router::components::RoutingProgress;
-use leptos_router::hooks::use_location;
-use model::constants::{RC_FROM_CACHE_PARAM_NAME, RC_SRC_URL_PARAM_NAME};
 use model::restclient::rest_client_request::RestClientRequest;
 use model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
-use url::Url;
-use web_sys::HtmlIFrameElement;
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
@@ -53,7 +42,6 @@ pub fn RequestResultPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
     let rc_context = use_context::<RestClientContext>().expect("Failed get rc_context");
-    let location = use_location();
 
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
@@ -68,13 +56,9 @@ pub fn RequestResultPanel(
     };
 
     let (in_progress, set_in_progress) = signal(InProgressType::None);
-
-    let (dev_tools_site, set_dev_tools_site) = signal(false);
-    let (proxy_allow, set_proxy_allow) = signal(true);
-    let (preview_sandbox, set_preview_sandbox) = signal("");
-    let (show_preview_html, set_show_preview_html) = signal(false);
-    let (preview_loading, set_preview_loading) = signal(false);
+    let show_preview_html = RwSignal::new(false);
     let (show_proxy_preview_started, set_show_proxy_preview_started) = signal(false);
+    let (proxy_allow, set_proxy_allow) = signal(true);
 
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_body_ref = NodeRef::<Div>::new();
@@ -83,57 +67,16 @@ pub fn RequestResultPanel(
 
     let request_result = RequestResult::new();
 
-    Effect::watch(
-        move || location.pathname.get(),
-        move |_value, _prev, _| {
-            clear_html_previewer();
-        },
-        false,
-    );
-
     Effect::new(move || {
-        set_dev_tools_site.set(is_dev_tools_site());
-        clear_html_previewer();
         spawn_local(async move {
-            let allow = is_proxy_allow().await;
-            set_proxy_allow.set(allow);
-            if allow {
-                set_preview_sandbox.set("allow-scripts allow-popups allow-same-origin");
-            } else {
-                set_preview_sandbox.set("allow-scripts allow-popups");
-            }
+            set_proxy_allow.set(is_proxy_allow().await);
         });
     });
 
     Effect::watch(
-        move || show_preview_html.get(),
-        move |value, _prev, _| {
-            if *value {
-                if let Err(err) = init_html_previewer(
-                    proxy_allow.get_untracked(),
-                    &rc_context.request.read_untracked().url,
-                ) {
-                    show_error(err, messages)
-                }
-            } else {
-                clear_html_previewer();
-            }
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || rc_context.request.get(),
-        move |_value, _prev, _| {
-            set_show_preview_html.set(false);
-        },
-        false,
-    );
-
-    Effect::watch(
         move || response.get(),
         move |value, _prev, _| {
-            set_show_preview_html.set(false);
+            show_preview_html.set(false);
             request_result.status_code.set("".to_owned());
             request_result.size.set(None);
             request_result.body.set("".to_owned());
@@ -180,7 +123,7 @@ pub fn RequestResultPanel(
 
                 if show_proxy_preview_started.get_untracked() {
                     set_show_proxy_preview_started.set(false);
-                    set_show_preview_html.set(true)
+                    show_preview_html.set(true)
                 }
             };
 
@@ -202,71 +145,6 @@ pub fn RequestResultPanel(
         },
         false,
     );
-
-    let get_preview_src_doc = move || {
-        set_preview_loading.set(true);
-        let mut html = request_result.body.get();
-        if proxy_allow.get_untracked() {
-            None
-        } else {
-            add_head_base_tag(&mut html, &rc_context.request.read_untracked().url);
-            Some(html)
-        }
-    };
-
-    let get_preview_src = move || {
-        set_preview_loading.set(true);
-        if proxy_allow.get_untracked() {
-            if let Ok(mut url) = Url::parse(&rc_context.request.get_untracked().url)
-                && let Ok(host_info) = get_browser_host_info()
-            {
-                url.set_scheme(&host_info.0)
-                    .unwrap_or_else(|_| panic!("Cant set url scheme {}", host_info.0));
-                url.set_host(Some(&host_info.1))
-                    .unwrap_or_else(|_| panic!("Cant set url host {} ", host_info.1));
-                url.set_port(host_info.2)
-                    .unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
-                url.query_pairs_mut()
-                    .append_pair(RC_SRC_URL_PARAM_NAME, &rc_context.request.get_untracked().url);
-
-                if dev_tools_site.get_untracked() {
-                    match params.read_untracked().get_body() {
-                        Ok(body) => {
-                            let request = RestClientRequest {
-                                method: rc_context.request.get_untracked().method,
-                                url: "".to_owned(),
-                                headers: params
-                                    .read_untracked()
-                                    .headers
-                                    .read_untracked()
-                                    .iter()
-                                    .map(|h| (h.name.get_untracked(), h.value.get_untracked()))
-                                    .collect::<Vec<(String, String)>>(),
-                                body,
-                            };
-                            if let Ok(json) =
-                                serde_json::to_string(&request).map_err(|err| err.to_string())
-                            {
-                                url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, &json);
-                            }
-                        }
-                        Err(err) => {
-                            show_error(err.to_string(), messages);
-                            return None;
-                        }
-                    };
-                } else {
-                    url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, "true");
-                }
-
-                Some(url.to_string())
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    };
 
     let on_attachment_download_click = move |_| {
         spawn_local(async move {
@@ -358,7 +236,7 @@ pub fn RequestResultPanel(
                                         rc_context.request.write().command = RequestCommand::Run;
                                         set_show_proxy_preview_started.set(true);
                                     } else {
-                                        set_show_preview_html.set(!show_preview_html.get_untracked())
+                                        show_preview_html.set(!show_preview_html.get_untracked())
                                     }
                                 }
                             />
@@ -387,36 +265,7 @@ pub fn RequestResultPanel(
                             hidden=Box::new(move || request_result.body.read().is_empty() || show_preview_html.get())
                         />
 
-                        // Html preview
-                        <Show when=move || { show_preview_html.get() }>
-                            <div class="flex-1 flex flex-col">
-                                <div class="progress-container pt-0 mt-0">
-                                    <RoutingProgress is_routing=preview_loading max_time=Duration::from_millis(250) />
-                                </div>
-                                <iframe class="flex-1 w-full"
-                                    src=get_preview_src
-                                    srcdoc=get_preview_src_doc
-                                    sandbox=preview_sandbox
-                                    on:load=move |event| {
-                                        let elem = event_target::<HtmlIFrameElement>(&event);
-                                        if let Some(cw) = elem.content_window() &&
-                                            let Ok(href) = cw.location().href() &&
-                                            let Ok(base_url) = url::Url::parse(&rc_context.request.read_untracked().url) &&
-                                            let Ok(mut href_url) = url::Url::parse(&href) &&
-                                            href_url.set_scheme(base_url.scheme()).is_ok() &&
-                                            href_url.set_host(base_url.host_str()).is_ok()
-                                            && let Err(err) = init_html_previewer(true, href_url.as_ref()) {
-                                                show_error(err, messages);
-                                            }
-                                        set_preview_loading.set(false);
-                                    }
-                                    on:error=move |_| {
-                                        set_preview_loading.set(false);
-                                    }
-                                >
-                                </iframe>
-                            </div>
-                        </Show>
+                        <RequestResultPreviewer params show_preview_html proxy_allow body={request_result.body.read_only()} />
 
                         // Attachment
                         <Show when=move || { !request_result.attachment.read().0.is_empty() }>

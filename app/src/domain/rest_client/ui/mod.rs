@@ -12,3 +12,4 @@ pub mod request_params_url;
 pub mod request_query_panel;
 pub mod request_raw_panel;
 pub mod request_cookies_panel;
+pub mod request_result_previewer;
