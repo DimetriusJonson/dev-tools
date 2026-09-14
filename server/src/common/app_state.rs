@@ -11,4 +11,5 @@ pub struct AppState {
     pub dump_port: u16,
     pub max_content_length: u64,
     pub rest_client_proxy_allow_ips: Vec<String>,
+    pub no_cache: bool,
 }

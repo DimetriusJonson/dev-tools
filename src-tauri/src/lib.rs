@@ -47,6 +47,7 @@ fn start_backend_server(
             None,
             u64::MAX,
             vec!["127.0.0.1".to_owned()],
+            true,
         )
         .await
         .unwrap();

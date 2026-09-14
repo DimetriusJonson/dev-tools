@@ -79,6 +79,7 @@ async fn main() -> anyhow::Result<()> {
         database_url,
         rc_max_content_length,
         rest_client_proxy_allow_ips,
+        false,
     )
     .await
 }

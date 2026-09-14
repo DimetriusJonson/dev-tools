@@ -36,6 +36,7 @@ pub async fn build_app_router(
     dump_port: u16,
     rc_max_content_length: u64,
     rest_client_proxy_allow_ips: Vec<String>,
+    no_cache: bool
 ) -> anyhow::Result<Router> {
     let leptos_options = conf_file.leptos_options;
 
@@ -46,6 +47,7 @@ pub async fn build_app_router(
         dump_port,
         max_content_length: rc_max_content_length,
         rest_client_proxy_allow_ips,
+        no_cache
     };
 
     let leptos_paths = vec![
@@ -102,18 +104,29 @@ pub async fn build_app_router(
     Ok(app)
 }
 
-pub async fn file_and_error_handler(
-    uri: Uri,
-    State(options): State<LeptosOptions>,
-) -> AxumResponse {
-    let root = options.site_root.clone();
-    get_static_file(uri.clone(), &root).await.into_response()
+pub async fn file_and_error_handler(uri: Uri, State(app_state): State<AppState>) -> AxumResponse {
+    let root = app_state.leptos_options.site_root.clone();
+    get_static_file(uri.clone(), &root, app_state.no_cache).await.into_response()
 }
 
-async fn get_static_file(uri: Uri, root: &str) -> Result<Response<AxumBody>, (StatusCode, String)> {
+async fn get_static_file(
+    uri: Uri,
+    root: &str,
+    no_cache: bool,
+) -> Result<Response<AxumBody>, (StatusCode, String)> {
     let req = Request::builder().uri(uri.clone()).body(AxumBody::empty()).unwrap();
     match ServeDir::new(root).oneshot(req).await {
-        Ok(res) => Ok(res.map(AxumBody::new)),
+        Ok(mut response) => {
+            if no_cache {
+                response.headers_mut().insert(
+                    "Cache-Control",
+                    "no-cache, no-store, must-revalidate".parse().unwrap(),
+                );
+                response.headers_mut().insert("Pragma", "no-cache".parse().unwrap());
+                response.headers_mut().insert("Expires", "0".parse().unwrap());
+            }
+            Ok(response.map(AxumBody::new))
+        }
         Err(err) => {
             Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {err}")))
         }

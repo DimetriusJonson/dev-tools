@@ -15,6 +15,7 @@ pub async fn start_axum_server(
     _database_url: Option<String>,
     rc_max_content_length: u64,
     rest_client_proxy_allow_ips: Vec<String>,
+    no_cache: bool,
 ) -> anyhow::Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_ansi(true)
@@ -58,6 +59,7 @@ pub async fn start_axum_server(
         dump_port,
         rc_max_content_length,
         rest_client_proxy_allow_ips,
+        no_cache
     )
     .await?;
     info!("listening on http://{}", addr);
