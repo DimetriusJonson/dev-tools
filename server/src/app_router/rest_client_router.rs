@@ -10,7 +10,7 @@ use crate::{
     common::{
         app_error::AppError,
         app_state::AppState,
-        dev_utils::extract_uri_query_params,
+        dev_utils::{extract_uri_query_params, resolve_request_ip},
         html_previewer::{add_preview_scripts, replace_absolute_links},
     },
 };
@@ -37,16 +37,18 @@ use url::ParseError;
 static SEND_CACHE: LazyLock<RwLock<HashMap<String, (HeaderMap, String)>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
-fn get_send_cached_value(url: &str, addr: SocketAddr) -> Option<(HeaderMap, String)> {
-    let key = format!("{}:{}", addr, url);
+fn get_send_cached_value(url: &str, client_ip: &str) -> Option<(HeaderMap, String)> {
+    let key = format!("{}:{}", client_ip, url);
+
     if let Ok(cache) = SEND_CACHE.read() {
         return cache.get(&key).cloned();
     }
     None
 }
 
-fn set_send_cached_value(url: &str, addr: SocketAddr, value: Option<(HeaderMap, String)>) {
-    let key = format!("{}:{}", addr, url);
+fn set_send_cached_value(url: &str, client_ip: &str, value: Option<(HeaderMap, String)>) {
+    let key = format!("{}:{}", client_ip, url);
+
     if let Ok(mut cache) = SEND_CACHE.write() {
         if let Some(value) = value {
             cache.insert(key, value);
@@ -56,9 +58,11 @@ fn set_send_cached_value(url: &str, addr: SocketAddr, value: Option<(HeaderMap, 
     }
 }
 
+#[axum::debug_handler]
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    request_headers: HeaderMap,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Json<RestClientResponse>, AppError> {
     build_request(&request, Some(app_state.dump_port))?.send().await?;
@@ -126,7 +130,11 @@ pub async fn rest_client_send_handler(
             let body = response.text().await?;
             let body_size = body.len() as u64;
 
-            set_send_cached_value(&request.url, addr, Some((resp_headers.clone(), body.clone())));
+            set_send_cached_value(
+                &request.url,
+                &resolve_request_ip(&request_headers, addr),
+                Some((resp_headers.clone(), body.clone())),
+            );
 
             Ok(Json(RestClientResponse {
                 status_code,
@@ -291,8 +299,9 @@ pub async fn rest_client_html_previewer_middleware(
                 .unwrap_or(false);
 
             if from_cache_param && let Some(url_param) = &url_param {
-                if let Some(value) = get_send_cached_value(url_param, addr) {
-                    set_send_cached_value(url_param, addr, None);
+                let client_ip = &resolve_request_ip(req.headers(), addr);
+                if let Some(value) = get_send_cached_value(url_param, client_ip) {
+                    set_send_cached_value(url_param, client_ip, None);
                     let body = Body::from(value.1);
                     let mut headers = value.0;
                     headers.remove(header::CONTENT_LENGTH);
@@ -431,20 +440,7 @@ pub async fn rest_client_proxy_allow(
 }
 
 fn is_proxy_allow(req: &Request, app_state: &AppState, client_addr: SocketAddr) -> bool {
-    let forwarded_for = req
-        .headers()
-        .get("x-forwarded-for")
-        .and_then(|val| val.to_str().ok())
-        .map(|value| value.to_string())
-        .unwrap_or("".to_owned());
-    let real_ip = client_addr.ip().to_string();
-
-    let client_ip = if !forwarded_for.is_empty() {
-        forwarded_for.split(',').next().unwrap_or(&real_ip).trim().to_owned()
-    } else {
-        real_ip
-    };
-
+    let client_ip = resolve_request_ip(req.headers(), client_addr);
     app_state.rest_client_proxy_allow_ips.contains(&client_ip)
 }
 
