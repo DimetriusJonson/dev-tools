@@ -24,7 +24,7 @@ use axum::{
 use axum_extra::extract::{CookieJar, cookie::Cookie};
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
 use model::{
-    constants::{RC_BASE_URL_COOKIE_NAME, RC_FROM_CACHE_PARAM_NAME, RC_SRC_URL_PARAM_NAME},
+    constants::{RC_BASE_URL_COOKIE_NAME, RC_REQ_DATA_PARAM_NAME, RC_SRC_URL_PARAM_NAME},
     restclient::{
         rest_client_request::RestClientRequest,
         rest_client_response::{RestClientResponse, RestClientResponseBody},
@@ -32,40 +32,11 @@ use model::{
 };
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
-use tracing::debug;
 use url::ParseError;
-
-static SEND_CACHE: LazyLock<RwLock<HashMap<String, RestClientRequest>>> =
-    LazyLock::new(|| RwLock::new(HashMap::new()));
-
-fn get_send_cached_value(url: &str, client_ip: &str) -> Option<RestClientRequest> {
-    let key = format!("{}:{}", client_ip, url);
-    debug!("get_send_cached_value {}", key);
-
-    if let Ok(cache) = SEND_CACHE.read() {
-        return cache.get(&key).cloned();
-    }
-    None
-}
-
-fn set_send_cached_value(url: &str, client_ip: &str, value: Option<RestClientRequest>) {
-    let key = format!("{}:{}", client_ip, url);
-    debug!("set_send_cached_value {}", key);
-
-    if let Ok(mut cache) = SEND_CACHE.write() {
-        if let Some(value) = value {
-            cache.insert(key, value);
-        } else {
-            cache.remove(&key);
-        }
-    }
-}
 
 #[axum::debug_handler]
 pub async fn rest_client_send_handler(
     State(app_state): State<AppState>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    request_headers: HeaderMap,
     Json(request): Json<RestClientRequest>,
 ) -> Result<Json<RestClientResponse>, AppError> {
     build_request(&request, Some(app_state.dump_port))?.send().await?;
@@ -131,12 +102,6 @@ pub async fn rest_client_send_handler(
 
             let body = response.text().await?;
             let body_size = body.len() as u64;
-
-            set_send_cached_value(
-                &request.url.to_owned(),
-                &resolve_request_ip(&request_headers, addr),
-                Some(request),
-            );
 
             Ok(Json(RestClientResponse {
                 status_code,
@@ -295,22 +260,13 @@ pub async fn rest_client_html_previewer_middleware(
                 .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
                 .unwrap_or(None);
 
-            let client_ip = &resolve_request_ip(req.headers(), addr);
-
-            let cached_request = if let Some(url_param) = &url_param {
-                match extract_uri_query_params(req.uri()).get(RC_FROM_CACHE_PARAM_NAME) {
-                    Some(value) => {
-                        if *value == "true" {
-                            get_send_cached_value(url_param, client_ip)
-                        } else {
-                            Some(serde_json::from_str(&urlencoding::decode(value)?.to_string())?)
-                        }
-                    }
+            let request_data =
+                match extract_uri_query_params(req.uri()).get(RC_REQ_DATA_PARAM_NAME) {
+                    Some(value) => Some(serde_json::from_str::<RestClientRequest>(
+                        &urlencoding::decode(value)?.to_string(),
+                    )?),
                     None => None,
-                }
-            } else {
-                None
-            };
+                };
 
             //debug!("url_param={:?} cached_request={:?}", url_param, cached_request);
 
@@ -349,10 +305,10 @@ pub async fn rest_client_html_previewer_middleware(
                 );
             }
 
-            let mut reqwest_headers = match &cached_request {
-                Some(cached_request) => {
+            let mut reqwest_headers = match &request_data {
+                Some(request_data) => {
                     let mut headers = HeaderMap::new();
-                    for h in &cached_request.headers {
+                    for h in &request_data.headers {
                         headers.append(HeaderName::from_str(&h.0)?, HeaderValue::from_str(&h.1)?);
                     }
                     headers
@@ -388,8 +344,8 @@ pub async fn rest_client_html_previewer_middleware(
 
             remove_base_cookie(&mut reqwest_headers);
 
-            let reqwest_method = match &cached_request {
-                Some(cached_request) => Method::from_str(&cached_request.method)?,
+            let reqwest_method = match &request_data {
+                Some(request_data) => Method::from_str(&request_data.method)?,
                 None => req.method().to_owned(),
             };
 
@@ -400,8 +356,8 @@ pub async fn rest_client_html_previewer_middleware(
                 .request(reqwest_method, &url)
                 .headers(reqwest_headers)
                 .body({
-                    match &cached_request {
-                        Some(cached_request) => reqwest::Body::from(cached_request.body.to_owned()),
+                    match &request_data {
+                        Some(request_data) => reqwest::Body::from(request_data.body.to_owned()),
                         None => {
                             let body_stream = req.into_body();
                             reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)
