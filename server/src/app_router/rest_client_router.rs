@@ -32,6 +32,7 @@ use model::{
 };
 use reqwest::{Client, RequestBuilder, Url};
 use serde_json::json;
+use tracing::debug;
 use url::ParseError;
 
 static SEND_CACHE: LazyLock<RwLock<HashMap<String, (HeaderMap, String)>>> =
@@ -39,6 +40,7 @@ static SEND_CACHE: LazyLock<RwLock<HashMap<String, (HeaderMap, String)>>> =
 
 fn get_send_cached_value(url: &str, client_ip: &str) -> Option<(HeaderMap, String)> {
     let key = format!("{}:{}", client_ip, url);
+    debug!("get_send_cached_value {}", key);
 
     if let Ok(cache) = SEND_CACHE.read() {
         return cache.get(&key).cloned();
@@ -48,6 +50,7 @@ fn get_send_cached_value(url: &str, client_ip: &str) -> Option<(HeaderMap, Strin
 
 fn set_send_cached_value(url: &str, client_ip: &str, value: Option<(HeaderMap, String)>) {
     let key = format!("{}:{}", client_ip, url);
+    debug!("set_send_cached_value {}", key);
 
     if let Ok(mut cache) = SEND_CACHE.write() {
         if let Some(value) = value {
