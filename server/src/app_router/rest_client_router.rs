@@ -312,7 +312,7 @@ pub async fn rest_client_html_previewer_middleware(
                 None
             };
 
-            debug!("url_param={:?} cached_request={:?}", url_param, cached_request);
+            //debug!("url_param={:?} cached_request={:?}", url_param, cached_request);
 
             let mut path = req.uri().path();
             if path.starts_with('/') {

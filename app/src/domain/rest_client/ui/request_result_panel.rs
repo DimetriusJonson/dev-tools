@@ -229,28 +229,32 @@ pub fn RequestResultPanel(
                 url.query_pairs_mut()
                     .append_pair(RC_SRC_URL_PARAM_NAME, &rc_context.request.get_untracked().url);
 
-                if /*dev_tools_site.get_untracked()*/true {
-                    let request = match params.read_untracked().get_body() {
-                        Ok(body) => RestClientRequest {
-                        method: rc_context.request.get_untracked().method,
-                        url: "".to_owned(),
-                        headers: params
-                            .read_untracked()
-                            .headers
-                            .read_untracked()
-                            .iter()
-                            .map(|h| (h.name.get_untracked(), h.value.get_untracked()))
-                            .collect::<Vec<(String, String)>>(),
-                        body,
-                    },
+                if dev_tools_site.get_untracked() {
+                    match params.read_untracked().get_body() {
+                        Ok(body) => {
+                            let request = RestClientRequest {
+                                method: rc_context.request.get_untracked().method,
+                                url: "".to_owned(),
+                                headers: params
+                                    .read_untracked()
+                                    .headers
+                                    .read_untracked()
+                                    .iter()
+                                    .map(|h| (h.name.get_untracked(), h.value.get_untracked()))
+                                    .collect::<Vec<(String, String)>>(),
+                                body,
+                            };
+                            if let Ok(json) =
+                                serde_json::to_string(&request).map_err(|err| err.to_string())
+                            {
+                                url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, &json);
+                            }
+                        }
                         Err(err) => {
-                            return;
-                        },
+                            show_error(err.to_string(), messages);
+                            return None;
+                        }
                     };
-
-                    if let Ok(json) = serde_json::to_string(&request).map_err(|err| err.to_string()) {
-                        url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, &json);
-                    }
                 } else {
                     url.query_pairs_mut().append_pair(RC_FROM_CACHE_PARAM_NAME, "true");
                 }
