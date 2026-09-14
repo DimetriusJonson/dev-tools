@@ -22,7 +22,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
-use http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri, header};
+use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
 use model::{
     constants::{RC_BASE_URL_COOKIE_NAME, RC_FROM_CACHE_PARAM_NAME, RC_SRC_URL_PARAM_NAME},
     restclient::{
@@ -35,10 +35,10 @@ use serde_json::json;
 use tracing::debug;
 use url::ParseError;
 
-static SEND_CACHE: LazyLock<RwLock<HashMap<String, (HeaderMap, String)>>> =
+static SEND_CACHE: LazyLock<RwLock<HashMap<String, RestClientRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
-fn get_send_cached_value(url: &str, client_ip: &str) -> Option<(HeaderMap, String)> {
+fn get_send_cached_value(url: &str, client_ip: &str) -> Option<RestClientRequest> {
     let key = format!("{}:{}", client_ip, url);
     debug!("get_send_cached_value {}", key);
 
@@ -48,7 +48,7 @@ fn get_send_cached_value(url: &str, client_ip: &str) -> Option<(HeaderMap, Strin
     None
 }
 
-fn set_send_cached_value(url: &str, client_ip: &str, value: Option<(HeaderMap, String)>) {
+fn set_send_cached_value(url: &str, client_ip: &str, value: Option<RestClientRequest>) {
     let key = format!("{}:{}", client_ip, url);
     debug!("set_send_cached_value {}", key);
 
@@ -129,14 +129,13 @@ pub async fn rest_client_send_handler(
                 }));
             }
 
-            let resp_headers = &response.headers().clone();
             let body = response.text().await?;
             let body_size = body.len() as u64;
 
             set_send_cached_value(
-                &request.url,
+                &request.url.to_owned(),
                 &resolve_request_ip(&request_headers, addr),
-                Some((resp_headers.clone(), body.clone())),
+                Some(request),
             );
 
             Ok(Json(RestClientResponse {
@@ -301,17 +300,15 @@ pub async fn rest_client_html_previewer_middleware(
                 .map(|str| str.parse::<bool>().unwrap_or(false))
                 .unwrap_or(false);
 
-            if from_cache_param && let Some(url_param) = &url_param {
-                let client_ip = &resolve_request_ip(req.headers(), addr);
-                if let Some(value) = get_send_cached_value(url_param, client_ip) {
-                    set_send_cached_value(url_param, client_ip, None);
-                    let body = Body::from(value.1);
-                    let mut headers = value.0;
-                    headers.remove(header::CONTENT_LENGTH);
-                    headers.remove(header::CONTENT_ENCODING);
-                    return Ok((StatusCode::OK, headers, body).into_response());
-                }
-            }
+            let client_ip = &resolve_request_ip(req.headers(), addr);
+            let cached_request = if from_cache_param
+                && let Some(url_param) = &url_param
+                && let Some(value) = get_send_cached_value(url_param, client_ip)
+            {
+                Some(value)
+            } else {
+                None
+            };
 
             let mut path = req.uri().path();
             if path.starts_with('/') {
@@ -348,7 +345,17 @@ pub async fn rest_client_html_previewer_middleware(
                 );
             }
 
-            let mut reqwest_headers = req.headers().clone();
+            let mut reqwest_headers = match &cached_request {
+                Some(cached_request) => {
+                    let mut headers = HeaderMap::new();
+                    for h in &cached_request.headers {
+                        headers.append(HeaderName::from_str(&h.0)?, HeaderValue::from_str(&h.1)?);
+                    }
+                    headers
+                }
+                None => req.headers().clone(),
+            };
+
             reqwest_headers.remove(header::HOST);
             reqwest_headers.remove(header::REFERER);
             reqwest_headers.remove(header::ACCEPT_ENCODING);
@@ -377,18 +384,29 @@ pub async fn rest_client_html_previewer_middleware(
 
             remove_base_cookie(&mut reqwest_headers);
 
+            let reqwest_method = match &cached_request {
+                Some(cached_request) => Method::from_str(&cached_request.method)?,
+                None => req.method().to_owned(),
+            };
+
+            //debug!("reqwest {} {} \n {:?}", reqwest_method, url, reqwest_headers);
             let request = Client::builder()
                 .danger_accept_invalid_certs(true)
                 .build()?
-                .request(req.method().to_owned(), &url)
+                .request(reqwest_method, &url)
                 .headers(reqwest_headers)
                 .body({
-                    let body_stream = req.into_body();
-                    reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)
+                    match &cached_request {
+                        Some(cached_request) => reqwest::Body::from(cached_request.body.to_owned()),
+                        None => {
+                            let body_stream = req.into_body();
+                            reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)
+                        }
+                    }
                 });
 
             let response = request.send().await?;
-            //            info!("response {} for {}", response.status(), url);
+            //debug!("reqwest status {} for {}", response.status(), url);
 
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
@@ -404,10 +422,11 @@ pub async fn rest_client_html_previewer_middleware(
             let body;
             if let Some(content_type) = response.headers().get(http::header::CONTENT_TYPE)
                 && let Ok(content_type) = content_type.to_str()
-                && content_type == "text/html"
+                && content_type.contains("text/html")
                 && let Some(referer) = referer
             {
                 let mut html = response.text().await?;
+
                 add_preview_scripts(&mut html);
 
                 replace_absolute_links(&mut html, rc_base_url, referer.as_str());
