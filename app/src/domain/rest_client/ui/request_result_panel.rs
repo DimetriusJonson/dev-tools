@@ -44,7 +44,6 @@ pub fn RequestResultPanel(
     };
 
     let show_preview_html = RwSignal::new(false);
-    let (show_proxy_preview_started, set_show_proxy_preview_started) = signal(false);
     let (proxy_allow, set_proxy_allow) = signal(true);
 
     let (tab_selected, set_tab_selected) = signal(0);
@@ -107,11 +106,6 @@ pub fn RequestResultPanel(
 
                 request_result.headers.set(response.headers.clone());
                 request_result.request_raw.set(response.request_raw.to_owned());
-
-                if show_proxy_preview_started.get_untracked() {
-                    set_show_proxy_preview_started.set(false);
-                    show_preview_html.set(true)
-                }
             };
 
             if params.read_untracked().formatting.get_untracked() {
@@ -180,7 +174,7 @@ pub fn RequestResultPanel(
                                 on_click=move |_| {
                                     if !show_preview_html.get_untracked() && proxy_allow.get_untracked() {
                                         rc_context.request.write().command = RequestCommand::Run;
-                                        set_show_proxy_preview_started.set(true);
+                                        show_preview_html.set(true)
                                     } else {
                                         show_preview_html.set(!show_preview_html.get_untracked())
                                     }
