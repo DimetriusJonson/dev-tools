@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use cookie::Cookie;
 use leptos::prelude::*;
 use leptos_router::{components::RoutingProgress, hooks::use_location};
 use model::{
@@ -10,7 +11,7 @@ use url::Url;
 use web_sys::HtmlIFrameElement;
 
 use crate::{
-    common::ui_utils::{get_browser_host_info},
+    common::ui_utils::{create_cookie, get_browser_host_info},
     components::layout::message_banner::{Messages, show_error},
     domain::rest_client::{
         model::{request_params::RequestParams, rest_client_context::RestClientContext},
@@ -132,6 +133,24 @@ pub fn RequestResultPreviewer(
                         return None;
                     }
                 };
+
+                // Create cookies from current request
+                let cookies: Vec<String> = params
+                    .read_untracked()
+                    .headers
+                    .read_untracked()
+                    .iter()
+                    .filter(|h| h.name.read_untracked().to_lowercase() == "cookie")
+                    .map(|h| h.value.get_untracked())
+                    .collect();
+
+                for cookie in cookies
+                    .iter()
+                    .flat_map(|value| value.split(';').into_iter())
+                    .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
+                {
+                    create_cookie(cookie.name(), cookie.value(), None).unwrap();
+                }
 
                 Some(url.to_string())
             } else {
