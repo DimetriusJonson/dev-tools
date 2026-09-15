@@ -17,7 +17,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
-use http::{HeaderMap, HeaderName, HeaderValue, Method, Uri, header};
+use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
 use model::{
     constants::{RC_BASE_URL_COOKIE_NAME, RC_REQ_DATA_PARAM_NAME, RC_SRC_URL_PARAM_NAME},
     restclient::rest_client_request::RestClientRequest,
@@ -34,7 +34,6 @@ pub async fn rest_client_proxy_middleware(
 ) -> Result<Response<Body>, AppError> {
     let referer_raw =
         req.headers().get(header::REFERER).map(|hv| hv.to_str().ok()).unwrap_or_default();
-    let referer_uri = referer_raw.map(|referer| Uri::from_str(referer).ok()).unwrap_or_default();
 
     let referer = referer_raw
         .map(|referer_raw| {
@@ -49,117 +48,7 @@ pub async fn rest_client_proxy_middleware(
     {
         let cookie_jar = CookieJar::from_headers(req.headers());
         if let Some(cookie) = cookie_jar.get(RC_BASE_URL_COOKIE_NAME) {
-            let rc_base_url = cookie.value().trim_end_matches("/");
-
-            let url_param = extract_uri_query_params(req.uri())
-                .get(RC_SRC_URL_PARAM_NAME)
-                .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
-                .unwrap_or(None);
-
-            let request_data = match extract_uri_query_params(req.uri()).get(RC_REQ_DATA_PARAM_NAME)
-            {
-                Some(value) => Some(serde_json::from_str::<RestClientRequest>(
-                    &urlencoding::decode(value)?.to_string(),
-                )?),
-                None => None,
-            };
-
-            //debug!("url_param={:?} cached_request={:?}", url_param, cached_request);
-
-            let mut path = req.uri().path();
-            if path.starts_with('/') {
-                path = &path[1..];
-            }
-
-            let base_url = if let Some(referer) = &referer_uri
-                && let Some(parent_base_url) =
-                    get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
-                && let Ok(parent_base_url) = Url::parse(&parent_base_url)
-            {
-                parent_base_url
-            } else {
-                Url::parse(rc_base_url)?
-            };
-
-            let url = match &url_param {
-                Some(url_param) => url_param.to_owned(),
-                None => format!(
-                    "{}://{}/{}{}",
-                    base_url.scheme(),
-                    base_url.host_str().unwrap_or_default(),
-                    path,
-                    req.uri().query().map(|query| format!("?{}", query)).unwrap_or_default()
-                ),
-            };
-
-            if let Some(url_param) = url_param {
-                set_proxy_cached_value(
-                    rc_base_url,
-                    req.uri().path(),
-                    req.uri().query(),
-                    url_param.to_owned(),
-                );
-            }
-
-            let mut reqwest_headers = match &request_data {
-                Some(request_data) => {
-                    let mut headers = HeaderMap::new();
-                    for h in &request_data.headers {
-                        headers.append(HeaderName::from_str(&h.0)?, HeaderValue::from_str(&h.1)?);
-                    }
-                    headers
-                }
-                None => req.headers().clone(),
-            };
-
-            reqwest_headers.remove(header::HOST);
-            reqwest_headers.remove(header::REFERER);
-            reqwest_headers.remove(header::ACCEPT_ENCODING);
-
-            if let Some(referer) = &referer {
-                let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
-                reqwest_headers.append(
-                    header::REFERER,
-                    format!(
-                        "{}://{}{}{}",
-                        base_url.scheme(),
-                        base_url.host_str().unwrap_or_default(),
-                        referer.path(),
-                        referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
-                    )
-                    .parse()?,
-                );
-            }
-
-            if reqwest_headers.get(header::ORIGIN).is_some() {
-                reqwest_headers.remove(header::ORIGIN);
-                if let Ok(header_value) = base_url.origin().ascii_serialization().parse() {
-                    reqwest_headers.append(header::ORIGIN, header_value);
-                }
-            }
-
-            remove_base_cookie(&mut reqwest_headers);
-
-            let reqwest_method = match &request_data {
-                Some(request_data) => Method::from_str(&request_data.method)?,
-                None => req.method().to_owned(),
-            };
-
-            //debug!("reqwest {} {} \n {:?}", reqwest_method, url, reqwest_headers);
-            let request = Client::builder()
-                .danger_accept_invalid_certs(true)
-                .build()?
-                .request(reqwest_method, &url)
-                .headers(reqwest_headers)
-                .body({
-                    match &request_data {
-                        Some(request_data) => reqwest::Body::from(request_data.body.to_owned()),
-                        None => {
-                            let body_stream = req.into_body();
-                            reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)
-                        }
-                    }
-                });
+            let request = build_request(req, cookie, &referer).await?;
 
             let response = request.send().await?;
             //debug!("reqwest status {} for {}", response.status(), url);
@@ -175,6 +64,7 @@ pub async fn rest_client_proxy_middleware(
             let mut headers = response.headers().clone();
             replace_cookies_domain(&mut headers);
 
+            let rc_base_url = cookie.value().trim_end_matches("/");
             let body = build_response_body(response, referer, rc_base_url, &mut headers).await?;
 
             return Ok((response_status, headers, body).into_response());
@@ -188,6 +78,123 @@ pub async fn rest_client_proxy_middleware(
             .expect("Cant create header value"),
     );
     Ok(response)
+}
+
+async fn build_request(
+    req: Request,
+    cookie: &Cookie<'_>,
+    referer: &Option<Url>,
+) -> Result<reqwest::RequestBuilder, AppError> {
+    let rc_base_url = cookie.value().trim_end_matches("/");
+
+    let url_param = extract_uri_query_params(req.uri())
+        .get(RC_SRC_URL_PARAM_NAME)
+        .map(|url| urlencoding::decode(url).ok().map(|url| url.to_string()))
+        .unwrap_or(None);
+
+    let request_data = match extract_uri_query_params(req.uri()).get(RC_REQ_DATA_PARAM_NAME) {
+        Some(value) => Some(serde_json::from_str::<RestClientRequest>(
+            &urlencoding::decode(value)?.to_string(),
+        )?),
+        None => None,
+    };
+
+    //debug!("url_param={:?} cached_request={:?}", url_param, cached_request);
+
+    let mut path = req.uri().path();
+    if path.starts_with('/') {
+        path = &path[1..];
+    }
+
+    let base_url = if let Some(referer) = &referer
+        && let Some(parent_base_url) =
+            get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
+        && let Ok(parent_base_url) = Url::parse(&parent_base_url)
+    {
+        parent_base_url
+    } else {
+        Url::parse(rc_base_url)?
+    };
+
+    let url = match &url_param {
+        Some(url_param) => url_param.to_owned(),
+        None => format!(
+            "{}://{}/{}{}",
+            base_url.scheme(),
+            base_url.host_str().unwrap_or_default(),
+            path,
+            req.uri().query().map(|query| format!("?{}", query)).unwrap_or_default()
+        ),
+    };
+
+    if let Some(url_param) = url_param {
+        set_proxy_cached_value(
+            rc_base_url,
+            req.uri().path(),
+            req.uri().query(),
+            url_param.to_owned(),
+        );
+    }
+
+    let mut reqwest_headers = match &request_data {
+        Some(request_data) => {
+            let mut headers = HeaderMap::new();
+            for h in &request_data.headers {
+                headers.append(HeaderName::from_str(&h.0)?, HeaderValue::from_str(&h.1)?);
+            }
+            headers
+        }
+        None => req.headers().clone(),
+    };
+
+    reqwest_headers.remove(header::HOST);
+    reqwest_headers.remove(header::REFERER);
+    reqwest_headers.remove(header::ACCEPT_ENCODING);
+
+    if let Some(referer) = &referer {
+        let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
+        reqwest_headers.append(
+            header::REFERER,
+            format!(
+                "{}://{}{}{}",
+                base_url.scheme(),
+                base_url.host_str().unwrap_or_default(),
+                referer.path(),
+                referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
+            )
+            .parse()?,
+        );
+    }
+
+    if reqwest_headers.get(header::ORIGIN).is_some() {
+        reqwest_headers.remove(header::ORIGIN);
+        if let Ok(header_value) = base_url.origin().ascii_serialization().parse() {
+            reqwest_headers.append(header::ORIGIN, header_value);
+        }
+    }
+
+    remove_base_cookie(&mut reqwest_headers);
+
+    let reqwest_method = match &request_data {
+        Some(request_data) => Method::from_str(&request_data.method)?,
+        None => req.method().to_owned(),
+    };
+
+    //debug!("reqwest {} {} \n {:?}", reqwest_method, url, reqwest_headers);
+    Ok(Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()?
+        .request(reqwest_method, &url)
+        .headers(reqwest_headers)
+        .body({
+            match &request_data {
+                Some(request_data) => reqwest::Body::from(request_data.body.to_owned()),
+                None => {
+                    let body_stream = req.into_body();
+                    reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)
+                }
+            }
+        }))
 }
 
 async fn build_response_body(
