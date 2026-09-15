@@ -16,6 +16,8 @@ pub mod xml_format_router;
 pub mod dump_receiver;
 pub mod index_router;
 pub mod rest_client_router;
+pub mod rest_client_proxy_router;
+pub mod rest_client_proxy_cache;
 pub mod test_json_router;
 
 pub async fn proxy_request_to_remote(
