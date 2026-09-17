@@ -39,13 +39,21 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let upload_exceed_file_size_memo =
         Memo::new(move |_| t_string!(i18n, share_file_upload_exceed_file_size).to_owned());
 
+    Effect::watch(
+        move || shared_url.get(),
+        move |value, _prev, _| {
+            let qrcode = QRBuilder::new(value.to_owned()).ecl(ECL::M).build().unwrap();
+            set_qr_code_svg.set(SvgBuilder::default().shape(Shape::Square).to_str(&qrcode));
+        },
+        false,
+    );
+
     let on_upload_file_click = move |_| {
         if let Some(file) = selected_file.get_untracked() {
             upload_file(
                 file,
                 set_in_progress,
                 set_shared_url,
-                set_qr_code_svg,
                 custom_server.get(),
                 move |upload_result| match upload_result {
                     UploadResult::Success => {
@@ -101,7 +109,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             class:hidden=move || !shared_url.get().is_empty()>
             <DragFile
                 on_drop_file=move |file| {
-                    upload_file(file, set_in_progress, set_shared_url, set_qr_code_svg, custom_server.get(), move |upload_result| {
+                    upload_file(file, set_in_progress, set_shared_url, custom_server.get(), move |upload_result| {
                         match upload_result {
                             UploadResult::Success => {
                                 selected_file.set(None);
@@ -211,7 +219,6 @@ fn upload_file(
     file: File,
     set_in_progress: WriteSignal<bool>,
     set_shared_url: WriteSignal<String>,
-    set_qr_code_svg: WriteSignal<String>,
     custom_server_url: String,
     callback: impl Fn(UploadResult) + Send + Sync + 'static,
 ) {
@@ -269,11 +276,6 @@ fn upload_file(
 
                             if let Some(file_url) = file_url {
                                 set_shared_url.set(file_url.to_owned());
-
-                                let qrcode = QRBuilder::new(file_url).ecl(ECL::M).build().unwrap();
-                                set_qr_code_svg.set(
-                                    SvgBuilder::default().shape(Shape::Square).to_str(&qrcode),
-                                );
                             }
                         } else {
                             result = UploadResult::Error(response.status_text());
