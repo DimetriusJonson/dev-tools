@@ -75,6 +75,7 @@ url = "2.5.8"
 size = "0.5.0"
 cookie = "0.18.2"
 cfg-if = "1.0.4"
+fast_qr = { version = "0.14.0", features = ["svg"] }
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

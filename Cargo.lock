@@ -143,6 +143,7 @@ dependencies = [
  "console_error_panic_hook",
  "cookie",
  "difference",
+ "fast_qr",
  "gloo-net",
  "gloo-storage",
  "gloo-utils",
@@ -1897,6 +1898,12 @@ dependencies = [
  "event-listener",
  "pin-project-lite",
 ]
+
+[[package]]
+name = "fast_qr"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aafa8088286fa3903718197ceb03dac70f8b4763748fbdca1e431a5a7217a09e"
 
 [[package]]
 name = "fastrand"

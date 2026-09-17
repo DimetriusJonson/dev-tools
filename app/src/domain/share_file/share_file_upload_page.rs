@@ -1,3 +1,6 @@
+use fast_qr::convert::svg::SvgBuilder;
+use fast_qr::convert::{Builder, Shape};
+use fast_qr::{ECL, QRBuilder};
 use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
@@ -14,6 +17,12 @@ use crate::i18n::*;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
 
+enum UploadResult {
+    Success,
+    Error(String),
+    ExceedSize,
+}
+
 #[component]
 pub fn ShareFileUploadPage() -> impl IntoView {
     let i18n = use_i18n();
@@ -23,6 +32,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
     let selected_file: RwSignal<Option<File>> = RwSignal::new(None);
     let (custom_server, set_custom_server) = signal("".to_owned());
+    let (qr_code_svg, set_qr_code_svg) = signal("".to_owned());
+
+    let upload_success_memo =
+        Memo::new(move |_| t_string!(i18n, share_file_upload_success).to_owned());
+    let upload_exceed_file_size_memo =
+        Memo::new(move |_| t_string!(i18n, share_file_upload_exceed_file_size).to_owned());
 
     let on_upload_file_click = move |_| {
         if let Some(file) = selected_file.get_untracked() {
@@ -30,15 +45,22 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 file,
                 set_in_progress,
                 set_shared_url,
-                messages,
+                set_qr_code_svg,
                 custom_server.get(),
-                i18n,
-                move |success| {
-                    if success {
+                move |upload_result| match upload_result {
+                    UploadResult::Success => {
                         selected_file.set(None);
                         if let Some(input_ref) = file_input_ref.write().as_mut() {
                             input_ref.set_files(None);
                         }
+
+                        show_info(upload_success_memo.get_untracked(), messages);
+                    }
+                    UploadResult::Error(err) => {
+                        show_error(err, messages);
+                    }
+                    UploadResult::ExceedSize => {
+                        show_error(upload_exceed_file_size_memo.get_untracked(), messages)
                     }
                 },
             );
@@ -47,7 +69,10 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     let on_copy_click = move |_| {
         copy_to_clipboard(&shared_url.get());
-        show_info(t_string!(i18n, share_file_upload_page_copied_to_clipboard_msg).to_owned(), messages);
+        show_info(
+            t_string!(i18n, share_file_upload_page_copied_to_clipboard_msg).to_owned(),
+            messages,
+        );
     };
 
     let custom_servers_resource = LocalResource::new(async move || {
@@ -76,12 +101,21 @@ pub fn ShareFileUploadPage() -> impl IntoView {
             class:hidden=move || !shared_url.get().is_empty()>
             <DragFile
                 on_drop_file=move |file| {
-                    upload_file(file, set_in_progress, set_shared_url, messages, custom_server.get(), i18n, move |success| {
-                        if success {
-                            selected_file.set(None);
-                            if let Some(input_ref) = file_input_ref.write().as_mut() {
-                                input_ref.set_files(None);
-                            }
+                    upload_file(file, set_in_progress, set_shared_url, set_qr_code_svg, custom_server.get(), move |upload_result| {
+                        match upload_result {
+                            UploadResult::Success => {
+                                selected_file.set(None);
+                                if let Some(input_ref) = file_input_ref.write().as_mut() {
+                                    input_ref.set_files(None);
+                                }
+                                show_info(upload_success_memo.get_untracked(), messages);
+                            },
+                            UploadResult::Error(err) => {
+                                show_error(err, messages);
+                            },
+                            UploadResult::ExceedSize => {
+                                show_error(upload_exceed_file_size_memo.get_untracked(), messages)
+                            },
                         }
                     });
                 }
@@ -132,25 +166,26 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 }
             )}
 
-            <div class="flex flex-col gap-4 items-center justify-center">
-                <Show when=move || { !shared_url.get().is_empty() }>
+            <Show when=move || { !shared_url.get().is_empty() }>
+                <div class="flex flex-col gap-4 items-center justify-center">
+                    <div class="flex flex-col gap-4 items-center justify-center">
+                        <div>
+                            <span class="text-white">Ссылка:</span>
+                            <span class="text-sky-500 px-2">{shared_url.get()}</span>
+                        </div>
 
-                    <div>
-                        <span class="text-white">Ссылка:</span>
-                        <span class="text-sky-500 px-2">{shared_url.get()}</span>
+                        <Button
+                            title=move || "".to_owned()
+                            label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
+                            button_width=ButtonWidth::Auto
+                            loading=move || in_progress.get()
+                            on_click=on_copy_click
+                            disabled=move || in_progress.get()
+                        />
                     </div>
-
-                    <Button
-                        title=move || "".to_owned()
-                        label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
-                        button_width=ButtonWidth::Auto
-                        loading=move || in_progress.get()
-                        on_click=on_copy_click
-                        disabled=move || in_progress.get()
-                    />
-
-                </Show>
-            </div>
+                    <div class="flex px-4 w-full" style="width:50%;" inner_html=qr_code_svg />
+                </div>
+            </Show>
 
             <div class="py-4 px-4">
                 <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
@@ -176,15 +211,14 @@ fn upload_file(
     file: File,
     set_in_progress: WriteSignal<bool>,
     set_shared_url: WriteSignal<String>,
-    messages: Messages,
+    set_qr_code_svg: WriteSignal<String>,
     custom_server_url: String,
-    i18n: leptos_i18n::I18nContext<Locale, I18nKeys>,
-    callback: impl Fn(bool) + Send + Sync + 'static,
+    callback: impl Fn(UploadResult) + Send + Sync + 'static,
 ) {
     spawn_local(async move {
         set_in_progress.set(true);
 
-        let mut result = false;
+        let mut result = UploadResult::Success;
 
         let (service_name, max_file_size) = if !custom_server_url.is_empty() {
             ("/share_local_file_upload", usize::MAX)
@@ -210,36 +244,47 @@ fn upload_file(
                                     "".to_owned()
                                 });
 
+                            let mut file_url = None;
                             if !custom_server_url.is_empty() {
                                 match response.text().await {
-                                    Ok(resp_text) => set_shared_url.set(format!(
-                                        "{}/share_file/view?id={}&local=true",
-                                        custom_server_url, resp_text
-                                    )),
-                                    Err(err) => show_error(err.to_string(), messages),
+                                    Ok(resp_text) => {
+                                        file_url = Some(format!(
+                                            "{}/share_file/view?id={}&local=true",
+                                            custom_server_url, resp_text
+                                        ))
+                                    }
+                                    Err(err) => result = UploadResult::Error(err.to_string()),
                                 }
                             } else {
                                 match response.text().await {
-                                    Ok(resp_text) => set_shared_url.set(format!(
-                                        "{}/share_file/view?id={}",
-                                        server_url, resp_text
-                                    )),
-                                    Err(err) => show_error(err.to_string(), messages),
+                                    Ok(resp_text) => {
+                                        file_url = Some(format!(
+                                            "{}/share_file/view?id={}",
+                                            server_url, resp_text
+                                        ))
+                                    }
+                                    Err(err) => result = UploadResult::Error(err.to_string()),
                                 }
                             }
-                            result = true;
 
-                            show_info(t_string!(i18n, share_file_upload_success).to_owned(), messages);
+                            if let Some(file_url) = file_url {
+                                set_shared_url.set(file_url.to_owned());
+
+                                let qrcode = QRBuilder::new(file_url).ecl(ECL::M).build().unwrap();
+                                set_qr_code_svg.set(
+                                    SvgBuilder::default().shape(Shape::Square).to_str(&qrcode),
+                                );
+                            }
                         } else {
-                            show_error(response.status_text(), messages);
+                            result = UploadResult::Error(response.status_text());
                         }
                     }
-                    Err(err) => show_error(err.to_string(), messages),
+                    Err(err) => result = UploadResult::Error(err.to_string()),
                 },
-                Err(err) => show_error(err.to_string(), messages),
+                Err(err) => result = UploadResult::Error(err.to_string()),
             }
         } else {
-            show_error(t_string!(i18n, share_file_upload_exceed_file_size).to_owned(), messages)
+            result = UploadResult::ExceedSize;
         }
 
         set_in_progress.set(false);
