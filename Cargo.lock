@@ -134,7 +134,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "app"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
@@ -2045,7 +2045,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "app",
  "console_error_panic_hook",
@@ -4279,7 +4279,7 @@ dependencies = [
 
 [[package]]
 name = "model"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "bytes",
  "serde",
@@ -6372,7 +6372,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -8579,7 +8579,7 @@ dependencies = [
 
 [[package]]
 name = "webdev_useful_tools"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "clap",
  "log",

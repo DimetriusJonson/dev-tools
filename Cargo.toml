@@ -3,7 +3,7 @@ resolver = "2"
 members = ["app", "frontend", "model", "server", "src-tauri"]
 
 [workspace.package]
-version = "0.5.9"
+version = "0.5.10"
 edition = "2024"
 
 [workspace.dependencies]
