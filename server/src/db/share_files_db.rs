@@ -66,7 +66,7 @@ pub async fn get_share_file_info_from_db(
     pool: &DbPool,
 ) -> Result<ShareFile, sqlx::Error> {
     sqlx::query_as::<_, ShareFile>(
-        "SELECT file_name, mime_type FROM share_files WHERE external_id=$1",
+        "SELECT file_name, mime_type, file_data FROM share_files WHERE external_id=$1",
     )
     .bind(external_id)
     .fetch_one(pool)
