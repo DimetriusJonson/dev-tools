@@ -160,7 +160,24 @@ async fn build_request(
                 base_url.scheme(),
                 base_url.host_str().unwrap_or_default(),
                 referer.path(),
-                referer.query().map(|query| format!("?{}", query)).unwrap_or_default()
+                referer
+                    .query()
+                    .map(|query| {
+                        let q = query
+                            .split("&")
+                            .filter(|param| {
+                                !param.starts_with(&format!("{}=", RC_SRC_URL_PARAM_NAME))
+                                    && !param.starts_with(&format!("{}=", RC_REQ_DATA_PARAM_NAME))
+                            })
+                            .collect::<Vec<&str>>()
+                            .join("&");
+                        if !q.is_empty() {
+                            format!("?{}", q)
+                        } else {
+                            q
+                        }
+                    })
+                    .unwrap_or_default()
             )
             .parse()?,
         );
