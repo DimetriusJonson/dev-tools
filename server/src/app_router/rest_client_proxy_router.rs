@@ -24,6 +24,7 @@ use model::{
 };
 use reqwest::{Client, Url};
 use serde_json::json;
+use tracing::debug;
 
 pub async fn rest_client_proxy_middleware(
     State(app_state): State<AppState>,
@@ -51,7 +52,7 @@ pub async fn rest_client_proxy_middleware(
             let request = build_request(req, cookie, &referer).await?;
 
             let response = request.send().await?;
-            //debug!("reqwest status {} for {}", response.status(), url);
+            debug!("-> PROXY RESPONSE {} {}", response.status(), response.url().to_string());
 
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
@@ -197,7 +198,7 @@ async fn build_request(
         None => req.method().to_owned(),
     };
 
-    //debug!("reqwest {} {} \n {:?}", reqwest_method, url, reqwest_headers);
+    debug!("PROXY SEND {} {} \n {:?}", reqwest_method, url, reqwest_headers);
     Ok(Client::builder()
         .danger_accept_invalid_certs(true)
         .build()?
