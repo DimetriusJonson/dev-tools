@@ -148,9 +148,7 @@ async fn build_request(
         None => req.headers().clone(),
     };
 
-    reqwest_headers.remove(header::HOST);
-    reqwest_headers.remove(header::REFERER);
-    reqwest_headers.remove(header::ACCEPT_ENCODING);
+    clean_request_headers(&mut reqwest_headers)?;
 
     if let Some(referer) = &referer {
         let referer = if referer.path() == "/rest_client" { &base_url } else { referer };
@@ -172,11 +170,7 @@ async fn build_request(
                             })
                             .collect::<Vec<&str>>()
                             .join("&");
-                        if !q.is_empty() {
-                            format!("?{}", q)
-                        } else {
-                            q
-                        }
+                        if !q.is_empty() { format!("?{}", q) } else { q }
                     })
                     .unwrap_or_default()
             )
@@ -213,6 +207,29 @@ async fn build_request(
                 }
             }
         }))
+}
+
+fn clean_request_headers(headers: &mut HeaderMap) -> Result<(), AppError> {
+    headers.remove(header::FORWARDED);
+    headers.remove(HeaderName::from_str("x-forwarded-for")?);
+    headers.remove(HeaderName::from_str("x-forwarded-host")?);
+    headers.remove(HeaderName::from_str("x-forwarded-proto")?);
+    headers.remove(HeaderName::from_str("x-real-ip")?);
+    headers.remove(header::HOST);
+    headers.remove(header::REFERER);
+    headers.remove(header::ACCEPT_ENCODING);
+
+    let vercel_headers = headers
+        .iter()
+        .map(|(name, _value)| name.to_string())
+        .filter(|name| name.starts_with("x-vercel-"))
+        .collect::<Vec<String>>();
+
+    for name in vercel_headers {
+        headers.remove(HeaderName::from_str(&name)?);
+    }
+
+    Ok(())
 }
 
 async fn build_response_body(
