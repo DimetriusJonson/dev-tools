@@ -24,7 +24,6 @@ use model::{
 };
 use reqwest::{Client, Url};
 use serde_json::json;
-use tracing::debug;
 
 pub async fn rest_client_proxy_middleware(
     State(app_state): State<AppState>,
@@ -35,6 +34,8 @@ pub async fn rest_client_proxy_middleware(
 ) -> Result<Response<Body>, AppError> {
     let referer_raw =
         req.headers().get(header::REFERER).map(|hv| hv.to_str().ok()).unwrap_or_default();
+
+    let req_uri = req.uri().to_owned();
 
     let referer = referer_raw
         .map(|referer_raw| {
@@ -52,7 +53,7 @@ pub async fn rest_client_proxy_middleware(
             let request = build_request(req, cookie, &referer).await?;
 
             let response = request.send().await?;
-            debug!("-> PROXY RESPONSE {} {}", response.status(), response.url().to_string());
+            //debug!("-> PROXY RESPONSE {} {}", response.status(), response.url().to_string());
 
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
@@ -65,8 +66,8 @@ pub async fn rest_client_proxy_middleware(
             let mut headers = response.headers().clone();
             replace_cookies_domain(&mut headers);
 
-            let rc_base_url = cookie.value().trim_end_matches("/");
-            let body = build_response_body(response, referer, rc_base_url, &mut headers).await?;
+            let body =
+                build_response_body(response, &req_uri.to_string(), referer, &mut headers).await?;
 
             return Ok((response_status, headers, body).into_response());
         }
@@ -192,7 +193,7 @@ async fn build_request(
         None => req.method().to_owned(),
     };
 
-    debug!("PROXY SEND {} {} \n {:?}", reqwest_method, url, reqwest_headers);
+    //debug!("PROXY SEND {} {} \n {:?}", reqwest_method, url, reqwest_headers);
     Ok(Client::builder()
         .danger_accept_invalid_certs(true)
         .build()?
@@ -234,8 +235,8 @@ fn clean_request_headers(headers: &mut HeaderMap) -> Result<(), AppError> {
 
 async fn build_response_body(
     response: reqwest::Response,
+    request_url: &str,
     referer: Option<Url>,
-    rc_base_url: &str,
     headers: &mut HeaderMap,
 ) -> Result<Body, AppError> {
     if let Some(content_type) = response.headers().get(http::header::CONTENT_TYPE)
@@ -247,7 +248,9 @@ async fn build_response_body(
 
         add_preview_scripts(&mut html);
 
-        replace_absolute_links(&mut html, rc_base_url, referer.as_str());
+        let local_url = format!("{}{}", referer.origin().ascii_serialization(), request_url);
+
+        replace_absolute_links(&mut html, &local_url, referer.as_str());
 
         let body = Body::from(html);
         headers.remove(header::CONTENT_LENGTH);
