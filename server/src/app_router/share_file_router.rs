@@ -183,6 +183,7 @@ pub async fn share_file_info(
         file_name: share_file_info.file_name,
         mime_type: share_file_info.mime_type,
         is_image,
+        file_size: share_file_info.file_size
     }))
 }
 

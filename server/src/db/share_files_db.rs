@@ -8,6 +8,13 @@ pub struct ShareFile {
     pub mime_type: String,
 }
 
+#[derive(FromRow)]
+pub struct ShareFileInfo {
+    pub file_name: String,
+    pub mime_type: String,
+    pub file_size: i64,
+}
+
 pub async fn create_share_file_in_db(
     external_id: &str,
     file_name: &str,
@@ -64,9 +71,9 @@ pub async fn get_share_file_from_db(
 pub async fn get_share_file_info_from_db(
     external_id: &str,
     pool: &DbPool,
-) -> Result<ShareFile, sqlx::Error> {
-    sqlx::query_as::<_, ShareFile>(
-        "SELECT file_name, mime_type, file_data FROM share_files WHERE external_id=$1",
+) -> Result<ShareFileInfo, sqlx::Error> {
+    sqlx::query_as::<_, ShareFileInfo>(
+        "SELECT file_name, mime_type, length(file_data) as file_size FROM share_files WHERE external_id=$1",
     )
     .bind(external_id)
     .fetch_one(pool)

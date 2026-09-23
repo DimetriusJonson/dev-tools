@@ -47,6 +47,7 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
             file_name: data.file_name.to_owned(),
             mime_type: data.mime_type.to_owned(),
             is_image,
+            file_size: data.file_data.len() as i64
         })
         .into_response())
     } else {
