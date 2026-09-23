@@ -118,7 +118,7 @@ fn is_absolute_url(url_str: &str) -> bool {
     url_str.starts_with("http://") || url_str.starts_with("https://") || url_str.starts_with("//")
 }
 
-fn convert_absolute_url(src_url: &str, local_url: &str) -> Option<String> {
+fn convert_absolute_url(src_url: &str, base_url: &str) -> Option<String> {
     let src_url = src_url.trim();
 
     if src_url.is_empty() {
@@ -136,15 +136,15 @@ fn convert_absolute_url(src_url: &str, local_url: &str) -> Option<String> {
     }
 
     if let Ok(mut url) = Url::parse(src_url)
-        && let Ok(local_url) = Url::parse(local_url)
+        && let Ok(base_url) = Url::parse(base_url)
     {
-        url.set_scheme(local_url.scheme())
-            .unwrap_or_else(|_| panic!("Cant set url scheme {}", local_url.scheme()));
-        url.set_host(Some(local_url.host_str().unwrap_or_default())).unwrap_or_else(|_| {
-            panic!("Cant set url host {} ", local_url.host_str().unwrap_or_default())
+        url.set_scheme(base_url.scheme())
+            .unwrap_or_else(|_| panic!("Cant set url scheme {}", base_url.scheme()));
+        url.set_host(Some(base_url.host_str().unwrap_or_default())).unwrap_or_else(|_| {
+            panic!("Cant set url host {} ", base_url.host_str().unwrap_or_default())
         });
-        url.set_port(local_url.port())
-            .unwrap_or_else(|_| panic!("Cant set url port {:?}", local_url.port()));
+        url.set_port(base_url.port())
+            .unwrap_or_else(|_| panic!("Cant set url port {:?}", base_url.port()));
         url.query_pairs_mut().append_pair(RC_SRC_URL_PARAM_NAME, src_url);
         return Some(url.to_string());
     }
