@@ -22,6 +22,7 @@ pub enum ButtonLinkWidth {
     Auto,
     #[default] 
     Md,
+    Lg,
 }
 
 #[component]
@@ -42,7 +43,7 @@ pub fn ButtonLink(
         None => "".to_owned(),
     });
 
-    let base_classes = "rounded-3xl cursor-pointer font-medium px-4 py-1 md:py-2 h-8dvh md:h-10 justify-center items-center text-sm md:text-base 
+    let base_classes = "rounded-3xl cursor-pointer font-medium px-4 py-1 md:py-2 h-8dvh md:h-10 justify-center items-center text-center text-sm md:text-base 
         transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = move || match color() {
@@ -61,6 +62,7 @@ pub fn ButtonLink(
     let button_width_classes = match button_width {
         ButtonLinkWidth::Auto => "w-auto".to_owned(),
         ButtonLinkWidth::Md => "w-32".to_owned(),
+        ButtonLinkWidth::Lg => "w-38".to_owned(),
     };
 
     view! {

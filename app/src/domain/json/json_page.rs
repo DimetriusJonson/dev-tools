@@ -10,6 +10,7 @@ use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
@@ -213,6 +214,12 @@ pub fn JsonPage() -> impl IntoView {
                             disabled=move || in_progress.get().is_active()
                         />
                     </div>
+
+                    <div class="flex flex-row md:flex-col gap-4 md:py-8">
+                        <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file?mode=json".to_owned() 
+                            button_width=ButtonLinkWidth::Lg color=move || ButtonLinkColor::Primary />
+                    </div>
+
                 </div>
             </div>
 

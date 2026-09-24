@@ -4,9 +4,11 @@ use fast_qr::{ECL, QRBuilder};
 use gloo_net::http::Request;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
+use leptos_router::hooks::use_query_map;
 use model::share_file::share_file_server::ShareFileServerDto;
 use web_sys::{File, HtmlInputElement};
 
+use crate::common::local_store::get_local_store_value;
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
@@ -25,6 +27,7 @@ enum UploadResult {
 
 #[component]
 pub fn ShareFileUploadPage() -> impl IntoView {
+    let params = use_query_map();
     let i18n = use_i18n();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let (shared_url, set_shared_url) = signal("".to_owned());
@@ -39,6 +42,8 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let upload_exceed_file_size_memo =
         Memo::new(move |_| t_string!(i18n, share_file_upload_exceed_file_size).to_owned());
 
+    let mode = move || params.read().get("mode").unwrap_or("file".to_owned());
+
     Effect::watch(
         move || shared_url.get(),
         move |value, _prev, _| {
@@ -51,7 +56,40 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     let on_upload_file_click = move |_| {
         if let Some(file) = selected_file.get_untracked() {
             upload_file(
-                file,
+                UploadParams::File(file),
+                set_in_progress,
+                set_shared_url,
+                custom_server.get(),
+                move |upload_result| match upload_result {
+                    UploadResult::Success => {
+                        selected_file.set(None);
+                        if let Some(input_ref) = file_input_ref.write().as_mut() {
+                            input_ref.set_files(None);
+                        }
+
+                        show_info(upload_success_memo.get_untracked(), messages);
+                    }
+                    UploadResult::Error(err) => {
+                        show_error(err, messages);
+                    }
+                    UploadResult::ExceedSize => {
+                        show_error(upload_exceed_file_size_memo.get_untracked(), messages)
+                    }
+                },
+            );
+        }
+    };
+
+    let on_upload_text_click = move |_| {
+        let text = match mode().as_str() {
+            "xml" => Some(get_local_store_value("src_xml", "".to_owned())),
+            "json" => Some(get_local_store_value("src_json", "".to_owned())),
+            _ => None,
+        };
+
+        if let Some(text) = text {
+            upload_file(
+                UploadParams::Text(mode(), text),
                 set_in_progress,
                 set_shared_url,
                 custom_server.get(),
@@ -104,59 +142,87 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     });
 
     view! {
-
-        <div class="flex justify-center items-center w-full p-4"
-            class:hidden=move || !shared_url.get().is_empty()>
-            <DragFile
-                on_drop_file=move |file| {
-                    upload_file(file, set_in_progress, set_shared_url, custom_server.get(), move |upload_result| {
-                        match upload_result {
-                            UploadResult::Success => {
-                                selected_file.set(None);
-                                if let Some(input_ref) = file_input_ref.write().as_mut() {
-                                    input_ref.set_files(None);
-                                }
-                                show_info(upload_success_memo.get_untracked(), messages);
-                            },
-                            UploadResult::Error(err) => {
-                                show_error(err, messages);
-                            },
-                            UploadResult::ExceedSize => {
-                                show_error(upload_exceed_file_size_memo.get_untracked(), messages)
-                            },
-                        }
-                    });
-                }
-                on_paste_file=move |file| {selected_file.set(Some(file));}
-                />
-        </div>
+        <Show when=move || { mode() == "file" }>
+            {
+                view! {
+                    <div class="flex justify-center items-center w-full p-4"
+                        class:hidden=move || !shared_url.get().is_empty()>
+                        <DragFile
+                            on_drop_file=move |file| {
+                                upload_file(UploadParams::File(file), set_in_progress, set_shared_url, custom_server.get(), move |upload_result| {
+                                    match upload_result {
+                                        UploadResult::Success => {
+                                            selected_file.set(None);
+                                            if let Some(input_ref) = file_input_ref.write().as_mut() {
+                                                input_ref.set_files(None);
+                                            }
+                                            show_info(upload_success_memo.get_untracked(), messages);
+                                        },
+                                        UploadResult::Error(err) => {
+                                            show_error(err, messages);
+                                        },
+                                        UploadResult::ExceedSize => {
+                                            show_error(upload_exceed_file_size_memo.get_untracked(), messages)
+                                        },
+                                    }
+                                });
+                            }
+                            on_paste_file=move |file| {selected_file.set(Some(file));}
+                            />
+                    </div>
+                }.into_view()
+            }
+        </Show>
 
         <div class="flex flex-col px-4 md:px-[30vw] py-12 gap-4 dark:text-white text-xs md:text-base">
-            <div class="flex" class:hidden=move || !shared_url.get().is_empty()>
-                <FileInput node_ref=file_input_ref on:change=move |event| {
-                    let input_file = event_target::<HtmlInputElement>(&event);
-                    if let Some(files) = input_file.files() && files.length() > 0 {
-                        selected_file.set(files.get(0));
-                    }
-                }/>
-                <Button
-                    title=move || "".to_owned()
-                    label=move || t_string!(i18n, share_file_upload_page_upload_btn_label).to_owned()
-                    button_width=ButtonWidth::Md
-                    loading=move || in_progress.get()
-                    on_click=on_upload_file_click
-                    disabled=move || in_progress.get() || selected_file.read().is_none()
-                />
-            </div>
+            <Show when=move || { mode() == "file" }>
+                {
+                    view! {
+                        <div class="flex" class:hidden=move || !shared_url.get().is_empty()>
+                            <FileInput node_ref=file_input_ref on:change=move |event| {
+                                let input_file = event_target::<HtmlInputElement>(&event);
+                                if let Some(files) = input_file.files() && files.length() > 0 {
+                                    selected_file.set(files.get(0));
+                                }
+                            }/>
+                            <Button
+                                title=move || "".to_owned()
+                                label=move || t_string!(i18n, share_file_upload_page_upload_btn_label).to_owned()
+                                button_width=ButtonWidth::Md
+                                loading=move || in_progress.get()
+                                on_click=on_upload_file_click
+                                disabled=move || in_progress.get() || selected_file.read().is_none()
+                            />
+                        </div>
+                    }.into_view()
+                }
+            </Show>
+
+            <Show when=move || { mode() != "file" }>
+                {
+                    view! {
+                        <div class="flex items-center justify-center" class:hidden=move || !shared_url.get().is_empty()>
+                            <Button
+                                title=move || "".to_owned()
+                                label=move || format!("{} {}", t_string!(i18n, share_file_upload_page_upload_btn_label), mode())
+                                button_width=ButtonWidth::Auto
+                                loading=move || in_progress.get()
+                                on_click=on_upload_text_click
+                                disabled=move || in_progress.get()
+                            />
+                        </div>
+                    }.into_view()
+                }
+            </Show>
 
             {move || custom_servers_resource.get().map(|custom_servers| {
                     let hidden = custom_servers.is_empty() || !shared_url.get().is_empty();
                     view! {
-                        <div class="flex items-center"
+                        <div class="flex items-center gap-2"
                             class:hidden=hidden>
                             <label for="server_addr" title=move || {t_string!(i18n, share_file_upload_page_server_addr_title).to_owned()}>{t!(i18n, share_file_upload_page_server_addr_label)}</label>
                             <SelectInput
-                                class_name="px-2".to_owned()
+                                class_name="w-full".to_owned()
                                 name={"server_addr".to_owned()}
                                 value={custom_server}
                                 set_value={set_custom_server}
@@ -195,28 +261,34 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                 </div>
             </Show>
 
-            <div class="py-4 px-4">
-                <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
+            <Show when=move || { mode() == "file" }>
+                {
+                    view! {
+                        <div class="py-4 px-4">
+                            <ul class="list-decimal [&_li]:py-1 text-gray-600 dark:text-gray-400 [&_b]:text-black [&_b]:dark:text-gray-300 [&_b]:p-1">
 
-                    <li>{t!(i18n, share_file_upload_info_1, <b> = <b />)}</li>
-                    <ul class="list-disc pl-4">
-                        <li>{t!(i18n, share_file_upload_info_2)}</li>
-                        <li>{t!(i18n, share_file_upload_info_3)}</li>
-                    </ul>
+                                <li>{t!(i18n, share_file_upload_info_1, <b> = <b />)}</li>
+                                <ul class="list-disc pl-4">
+                                    <li>{t!(i18n, share_file_upload_info_2)}</li>
+                                    <li>{t!(i18n, share_file_upload_info_3)}</li>
+                                </ul>
 
-                    <li>{t!(i18n, share_file_upload_info_4, <b> = <b />)}</li>
-                    <li>{t!(i18n, share_file_upload_info_5, <b> = <b />)}</li>
-                    <li>{t!(i18n, share_file_upload_info_6)}</li>
-                    <li>{t!(i18n, share_file_upload_info_7, <b> = <b />)}</li>
-                </ul>
-            </div>
+                                <li>{t!(i18n, share_file_upload_info_4, <b> = <b />)}</li>
+                                <li>{t!(i18n, share_file_upload_info_5, <b> = <b />)}</li>
+                                <li>{t!(i18n, share_file_upload_info_6)}</li>
+                                <li>{t!(i18n, share_file_upload_info_7, <b> = <b />)}</li>
+                            </ul>
+                        </div>
+                    }.into_view()
+                }
+            </Show>
 
         </div>
     }
 }
 
 fn upload_file(
-    file: File,
+    params: UploadParams,
     set_in_progress: WriteSignal<bool>,
     set_shared_url: WriteSignal<String>,
     custom_server_url: String,
@@ -233,63 +305,87 @@ fn upload_file(
             ("/share_file_upload", MAX_FILE_SIZE)
         };
 
-        if file.size() <= max_file_size as f64 {
-            match Request::post(service_name)
-                .header("content-type", &file.type_())
-                .query([("file_name", file.name())])
-                .body(&file)
-            {
-                Ok(request) => match request.send().await {
-                    Ok(response) => {
-                        if response.status() == 200 {
-                            let server_url =
-                                response.headers().get("remote-server-url").unwrap_or_else(|| {
-                                    if let Some(window) = web_sys::window() {
-                                        let location = window.location();
-                                        return location.origin().to_owned().unwrap_or_default();
-                                    }
-                                    "".to_owned()
-                                });
+        let request = match params {
+            UploadParams::File(file) => {
+                if file.size() <= max_file_size as f64 {
+                    Request::post(service_name)
+                        .header("content-type", &file.type_())
+                        .query([("file_name", file.name())])
+                        .body(&file)
+                } else {
+                    set_in_progress.set(false);
+                    callback(UploadResult::ExceedSize);
+                    return;
+                }
+            }
+            UploadParams::Text(media_type, text) => Request::post(service_name)
+                .header("content-type", get_media_content_type(&media_type))
+                .query([("file_name", format!("data.{}", media_type))])
+                .body(&text),
+        };
 
-                            let mut file_url = None;
-                            if !custom_server_url.is_empty() {
-                                match response.text().await {
-                                    Ok(resp_text) => {
-                                        file_url = Some(format!(
-                                            "{}/share_file/view?id={}&local=true",
-                                            custom_server_url, resp_text
-                                        ))
-                                    }
-                                    Err(err) => result = UploadResult::Error(err.to_string()),
+        match request {
+            Ok(request) => match request.send().await {
+                Ok(response) => {
+                    if response.status() == 200 {
+                        let server_url =
+                            response.headers().get("remote-server-url").unwrap_or_else(|| {
+                                if let Some(window) = web_sys::window() {
+                                    let location = window.location();
+                                    return location.origin().to_owned().unwrap_or_default();
                                 }
-                            } else {
-                                match response.text().await {
-                                    Ok(resp_text) => {
-                                        file_url = Some(format!(
-                                            "{}/share_file/view?id={}",
-                                            server_url, resp_text
-                                        ))
-                                    }
-                                    Err(err) => result = UploadResult::Error(err.to_string()),
-                                }
-                            }
+                                "".to_owned()
+                            });
 
-                            if let Some(file_url) = file_url {
-                                set_shared_url.set(file_url.to_owned());
+                        let mut file_url = None;
+                        if !custom_server_url.is_empty() {
+                            match response.text().await {
+                                Ok(resp_text) => {
+                                    file_url = Some(format!(
+                                        "{}/share_file/view?id={}&local=true",
+                                        custom_server_url, resp_text
+                                    ))
+                                }
+                                Err(err) => result = UploadResult::Error(err.to_string()),
                             }
                         } else {
-                            result = UploadResult::Error(response.status_text());
+                            match response.text().await {
+                                Ok(resp_text) => {
+                                    file_url = Some(format!(
+                                        "{}/share_file/view?id={}",
+                                        server_url, resp_text
+                                    ))
+                                }
+                                Err(err) => result = UploadResult::Error(err.to_string()),
+                            }
                         }
+
+                        if let Some(file_url) = file_url {
+                            set_shared_url.set(file_url.to_owned());
+                        }
+                    } else {
+                        result = UploadResult::Error(response.status_text());
                     }
-                    Err(err) => result = UploadResult::Error(err.to_string()),
-                },
+                }
                 Err(err) => result = UploadResult::Error(err.to_string()),
-            }
-        } else {
-            result = UploadResult::ExceedSize;
+            },
+            Err(err) => result = UploadResult::Error(err.to_string()),
         }
 
         set_in_progress.set(false);
         callback(result);
     });
+}
+
+fn get_media_content_type(media_type: &str) -> &str {
+    match media_type {
+        "xml" => "application/xml",
+        "json" => "application/json",
+        _ => "text/plain",
+    }
+}
+
+enum UploadParams {
+    File(File),
+    Text(String, String),
 }
