@@ -8,13 +8,13 @@ use leptos_router::hooks::use_query_map;
 use model::share_file::share_file_server::ShareFileServerDto;
 use web_sys::{File, HtmlInputElement};
 
-use crate::common::local_store::get_local_store_value;
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::drag_file::DragFile;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
+use crate::domain::share_file::ShareStorage;
 use crate::i18n::*;
 
 const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
@@ -29,6 +29,8 @@ enum UploadResult {
 pub fn ShareFileUploadPage() -> impl IntoView {
     let params = use_query_map();
     let i18n = use_i18n();
+    let share_storage = use_context::<ShareStorage>().expect("Cant get share storage context!");
+
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let (shared_url, set_shared_url) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
@@ -81,36 +83,28 @@ pub fn ShareFileUploadPage() -> impl IntoView {
     };
 
     let on_upload_text_click = move |_| {
-        let text = match mode().as_str() {
-            "xml" => Some(get_local_store_value("src_xml", "".to_owned())),
-            "json" => Some(get_local_store_value("src_json", "".to_owned())),
-            _ => None,
-        };
+        upload_file(
+            UploadParams::Text(mode(), share_storage.0.get_untracked()),
+            set_in_progress,
+            set_shared_url,
+            custom_server.get(),
+            move |upload_result| match upload_result {
+                UploadResult::Success => {
+                    selected_file.set(None);
+                    if let Some(input_ref) = file_input_ref.write().as_mut() {
+                        input_ref.set_files(None);
+                    }
 
-        if let Some(text) = text {
-            upload_file(
-                UploadParams::Text(mode(), text),
-                set_in_progress,
-                set_shared_url,
-                custom_server.get(),
-                move |upload_result| match upload_result {
-                    UploadResult::Success => {
-                        selected_file.set(None);
-                        if let Some(input_ref) = file_input_ref.write().as_mut() {
-                            input_ref.set_files(None);
-                        }
-
-                        show_info(upload_success_memo.get_untracked(), messages);
-                    }
-                    UploadResult::Error(err) => {
-                        show_error(err, messages);
-                    }
-                    UploadResult::ExceedSize => {
-                        show_error(upload_exceed_file_size_memo.get_untracked(), messages)
-                    }
-                },
-            );
-        }
+                    show_info(upload_success_memo.get_untracked(), messages);
+                }
+                UploadResult::Error(err) => {
+                    show_error(err, messages);
+                }
+                UploadResult::ExceedSize => {
+                    show_error(upload_exceed_file_size_memo.get_untracked(), messages)
+                }
+            },
+        );
     };
 
     let on_copy_click = move |_| {

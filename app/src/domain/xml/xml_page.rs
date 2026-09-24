@@ -2,6 +2,7 @@ use gloo_net::http::Request;
 use leptos::html::Div;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
+use leptos_router::hooks::use_navigate;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
@@ -9,12 +10,12 @@ use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
-use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
 use crate::components::ui::text_area::TextArea;
 
+use crate::domain::share_file::ShareStorage;
 use crate::i18n::*;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -35,7 +36,10 @@ impl InProgressType {
 #[component]
 pub fn XmlPage() -> impl IntoView {
     let i18n = use_i18n();
+    let navigate = use_navigate();
+
     let messages = use_context::<Messages>().expect("Cant get messages context!");
+    let share_storage = use_context::<ShareStorage>().expect("Cant get share storage context!");
 
     let code_lang = RwSignal::new("xml".to_owned());
     let (xml, set_xml) = signal(get_local_store_value("src_xml", "".to_owned()));
@@ -209,11 +213,6 @@ pub fn XmlPage() -> impl IntoView {
                             disabled=move || in_progress.get().is_active()
                         />
                     </div>
-
-                    <div class="flex flex-row md:flex-col gap-4 md:py-8">
-                        <ButtonLink label=move || t_display!(i18n, share_file_btn_label).to_string() href="/share_file?mode=xml".to_owned() 
-                            button_width=ButtonLinkWidth::Lg color=move || ButtonLinkColor::Primary />
-                    </div>
                 </div>
             </div>
 
@@ -241,14 +240,28 @@ pub fn XmlPage() -> impl IntoView {
                     }
                 }
 
-                <Button
-                    title=move || "".to_owned()
-                    label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
-                    button_width=ButtonWidth::Auto
-                    loading=move || false
-                    on_click=on_copy_click
-                    disabled=move || in_progress.get().is_active()
-                />
+                <div class="flex gap-4 justify-between" class:hidden=move || dst_xml.read().is_empty()>
+                    <Button
+                        title=move || "".to_owned()
+                        label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
+                        button_width=ButtonWidth::Auto
+                        loading=move || false
+                        on_click=on_copy_click
+                        disabled=move || in_progress.get().is_active()
+                    />
+
+                    <Button 
+                        title=move || "".to_owned()
+                        label=move || t_display!(i18n, share_file_btn_label).to_string() 
+                        button_width=ButtonWidth::Lg 
+                        loading=move || false
+                        disabled=move || false
+                        on_click=move |_| {
+                            share_storage.set_text(&dst_xml.read_untracked());
+                            navigate("/share_file?mode=xml", Default::default());
+                        }
+                    />
+                </div>
 
             </div>
         </div>

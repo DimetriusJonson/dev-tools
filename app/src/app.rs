@@ -1,4 +1,5 @@
 use crate::domain::rest_client::rest_client_page::RestClientPage;
+use crate::domain::share_file::ShareStorage;
 use crate::i18n::*;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Stylesheet, Title, provide_meta_context};
@@ -20,6 +21,9 @@ use crate::i18n::I18nContextProvider;
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+
+    let share_storage = ShareStorage::new();
+    provide_context(share_storage);
 
     view! {
         <I18nContextProvider>
