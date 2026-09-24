@@ -122,11 +122,21 @@ fn load_text(url: String, set_text: WriteSignal<String>, messages: Messages) {
 }
 
 fn get_mime_code_lang(mime_type: &str) -> Option<&str> {
-    match mime_type {
-        "text/plain" => Some("text"),
-        "application/json" => Some("json"),
-        "application/xml" | "text/xml" => Some("xml"),
-        "text/html" => Some("html"),
-        _ => None
+    if mime_type == "text/plain" {
+        return Some("text");
     }
+
+    if mime_type.contains("json") {
+        return Some("json");
+    }
+
+    if mime_type.contains("xml") {
+        return Some("xml");
+    }
+
+    if mime_type.contains("html") {
+        return Some("html");
+    }
+
+    None
 }

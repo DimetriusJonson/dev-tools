@@ -96,7 +96,7 @@ async fn build_request(
 
     let request_data = match extract_uri_query_params(req.uri()).get(RC_REQ_DATA_PARAM_NAME) {
         Some(value) => Some(serde_json::from_str::<RestClientRequest>(
-            &urlencoding::decode(value)?.to_string(),
+            urlencoding::decode(value)?.as_ref(),
         )?),
         None => None,
     };

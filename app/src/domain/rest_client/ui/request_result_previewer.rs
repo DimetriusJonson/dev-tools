@@ -146,7 +146,7 @@ pub fn RequestResultPreviewer(
 
                 for cookie in cookies
                     .iter()
-                    .flat_map(|value| value.split(';').into_iter())
+                    .flat_map(|value| value.split(';'))
                     .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
                 {
                     create_cookie(cookie.name(), cookie.value(), None).unwrap();
