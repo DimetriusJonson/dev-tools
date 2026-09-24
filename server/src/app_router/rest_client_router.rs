@@ -43,7 +43,10 @@ pub async fn rest_client_send_handler(
             if let Some(content_length) = content_length
                 && content_length > app_state.max_content_length
             {
-                return Err(AppError::BadRequest("The response size is too large.".to_owned()));
+                return Err(AppError::BadRequest(format!(
+                    "Rest client send: The response size is too large (max={}, actual={}).",
+                    app_state.max_content_length, content_length
+                )));
             }
 
             if response
@@ -165,7 +168,10 @@ pub async fn rest_client_attachment_download_handler(
     if let Some(content_length) = response.content_length()
         && content_length > app_state.max_content_length
     {
-        return Err(AppError::BadRequest("The response size is too large.".to_owned()));
+        return Err(AppError::BadRequest(format!(
+            "Attachment dowload: The response size is too large (max={}, actual={}).",
+            app_state.max_content_length, content_length
+        )));
     }
 
     let response_status = response.status();
