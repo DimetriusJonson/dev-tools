@@ -105,14 +105,29 @@ pub fn RequestParamsUrl(
                         .json(&rc_request)
                     {
                         Ok(request) => match request.send().await {
-                            Ok(response) => match response.json::<RestClientResponse>().await {
-                                Ok(resp) => {
-                                    set_response.set(Some(resp));
+                            Ok(response) => {
+                                if response.ok() {
+                                    match response.json::<RestClientResponse>().await {
+                                        Ok(resp) => {
+                                            set_response.set(Some(resp));
+                                        }
+                                        Err(err) => {
+                                            show_error(format!("Wrong json: {}", err), messages)
+                                        }
+                                    }
+                                } else {
+                                    match response.text().await {
+                                        Ok(text) => show_error(
+                                            format!("Response error: {}", text),
+                                            messages,
+                                        ),
+                                        Err(err) => show_error(
+                                            format!("Cant get response text: {}", err),
+                                            messages,
+                                        ),
+                                    }
                                 }
-                                Err(err) => {
-                                    show_error(format!("Cant get response: {}", err), messages)
-                                }
-                            },
+                            }
                             Err(err) => {
                                 let error_str = err.to_string();
                                 if error_str.contains("AbortError") {
