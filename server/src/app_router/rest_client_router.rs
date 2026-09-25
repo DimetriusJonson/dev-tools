@@ -108,22 +108,23 @@ async fn resolve_content_disposition(
         response.headers().get(header::CONTENT_DISPOSITION).and_then(|val| val.to_str().ok());
 
     if let Some(content_disposition) = content_disposition {
-        let file_name = if let Some(file_name) = content_disposition
+        if let Some(file_name) = content_disposition
             .split(';')
             .find(|part| part.trim().starts_with("filename"))
             .and_then(|part| part.split('=').nth(1))
             .map(|name| name.trim().trim_matches('"').to_owned())
         {
-            file_name
+            return Ok(Some(file_name));
         } else {
-            Url::parse(&request.url)?
-                .path_segments()
-                .map(|ps| ps.last().unwrap_or("attachment").to_owned())
-                .unwrap_or("attachment".to_owned())
+            return Ok(Some(
+                Url::parse(&request.url)?
+                    .path_segments()
+                    .and_then(|ps| ps.last())
+                    .and_then(|s| Some(s.to_owned()))
+                    .unwrap_or("unknown.file".to_owned()),
+            ));
         };
-        return Ok(Some(file_name));
     }
-
     Ok(None)
 }
 
