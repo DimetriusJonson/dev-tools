@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use http::Method;
 use leptos::{prelude::*, task::spawn_local};
+use url::Url;
 
+use crate::common::curl_parser::parsed_request::ParsedRequest;
 use crate::domain::rest_client::model::request_body_kind::RequestBodyKind;
 use crate::domain::rest_client::model::rest_client_context::RestClientContext;
 use crate::domain::rest_client::util::request_store::{
@@ -29,10 +31,18 @@ pub fn RestClientCUrlButton(
             if let Some(curl_cmd) = paste_from_clipboard().await {
                 match parse_curl_cmd(&curl_cmd) {
                     Ok(parsed_request) => {
+                        let url = match parse_curl_url(&parsed_request) {
+                            Ok(url) => url,
+                            Err(err) => {
+                                show_error(format!("Error: {}", err), messages);
+                                return;
+                            }
+                        };
+
                         let request = RequestInfo::new(
                             generate_request_id(rc_context.project.read_only()),
                             rc_context.project_id(),
-                            parsed_request.url.to_owned(),
+                            url.to_owned(),
                             "".to_owned(),
                             parsed_request.method.unwrap_or(Method::GET).to_string(),
                         );
@@ -44,12 +54,14 @@ pub fn RestClientCUrlButton(
                             rc_context.project.read_only(),
                             &requests.read_untracked(),
                         );
+
                         set_stored_value(
                             rc_context.project.read_only(),
                             request.id,
                             RequestFieldKind::Url,
-                            request.url,
+                            url,
                         );
+
                         set_stored_value(
                             rc_context.project.read_only(),
                             request.id,
@@ -69,25 +81,6 @@ pub fn RestClientCUrlButton(
                         {
                             if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
                                 &parsed_request.body.join("\n"),
-                            ) && let Ok(json) = serde_json::to_string(
-                                &map.into_iter().collect::<Vec<(String, String)>>(),
-                            ) {
-                                set_stored_value(
-                                    rc_context.project.read_only(),
-                                    request.id,
-                                    RequestFieldKind::BodyFormencoded,
-                                    json,
-                                );
-                                set_stored_value(
-                                    rc_context.project.read_only(),
-                                    request.id,
-                                    RequestFieldKind::BodyType,
-                                    "formencoded".to_owned(),
-                                );
-                            }
-                        } else if !parsed_request.body_urlencode.is_empty() {
-                            if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
-                                &parsed_request.body_urlencode,
                             ) && let Ok(json) = serde_json::to_string(
                                 &map.into_iter().collect::<Vec<(String, String)>>(),
                             ) {
@@ -162,4 +155,31 @@ pub fn RestClientCUrlButton(
 
 
     }
+}
+
+fn parse_curl_url(parsed_request: &ParsedRequest) -> Result<String, String> {
+    if !parsed_request.body_urlencode.is_empty() {
+        if let Ok(map) =
+            serde_urlencoded::from_str::<HashMap<String, String>>(&parsed_request.body_urlencode)
+        {
+            if !map.is_empty() {
+                match serde_urlencoded::to_string(&map) {
+                    Ok(encoded_query) => match Url::parse(&parsed_request.url) {
+                        Ok(mut url) => {
+                            url.set_query(Some(&encoded_query));
+                            return Ok(url.to_string());
+                        }
+                        Err(err) => {
+                            return Err(err.to_string());
+                        }
+                    },
+                    Err(err) => {
+                        return Err(err.to_string());
+                    }
+                };
+            }
+        }
+    }
+
+    Ok(parsed_request.url.to_owned())
 }
