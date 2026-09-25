@@ -124,6 +124,9 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 let s = remove_quote(s);
                 parsed.body.push(s.into());
             }
+            Rule::output => {}
+            Rule::writeout => {}
+            Rule::maxtime => {}
             Rule::data_raw => {
                 if let Some(pair) = pair.into_inner().next() {
                     parsed.body.push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
@@ -138,6 +141,16 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     return Err("data-binary value must be present".into());
                 }
             }
+            Rule::data_urlencode => {
+                if let Some(pair) = pair.into_inner().next() {
+                    if !parsed.body_urlencode.is_empty() {
+                        parsed.body_urlencode.push_str("&");
+                    }
+                    parsed.body_urlencode.push_str(&pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                } else {
+                    return Err("data-urlencode value must be present".into());
+                }
+            }
             Rule::ssl_verify_option => {
                 parsed.insecure = true;
             }
@@ -146,7 +159,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             }
             Rule::url_option
             | Rule::verbose_option
-            | Rule::output_option
+            | Rule::get_option
             | Rule::head_option
             | Rule::fail_option
             | Rule::silent_option

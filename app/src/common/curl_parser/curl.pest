@@ -15,7 +15,7 @@ double_quoted_inner = { (("\\" ~ ANY) | (!"\"" ~ ANY))* }
 none_ws = { (!ws ~ ANY)+ }
 url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
 url = { single_quoted | double_quoted | url_plain}
-option = _{ method_option | header_option | cookie_option | data_raw_option | data_binary_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option | verbose_option | output_option | silent_option | head_option | fail_option | show_headers_option | user_agent_option }
+option = _{ method_option | header_option | cookie_option | data_raw_option | data_binary_option | data_urlencode_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option | verbose_option | output_option | silent_option | head_option | fail_option | show_headers_option | user_agent_option | writeout_option | maxtime_option | get_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
 method = { single_quoted | double_quoted | none_ws }
@@ -29,6 +29,9 @@ cookie = { single_quoted | double_quoted | none_ws }
 data_raw_option = _{ "--data-raw" ~ wss ~ data_raw }
 data_raw = { single_quoted | double_quoted | single_quoted_dollar | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
 
+data_urlencode_option = _{ "--data-urlencode" ~ wss ~ data_urlencode }
+data_urlencode = { single_quoted | double_quoted | single_quoted_dollar | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
+
 data_binary_option = _{ "--data-binary" ~ wss ~ data_binary }
 data_binary = { single_quoted | double_quoted | single_quoted_dollar | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" ~ ASCII_ALPHA_LOWER) | "\\") ~ ANY)+ }
 
@@ -41,20 +44,26 @@ body = { single_quoted | double_quoted | (!((" -" ~ ASCII_ALPHA_UPPER) | (" --" 
 auth_option = _{ "-u" ~ ws+ ~ auth }
 auth = { single_quoted | double_quoted | none_ws }
 
-ssl_verify_option = { ("-k" | "--insecure") }
+output_option = _{ ("-o" | "--output") ~ ws+ ~ output }
+output = { single_quoted | double_quoted | none_ws }
 
-compressed_option = { "--compressed" }
+writeout_option = _{ ("-w" | "--write-out") ~ ws+ ~ writeout }
+writeout = { single_quoted | double_quoted | none_ws }
 
-verbose_option = { ("-v" | "--verbose") }
-output_option = { ("-o" | "--output") }
-silent_option = { ("-s" | "--silent") }
-head_option = { ("-I" | "--head") }
-fail_option = { ("-f" | "--fail") }
-show_headers_option = { ("-i" | "--show-headers") }
+maxtime_option = _{ ("-m" | "--max-time") ~ ws+ ~ maxtime }
+maxtime = { single_quoted | double_quoted | none_ws }
 
 user_agent_option = _{ ("-A" | "--user-agent") ~ ws+ ~ user_agent }
 user_agent = { single_quoted | double_quoted | none_ws }
 
+ssl_verify_option = { ("-k" | "--insecure") }
+compressed_option = { "--compressed" }
+verbose_option = { ("-v" | "--verbose") }
+silent_option = { ("-s" | "--silent") }
+head_option = { ("-I" | "--head") }
+fail_option = { ("-f" | "--fail") }
+show_headers_option = { ("-i" | "--show-headers") }
+get_option = { ("-G" | "--get") }
 url_option = { "--url" }
 
 wss = _{ ws* ~ slash* ~ ws* }

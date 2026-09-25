@@ -85,6 +85,25 @@ pub fn RestClientCUrlButton(
                                     "formencoded".to_owned(),
                                 );
                             }
+                        } else if !parsed_request.body_urlencode.is_empty() {
+                            if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
+                                &parsed_request.body_urlencode,
+                            ) && let Ok(json) = serde_json::to_string(
+                                &map.into_iter().collect::<Vec<(String, String)>>(),
+                            ) {
+                                set_stored_value(
+                                    rc_context.project.read_only(),
+                                    request.id,
+                                    RequestFieldKind::BodyFormencoded,
+                                    json,
+                                );
+                                set_stored_value(
+                                    rc_context.project.read_only(),
+                                    request.id,
+                                    RequestFieldKind::BodyType,
+                                    "formencoded".to_owned(),
+                                );
+                            }
                         } else {
                             set_stored_value(
                                 rc_context.project.read_only(),
