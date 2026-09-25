@@ -40,15 +40,6 @@ pub async fn rest_client_send_handler(
                 })
                 .collect();
 
-            if let Some(content_length) = content_length
-                && content_length > app_state.max_content_length
-            {
-                return Err(AppError::BadRequest(format!(
-                    "Rest client send: The response size is too large (max={}, actual={}).",
-                    app_state.max_content_length, content_length
-                )));
-            }
-
             if response
                 .headers()
                 .get(reqwest::header::CONTENT_TYPE)
@@ -71,20 +62,37 @@ pub async fn rest_client_send_handler(
                 .get(header::CONTENT_DISPOSITION)
                 .and_then(|val| val.to_str().ok());
 
-            if let Some(filename) = content_disposition.and_then(|cd| {
-                cd.split(';')
+            if let Some(content_disposition) = content_disposition {
+                let file_name = if let Some(file_name) = content_disposition
+                    .split(';')
                     .find(|part| part.trim().starts_with("filename"))
                     .and_then(|part| part.split('=').nth(1))
-                    .map(|name| name.trim().trim_matches('"').to_string())
-            }) {
+                    .map(|name| name.trim().trim_matches('"').to_owned())
+                {
+                    file_name
+                } else {
+                    Url::parse(&request.url)?
+                        .path_segments()
+                        .map(|ps| ps.last().unwrap_or("attachment").to_owned())
+                        .unwrap_or("attachment".to_owned())
+                };
                 return Ok(Json(RestClientResponse {
                     status_code,
                     headers,
-                    body: RestClientResponseBody::Attachment(filename),
+                    body: RestClientResponseBody::Attachment(file_name),
                     request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                     error: None,
                     size: content_length,
                 }));
+            }
+
+            if let Some(content_length) = content_length
+                && content_length > app_state.max_content_length
+            {
+                return Err(AppError::BadRequest(format!(
+                    "Rest client send: The response size is too large (max={}, actual={}).",
+                    app_state.max_content_length, content_length
+                )));
             }
 
             let body = response.text().await?;
