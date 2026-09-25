@@ -57,33 +57,9 @@ pub async fn rest_client_send_handler(
                 }));
             }
 
-            let content_disposition = response
-                .headers()
-                .get(header::CONTENT_DISPOSITION)
-                .and_then(|val| val.to_str().ok());
-
-            if let Some(content_disposition) = content_disposition {
-                let file_name = if let Some(file_name) = content_disposition
-                    .split(';')
-                    .find(|part| part.trim().starts_with("filename"))
-                    .and_then(|part| part.split('=').nth(1))
-                    .map(|name| name.trim().trim_matches('"').to_owned())
-                {
-                    file_name
-                } else {
-                    Url::parse(&request.url)?
-                        .path_segments()
-                        .map(|ps| ps.last().unwrap_or("attachment").to_owned())
-                        .unwrap_or("attachment".to_owned())
-                };
-                return Ok(Json(RestClientResponse {
-                    status_code,
-                    headers,
-                    body: RestClientResponseBody::Attachment(file_name),
-                    request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
-                    error: None,
-                    size: content_length,
-                }));
+            if let Some(result) = process_content_disposition(&request, &response, &headers).await?
+            {
+                return Ok(result);
             }
 
             if let Some(content_length) = content_length
@@ -116,6 +92,41 @@ pub async fn rest_client_send_handler(
             size: None,
         })),
     }
+}
+
+async fn process_content_disposition(
+    request: &RestClientRequest,
+    response: &reqwest::Response,
+    response_headers: &Vec<(String, String)>,
+) -> Result<Option<Json<RestClientResponse>>, AppError> {
+    let content_disposition =
+        response.headers().get(header::CONTENT_DISPOSITION).and_then(|val| val.to_str().ok());
+
+    if let Some(content_disposition) = content_disposition {
+        let file_name = if let Some(file_name) = content_disposition
+            .split(';')
+            .find(|part| part.trim().starts_with("filename"))
+            .and_then(|part| part.split('=').nth(1))
+            .map(|name| name.trim().trim_matches('"').to_owned())
+        {
+            file_name
+        } else {
+            Url::parse(&request.url)?
+                .path_segments()
+                .map(|ps| ps.last().unwrap_or("attachment").to_owned())
+                .unwrap_or("attachment".to_owned())
+        };
+        return Ok(Some(Json(RestClientResponse {
+            status_code: response.status().as_u16(),
+            headers: response_headers.clone(),
+            body: RestClientResponseBody::Attachment(file_name),
+            request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+            error: None,
+            size: response.content_length(),
+        })));
+    }
+
+    Ok(None)
 }
 
 fn build_request(
