@@ -10,15 +10,13 @@ use model::share_file::{
 };
 use nanoid::nanoid;
 
-use crate::{
-    common::{
-        app_error::AppError,
-        app_state::AppState,
-        compress_utils::compress_bytes,
-        dev_utils::{extract_uri_query_params, is_mime_image},
-        image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
-        net_utils::get_local_addrs,
-    },
+use crate::common::{
+    app_error::AppError,
+    app_state::AppState,
+    compress_utils::compress_bytes,
+    dev_utils::{extract_uri_query_params, is_mime_image},
+    image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
+    net_utils::get_local_addrs,
 };
 
 pub const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
@@ -36,28 +34,32 @@ pub struct ShareFileUploadData {
 pub async fn share_file_upload(
     State(app_state): State<AppState>,
     request: Request,
-) -> Result<String, AppError> {
-    let pool = app_state.pool.expect("No db pool");
-    crate::db::share_files_db::delete_old_share_files_in_db(&pool).await?;
+) -> Result<impl IntoResponse, AppError> {
+    if let Some(pool) = app_state.pool {
+        crate::db::share_files_db::delete_old_share_files_in_db(&pool).await?;
 
-    let uri = request.uri().clone();
-    let params = extract_uri_query_params(&uri);
-    let file_name = params
-        .get("file_name")
-        .ok_or(AppError::BadRequest("parameter 'file_name' is empty".to_owned()))?;
+        let uri = request.uri().clone();
+        let params = extract_uri_query_params(&uri);
+        let file_name = params
+            .get("file_name")
+            .ok_or(AppError::BadRequest("parameter 'file_name' is empty".to_owned()))?;
 
-    let prepared_data = share_file_prepare_for_upload(request, file_name, 5 * 1024 * 1024).await?;
-    crate::db::share_files_db::create_share_file_in_db(
-        &prepared_data.external_id,
-        file_name,
-        &prepared_data.mime_type,
-        prepared_data.file_data,
-        prepared_data.image_thumbnail,
-        &pool,
-    )
-    .await?;
+        let prepared_data =
+            share_file_prepare_for_upload(request, file_name, 5 * 1024 * 1024).await?;
+        crate::db::share_files_db::create_share_file_in_db(
+            &prepared_data.external_id,
+            file_name,
+            &prepared_data.mime_type,
+            prepared_data.file_data,
+            prepared_data.image_thumbnail,
+            &pool,
+        )
+        .await?;
 
-    Ok(prepared_data.external_id)
+        Ok(prepared_data.external_id.into_response())
+    } else {
+        crate::app_router::proxy_request_to_remote(request, app_state).await
+    }
 }
 
 #[cfg(not(feature = "db"))]
@@ -111,51 +113,55 @@ pub async fn share_file_download(
 ) -> Result<impl IntoResponse, AppError> {
     use crate::common::compress_utils::decompress_bytes;
 
-    let pool = app_state.pool.expect("No db pool");
-    let params = extract_uri_query_params(request.uri());
-    let external_id =
-        params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
-    let thumbnail = params
-        .get("thumbnail")
-        .map(|v| v.parse::<bool>().ok())
-        .unwrap_or_default()
-        .unwrap_or_default();
-    if thumbnail {
-        let mut headers = http::HeaderMap::new();
-        headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
+    if let Some(pool) = app_state.pool {
+        let params = extract_uri_query_params(request.uri());
+        let external_id =
+            params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
+        let thumbnail = params
+            .get("thumbnail")
+            .map(|v| v.parse::<bool>().ok())
+            .unwrap_or_default()
+            .unwrap_or_default();
+        if thumbnail {
+            let mut headers = http::HeaderMap::new();
+            headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
 
-        let image_thumbnail =
-            crate::db::share_files_db::get_share_file_thumbnail_from_db(external_id, &pool).await?;
-        if let Some(image_thumbnail) = image_thumbnail {
-            headers.insert(http::header::CONTENT_TYPE, MIME_IMAGE_JPG.parse()?);
-            Ok((headers, image_thumbnail).into_response())
+            let image_thumbnail =
+                crate::db::share_files_db::get_share_file_thumbnail_from_db(external_id, &pool)
+                    .await?;
+            if let Some(image_thumbnail) = image_thumbnail {
+                headers.insert(http::header::CONTENT_TYPE, MIME_IMAGE_JPG.parse()?);
+                Ok((headers, image_thumbnail).into_response())
+            } else {
+                headers.insert(http::header::CONTENT_TYPE, DEFAULT_CONTENT_TYPE.parse()?);
+                Ok((headers, vec![]).into_response())
+            }
         } else {
-            headers.insert(http::header::CONTENT_TYPE, DEFAULT_CONTENT_TYPE.parse()?);
-            Ok((headers, vec![]).into_response())
+            let share_file =
+                crate::db::share_files_db::get_share_file_from_db(external_id, &pool).await?;
+
+            let mut mime_type = share_file.mime_type;
+            if mime_type.is_empty() {
+                mime_type = DEFAULT_CONTENT_TYPE.to_owned();
+            }
+
+            let mut file_data = share_file.file_data;
+            if !is_mime_image(&mime_type) {
+                file_data = decompress_bytes(file_data)?;
+            }
+
+            let mut headers = http::HeaderMap::new();
+            headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
+            headers.insert(http::header::CONTENT_TYPE, mime_type.parse()?);
+            headers.insert(
+                http::header::CONTENT_DISPOSITION,
+                format!("attachment; filename=\"{}\"", share_file.file_name).parse()?,
+            );
+
+            Ok((headers, file_data).into_response())
         }
     } else {
-        let share_file =
-            crate::db::share_files_db::get_share_file_from_db(external_id, &pool).await?;
-
-        let mut mime_type = share_file.mime_type;
-        if mime_type.is_empty() {
-            mime_type = DEFAULT_CONTENT_TYPE.to_owned();
-        }
-
-        let mut file_data = share_file.file_data;
-        if !is_mime_image(&mime_type) {
-            file_data = decompress_bytes(file_data)?;
-        }
-
-        let mut headers = http::HeaderMap::new();
-        headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
-        headers.insert(http::header::CONTENT_TYPE, mime_type.parse()?);
-        headers.insert(
-            http::header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}\"", share_file.file_name).parse()?,
-        );
-
-        Ok((headers, file_data).into_response())
+        crate::app_router::proxy_request_to_remote(request, app_state).await
     }
 }
 
@@ -166,25 +172,28 @@ pub async fn share_file_download(
 ) -> Result<impl IntoResponse, AppError> {
     crate::app_router::proxy_request_to_remote(request, app_state).await
 }
-
 #[cfg(feature = "db")]
 pub async fn share_file_info(
     State(app_state): State<AppState>,
     request: Request,
-) -> Result<Json<ShareFileInfoDto>, AppError> {
-    let pool = app_state.pool.expect("No db pool");
-    let params = extract_uri_query_params(request.uri());
-    let external_id =
-        params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
-    let share_file_info =
-        crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?;
-    let is_image = is_mime_image(&share_file_info.mime_type);
-    Ok(Json(ShareFileInfoDto {
-        file_name: share_file_info.file_name,
-        mime_type: share_file_info.mime_type,
-        is_image,
-        file_size: share_file_info.file_size
-    }))
+) -> Result<impl IntoResponse, AppError> {
+    if let Some(pool) = app_state.pool {
+        let params = extract_uri_query_params(request.uri());
+        let external_id =
+            params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
+        let share_file_info =
+            crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?;
+        let is_image = is_mime_image(&share_file_info.mime_type);
+        Ok(Json(ShareFileInfoDto {
+            file_name: share_file_info.file_name,
+            mime_type: share_file_info.mime_type,
+            is_image,
+            file_size: share_file_info.file_size,
+        })
+        .into_response())
+    } else {
+        crate::app_router::proxy_request_to_remote(request, app_state).await
+    }
 }
 
 #[cfg(not(feature = "db"))]
