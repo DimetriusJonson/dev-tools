@@ -144,7 +144,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::data_urlencode => {
                 if let Some(pair) = pair.into_inner().next() {
                     if !parsed.body_urlencode.is_empty() {
-                        parsed.body_urlencode.push_str("&");
+                        parsed.body_urlencode.push('&');
                     }
                     parsed.body_urlencode.push_str(&pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
                 } else {

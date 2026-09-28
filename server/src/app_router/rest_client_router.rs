@@ -119,8 +119,8 @@ async fn resolve_content_disposition(
             return Ok(Some(
                 Url::parse(&request.url)?
                     .path_segments()
-                    .and_then(|ps| ps.last())
-                    .and_then(|s| Some(s.to_owned()))
+                    .and_then(|mut ps| ps.next_back())
+                    .map(|s| s.to_owned())
                     .unwrap_or("unknown.file".to_owned()),
             ));
         };
