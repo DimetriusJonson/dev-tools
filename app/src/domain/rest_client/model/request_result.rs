@@ -4,6 +4,7 @@ use leptos::prelude::RwSignal;
 pub struct RequestResult {
     pub status_code: RwSignal<String>,
     pub size: RwSignal<Option<u64>>,
+    pub request_time: RwSignal<u64>,
     pub body: RwSignal<String>,
     pub attachment: RwSignal<(String, String)>,
     pub image: RwSignal<String>,
@@ -17,6 +18,7 @@ impl RequestResult {
         Self {
             status_code: RwSignal::new("".to_owned()),
             size: RwSignal::new(None),
+            request_time: RwSignal::new(0),
             body: RwSignal::new("".to_owned()),
             lang: RwSignal::new("".to_owned()),
             headers: RwSignal::new(Vec::new()),

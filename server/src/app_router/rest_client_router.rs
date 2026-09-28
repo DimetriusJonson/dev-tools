@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::{
     app_router::dump_receiver::DUMP_REQUEST,
@@ -25,7 +28,11 @@ pub async fn rest_client_send_handler(
 ) -> Result<Json<RestClientResponse>, AppError> {
     build_request(&request, Some(app_state.dump_port))?.send().await?;
 
-    match build_request(&request, None)?.send().await {
+    let start_time = SystemTime::now().duration_since(UNIX_EPOCH)?;
+    let request_result = build_request(&request, None)?.send().await;
+    let request_time = (SystemTime::now().duration_since(UNIX_EPOCH)? - start_time).as_millis() as u64;
+
+    match request_result {
         Ok(response) => {
             let status_code = response.status().as_u16();
             let content_length = response.content_length();
@@ -54,6 +61,7 @@ pub async fn rest_client_send_handler(
                     request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                     error: None,
                     size: content_length,
+                    request_time,
                 }));
             }
 
@@ -65,6 +73,7 @@ pub async fn rest_client_send_handler(
                     request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                     error: None,
                     size: content_length,
+                    request_time,
                 }));
             }
 
@@ -87,6 +96,7 @@ pub async fn rest_client_send_handler(
                 request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
                 error: None,
                 size: Some(content_length.unwrap_or(body_size)),
+                request_time,
             }))
         }
         Err(err) => Ok(Json(RestClientResponse {
@@ -96,6 +106,7 @@ pub async fn rest_client_send_handler(
             request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
             error: Some(err.to_string()),
             size: None,
+            request_time,
         })),
     }
 }

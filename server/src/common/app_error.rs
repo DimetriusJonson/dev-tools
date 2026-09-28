@@ -1,4 +1,7 @@
-use std::{fmt::Display, num::ParseIntError, str::ParseBoolError, string::FromUtf8Error};
+use std::{
+    fmt::Display, num::ParseIntError, str::ParseBoolError, string::FromUtf8Error,
+    time::SystemTimeError,
+};
 
 #[derive(Debug)]
 pub enum AppError {
@@ -108,6 +111,12 @@ impl From<FromUtf8Error> for AppError {
 
 impl From<serde_json::Error> for AppError {
     fn from(value: serde_json::Error) -> Self {
+        Self::SystemError(value.to_string())
+    }
+}
+
+impl From<SystemTimeError> for AppError {
+    fn from(value: SystemTimeError) -> Self {
         Self::SystemError(value.to_string())
     }
 }

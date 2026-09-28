@@ -17,4 +17,5 @@ pub struct RestClientResponse {
     pub request_raw: String,
     pub error: Option<String>,
     pub size: Option<u64>,
+    pub request_time: u64,
 }

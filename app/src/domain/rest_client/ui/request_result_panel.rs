@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
 use crate::common::ui_utils::copy_to_clipboard;
@@ -62,6 +64,7 @@ pub fn RequestResultPanel(
             show_preview_html.set(false);
             request_result.status_code.set("".to_owned());
             request_result.size.set(None);
+            request_result.request_time.set(0);
             request_result.body.set("".to_owned());
             request_result.lang.set("".to_owned());
             request_result.headers.set(Vec::new());
@@ -75,6 +78,7 @@ pub fn RequestResultPanel(
 
                 request_result.status_code.set(response.status_code.to_string());
                 request_result.size.set(response.size);
+                request_result.request_time.set(response.request_time);
                 match &response.body {
                     RestClientResponseBody::Text(body) => {
                         request_result.lang.set(
@@ -141,6 +145,7 @@ pub fn RequestResultPanel(
                         <Show when=move || { request_result.size.read().is_some() }>
                             <span class="dark:text-white">{move || format!("Size: {}", size::Size::from_bytes(request_result.size.get().unwrap_or_default()))}</span>
                         </Show>
+                        <span class="dark:text-white">{move || format!("Time: {}", humantime::format_duration(Duration::from_millis(request_result.request_time.get())).to_string())}</span>
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"
