@@ -71,10 +71,10 @@ pub async fn share_file_upload(
 pub async fn share_file_prepare_for_upload(
     request: Request,
     file_name: &str,
-    max_file_size: usize,
+    max_file_size: i32,
 ) -> Result<ShareFileUploadData, AppError> {
     let headers = request.headers().clone();
-    let bytes = to_bytes(request.into_body(), max_file_size).await?;
+    let bytes = to_bytes(request.into_body(), max_file_size as usize).await?;
     let mut file_data = bytes.to_vec();
     let image_thumbnail;
 
