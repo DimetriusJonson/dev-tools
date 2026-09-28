@@ -12,7 +12,7 @@ pub struct ShareFile {
 pub struct ShareFileInfo {
     pub file_name: String,
     pub mime_type: String,
-    pub file_size: i64,
+    pub file_size: i32,
 }
 
 pub async fn create_share_file_in_db(
