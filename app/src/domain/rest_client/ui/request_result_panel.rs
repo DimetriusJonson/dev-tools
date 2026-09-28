@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
 use crate::common::ui_utils::copy_to_clipboard;
@@ -145,7 +143,7 @@ pub fn RequestResultPanel(
                         <Show when=move || { request_result.size.read().is_some() }>
                             <span class="dark:text-white">{move || format!("Size: {}", size::Size::from_bytes(request_result.size.get().unwrap_or_default()))}</span>
                         </Show>
-                        <span class="dark:text-white">{move || format!("Time: {}", humantime::format_duration(Duration::from_millis(request_result.request_time.get())).to_string())}</span>
+                        <span class="dark:text-white">{move || format_request_time(request_result.request_time.get())}</span>
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"
@@ -261,5 +259,13 @@ async fn is_proxy_allow() -> bool {
             console_log(&format!("Error: {}", err));
             false
         }
+    }
+}
+
+fn format_request_time(value: u64) -> String {
+    if value > 1000 {
+        format!("Time: {:.2} s", value as f64 / 1000.0)
+    } else {
+        format!("Time: {} ms", value)
     }
 }
