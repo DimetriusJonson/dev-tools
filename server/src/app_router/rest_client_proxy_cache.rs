@@ -6,7 +6,7 @@ use model::constants::RC_BASE_URL_COOKIE_NAME;
 static PROXY_CACHE: LazyLock<RwLock<HashMap<String, String>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
-fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> String {
+fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<String>) -> String {
     let mut query_str = query
         .map(|q| {
             q.split('&')
@@ -22,7 +22,7 @@ fn build_proxy_cache_key(base_url: &str, path: &str, query: Option<&str>) -> Str
     format!("{}:{}{}", base_url, path, query_str)
 }
 
-pub fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -> Option<String> {
+pub fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<String>) -> Option<String> {
     let key = build_proxy_cache_key(base_url, path, query);
 
     //info!("get cache {}", key);
@@ -32,7 +32,7 @@ pub fn get_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>) -
     None
 }
 
-pub fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<&str>, value: String) {
+pub fn set_proxy_cached_value(base_url: &str, path: &str, query: Option<String>, value: String) {
     let key = build_proxy_cache_key(base_url, path, query);
 
     //info!("*** set cache {}", key);

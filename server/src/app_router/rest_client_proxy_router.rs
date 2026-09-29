@@ -58,7 +58,10 @@ pub async fn rest_client_proxy_middleware(
             if let Some(content_length) = response.content_length()
                 && content_length > app_state.max_content_length
             {
-                return Err(AppError::BadRequest(format!("Proxy middleware: The response size is too large (max={}, actual={}).", app_state.max_content_length, content_length)));
+                return Err(AppError::BadRequest(format!(
+                    "Proxy middleware: The response size is too large (max={}, actual={}).",
+                    app_state.max_content_length, content_length
+                )));
             }
 
             let response_status = response.status();
@@ -95,9 +98,9 @@ async fn build_request(
         .unwrap_or(None);
 
     let request_data = match extract_uri_query_params(req.uri()).get(RC_REQ_DATA_PARAM_NAME) {
-        Some(value) => Some(serde_json::from_str::<RestClientRequest>(
-            urlencoding::decode(value)?.as_ref(),
-        )?),
+        Some(value) => {
+            Some(serde_json::from_str::<RestClientRequest>(urlencoding::decode(value)?.as_ref())?)
+        }
         None => None,
     };
 
@@ -110,7 +113,7 @@ async fn build_request(
 
     let base_url = if let Some(referer) = &referer
         && let Some(parent_base_url) =
-            get_proxy_cached_value(rc_base_url, referer.path(), referer.query())
+            get_proxy_cached_value(rc_base_url, referer.path(), normalize_query(referer.query()))
         && let Ok(parent_base_url) = Url::parse(&parent_base_url)
     {
         parent_base_url
@@ -133,7 +136,7 @@ async fn build_request(
         set_proxy_cached_value(
             rc_base_url,
             req.uri().path(),
-            req.uri().query(),
+            normalize_query(req.uri().query()),
             url_param.to_owned(),
         );
     }
@@ -160,19 +163,8 @@ async fn build_request(
                 base_url.scheme(),
                 base_url.host_str().unwrap_or_default(),
                 referer.path(),
-                referer
-                    .query()
-                    .map(|query| {
-                        let q = query
-                            .split("&")
-                            .filter(|param| {
-                                !param.starts_with(&format!("{}=", RC_SRC_URL_PARAM_NAME))
-                                    && !param.starts_with(&format!("{}=", RC_REQ_DATA_PARAM_NAME))
-                            })
-                            .collect::<Vec<&str>>()
-                            .join("&");
-                        if !q.is_empty() { format!("?{}", q) } else { q }
-                    })
+                normalize_query(referer.query())
+                    .map(|q| if !q.is_empty() { format!("?{}", q) } else { q })
                     .unwrap_or_default()
             )
             .parse()?,
@@ -320,4 +312,17 @@ fn replace_cookies_domain(headers: &mut HeaderMap) {
             headers.append(header::SET_COOKIE, header_value);
         }
     }
+}
+
+fn normalize_query(query: Option<&str>) -> Option<String> {
+    query.map(|query| {
+        query
+            .split("&")
+            .filter(|param| {
+                !param.starts_with(&format!("{}=", RC_SRC_URL_PARAM_NAME))
+                    && !param.starts_with(&format!("{}=", RC_REQ_DATA_PARAM_NAME))
+            })
+            .collect::<Vec<&str>>()
+            .join("&")
+    })
 }
