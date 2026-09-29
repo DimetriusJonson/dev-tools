@@ -69,7 +69,6 @@ pub fn ShareFileViewPage() -> impl IntoView {
                     let download_srv_name = if local() {"share_local_file_download"} else {"share_file_download"};
                     let dowload_url = format!("/{}?id={}", download_srv_name, id());
 
-                    let remove_file_name = info.file_name.to_owned();
                     let download_and_remove_file_name = info.file_name.to_owned();
                     let dowload_and_remove_url = format!("/{}?id={}&remove=true", download_srv_name, id());
 
@@ -111,7 +110,7 @@ pub fn ShareFileViewPage() -> impl IntoView {
                             <ButtonLink label=move || t_display!(i18n, share_file_view_download_file, file_name = file_name.to_owned()).to_string() href={dowload_url.to_owned()} button_width=ButtonLinkWidth::Auto
                                 color=move || ButtonLinkColor::Primary prop:download=download_file_name />
 
-                            <ButtonLink label=move || t_display!(i18n, share_file_view_download_and_remove_file, file_name = remove_file_name.to_owned()).to_string() href={dowload_and_remove_url.to_owned()} button_width=ButtonLinkWidth::Auto
+                            <ButtonLink label=move || t_display!(i18n, share_file_view_download_and_remove_file).to_string() href={dowload_and_remove_url.to_owned()} button_width=ButtonLinkWidth::Auto
                                 color=move || ButtonLinkColor::Primary prop:download=download_and_remove_file_name />
                         </div>
                     }
