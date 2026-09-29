@@ -4,21 +4,19 @@ use axum::{
     extract::{Request, State},
     response::IntoResponse,
 };
-use http::HeaderValue;
+use http::{HeaderValue, StatusCode};
 use model::share_file::{
     share_file_info_dto::ShareFileInfoDto, share_file_server::ShareFileServerDto,
 };
 use nanoid::nanoid;
 
-use crate::{
-    common::{
-        app_error::AppError,
-        app_state::AppState,
-        compress_utils::compress_bytes,
-        dev_utils::{extract_uri_query_params, is_mime_image},
-        image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
-        net_utils::get_local_addrs,
-    },
+use crate::common::{
+    app_error::AppError,
+    app_state::AppState,
+    compress_utils::compress_bytes,
+    dev_utils::{extract_uri_query_params, is_mime_image},
+    image_utils::{convert_image_data_to_jpg, create_image_thumbnail},
+    net_utils::get_local_addrs,
 };
 
 pub const DEFAULT_CONTENT_TYPE: &str = "application/octet-stream";
@@ -120,6 +118,11 @@ pub async fn share_file_download(
         .map(|v| v.parse::<bool>().ok())
         .unwrap_or_default()
         .unwrap_or_default();
+    let remove: bool = params
+        .get("remove")
+        .map(|v| v.parse::<bool>().ok())
+        .unwrap_or_default()
+        .unwrap_or_default();
     if thumbnail {
         let mut headers = http::HeaderMap::new();
         headers.insert(http::header::CACHE_CONTROL, "public, max-age=3600".parse()?);
@@ -155,6 +158,10 @@ pub async fn share_file_download(
             format!("attachment; filename=\"{}\"", share_file.file_name).parse()?,
         );
 
+        if remove {
+            crate::db::share_files_db::delete_share_file_from_db(external_id, &pool).await?;
+        }
+
         Ok((headers, file_data).into_response())
     }
 }
@@ -176,15 +183,19 @@ pub async fn share_file_info(
     let params = extract_uri_query_params(request.uri());
     let external_id =
         params.get("id").ok_or(AppError::BadRequest("parameter 'id' is empty".to_owned()))?;
-    let share_file_info =
-        crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?;
-    let is_image = is_mime_image(&share_file_info.mime_type);
-    Ok(Json(ShareFileInfoDto {
-        file_name: share_file_info.file_name,
-        mime_type: share_file_info.mime_type,
-        is_image,
-        file_size: share_file_info.file_size
-    }))
+    if let Some(share_file_info) =
+        crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?
+    {
+        let is_image = is_mime_image(&share_file_info.mime_type);
+        Ok(Json(ShareFileInfoDto {
+            file_name: share_file_info.file_name,
+            mime_type: share_file_info.mime_type,
+            is_image,
+            file_size: share_file_info.file_size,
+        }))
+    } else {
+        Err(AppError::NotFound("Not found file".to_owned()))
+    }
 }
 
 #[cfg(not(feature = "db"))]
@@ -237,6 +248,8 @@ pub async fn share_file_info_ex_handler(
 
     if response.status().is_success() {
         Ok(Json(response.json::<ShareFileInfoDto>().await?))
+    } else if response.status() == StatusCode::NOT_FOUND {
+        Err(AppError::NotFound(response.text().await?))?
     } else {
         Err(AppError::SystemError(response.text().await?))?
     }

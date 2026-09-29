@@ -6,6 +6,7 @@ use std::{
 #[derive(Debug)]
 pub enum AppError {
     SystemError(String),
+    NotFound(String),
     BadRequest(String),
 }
 
@@ -14,6 +15,7 @@ impl Display for AppError {
         match self {
             AppError::SystemError(msg) => write!(f, "System error: {}", msg),
             AppError::BadRequest(msg) => write!(f, "Bad request: {}", msg),
+            AppError::NotFound(msg) => write!(f, "Error: {}", msg),
         }
     }
 }
@@ -139,6 +141,7 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
             }
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
+            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
         };
 
         (status, error_message).into_response()

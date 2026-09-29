@@ -49,6 +49,7 @@
     "share_file_upload_exceed_file_size":"File too big for cloud!",
 
     "share_file_view_download_file": "Download {{ file_name }}",
+    "share_file_view_download_and_remove_file": "Download and remove {{ file_name }}",
 
     "compare_page_source_tab": "Input data",
     "compare_page_result_tab":"Result",

@@ -71,11 +71,22 @@ pub async fn get_share_file_from_db(
 pub async fn get_share_file_info_from_db(
     external_id: &str,
     pool: &DbPool,
-) -> Result<ShareFileInfo, sqlx::Error> {
+) -> Result<Option<ShareFileInfo>, sqlx::Error> {
     sqlx::query_as::<_, ShareFileInfo>(
         "SELECT file_name, mime_type, length(file_data) as file_size FROM share_files WHERE external_id=$1",
     )
     .bind(external_id)
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await
+}
+
+pub async fn delete_share_file_from_db(
+    external_id: &str,
+    pool: &DbPool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM share_files WHERE external_id=$1")
+        .bind(external_id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }

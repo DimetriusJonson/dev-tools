@@ -1,5 +1,4 @@
 use gloo_net::http::Request;
-use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_query_map;
@@ -29,20 +28,30 @@ pub fn ShareFileViewPage() -> impl IntoView {
             .build()
         {
             Ok(request) => match request.send().await {
-                Ok(response) => match response.json::<ShareFileInfoDto>().await {
-                    Ok(dto) => Some(dto),
-                    Err(err) => {
-                        console_log(&format!("Error: {}", err));
+                Ok(response) => {
+                    if response.ok() {
+                        match response.json::<ShareFileInfoDto>().await {
+                            Ok(dto) => Some(dto),
+                            Err(err) => {
+                                show_error(format!("Error: {}", err), messages);
+                                None
+                            }
+                        }
+                    } else {
+                        match response.text().await {
+                            Ok(error) => show_error(format!("Error: {}", error), messages),
+                            Err(err) => show_error(format!("Error: {}", err), messages),
+                        }
                         None
                     }
-                },
+                }
                 Err(err) => {
-                    console_log(&format!("Error: {}", err));
+                    show_error(format!("Error: {}", err), messages);
                     None
                 }
             },
             Err(err) => {
-                console_log(&format!("Error: {}", err));
+                show_error(format!("Error: {}", err), messages);
                 None
             }
         }
@@ -59,6 +68,10 @@ pub fn ShareFileViewPage() -> impl IntoView {
                     let download_file_name = info.file_name.to_owned();
                     let download_srv_name = if local() {"share_local_file_download"} else {"share_file_download"};
                     let dowload_url = format!("/{}?id={}", download_srv_name, id());
+
+                    let remove_file_name = info.file_name.to_owned();
+                    let download_and_remove_file_name = info.file_name.to_owned();
+                    let dowload_and_remove_url = format!("/{}?id={}&remove=true", download_srv_name, id());
 
                     if info.file_size < 100 * 1024 && let Some(lang) = get_mime_code_lang(&info.mime_type) {
                         set_code_lang.set(lang.to_owned());
@@ -94,8 +107,13 @@ pub fn ShareFileViewPage() -> impl IntoView {
                             }
                         </Show>
 
-                        <ButtonLink label=move || t_display!(i18n, share_file_view_download_file, file_name = file_name.to_owned()).to_string() href={dowload_url.to_owned()} button_width=ButtonLinkWidth::Auto
-                            color=move || ButtonLinkColor::Primary prop:download=download_file_name />
+                        <div class="flex gap-4">
+                            <ButtonLink label=move || t_display!(i18n, share_file_view_download_file, file_name = file_name.to_owned()).to_string() href={dowload_url.to_owned()} button_width=ButtonLinkWidth::Auto
+                                color=move || ButtonLinkColor::Primary prop:download=download_file_name />
+
+                            <ButtonLink label=move || t_display!(i18n, share_file_view_download_and_remove_file, file_name = remove_file_name.to_owned()).to_string() href={dowload_and_remove_url.to_owned()} button_width=ButtonLinkWidth::Auto
+                                color=move || ButtonLinkColor::Primary prop:download=download_and_remove_file_name />
+                        </div>
                     }
                 })
             })}

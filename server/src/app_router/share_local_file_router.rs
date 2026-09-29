@@ -47,11 +47,11 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
             file_name: data.file_name.to_owned(),
             mime_type: data.mime_type.to_owned(),
             is_image,
-            file_size: data.file_data.len() as i32
+            file_size: data.file_data.len() as i32,
         })
         .into_response())
     } else {
-        Err(AppError::SystemError(format!("Not found file id={}!", external_id)))
+        Err(AppError::NotFound(format!("Not found file id={}!", external_id)))
     }
 }
 
@@ -60,8 +60,9 @@ pub async fn share_local_file_download(request: Request) -> Result<impl IntoResp
     let params = extract_uri_query_params(request.uri());
     let external_id = params.get("id").unwrap_or(&"");
     let thumbnail = params.get("thumbnail").unwrap_or(&"false").parse::<bool>()?;
+    let remove = params.get("remove").unwrap_or(&"false").parse::<bool>()?;
 
-    let local_db = LOCAL_SHARE_DB.lock().unwrap();
+    let mut local_db = LOCAL_SHARE_DB.lock().unwrap();
     if let Some(data) = local_db.get(external_id.to_owned()) {
         if thumbnail {
             let mut headers = HeaderMap::new();
@@ -93,9 +94,13 @@ pub async fn share_local_file_download(request: Request) -> Result<impl IntoResp
                 format!("attachment; filename=\"{}\"", data.file_name).parse()?,
             );
 
+            if remove {
+                local_db.remove(external_id.to_owned());
+            }
+
             Ok((headers, file_data).into_response())
         }
     } else {
-        Err(AppError::SystemError(format!("Not found file id={}!", external_id)))
+        Err(AppError::NotFound(format!("Not found file id={}!", external_id)))
     }
 }
