@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use gloo_net::http::Request;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -5,6 +7,7 @@ use leptos_router::hooks::use_query_map;
 use model::share_file::share_file_info_dto::ShareFileInfoDto;
 
 use crate::components::layout::message_banner::{Messages, show_error};
+use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::button_link::{ButtonLink, ButtonLinkColor, ButtonLinkWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::i18n::*;
@@ -69,7 +72,6 @@ pub fn ShareFileViewPage() -> impl IntoView {
                     let download_srv_name = if local() {"share_local_file_download"} else {"share_file_download"};
                     let dowload_url = format!("/{}?id={}", download_srv_name, id());
 
-                    let download_and_remove_file_name = info.file_name.to_owned();
                     let dowload_and_remove_url = format!("/{}?id={}&remove=true", download_srv_name, id());
 
                     if info.file_size < 100 * 1024 && let Some(lang) = get_mime_code_lang(&info.mime_type) {
@@ -110,8 +112,23 @@ pub fn ShareFileViewPage() -> impl IntoView {
                             <ButtonLink label=move || t_display!(i18n, share_file_view_download_file, file_name = file_name.to_owned()).to_string() href={dowload_url.to_owned()} button_width=ButtonLinkWidth::Auto
                                 color=move || ButtonLinkColor::Primary prop:download=download_file_name />
 
-                            <ButtonLink label=move || t_display!(i18n, share_file_view_download_and_remove_file).to_string() href={dowload_and_remove_url.to_owned()} button_width=ButtonLinkWidth::Auto
-                                color=move || ButtonLinkColor::Primary prop:download=download_and_remove_file_name />
+                            <Button
+                                title=move || "".to_owned()
+                                label=move || t_string!(i18n, share_file_view_download_and_remove_file).to_owned()
+                                button_width=ButtonWidth::Auto
+                                loading=move || false
+                                on_click=move |_| {
+                                    window().location().set_href(&dowload_and_remove_url).unwrap();
+                                    set_timeout(
+                                        move || {
+                                            share_info_resource.set(None);
+                                        },
+                                        Duration::from_secs(1),
+                                    );
+                                }
+                                disabled=move || false
+                            />
+
                         </div>
                     }
                 })
