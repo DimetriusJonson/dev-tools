@@ -149,7 +149,9 @@ pub fn RequestResultPreviewer(
                     .flat_map(|value| value.split(';'))
                     .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
                 {
-                    create_cookie(cookie.name(), cookie.value(), None).unwrap();
+                    if let Err(err) = create_cookie(cookie.name(), cookie.value(), None) {
+                        show_error(err, messages);
+                    }
                 }
 
                 Some(url.to_string())

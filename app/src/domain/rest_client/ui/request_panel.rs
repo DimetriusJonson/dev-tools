@@ -69,11 +69,11 @@ fn create_request_watcher(
     Effect::watch(
         move || rc_context.request.get(),
         move |value, prev, _| {
-            if prev.is_none()
-                || value.id != prev.unwrap().id
-                || rc_context.project.read_untracked().parse::<i32>().unwrap_or(0)
-                    != prev.unwrap().project_id
-            {
+            if prev.is_none_or(|prev| {
+                value.id != prev.id
+                    || rc_context.project.read_untracked().parse::<i32>().unwrap_or(0)
+                        != prev.project_id
+            }) {
                 params.read_untracked().url.set(value.url.to_owned());
                 params.read_untracked().method.set(value.method.to_owned());
 
@@ -94,7 +94,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
     Effect::watch(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
+            if prev.is_none_or(|prev| value != prev) {
                 rc_context.request.write().url = value.to_owned();
             }
         },
@@ -104,7 +104,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
     Effect::watch(
         move || params.read_untracked().method.get(),
         move |value, prev, _| {
-            if prev.is_none() || value != prev.unwrap() {
+            if prev.is_none_or(|prev| value != prev) {
                 rc_context.request.write().method = value.to_owned();
             }
         },

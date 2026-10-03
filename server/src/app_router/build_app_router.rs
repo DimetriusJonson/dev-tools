@@ -4,7 +4,7 @@ use axum::response::Response as AxumResponse;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Router, middleware};
-use http::{StatusCode, Uri};
+use http::Uri;
 use leptos::prelude::*;
 use tower::ServiceExt;
 use tower_http::compression::CompressionLayer;
@@ -13,7 +13,9 @@ use tower_http::trace::TraceLayer;
 
 use crate::app_router::index_router::index_handler;
 use crate::app_router::json_format_router::format_json_handler;
-use crate::app_router::rest_client_proxy_router::{rest_client_proxy_middleware, rest_client_proxy_allow};
+use crate::app_router::rest_client_proxy_router::{
+    rest_client_proxy_allow, rest_client_proxy_middleware,
+};
 use crate::app_router::rest_client_router::{
     rest_client_attachment_download_handler, rest_client_send_handler,
 };
@@ -26,6 +28,7 @@ use crate::app_router::share_local_file_router::{
 };
 use crate::app_router::test_json_router::test_json_handler;
 use crate::app_router::xml_format_router::format_xml_handler;
+use crate::common::app_error::AppError;
 use crate::common::app_state::AppState;
 use crate::db::DbPool;
 
@@ -113,22 +116,18 @@ async fn get_static_file(
     uri: Uri,
     root: &str,
     no_cache: bool,
-) -> Result<Response<AxumBody>, (StatusCode, String)> {
-    let req = Request::builder().uri(uri.clone()).body(AxumBody::empty()).unwrap();
-    match ServeDir::new(root).oneshot(req).await {
-        Ok(mut response) => {
-            if no_cache {
-                response.headers_mut().insert(
-                    "Cache-Control",
-                    "no-cache, no-store, must-revalidate".parse().unwrap(),
-                );
-                response.headers_mut().insert("Pragma", "no-cache".parse().unwrap());
-                response.headers_mut().insert("Expires", "0".parse().unwrap());
-            }
-            Ok(response.map(AxumBody::new))
-        }
-        Err(err) => {
-            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {err}")))
-        }
+) -> Result<Response<AxumBody>, AppError> {
+    let req = Request::builder().uri(uri.clone()).body(AxumBody::empty())?;
+    let mut response = ServeDir::new(root)
+        .oneshot(req)
+        .await
+        .map_err(|err| AppError::SystemError(err.to_string()))?;
+    if no_cache {
+        response
+            .headers_mut()
+            .insert("Cache-Control", "no-cache, no-store, must-revalidate".parse()?);
+        response.headers_mut().insert("Pragma", "no-cache".parse()?);
+        response.headers_mut().insert("Expires", "0".parse()?);
     }
+    Ok(response.map(AxumBody::new))
 }

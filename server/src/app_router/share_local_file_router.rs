@@ -28,7 +28,7 @@ pub async fn share_local_file_upload(request: Request) -> Result<impl IntoRespon
 
     let prepared_data = share_file_prepare_for_upload(request, file_name, i32::MAX).await?;
 
-    let mut local_db = LOCAL_SHARE_DB.lock().unwrap();
+    let mut local_db = LOCAL_SHARE_DB.lock().expect("Failed lock local share db");
     let external_id = prepared_data.external_id.to_owned();
     local_db.insert(external_id.to_owned(), prepared_data);
 
@@ -40,7 +40,7 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
     let params = extract_uri_query_params(request.uri());
     let external_id = params.get("id").unwrap_or(&"");
 
-    let local_db = LOCAL_SHARE_DB.lock().unwrap();
+    let local_db = LOCAL_SHARE_DB.lock().expect("Failed lock local share db");
     if let Some(data) = local_db.get(external_id.to_owned()) {
         let is_image = is_mime_image(&data.mime_type);
         Ok(Json(ShareFileInfoDto {
@@ -62,7 +62,7 @@ pub async fn share_local_file_download(request: Request) -> Result<impl IntoResp
     let thumbnail = params.get("thumbnail").unwrap_or(&"false").parse::<bool>()?;
     let remove = params.get("remove").unwrap_or(&"false").parse::<bool>()?;
 
-    let mut local_db = LOCAL_SHARE_DB.lock().unwrap();
+    let mut local_db = LOCAL_SHARE_DB.lock().expect("Failed lock local share db");
     if let Some(data) = local_db.get(external_id.to_owned()) {
         if thumbnail {
             let mut headers = HeaderMap::new();

@@ -29,7 +29,7 @@ pub fn Tabs(
             {
                 let tabs = items();
                 move |value, prev, _| {
-                    if (prev.is_none() || value != prev.unwrap())
+                    if (prev.is_none_or(|prev| value != prev))
                         && let Err(err) = update_selected(&tabs.clone(), *value)
                     {
                         console_log(&err.to_string());

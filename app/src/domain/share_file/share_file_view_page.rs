@@ -118,7 +118,9 @@ pub fn ShareFileViewPage() -> impl IntoView {
                                 button_width=ButtonWidth::Auto
                                 loading=move || false
                                 on_click=move |_| {
-                                    window().location().set_href(&dowload_and_remove_url).unwrap();
+                                    if let Err(err) = window().location().set_href(&dowload_and_remove_url) {
+                                        show_error(err.as_string().unwrap_or("Failed set href".to_owned()), messages);
+                                    }
                                     set_timeout(
                                         move || {
                                             share_info_resource.set(None);

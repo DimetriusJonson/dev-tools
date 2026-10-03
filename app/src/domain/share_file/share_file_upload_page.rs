@@ -48,9 +48,11 @@ pub fn ShareFileUploadPage() -> impl IntoView {
 
     Effect::watch(
         move || shared_url.get(),
-        move |value, _prev, _| {
-            let qrcode = QRBuilder::new(value.to_owned()).ecl(ECL::M).build().unwrap();
-            set_qr_code_svg.set(SvgBuilder::default().shape(Shape::Square).to_str(&qrcode));
+        move |value, _prev, _| match QRBuilder::new(value.to_owned()).ecl(ECL::M).build() {
+            Ok(qrcode) => {
+                set_qr_code_svg.set(SvgBuilder::default().shape(Shape::Square).to_str(&qrcode))
+            }
+            Err(err) => show_error(err.to_string(), messages),
         },
         false,
     );

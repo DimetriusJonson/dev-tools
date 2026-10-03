@@ -45,7 +45,7 @@ pub async fn rest_client_proxy_middleware(
         .unwrap_or_default();
 
     if (!routes_paths.contains(&req.uri().path())
-        || (referer.is_some() && !routes_paths.contains(&referer.to_owned().unwrap().path())))
+        || (referer.to_owned().is_some_and(|referer| !routes_paths.contains(&referer.path()))))
         && is_proxy_allow(&req, &app_state, addr)
     {
         let cookie_jar = CookieJar::from_headers(req.headers());

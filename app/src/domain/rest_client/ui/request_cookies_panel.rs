@@ -32,12 +32,11 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
         let actual_cookie =
             value.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie");
 
-        if prev_cookie.is_none()
-            || (prev_cookie.is_some()
-                && actual_cookie.is_some()
-                && prev_cookie.unwrap().value.get_untracked()
-                    != actual_cookie.unwrap().value.get_untracked())
-        {
+        if prev_cookie.is_none_or(|prev_cookie| {
+            actual_cookie.is_some_and(|actual_cookie| {
+                prev_cookie.value.get_untracked() != actual_cookie.value.get_untracked()
+            })
+        }) {
             let actual_cookies =
                 parse_cookies(&actual_cookie.map(|h| h.value.get_untracked()).unwrap_or_default());
 

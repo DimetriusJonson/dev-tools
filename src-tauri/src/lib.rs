@@ -50,7 +50,7 @@ fn start_backend_server(
             true,
         )
         .await
-        .unwrap();
+        .expect("Failed start server!");
     });
     app_handle.manage(ServerTask(server_task));
 

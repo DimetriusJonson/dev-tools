@@ -53,7 +53,7 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     Effect::watch(
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
-            if (prev.is_none() || value != prev.unwrap())
+            if (prev.is_none_or(|prev| value != prev))
                 && let Ok(url) = Url::parse(value)
             {
                 safe_updating_ui_value(update_lock, move || {
