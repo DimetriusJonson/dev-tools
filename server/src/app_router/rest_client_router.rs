@@ -30,7 +30,8 @@ pub async fn rest_client_send_handler(
 
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH)?;
     let request_result = build_request(&request, None)?.send().await;
-    let request_time = (SystemTime::now().duration_since(UNIX_EPOCH)? - start_time).as_millis() as u64;
+    let request_time =
+        (SystemTime::now().duration_since(UNIX_EPOCH)? - start_time).as_millis() as u64;
 
     match request_result {
         Ok(response) => {
@@ -54,27 +55,31 @@ pub async fn rest_client_send_handler(
                 .map(|content_type| content_type.starts_with("image/"))
                 .unwrap_or(false)
             {
-                return Ok(Json(RestClientResponse {
-                    status_code,
-                    headers,
-                    body: RestClientResponseBody::Image,
-                    request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
-                    error: None,
-                    size: content_length,
-                    request_time,
-                }));
+                return Ok(Json(
+                    RestClientResponse::default()
+                        .with_status_code(status_code)
+                        .with_headers(headers)
+                        .with_body(RestClientResponseBody::Image)
+                        .with_request_raw(
+                            String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+                        )
+                        .with_size(content_length)
+                        .with_request_time(request_time),
+                ));
             }
 
             if let Some(file_name) = resolve_content_disposition(&request, &response).await? {
-                return Ok(Json(RestClientResponse {
-                    status_code,
-                    headers,
-                    body: RestClientResponseBody::Attachment(file_name),
-                    request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
-                    error: None,
-                    size: content_length,
-                    request_time,
-                }));
+                return Ok(Json(
+                    RestClientResponse::default()
+                        .with_status_code(status_code)
+                        .with_headers(headers)
+                        .with_body(RestClientResponseBody::Attachment(file_name))
+                        .with_request_raw(
+                            String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+                        )
+                        .with_size(content_length)
+                        .with_request_time(request_time),
+                ));
             }
 
             if let Some(content_length) = content_length
@@ -89,25 +94,24 @@ pub async fn rest_client_send_handler(
             let body = response.text().await?;
             let body_size = body.len() as u64;
 
-            Ok(Json(RestClientResponse {
-                status_code,
-                headers,
-                body: RestClientResponseBody::Text(body),
-                request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
-                error: None,
-                size: Some(content_length.unwrap_or(body_size)),
-                request_time,
-            }))
+            Ok(Json(
+                RestClientResponse::default()
+                    .with_status_code(status_code)
+                    .with_headers(headers)
+                    .with_body(RestClientResponseBody::Text(body))
+                    .with_request_raw(
+                        String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
+                    )
+                    .with_size(Some(content_length.unwrap_or(body_size)))
+                    .with_request_time(request_time),
+            ))
         }
-        Err(err) => Ok(Json(RestClientResponse {
-            status_code: 0,
-            headers: Vec::new(),
-            body: RestClientResponseBody::None,
-            request_raw: String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string(),
-            error: Some(err.to_string()),
-            size: None,
-            request_time,
-        })),
+        Err(err) => Ok(Json(
+            RestClientResponse::default()
+                .with_error(Some(err.to_string()))
+                .with_request_raw(String::from_utf8_lossy(&DUMP_REQUEST.lock().await).to_string())
+                .with_request_time(request_time),
+        )),
     }
 }
 
@@ -128,7 +132,7 @@ async fn resolve_content_disposition(
             return Ok(Some(file_name));
         } else {
             return Ok(Some(
-                Url::parse(&request.url)?
+                Url::parse(request.url())?
                     .path_segments()
                     .and_then(|mut ps| ps.next_back())
                     .map(|s| s.to_owned())
@@ -143,21 +147,21 @@ fn build_request(
     request: &RestClientRequest,
     dump_port: Option<u16>,
 ) -> Result<RequestBuilder, AppError> {
-    let method = Method::from_str(&request.method)?;
+    let method = Method::from_str(request.method())?;
     let mut headers = HeaderMap::new();
-    for (name, value) in &request.headers {
+    for (name, value) in request.headers() {
         headers.insert(HeaderName::from_str(name)?, HeaderValue::from_str(value)?);
     }
 
     let url;
     if let Some(dump_port) = dump_port {
-        let (new_url, old_host) = build_to_dump_receiver_url(request.url.to_owned(), dump_port)?;
+        let (new_url, old_host) = build_to_dump_receiver_url(request.url().to_owned(), dump_port)?;
         url = new_url;
         if !headers.contains_key(http::header::HOST) {
             headers.insert(http::header::HOST, HeaderValue::from_str(&old_host)?);
         }
     } else {
-        url = request.url.to_owned();
+        url = request.url().to_owned();
     };
 
     Ok(Client::builder()
@@ -165,7 +169,7 @@ fn build_request(
         .build()?
         .request(method, url)
         .headers(headers)
-        .body(reqwest::Body::from(request.body.to_owned())))
+        .body(reqwest::Body::from(request.body().to_owned())))
 }
 
 fn build_to_dump_receiver_url(

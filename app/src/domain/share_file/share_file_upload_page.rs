@@ -125,7 +125,7 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                         let mut result = Vec::new();
                         for server in servers {
                             result
-                                .push((Some(server.url.to_owned()), server.description.to_owned()));
+                                .push((Some(server.url().to_owned()), server.description().to_owned()));
                         }
                         result
                     }

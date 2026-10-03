@@ -43,12 +43,12 @@ pub async fn share_local_file_info(request: Request) -> Result<impl IntoResponse
     let local_db = LOCAL_SHARE_DB.lock().expect("Failed lock local share db");
     if let Some(data) = local_db.get(external_id.to_owned()) {
         let is_image = is_mime_image(&data.mime_type);
-        Ok(Json(ShareFileInfoDto {
-            file_name: data.file_name.to_owned(),
-            mime_type: data.mime_type.to_owned(),
+        Ok(Json(ShareFileInfoDto::new(
+            data.file_name.to_owned(),
+            data.mime_type.to_owned(),
             is_image,
-            file_size: data.file_data.len() as i32,
-        })
+            data.file_data.len() as i32,
+        ))
         .into_response())
     } else {
         Err(AppError::NotFound(format!("Not found file id={}!", external_id)))

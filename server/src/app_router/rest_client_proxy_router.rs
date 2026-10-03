@@ -144,7 +144,7 @@ async fn build_request(
     let mut reqwest_headers = match &request_data {
         Some(request_data) => {
             let mut headers = HeaderMap::new();
-            for h in &request_data.headers {
+            for h in request_data.headers() {
                 headers.append(HeaderName::from_str(&h.0)?, HeaderValue::from_str(&h.1)?);
             }
             headers
@@ -181,7 +181,7 @@ async fn build_request(
     remove_base_cookie(&mut reqwest_headers);
 
     let reqwest_method = match &request_data {
-        Some(request_data) => Method::from_str(&request_data.method)?,
+        Some(request_data) => Method::from_str(request_data.method())?,
         None => req.method().to_owned(),
     };
 
@@ -193,7 +193,7 @@ async fn build_request(
         .headers(reqwest_headers)
         .body({
             match &request_data {
-                Some(request_data) => reqwest::Body::from(request_data.body.to_owned()),
+                Some(request_data) => reqwest::Body::from(request_data.body().to_owned()),
                 None => {
                     let body_stream = req.into_body();
                     reqwest::Body::from(body::to_bytes(body_stream, usize::MAX).await?)

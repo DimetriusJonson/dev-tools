@@ -1,9 +1,12 @@
+use getset::{Getters, WithSetters};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, Getters, WithSetters)]
+#[get = "pub"]
+#[set_with = "pub"]
 pub struct RestClientRequest {
-    pub method: String,
-    pub url: String,
-    pub headers: Vec<(String, String)>,
-    pub body: String,
+    method: String,
+    url: String,
+    headers: Vec<(String, String)>,
+    body: String,
 }

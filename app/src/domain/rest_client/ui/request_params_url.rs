@@ -90,12 +90,11 @@ pub fn RequestParamsUrl(
                 }
             };
 
-            let rc_request = RestClientRequest {
-                method: params.method.get_untracked(),
-                url: params.url.get_untracked(),
-                headers,
-                body,
-            };
+            let rc_request = RestClientRequest::default()
+                .with_method(params.method.get_untracked())
+                .with_url(params.url.get_untracked())
+                .with_headers(headers)
+                .with_body(body);
 
             match AbortController::new() {
                 Ok(abort_controller) => {

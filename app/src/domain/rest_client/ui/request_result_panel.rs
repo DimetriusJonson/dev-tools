@@ -30,7 +30,7 @@ pub fn RequestResultPanel(
 
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
-            if let RestClientResponseBody::Text(body) = response.body {
+            if let RestClientResponseBody::Text(body) = response.body() {
                 copy_to_clipboard(&body);
             }
             show_info(
@@ -70,18 +70,18 @@ pub fn RequestResultPanel(
             request_result.attachment.set(("".to_owned(), "".to_owned()));
             request_result.image.set("".to_owned());
             if let Some(response) = value {
-                if let Some(error) = &response.error {
+                if let Some(error) = &response.error() {
                     show_error(error.to_owned(), messages);
                 };
 
-                request_result.status_code.set(response.status_code.to_string());
-                request_result.size.set(response.size);
-                request_result.request_time.set(response.request_time);
-                match &response.body {
+                request_result.status_code.set(response.status_code().to_string());
+                request_result.size.set(response.size());
+                request_result.request_time.set(response.request_time());
+                match &response.body() {
                     RestClientResponseBody::Text(body) => {
                         request_result.lang.set(
                             response
-                                .headers
+                                .headers()
                                 .iter()
                                 .filter(|v| v.0.to_lowercase() == "content-type")
                                 .filter_map(|v| get_media_type_code(&v.1))
@@ -103,8 +103,8 @@ pub fn RequestResultPanel(
                     RestClientResponseBody::None => (),
                 }
 
-                request_result.headers.set(response.headers.clone());
-                request_result.request_raw.set(response.request_raw.to_owned());
+                request_result.headers.set(response.headers().clone());
+                request_result.request_raw.set(response.request_raw().to_owned());
             };
 
             if params.read_untracked().formatting.get_untracked() {

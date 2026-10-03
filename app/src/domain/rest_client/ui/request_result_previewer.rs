@@ -110,18 +110,18 @@ pub fn RequestResultPreviewer(
 
                 match params.read_untracked().get_body() {
                     Ok(body) => {
-                        let request = RestClientRequest {
-                            method: rc_context.request.get_untracked().method,
-                            url: "".to_owned(),
-                            headers: params
-                                .read_untracked()
-                                .headers
-                                .read_untracked()
-                                .iter()
-                                .map(|h| (h.name.get_untracked(), h.value.get_untracked()))
-                                .collect::<Vec<(String, String)>>(),
-                            body,
-                        };
+                        let request = RestClientRequest::default()
+                            .with_method(rc_context.request.get_untracked().method)
+                            .with_headers(
+                                params
+                                    .read_untracked()
+                                    .headers
+                                    .read_untracked()
+                                    .iter()
+                                    .map(|h| (h.name.get_untracked(), h.value.get_untracked()))
+                                    .collect::<Vec<(String, String)>>(),
+                            )
+                            .with_body(body);
                         if let Ok(json) =
                             serde_json::to_string(&request).map_err(|err| err.to_string())
                         {

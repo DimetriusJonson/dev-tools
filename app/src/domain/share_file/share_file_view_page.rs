@@ -67,14 +67,15 @@ pub fn ShareFileViewPage() -> impl IntoView {
         <div class="flex flex-col items-center justify-center gap-4 py-12 text-xs md:text-base dark:text-white">
             {move || share_info_resource.get().map(|info| {
                 info.map(|info|{
-                    let file_name = info.file_name.to_owned();
-                    let download_file_name = info.file_name.to_owned();
+                    let is_image = info.is_image();
+                    let file_name = info.file_name().to_owned();
+                    let download_file_name = info.file_name().to_owned();
                     let download_srv_name = if local() {"share_local_file_download"} else {"share_file_download"};
                     let dowload_url = format!("/{}?id={}", download_srv_name, id());
 
                     let dowload_and_remove_url = format!("/{}?id={}&remove=true", download_srv_name, id());
 
-                    if info.file_size < 100 * 1024 && let Some(lang) = get_mime_code_lang(&info.mime_type) {
+                    if info.file_size() < 100 * 1024 && let Some(lang) = get_mime_code_lang(info.mime_type()) {
                         set_code_lang.set(lang.to_owned());
                         load_text(dowload_url.to_owned(), set_text, messages);
                     } else {
@@ -82,11 +83,11 @@ pub fn ShareFileViewPage() -> impl IntoView {
                     }
 
                     view! {
-                        <Show when=move || { info.is_image }>
+                        <Show when=move || { is_image }>
                             {
                                 view! {
                                     <div class="items-center justify-center">
-                                        <img src={format!("/{}?id={}&thumbnail=true", download_srv_name, id())} alt={info.file_name.to_owned()}/>
+                                        <img src={format!("/{}?id={}&thumbnail=true", download_srv_name, id())} alt={info.file_name().to_owned()}/>
                                     </div>
                                 }.into_view()
                             }

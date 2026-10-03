@@ -1,5 +1,8 @@
 use crate::{
-    common::ui_utils::save_file_to_disk, components::layout::message_banner::{Messages, show_error, show_info}, domain::rest_client::model::request_params::RequestParams, i18n::*,
+    common::ui_utils::save_file_to_disk,
+    components::layout::message_banner::{Messages, show_error, show_info},
+    domain::rest_client::model::request_params::RequestParams,
+    i18n::*,
 };
 use gloo_net::http::Request;
 use leptos::{prelude::*, task::spawn_local};
@@ -25,12 +28,10 @@ pub fn RequestResultAttachment(
             }
 
             let attachment = attachment.get_untracked();
-            let rc_request = RestClientRequest {
-                method: "GET".to_owned(),
-                url: attachment.0,
-                headers,
-                body: "".to_owned(),
-            };
+            let rc_request = RestClientRequest::default()
+                .with_method("GET".to_owned())
+                .with_url(attachment.0)
+                .with_headers(headers);
 
             set_in_progress.set(true);
             match Request::post("/rest_client_attachment_download").json(&rc_request) {

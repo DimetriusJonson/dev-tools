@@ -187,12 +187,12 @@ pub async fn share_file_info(
         crate::db::share_files_db::get_share_file_info_from_db(external_id, &pool).await?
     {
         let is_image = is_mime_image(&share_file_info.mime_type);
-        Ok(Json(ShareFileInfoDto {
-            file_name: share_file_info.file_name,
-            mime_type: share_file_info.mime_type,
+        Ok(Json(ShareFileInfoDto::new(
+            share_file_info.file_name,
+            share_file_info.mime_type,
             is_image,
-            file_size: share_file_info.file_size,
-        }))
+            share_file_info.file_size,
+        )))
     } else {
         Err(AppError::NotFound("Not found file".to_owned()))
     }
@@ -220,9 +220,11 @@ pub async fn share_file_custom_servers_handler(
     Ok(Json(
         addrs
             .iter()
-            .map(|a| ShareFileServerDto {
-                url: format!("http://{}:{}", a.0.to_owned(), site_addr.port()),
-                description: format!("{} ({})", a.1, a.0),
+            .map(|a| {
+                ShareFileServerDto::new(
+                    format!("http://{}:{}", a.0.to_owned(), site_addr.port()),
+                    format!("{} ({})", a.1, a.0),
+                )
             })
             .collect(),
     ))
