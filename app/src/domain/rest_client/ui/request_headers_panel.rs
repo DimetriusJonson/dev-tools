@@ -20,12 +20,12 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
         <PropertyEditor
             key_label=move || t_display!(i18n, rest_client_header_name).to_string()
             value_label=move || t_display!(i18n, rest_client_header_value).to_string()
-            items=move || params.read_untracked().headers.read().vec_owned()
+            items=move || params.read_untracked().headers().read().vec_owned()
             key_options=HEADERS_AUTOCOMPLETE
             value_options=MEDIA_TYPES_AUTOCOMPLETE
             on_add=move |v:(String, String)| {
                 let name_converted = v.0.to_lowercase();
-                if params.read_untracked().headers.read_untracked().iter().find(|h|h.name().read_untracked().to_lowercase() == name_converted).is_none() {
+                if params.read_untracked().headers().read_untracked().iter().find(|h|h.name().read_untracked().to_lowercase() == name_converted).is_none() {
                     if let Err(err) = HeaderName::from_str(&v.0) {
                         show_error(err.to_string(), messages);
                         return;
@@ -35,17 +35,17 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                         show_error(err.to_string(), messages);
                         return;
                     }
-                    params.read_untracked().headers.write().push(RequestHeader::new(v.0, v.1));
+                    params.read_untracked().set_headers().write().push(RequestHeader::new(v.0, v.1));
                 }
             }
             on_delete=move |id:String| {
-                params.read_untracked().headers.write().remove_by_id(id);
+                params.read_untracked().set_headers().write().remove_by_id(id);
             }
             on_change_key=move |v: (String, String)| {
                 if let Err(err) = HeaderName::from_str(&v.1) {
                     show_error(err.to_string(), messages);
                 } else {
-                    params.read_untracked().headers.write().iter_mut()
+                    params.read_untracked().set_headers().write().iter_mut()
                         .filter(|h|*h.id() == v.0)
                         .for_each(|h| {h.set_name().set(v.1.to_owned())});
                 }
@@ -54,7 +54,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 if let Err(err) = HeaderValue::from_str(&v.1) {
                     show_error(err.to_string(), messages);
                 } else {
-                    params.read_untracked().headers.write().iter_mut()
+                    params.read_untracked().set_headers().write().iter_mut()
                         .filter(|h|*h.id() == v.0)
                         .for_each(|h| {h.set_value().set(v.1.to_owned())});
                 }

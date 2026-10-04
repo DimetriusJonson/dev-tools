@@ -23,27 +23,27 @@ fn build_curl_cmd(
     result.push_str(&format!("{} ", process_name));
 
     // url
-    result.push_str(&format!("{}{}{}", quote, request_params.url.read_untracked(), quote));
+    result.push_str(&format!("{}{}{}", quote, request_params.url().read_untracked(), quote));
 
     //method
-    if request_params.method.read_untracked() != "GET".to_owned()
-        || !request_params.body.read_untracked().is_empty()
+    if request_params.method().read_untracked() != "GET".to_owned()
+        || !request_params.body().read_untracked().is_empty()
     {
-        result.push_str(&format!(" {}-X {}", new_line, request_params.method.read_untracked()));
+        result.push_str(&format!(" {}-X {}", new_line, request_params.method().read_untracked()));
     }
 
     //headers
-    if !request_params.body.read_untracked().is_empty() && request_params.content_type().is_none() {
+    if !request_params.body().read_untracked().is_empty() && request_params.content_type().is_none() {
         add_header_param(
             &mut result,
             "Content-Type",
-            request_params.body_type.get_untracked().content_type(),
+            request_params.body_type().get_untracked().content_type(),
             quote,
             new_line,
         );
     }
 
-    for header in request_params.headers.read_untracked().iter() {
+    for header in request_params.headers().read_untracked().iter() {
         add_header_param(
             &mut result,
             &header.name().read_untracked(),
@@ -54,12 +54,12 @@ fn build_curl_cmd(
     }
 
     // body
-    let body = match request_params.body_type.get_untracked() {
+    let body = match request_params.body_type().get_untracked() {
         RequestBodyKind::Text | RequestBodyKind::Json | RequestBodyKind::Xml => {
-            escape_string(&request_params.body.read_untracked())
+            escape_string(&request_params.body().read_untracked())
         }
         RequestBodyKind::Formencoded => {
-            match request_params.body_formencoded.get_untracked().to_urlencoded_string() {
+            match request_params.body_formencoded().get_untracked().to_urlencoded_string() {
                 Ok(url) => url,
                 Err(_err) => "".to_owned(),
             }

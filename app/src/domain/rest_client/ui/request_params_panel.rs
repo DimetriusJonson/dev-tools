@@ -41,7 +41,7 @@ pub fn RequestParamsPanel(
     let tab_cookies_ref = NodeRef::<Div>::new();
 
     Effect::watch(
-        move || params.read_untracked().body_type.get(),
+        move || params.read_untracked().body_type().get(),
         move |value, _prev, _| {
             safe_updating_ui_value(update_lock, {
                 let body_type = value.clone();
@@ -72,29 +72,29 @@ pub fn RequestParamsPanel(
                         _ => RequestBodyKind::Json,
                     };
                     set_body_lang.set(body_type.to_string());
-                    params.read_untracked().body_type.set(body_type);
+                    params.read_untracked().set_body_type().set(body_type);
                 }
             });
         },
         false,
     );
 
-    let on_format_body = move |_| match params.read_untracked().body_type.get_untracked() {
+    let on_format_body = move |_| match params.read_untracked().body_type().get_untracked() {
         RequestBodyKind::Json => {
             let formatted =
-                format_json(params.read_untracked().body.read_untracked().as_borrowed(), 4);
-            params.read_untracked().body.set(formatted);
+                format_json(params.read_untracked().body().read_untracked().as_borrowed(), 4);
+            params.read_untracked().set_body().set(formatted);
         }
         RequestBodyKind::Xml => {
             let formatted =
-                match format_xml(params.read_untracked().body.read_untracked().as_borrowed(), 4) {
+                match format_xml(params.read_untracked().body().read_untracked().as_borrowed(), 4) {
                     Ok(formatted_xml) => formatted_xml,
                     Err(err) => {
                         show_error(err.to_string(), messages);
                         return;
                     }
                 };
-            params.read_untracked().body.set(formatted);
+            params.read_untracked().set_body().set(formatted);
         }
         RequestBodyKind::Text => (),
         RequestBodyKind::Formencoded => (),
@@ -106,7 +106,7 @@ pub fn RequestParamsPanel(
             <div class="overflow-y-auto flex-1 flex flex-col gap-4">
                 <div node_ref=params_ref class="flex flex-col overflow-y-auto">
                     <Tabs class_name="".to_owned()
-                        tab_selected=params.read_untracked().params_tab_selected.read_only() set_tab_selected=params.read_untracked().params_tab_selected.write_only()
+                        tab_selected=params.read_untracked().params_tab_selected() set_tab_selected=params.read_untracked().set_params_tab_selected()
                         items=move || vec![
                             TabItem::new_simple(t_string!(i18n, rest_client_headers_tab), tab_headers_ref),
                             TabItem::new_simple(t_string!(i18n, rest_client_query_tab), tab_query_ref),
@@ -152,11 +152,11 @@ pub fn RequestParamsPanel(
                         <CodeMirrorEditor
                             element_id="request-body-code-editor".to_owned()
                             lang=body_lang
-                            value=params.read_untracked().body.read_only()
-                            set_value=params.read_untracked().body.write_only()
+                            value=params.read_untracked().body()
+                            set_value=params.read_untracked().set_body()
                          />
 
-                        <Show when=move || params.read_untracked().body_type.get() != RequestBodyKind::Text>
+                        <Show when=move || params.read_untracked().body_type().get() != RequestBodyKind::Text>
                             <Button
                                 label=move || "¶".to_owned()
                                 title=move || t_string!(i18n, rest_client_req_body_format_title).to_owned()

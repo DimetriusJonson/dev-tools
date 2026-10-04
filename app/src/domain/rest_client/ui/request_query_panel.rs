@@ -51,7 +51,7 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     );
 
     Effect::watch(
-        move || params.read_untracked().url.get(),
+        move || params.read_untracked().url().get(),
         move |value, prev, _| {
             if (prev.is_none_or(|prev| value != prev))
                 && let Ok(url) = Url::parse(value)
@@ -80,7 +80,7 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
         move || items.get(),
         move |value, _prev, _| {
             if !update_lock.get_untracked()
-                && let Ok(mut url) = Url::from_str(&params.get_untracked().url.read_untracked())
+                && let Ok(mut url) = Url::from_str(&params.get_untracked().url().read_untracked())
             {
                 url.query_pairs_mut().clear();
                 for item in value {
@@ -89,9 +89,9 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                 }
 
                 let url_str = url.to_string().trim_end_matches("?").to_owned();
-                if params.read_untracked().url.read_untracked() != url_str {
+                if params.read_untracked().url().read_untracked() != url_str {
                     safe_updating_ui_value(update_lock, move || {
-                        params.read_untracked().url.set(url_str.to_owned())
+                        params.read_untracked().set_url().set(url_str.to_owned())
                     });
                 }
             }

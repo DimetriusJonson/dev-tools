@@ -74,12 +74,12 @@ fn create_request_watcher(
                     || rc_context.project.read_untracked().parse::<i32>().unwrap_or(0)
                         != prev.project_id()
             }) {
-                params.read_untracked().url.set(value.url().to_owned());
-                params.read_untracked().method.set(value.method().to_owned());
+                params.read_untracked().set_url().set(value.url().to_owned());
+                params.read_untracked().set_method().set(value.method().to_owned());
 
                 params.read_untracked().read_from_store(rc_context.clone(), value.id());
 
-                if params.read_untracked().save_response.get_untracked() {
+                if params.read_untracked().save_response().get_untracked() {
                     response.read_from_store(rc_context.clone(), value.id());
                 } else {
                     response.clear();
@@ -92,7 +92,7 @@ fn create_request_watcher(
 
 fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestClientContext) {
     Effect::watch(
-        move || params.read_untracked().url.get(),
+        move || params.read_untracked().url().get(),
         move |value, prev, _| {
             if prev.is_none_or(|prev| value != prev) {
                 rc_context.request.write().set_url(value.to_owned());
@@ -102,7 +102,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
     );
 
     Effect::watch(
-        move || params.read_untracked().method.get(),
+        move || params.read_untracked().method().get(),
         move |value, prev, _| {
             if prev.is_none_or(|prev| value != prev) {
                 rc_context.request.write().set_method(value.to_owned());

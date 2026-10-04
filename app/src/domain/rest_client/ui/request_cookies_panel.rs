@@ -61,13 +61,13 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     Effect::watch(
         move || rc_context.request.get(),
         move |_value, _prev, _| {
-            update_items(None, &params.read_untracked().headers.read_untracked());
+            update_items(None, &params.read_untracked().headers().read_untracked());
         },
         false,
     );
 
     Effect::watch(
-        move || params.read_untracked().headers.get(),
+        move || params.read_untracked().headers().get(),
         move |value, prev, _| {
             update_items(prev, value);
         },
@@ -90,7 +90,7 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
 
                 let cookie_header = params
                     .get_untracked()
-                    .headers
+                    .headers()
                     .get_untracked()
                     .iter()
                     .find(|h| h.name().read_untracked().to_lowercase() == "cookie")
@@ -102,7 +102,7 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                             safe_updating_ui_value(update_lock, move || {
                                 params
                                     .read_untracked()
-                                    .headers
+                                    .set_headers()
                                     .write()
                                     .iter_mut()
                                     .filter(|h| h.id() == cookie_header.id())
@@ -111,14 +111,14 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                         }
                     } else {
                         safe_updating_ui_value(update_lock, move || {
-                            params.read_untracked().headers.write().remove_by_name("cookie");
+                            params.read_untracked().set_headers().write().remove_by_name("cookie");
                         });
                     }
                 } else {
                     safe_updating_ui_value(update_lock, move || {
                         params
                             .read_untracked()
-                            .headers
+                            .set_headers()
                             .write()
                             .push(RequestHeader::new("cookie".to_owned(), cookie_value.to_owned()));
                     });

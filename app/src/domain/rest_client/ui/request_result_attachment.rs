@@ -23,7 +23,7 @@ pub fn RequestResultAttachment(
     let on_attachment_download_click = move |_| {
         spawn_local(async move {
             let mut headers = Vec::new();
-            for header in params.read_untracked().headers.get_untracked().iter() {
+            for header in params.read_untracked().headers().get_untracked().iter() {
                 headers.push((header.name().get_untracked(), header.value().get_untracked()));
             }
 

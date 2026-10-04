@@ -64,21 +64,21 @@ pub fn RequestParamsUrl(
             clear_html_previewer();
 
             let params = params.read_untracked();
-            let method = params.method.get_untracked();
+            let method = params.method().get_untracked();
 
             let mut headers = Vec::new();
 
             if (&method == "POST" || &method == "PUT")
-                && !params.body.read_untracked().is_empty()
+                && !params.body().read_untracked().is_empty()
                 && params.content_type().is_none()
             {
                 headers.push((
                     "Content-Type".to_owned(),
-                    params.body_type.read_untracked().content_type().to_owned(),
+                    params.body_type().read_untracked().content_type().to_owned(),
                 ));
             }
 
-            for header in params.headers.get_untracked().iter() {
+            for header in params.headers().get_untracked().iter() {
                 headers.push((header.name().get_untracked(), header.value().get_untracked()));
             }
 
@@ -91,8 +91,8 @@ pub fn RequestParamsUrl(
             };
 
             let rc_request = RestClientRequest::default()
-                .with_method(params.method.get_untracked())
-                .with_url(params.url.get_untracked())
+                .with_method(params.method().get_untracked())
+                .with_url(params.url().get_untracked())
                 .with_headers(headers)
                 .with_body(body);
 
@@ -170,8 +170,8 @@ pub fn RequestParamsUrl(
                     single_select_option("OPTIONS"),
                     ]}
                 on_change=move |_| {}
-                value=params.read_untracked().method.read_only()
-                set_value=params.read_untracked().method.write_only()
+                value=params.read_untracked().method()
+                set_value=params.read_untracked().set_method()
             />
 
             <TextInput
@@ -179,8 +179,8 @@ pub fn RequestParamsUrl(
                 input_type="text".to_owned()
                 class_name="w-full".to_owned()
                 placeholder=move || {t_string!(i18n, rest_client_url_placeholder).to_owned()}
-                value=params.read_untracked().url.read_only()
-                set_value=params.read_untracked().url.write_only()
+                value=params.read_untracked().url()
+                set_value=params.read_untracked().set_url()
                 on_press_enter=move |_| {
                     if let Some(send_btn) = send_btn_node_ref.get() {
                         send_btn.click();

@@ -115,7 +115,7 @@ pub fn RequestResultPreviewer(
                             .with_headers(
                                 params
                                     .read_untracked()
-                                    .headers
+                                    .headers()
                                     .read_untracked()
                                     .iter()
                                     .map(|h| (h.name().get_untracked(), h.value().get_untracked()))
@@ -137,7 +137,7 @@ pub fn RequestResultPreviewer(
                 // Create cookies from current request
                 let cookies: Vec<String> = params
                     .read_untracked()
-                    .headers
+                    .headers()
                     .read_untracked()
                     .iter()
                     .filter(|h| h.name().read_untracked().to_lowercase() == "cookie")

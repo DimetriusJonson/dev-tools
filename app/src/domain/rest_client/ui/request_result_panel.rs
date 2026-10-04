@@ -93,12 +93,12 @@ pub fn RequestResultPanel(
                     }
                     RestClientResponseBody::Attachment(file_name) => {
                         request_result.attachment.set((
-                            params.read_untracked().url.get_untracked(),
+                            params.read_untracked().url().get_untracked(),
                             file_name.to_owned(),
                         ));
                     }
                     RestClientResponseBody::Image => {
-                        request_result.image.set(params.read_untracked().url.get_untracked())
+                        request_result.image.set(params.read_untracked().url().get_untracked())
                     }
                     RestClientResponseBody::None => (),
                 }
@@ -107,7 +107,7 @@ pub fn RequestResultPanel(
                 request_result.request_raw.set(response.request_raw().to_owned());
             };
 
-            if params.read_untracked().formatting.get_untracked() {
+            if params.read_untracked().formatting().get_untracked() {
                 if request_result.lang.get_untracked() == "xml" {
                     let formatted_xml = match format_xml(&request_result.body.read_untracked(), 4) {
                         Ok(formatted_text) => formatted_text,
@@ -147,15 +147,15 @@ pub fn RequestResultPanel(
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"
-                                    bind:value=(params.read_untracked().formatting, params.read_untracked().formatting)
-                                    prop:checked=params.read_untracked().formatting
+                                    bind:value=(params.read_untracked().formatting(), params.read_untracked().set_formatting())
+                                    prop:checked=params.read_untracked().formatting()
                                     />
                                 <label for="formatting" class="dark:text-white">Format</label>
                             </div>
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="save-response" class="h-4 w-4"
-                                    bind:value=(params.read_untracked().save_response, params.read_untracked().save_response)
-                                    prop:checked=params.read_untracked().save_response
+                                    bind:value=(params.read_untracked().save_response(), params.read_untracked().set_save_response())
+                                    prop:checked=params.read_untracked().save_response()
                                     />
                                 <label for="save-response" class="dark:text-white">Save</label>
                             </div>
