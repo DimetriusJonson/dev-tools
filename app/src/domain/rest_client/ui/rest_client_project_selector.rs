@@ -142,7 +142,7 @@ pub fn ProjectSelector(
                                             },
                                             "rename" => {
                                                 if let Ok(project_id) = rc_context.project.get_untracked().parse::<i32>()
-                                                    && let Some(project_name) = projects.read_untracked().iter().filter(|p|p.id == project_id).map(|p|p.name.to_owned()).next_back() {
+                                                    && let Some(project_name) = projects.read_untracked().iter().filter(|p|p.id() == project_id).map(|p|p.name().to_owned()).next_back() {
                                                         set_edit_name_mode.set(true);
                                                         set_edit_name.set(project_name);
                                                         set_old_project.set(rc_context.project.get());
@@ -159,9 +159,9 @@ pub fn ProjectSelector(
                                                 if let Ok(project_id) = rc_context.project.get_untracked().parse::<i32>() {
                                                     on_delete.run(());
 
-                                                    set_projects.write().retain(|p|p.id != project_id);
+                                                    set_projects.write().retain(|p|p.id() != project_id);
                                                     if let Some(prj) = projects.read_untracked().first() {
-                                                        rc_context.project.set(prj.id.to_string());
+                                                        rc_context.project.set(prj.id_str());
                                                     } else {
                                                         rc_context.project.set("".to_owned());
                                                     }
@@ -193,19 +193,19 @@ pub fn ProjectSelector(
                                 return;
                             }
 
-                            if projects.read_untracked().iter().filter(|p|p.id != project_id)
-                                .any(|p|p.name.to_lowercase() == val) {
+                            if projects.read_untracked().iter().filter(|p|p.id() != project_id)
+                                .any(|p|p.name().to_lowercase() == val) {
                                     show_error(t_string!(i18n, rest_client_already_exist_project).to_owned(), messages);
                                 return;
                             }
 
                             if project_id == 0 {
                                 let project_id = generate_project_id();
-                                set_projects.write().push(RestClientProject { id: project_id, name: value.trim().to_owned() });
+                                set_projects.write().push(RestClientProject::new(project_id, value.trim().to_owned()));
 
                                 rc_context.project.set(project_id.to_string());
                             } else {
-                                set_projects.write().iter_mut().filter(|p|p.id == project_id).for_each(|p| p.name = value.to_owned());
+                                set_projects.write().iter_mut().filter(|p|p.id() == project_id).for_each(|p| { p.set_name(value.to_owned());});
                             }
                             set_edit_name_mode.set(false);
                         }
@@ -221,13 +221,13 @@ pub fn ProjectSelector(
 }
 
 fn get_projects_options(projects: &[RestClientProject]) -> Vec<(Option<String>, String)> {
-    projects.iter().map(|p| (Some(p.id.to_string()), p.name.to_owned())).collect()
+    projects.iter().map(|p| (Some(p.id_str()), p.name().to_owned())).collect()
 }
 
 fn generate_project_id() -> i32 {
     let projects = get_stored_projects();
     if !projects.is_empty()
-        && let Some(id) = projects.iter().map(|p| p.id).max()
+        && let Some(id) = projects.iter().map(|p| p.id()).max()
     {
         return id + 1;
     }

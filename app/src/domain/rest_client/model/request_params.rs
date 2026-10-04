@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use getset::{CopyGetters, Getters, Setters};
 use leptos::prelude::{Effect, Get, GetUntracked, ReadSignal, ReadUntracked, RwSignal, Set, WriteSignal};
 use serde::{Deserialize, Serialize};
 
@@ -11,10 +12,22 @@ use crate::domain::rest_client::{
     util::request_store::{RequestFieldKind, get_stored_value, set_stored_value},
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Getters, CopyGetters, Setters)]
 pub struct RestClientProject {
-    pub id: i32,
-    pub name: String,
+    #[getset(get_copy = "pub")]
+    id: i32,
+    #[getset(get = "pub", set = "pub")]
+    name: String,
+}
+
+impl RestClientProject {
+    pub fn new(id: i32, name: String) -> Self {
+        Self { id, name }
+    }
+
+    pub fn id_str(&self) -> String {
+        self.id.to_string()
+    }
 }
 
 #[derive(Clone, Debug)]
