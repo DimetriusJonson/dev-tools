@@ -48,7 +48,7 @@ pub fn RequestResultPanel(
     let tab_headers_ref = NodeRef::<Div>::new();
     let tab_request_raw_ref = NodeRef::<Div>::new();
 
-    let request_result = RequestResult::new();
+    let (request_result, _) = signal(RequestResult::default());
 
     Effect::new(move || {
         spawn_local(async move {
@@ -60,26 +60,21 @@ pub fn RequestResultPanel(
         move || response.get(),
         move |value, _prev, _| {
             show_preview_html.set(false);
-            request_result.status_code.set("".to_owned());
-            request_result.size.set(None);
-            request_result.request_time.set(0);
-            request_result.body.set("".to_owned());
-            request_result.lang.set("".to_owned());
-            request_result.headers.set(Vec::new());
-            request_result.request_raw.set("".to_owned());
-            request_result.attachment.set(("".to_owned(), "".to_owned()));
-            request_result.image.set("".to_owned());
+            request_result.read_untracked().clear();
             if let Some(response) = value {
                 if let Some(error) = &response.error() {
                     show_error(error.to_owned(), messages);
                 };
 
-                request_result.status_code.set(response.status_code().to_string());
-                request_result.size.set(response.size());
-                request_result.request_time.set(response.request_time());
+                request_result
+                    .read_untracked()
+                    .set_status_code()
+                    .set(response.status_code().to_string());
+                request_result.read_untracked().set_size().set(response.size());
+                request_result.read_untracked().set_request_time().set(response.request_time());
                 match &response.body() {
                     RestClientResponseBody::Text(body) => {
-                        request_result.lang.set(
+                        request_result.read_untracked().set_lang().set(
                             response
                                 .headers()
                                 .iter()
@@ -89,37 +84,45 @@ pub fn RequestResultPanel(
                                 .unwrap_or("html".to_owned()),
                         );
 
-                        request_result.body.set(body.to_owned())
+                        request_result.read_untracked().set_body().set(body.to_owned())
                     }
                     RestClientResponseBody::Attachment(file_name) => {
-                        request_result.attachment.set((
+                        request_result.read_untracked().set_attachment().set((
                             params.read_untracked().url().get_untracked(),
                             file_name.to_owned(),
                         ));
                     }
-                    RestClientResponseBody::Image => {
-                        request_result.image.set(params.read_untracked().url().get_untracked())
-                    }
+                    RestClientResponseBody::Image => request_result
+                        .read_untracked()
+                        .set_image()
+                        .set(params.read_untracked().url().get_untracked()),
                     RestClientResponseBody::None => (),
                 }
 
-                request_result.headers.set(response.headers().clone());
-                request_result.request_raw.set(response.request_raw().to_owned());
+                request_result.read_untracked().set_headers().set(response.headers().clone());
+                request_result
+                    .read_untracked()
+                    .set_request_raw()
+                    .set(response.request_raw().to_owned());
             };
 
             if params.read_untracked().formatting().get_untracked() {
-                if request_result.lang.get_untracked() == "xml" {
-                    let formatted_xml = match format_xml(&request_result.body.read_untracked(), 4) {
+                if request_result.read_untracked().lang().get_untracked() == "xml" {
+                    let formatted_xml = match format_xml(
+                        &request_result.read_untracked().body().read_untracked(),
+                        4,
+                    ) {
                         Ok(formatted_text) => formatted_text,
                         Err(err) => {
                             show_error(format!("Cant format xml: {}", err), messages);
                             return;
                         }
                     };
-                    request_result.body.set(formatted_xml);
-                } else if request_result.lang.get_untracked() == "json" {
-                    let formatted_json = format_json(&request_result.body.read_untracked(), 4);
-                    request_result.body.set(formatted_json);
+                    request_result.read_untracked().set_body().set(formatted_xml);
+                } else if request_result.read_untracked().lang().get_untracked() == "json" {
+                    let formatted_json =
+                        format_json(&request_result.read_untracked().body().read_untracked(), 4);
+                    request_result.read_untracked().set_body().set(formatted_json);
                 }
             }
         },
@@ -139,11 +142,11 @@ pub fn RequestResultPanel(
             <div class="flex-1 overflow-y-auto flex">
                 <div node_ref=tab_body_ref class="flex flex-col gap-4 w-full">
                     <div class="flex justify-between">
-                        <span class="dark:text-white">{move || format!("Status: {}", request_result.status_code.get())}</span>
-                        <Show when=move || { request_result.size.read().is_some() }>
-                            <span class="dark:text-white">{move || format!("Size: {}", size::Size::from_bytes(request_result.size.get().unwrap_or_default()))}</span>
+                        <span class="dark:text-white">{move || format!("Status: {}", request_result.read_untracked().status_code().get())}</span>
+                        <Show when=move || { request_result.read_untracked().size().read().is_some() }>
+                            <span class="dark:text-white">{move || format!("Size: {}", size::Size::from_bytes(request_result.read_untracked().size().get().unwrap_or_default()))}</span>
                         </Show>
-                        <span class="dark:text-white">{move || format_request_time(request_result.request_time.get())}</span>
+                        <span class="dark:text-white">{move || format_request_time(request_result.read_untracked().request_time().get())}</span>
                         <div class="flex">
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="formatting" class="h-4 w-4"
@@ -164,7 +167,7 @@ pub fn RequestResultPanel(
                                 label=move || "👁".to_owned()
                                 title=move || t_string!(i18n, rest_client_response_html_preview).to_owned()
                                 class_name="w-6 dark:text-white text-black".to_owned()
-                                class:hidden=move || request_result.lang.read().as_str() != "html"
+                                class:hidden=move || request_result.read_untracked().lang().read().as_str() != "html"
                                 class:border=show_preview_html
                                 button_width=ButtonWidth::Custom
                                 button_height=ButtonHeight::Custom
@@ -193,21 +196,21 @@ pub fn RequestResultPanel(
                     <div class="flex-1 relative flex overflow-auto w-full min-w-0">
                         <CodeMirrorEditor
                             element_id="response-body-code-editor".to_owned()
-                            lang=request_result.lang.read_only()
-                            value=request_result.body.read_only()
-                            set_value=request_result.body.write_only()
+                            lang=request_result.read_untracked().lang()
+                            value=request_result.read_untracked().body()
+                            set_value=request_result.read_untracked().set_body()
                             read_only=true
-                            hidden=Box::new(move || request_result.body.read().is_empty() || show_preview_html.get())
+                            hidden=Box::new(move || request_result.read_untracked().body().read().is_empty() || show_preview_html.get())
                         />
 
-                        <RequestResultPreviewer params show_preview_html proxy_allow body={request_result.body.read_only()} />
+                        <RequestResultPreviewer params show_preview_html proxy_allow body={request_result.read_untracked().body()} />
 
-                        <RequestResultAttachment params attachment={request_result.attachment.read_only()} />
+                        <RequestResultAttachment params attachment={request_result.read_untracked().attachment()} />
 
                         // Image
-                        <Show when=move || { !request_result.image.read().is_empty() }>
+                        <Show when=move || { !request_result.read_untracked().image().read().is_empty() }>
                             <div class="flex-1 flex items-center justify-center gap-4">
-                                <img class="flex-1" src = move || request_result.image.get() alt="Image" />
+                                <img class="flex-1" src = move || request_result.read_untracked().image().get() alt="Image" />
                             </div>
                         </Show>
 
@@ -216,11 +219,11 @@ pub fn RequestResultPanel(
 
                 <div node_ref=tab_headers_ref class="flex flex-col md:flex-row gap-4 pt-4 text-xs md:text-base w-full">
                     <div class="overflow-auto rounded-md border border-gray-300 dark:border-gray-700 shadow-sm w-full">
-                        <div class="h-0 flex flex-col gap-4 px-4 dark:text-white whitespace-pre-wrap wrap-break-word break-all" inner_html={move || render_headers(request_result.headers.get())}/>
+                        <div class="h-0 flex flex-col gap-4 px-4 dark:text-white whitespace-pre-wrap wrap-break-word break-all" inner_html={move || render_headers(request_result.read_untracked().headers().get())}/>
                     </div>
                 </div>
 
-                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_result.request_raw.read_only() params />
+                <RequestRawPanel node_ref=tab_request_raw_ref request_raw=request_result.read_untracked().request_raw() params />
             </div>
         </div>
     }
