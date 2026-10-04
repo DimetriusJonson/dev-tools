@@ -124,18 +124,22 @@ impl KeyValueTableItem for RequestHeader {
         self.id.to_string()
     }
 
+    #[inline]
     fn name(&self) -> ReadSignal<String> {
         self.name.read_only()
     }
 
+    #[inline]
     fn set_name(&self) -> WriteSignal<String> {
         self.name.write_only()
     }
 
+    #[inline]
     fn value(&self) -> ReadSignal<String> {
         self.value.read_only()
     }
 
+    #[inline]
     fn set_value(&self) -> WriteSignal<String> {
         self.value.write_only()
     }

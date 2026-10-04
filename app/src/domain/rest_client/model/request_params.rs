@@ -70,74 +70,92 @@ impl RequestParams {
         }
     }
 
+    #[inline]
     pub fn url(&self) -> ReadSignal<String> {
         self.url.read_only()
     } 
 
+    #[inline]
     pub fn set_url(&self) -> WriteSignal<String> {
         self.url.write_only()
     } 
 
+    #[inline]
     pub fn method(&self) -> ReadSignal<String> {
         self.method.read_only()
     } 
 
+    #[inline]
     pub fn set_method(&self) -> WriteSignal<String> {
         self.method.write_only()
     } 
 
+    #[inline]
     pub fn body_type(&self) -> ReadSignal<RequestBodyKind> {
         self.body_type.read_only()
     } 
 
+    #[inline]
     pub fn set_body_type(&self) -> WriteSignal<RequestBodyKind> {
         self.body_type.write_only()
     } 
 
+    #[inline]
     pub fn body(&self) -> ReadSignal<String> {
         self.body.read_only()
     } 
 
+    #[inline]
     pub fn set_body(&self) -> WriteSignal<String> {
         self.body.write_only()
     } 
 
+    #[inline]
     pub fn save_response(&self) -> ReadSignal<bool> {
         self.save_response.read_only()
     } 
 
+    #[inline]
     pub fn set_save_response(&self) -> WriteSignal<bool> {
         self.save_response.write_only()
     } 
 
+    #[inline]
     pub fn formatting(&self) -> ReadSignal<bool> {
         self.formatting.read_only()
     } 
 
+    #[inline]
     pub fn set_formatting(&self) -> WriteSignal<bool> {
         self.formatting.write_only()
     } 
 
+    #[inline]
     pub fn params_tab_selected(&self) -> ReadSignal<usize> {
         self.params_tab_selected.read_only()
     } 
 
+    #[inline]
     pub fn set_params_tab_selected(&self) -> WriteSignal<usize> {
         self.params_tab_selected.write_only()
     } 
 
+    #[inline]
     pub fn body_formencoded(&self) -> ReadSignal<RequestBodyFormValues> {
         self.body_formencoded.read_only()
     } 
 
+    #[inline]
     pub fn set_body_formencoded(&self) -> WriteSignal<RequestBodyFormValues> {
         self.body_formencoded.write_only()
     } 
 
+    #[inline]
     pub fn headers(&self) -> ReadSignal<RequestHeaders> {
         self.headers.read_only()
     } 
 
+    #[inline]
     pub fn set_headers(&self) -> WriteSignal<RequestHeaders> {
         self.headers.write_only()
     } 

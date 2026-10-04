@@ -29,14 +29,17 @@ impl RequestBodyFormValue {
         &self.id
     }
 
+    #[inline]
     pub fn name(&self) -> ReadSignal<String> {
         self.name.read_only()
     }
 
+    #[inline]
     pub fn set_name(&self) -> WriteSignal<String> {
         self.name.write_only()
     }
 
+    #[inline]
     pub fn set_value(&self) -> WriteSignal<String> {
         self.value.write_only()
     }
@@ -52,22 +55,27 @@ impl RequestBodyFormValues {
         Self { inner: Vec::new() }
     }
 
+    #[inline]
     pub fn push(&mut self, header: RequestBodyFormValue) {
         self.inner.push(header)
     }
 
+    #[inline]
     pub fn iter(&self) -> Iter<'_, RequestBodyFormValue> {
         self.inner.iter()
     }
 
+    #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, RequestBodyFormValue> {
         self.inner.iter_mut()
     }
 
+    #[inline]
     pub fn remove_by_id(&mut self, id: String) {
         self.inner.retain(|h| h.id != id);
     }
 
+    #[inline]
     pub fn vec_owned(&self) -> Vec<RequestBodyFormValue> {
         self.inner.clone()
     }
@@ -130,22 +138,27 @@ impl RequestBodyFormValue {
 }
 
 impl KeyValueTableItem for RequestBodyFormValue {
+    #[inline]
     fn id(&self) -> String {
         self.id.to_string()
     }
 
+    #[inline]
     fn name(&self) -> ReadSignal<String> {
         self.name.read_only()
     }
 
+    #[inline]
     fn set_name(&self) -> WriteSignal<String> {
         self.name.write_only()
     }
 
+    #[inline]
     fn value(&self) -> ReadSignal<String> {
         self.value.read_only()
     }
 
+    #[inline]
     fn set_value(&self) -> WriteSignal<String> {
         self.value.write_only()
     }
