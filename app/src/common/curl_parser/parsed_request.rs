@@ -1,26 +1,21 @@
+use getset::{CopyGetters, Getters, MutGetters, Setters};
 use http::{HeaderMap, Method};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Getters, MutGetters, CopyGetters, Setters, Default)]
+#[set="pub"]
 pub struct ParsedRequest {
-    pub method: Option<Method>,
-    pub url: String,
-    pub headers: HeaderMap,
-    pub body: Vec<String>,
-    pub body_urlencode: String,
-    pub insecure: bool,
-    pub compressed: bool,
-}
-
-impl Default for ParsedRequest {
-    fn default() -> Self {
-        Self {
-            method: None,
-            url: String::new(),
-            headers: HeaderMap::with_capacity(8),
-            body: Vec::with_capacity(4),
-            body_urlencode: "".to_owned(),
-            insecure: false,
-            compressed: false,
-        }
-    }
+    #[get = "pub"]
+    method: Option<Method>,
+    #[get = "pub"]
+    url: String,
+    #[getset(get = "pub", get_mut = "pub")]
+    headers: HeaderMap,
+    #[getset(get = "pub", get_mut = "pub")]
+    body: Vec<String>,
+    #[getset(get = "pub", get_mut = "pub")]
+    body_urlencode: String,
+    #[get_copy = "pub"]
+    insecure: bool,
+    #[get_copy = "pub"]
+    compressed: bool,
 }

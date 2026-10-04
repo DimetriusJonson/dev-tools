@@ -37,7 +37,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                         return Err(format!("Unknown request method {}.", method).into());
                     };
 
-                    parsed.method = Some(method);
+                    parsed.set_method(Some(method));
                 } else {
                     return Err("method value must be present".into());
                 }
@@ -56,11 +56,11 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     full_url
                 };
 
-                parsed.url = url;
+                parsed.set_url(url);
             }
             Rule::location => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.url = pair.to_string();
+                    parsed.set_url(pair.to_string());
                 } else {
                     return Err("location value must be present".into());
                 }
@@ -70,7 +70,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     // Use split_once for better performance
                     if let Some((name, value)) = pair.as_str().split_once(':') {
                         let header_value = unescape_string(value.trim());
-                        parsed.headers.insert(
+                        parsed.headers_mut().insert(
                             HeaderName::from_str(name.trim())?,
                             HeaderValue::from_str(&header_value)?,
                         );
@@ -81,7 +81,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                         if let Some(name) = kv.next() {
                             if let Some(value) = kv.next() {
                                 let header_value = unescape_string(value.trim());
-                                parsed.headers.insert(
+                                parsed.headers_mut().insert(
                                     HeaderName::from_str(name.trim())?,
                                     HeaderValue::from_str(&header_value)?,
                                 );
@@ -99,7 +99,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::cookie => {
                 if let Some(pair) = pair.into_inner().next() {
                     let header_value = unescape_string(pair.as_str().trim());
-                    parsed.headers.insert(
+                    parsed.headers_mut().insert(
                         HeaderName::from_str("Cookie")?,
                         HeaderValue::from_str(&header_value)?,
                     );
@@ -114,7 +114,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     let mut basic_auth = String::with_capacity(6 + encoded.len()); // "Basic " + encoded
                     basic_auth.push_str("Basic ");
                     basic_auth.push_str(&encoded);
-                    parsed.headers.insert(AUTHORIZATION, basic_auth.parse()?);
+                    parsed.headers_mut().insert(AUTHORIZATION, basic_auth.parse()?);
                 } else {
                     return Err("auth value must be present".into());
                 }
@@ -122,40 +122,40 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::body => {
                 let s = pair.as_str().trim();
                 let s = remove_quote(s);
-                parsed.body.push(s.into());
+                parsed.body_mut().push(s.into());
             }
             Rule::output => {}
             Rule::writeout => {}
             Rule::maxtime => {}
             Rule::data_raw => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.body.push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                    parsed.body_mut().push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
                 } else {
                     return Err("data-raw value must be present".into());
                 }
             }
             Rule::data_binary => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.body.push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                    parsed.body_mut().push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
                 } else {
                     return Err("data-binary value must be present".into());
                 }
             }
             Rule::data_urlencode => {
                 if let Some(pair) = pair.into_inner().next() {
-                    if !parsed.body_urlencode.is_empty() {
-                        parsed.body_urlencode.push('&');
+                    if !parsed.body_urlencode().is_empty() {
+                        parsed.body_urlencode_mut().push('&');
                     }
-                    parsed.body_urlencode.push_str(&pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                    parsed.body_urlencode_mut().push_str(&pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
                 } else {
                     return Err("data-urlencode value must be present".into());
                 }
             }
             Rule::ssl_verify_option => {
-                parsed.insecure = true;
+                parsed.set_insecure(true);
             }
             Rule::compressed_option => {
-                parsed.compressed = true;
+                parsed.set_compressed(true);
             }
             Rule::url_option
             | Rule::verbose_option
@@ -166,7 +166,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             | Rule::show_headers_option => {}
             Rule::user_agent => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.headers.insert(USER_AGENT, pair.as_str().parse()?);
+                    parsed.headers_mut().insert(USER_AGENT, pair.as_str().parse()?);
                 } else {
                     return Err("user-agent value must be present".into());
                 }
@@ -176,16 +176,16 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
         }
     }
 
-    if parsed.headers.get(CONTENT_TYPE).is_none() && !parsed.body.is_empty() {
+    if parsed.headers().get(CONTENT_TYPE).is_none() && !parsed.body().is_empty() {
         parsed
-            .headers
+            .headers_mut()
             .insert(CONTENT_TYPE, HeaderValue::from_static("application/x-www-form-urlencoded"));
     }
-    if parsed.headers.get(ACCEPT).is_none() {
-        parsed.headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
+    if parsed.headers().get(ACCEPT).is_none() {
+        parsed.headers_mut().insert(ACCEPT, HeaderValue::from_static("*/*"));
     }
-    if !parsed.body.is_empty() && parsed.method.is_none() {
-        parsed.method = Some(Method::POST)
+    if !parsed.body().is_empty() && parsed.method().is_none() {
+        parsed.set_method(Some(Method::POST));
     }
     Ok(parsed)
 }

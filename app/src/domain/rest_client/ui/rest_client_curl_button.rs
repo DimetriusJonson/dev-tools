@@ -44,7 +44,7 @@ pub fn RestClientCUrlButton(
                             rc_context.project_id(),
                             url.to_owned(),
                             "".to_owned(),
-                            parsed_request.method.unwrap_or(Method::GET).to_string(),
+                            parsed_request.method().to_owned().unwrap_or(Method::GET).to_string(),
                         );
 
                         set_requests.write().push(RwSignal::new(request.clone()));
@@ -70,7 +70,7 @@ pub fn RestClientCUrlButton(
                         );
 
                         let content_type = parsed_request
-                            .headers
+                            .headers()
                             .iter()
                             .find(|h| h.0.as_str().to_lowercase() == "content-type")
                             .map(|h| h.1.to_str().ok())
@@ -80,7 +80,7 @@ pub fn RestClientCUrlButton(
                             && content_type.to_lowercase() == "application/x-www-form-urlencoded"
                         {
                             if let Ok(map) = serde_urlencoded::from_str::<HashMap<String, String>>(
-                                &parsed_request.body.join("\n"),
+                                &parsed_request.body().join("\n"),
                             ) && let Ok(json) = serde_json::to_string(
                                 &map.into_iter().collect::<Vec<(String, String)>>(),
                             ) {
@@ -102,7 +102,7 @@ pub fn RestClientCUrlButton(
                                 rc_context.project.read_only(),
                                 request.id,
                                 RequestFieldKind::Body,
-                                parsed_request.body.join("\n"),
+                                parsed_request.body().join("\n"),
                             );
                             let body_type = RequestBodyKind::from_content_type(
                                 content_type.unwrap_or_default(),
@@ -120,7 +120,7 @@ pub fn RestClientCUrlButton(
                             request.id,
                             RequestFieldKind::Headers,
                             parsed_request
-                                .headers
+                                .headers()
                                 .iter()
                                 .map(|h| format!("{}:{}", h.0, h.1.to_str().unwrap_or("")))
                                 .collect::<Vec<String>>()
@@ -158,13 +158,13 @@ pub fn RestClientCUrlButton(
 }
 
 fn parse_curl_url(parsed_request: &ParsedRequest) -> Result<String, String> {
-    if !parsed_request.body_urlencode.is_empty()
+    if !parsed_request.body_urlencode().is_empty()
         && let Ok(map) =
-            serde_urlencoded::from_str::<HashMap<String, String>>(&parsed_request.body_urlencode)
+            serde_urlencoded::from_str::<HashMap<String, String>>(&parsed_request.body_urlencode())
         && !map.is_empty()
     {
         match serde_urlencoded::to_string(&map) {
-            Ok(encoded_query) => match Url::parse(&parsed_request.url) {
+            Ok(encoded_query) => match Url::parse(&parsed_request.url()) {
                 Ok(mut url) => {
                     url.set_query(Some(&encoded_query));
                     return Ok(url.to_string());
@@ -179,5 +179,5 @@ fn parse_curl_url(parsed_request: &ParsedRequest) -> Result<String, String> {
         };
     }
 
-    Ok(parsed_request.url.to_owned())
+    Ok(parsed_request.url().to_owned())
 }
