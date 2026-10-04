@@ -27,18 +27,18 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
 
     let update_items = move |prev: Option<&RequestHeaders>, value: &RequestHeaders| {
         let prev_cookie = prev
-            .map(|prev| prev.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie"))
+            .map(|prev| prev.iter().find(|h| h.name().read_untracked().to_lowercase() == "cookie"))
             .unwrap_or_default();
         let actual_cookie =
-            value.iter().find(|h| h.name.read_untracked().to_lowercase() == "cookie");
+            value.iter().find(|h| h.name().read_untracked().to_lowercase() == "cookie");
 
         if prev_cookie.is_none_or(|prev_cookie| {
             actual_cookie.is_some_and(|actual_cookie| {
-                prev_cookie.value.get_untracked() != actual_cookie.value.get_untracked()
+                prev_cookie.value().get_untracked() != actual_cookie.value().get_untracked()
             })
         }) {
             let actual_cookies =
-                parse_cookies(&actual_cookie.map(|h| h.value.get_untracked()).unwrap_or_default());
+                parse_cookies(&actual_cookie.map(|h| h.value().get_untracked()).unwrap_or_default());
 
             safe_updating_ui_value(update_lock, move || {
                 let mut cookies_items = Vec::new();
@@ -93,20 +93,20 @@ pub fn RequestCookiesPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     .headers
                     .get_untracked()
                     .iter()
-                    .find(|h| h.name.read_untracked().to_lowercase() == "cookie")
+                    .find(|h| h.name().read_untracked().to_lowercase() == "cookie")
                     .cloned();
 
                 if let Some(cookie_header) = cookie_header {
                     if !cookie_value.is_empty() {
-                        if cookie_header.value.get_untracked() != cookie_value {
+                        if cookie_header.value().get_untracked() != cookie_value {
                             safe_updating_ui_value(update_lock, move || {
                                 params
                                     .read_untracked()
                                     .headers
                                     .write()
                                     .iter_mut()
-                                    .filter(|h| h.id == cookie_header.id)
-                                    .for_each(|h| h.value.set(cookie_value.to_owned()));
+                                    .filter(|h| h.id() == cookie_header.id())
+                                    .for_each(|h| h.set_value().set(cookie_value.to_owned()));
                             });
                         }
                     } else {

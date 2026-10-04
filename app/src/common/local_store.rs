@@ -7,7 +7,7 @@ pub fn get_local_store_value(_key: &str, default: String) -> String {
     }
 }
 
-pub fn set_local_store_value(key: &str, value: String) {
+pub fn set_local_store_value(key: &str, value: &str) {
     use gloo_storage::{LocalStorage, Storage};
     LocalStorage::set(key, value).unwrap_or(());
 }

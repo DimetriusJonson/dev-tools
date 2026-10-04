@@ -131,7 +131,7 @@ pub fn RequestParamsPanel(
                     target_ref=params_ref
                     second_target_ref=body_ref
                     horizontal=true
-                    local_store_prop_name=move || build_request_stored_key(rc_context.project.read().as_str(), rc_context.request.read().id, "headers_height")
+                    local_store_prop_name=move || build_request_stored_key(rc_context.project.read().as_str(), rc_context.request.read().id(), "headers_height")
                     min_ratio={10.0}
                     max_ratio={90.0}
                     default_ratio={50.0}

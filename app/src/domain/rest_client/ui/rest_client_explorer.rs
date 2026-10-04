@@ -41,15 +41,15 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
             set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
             set_stored_value(
                 rc_context.project.read_only(),
-                request.id,
+                request.id(),
                 RequestFieldKind::Url,
-                request.url,
+                request.url(),
             );
             set_stored_value(
                 rc_context.project.read_only(),
-                request.id,
+                request.id(),
                 RequestFieldKind::Method,
-                request.method,
+                request.method(),
             );
 
             let headers = [
@@ -59,9 +59,9 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
             ];
             set_stored_value(
                 rc_context.project.read_only(),
-                request.id,
+                request.id(),
                 RequestFieldKind::Headers,
-                headers
+                &headers
                     .iter()
                     .map(|h| format!("{}:{}", h.0, h.1))
                     .collect::<Vec<String>>()
@@ -75,7 +75,7 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
         move |value, _prev, _| {
             set_requests.set(load_requests(value));
             if let Some(saved_curr_request_id) = get_stored_current_request() &&
-                let Some(request) = requests.read_untracked().iter().find(|r|r.read_untracked().id == saved_curr_request_id) {
+                let Some(request) = requests.read_untracked().iter().find(|r|r.read_untracked().id() == saved_curr_request_id) {
                 rc_context.request.set(request.get_untracked());
             } else {
                 if let Some(first) = requests.read_untracked().first() {
@@ -92,11 +92,11 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
         move || rc_context.request.get(),
         move |value, _prev, _| {
             if let Some(req) =
-                requests.read_untracked().iter().find(|r| r.read_untracked().id == value.id)
+                requests.read_untracked().iter().find(|r| r.read_untracked().id() == value.id())
             {
-                set_stored_current_request(Some(value.id));
-                req.write().url = value.url.to_owned();
-                req.write().method = value.method.to_owned();
+                set_stored_current_request(Some(value.id()));
+                req.write().set_url(value.url().to_owned());
+                req.write().set_method(value.method().to_owned());
             }
         },
         false,
@@ -108,7 +108,7 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
                 <ProjectSelector on_delete=move |_| {
                     requests.read_untracked().iter().for_each(|r| {
                         set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
-                        delete_stored_request(rc_context.project.read_untracked().as_str(),  r.read_untracked().id);
+                        delete_stored_request(rc_context.project.read_untracked().as_str(),  r.read_untracked().id());
                     });
                 }/>
 

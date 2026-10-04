@@ -62,7 +62,7 @@ pub fn CompareTextPage() -> impl IntoView {
                                 value=text1
                                 set_value=set_text1
                                 on_change=move |_| {
-                                    set_local_store_value("compare_text1", text1.get_untracked());
+                                    set_local_store_value("compare_text1", &text1.read_untracked());
                                 }
                             />
                         </div>
@@ -84,7 +84,7 @@ pub fn CompareTextPage() -> impl IntoView {
                                 value=text2
                                 set_value=set_text2
                                 on_change=move |_| {
-                                    set_local_store_value("compare_text2", text2.get_untracked());
+                                    set_local_store_value("compare_text2", &text2.read_untracked());
                                 }
                             />
                         </div>
@@ -109,8 +109,8 @@ pub fn CompareTextPage() -> impl IntoView {
                                 set_text1.set(text2.get());
                                 set_text2.set(temp_text);
 
-                                set_local_store_value("compare_text1", text1.get_untracked());
-                                set_local_store_value("compare_text2", text2.get_untracked());
+                                set_local_store_value("compare_text1", &text1.read_untracked());
+                                set_local_store_value("compare_text2", &text2.read_untracked());
                             }
                             disabled=move || in_progress.get()
                         />

@@ -24,7 +24,7 @@ pub fn RequestResultAttachment(
         spawn_local(async move {
             let mut headers = Vec::new();
             for header in params.read_untracked().headers.get_untracked().iter() {
-                headers.push((header.name.get_untracked(), header.value.get_untracked()));
+                headers.push((header.name().get_untracked(), header.value().get_untracked()));
             }
 
             let attachment = attachment.get_untracked();

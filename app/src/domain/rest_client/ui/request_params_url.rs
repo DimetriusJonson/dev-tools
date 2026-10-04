@@ -40,10 +40,10 @@ pub fn RequestParamsUrl(
                 return;
             }
 
-            if value.command == RequestCommand::Run
+            if value.command() == RequestCommand::Run
                 && let Some(send_btn) = send_btn_node_ref.get_untracked()
             {
-                rc_context.request.write_untracked().command = RequestCommand::None;
+                rc_context.request.write_untracked().set_command(RequestCommand::None);
                 send_btn.click();
             }
         },
@@ -79,7 +79,7 @@ pub fn RequestParamsUrl(
             }
 
             for header in params.headers.get_untracked().iter() {
-                headers.push((header.name.get_untracked(), header.value.get_untracked()));
+                headers.push((header.name().get_untracked(), header.value().get_untracked()));
             }
 
             let body = match params.get_body() {

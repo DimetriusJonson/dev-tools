@@ -38,7 +38,7 @@ pub fn RequestRawPanel(
     Effect::watch(
         move || rc_context.request.get(),
         move |value, _prev, _| {
-            match value.command {
+            match value.command() {
                 RequestCommand::CopyCUrl => {
                     if let Ok(mouse_event) = MouseEvent::new("click") {
                         on_build_c_url(mouse_event) 
@@ -51,7 +51,7 @@ pub fn RequestRawPanel(
                 }
                 _ => (),
             }
-            rc_context.request.write_untracked().command = RequestCommand::None;
+            rc_context.request.write_untracked().set_command(RequestCommand::None);
         },
         false,
     );

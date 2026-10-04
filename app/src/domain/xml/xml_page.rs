@@ -150,7 +150,7 @@ pub fn XmlPage() -> impl IntoView {
                         value=xml
                         set_value=set_xml
                         on_change=move |_| {
-                            set_local_store_value("src_xml", xml.get_untracked());
+                            set_local_store_value("src_xml", &xml.read_untracked());
                         }
                     />
                     <div class="flex flex-row">
@@ -177,8 +177,8 @@ pub fn XmlPage() -> impl IntoView {
                                 (Some("3".to_owned()), t_string!(i18n, ident_option_label_3).to_owned()),
                                 (Some("4".to_owned()), t_string!(i18n, ident_option_label_4).to_owned())
                                 ]}
-                            on_change=move |value| {
-                                set_local_store_value("xml_ident", value);
+                            on_change=move |value: String| {
+                                set_local_store_value("xml_ident", &value);
                             }
                             value=ident
                             set_value=set_ident

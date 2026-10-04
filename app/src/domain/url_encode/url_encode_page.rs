@@ -66,7 +66,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 value=url
                 set_value=set_url
                 on_change=move |_| {
-                    set_local_store_value("src_url", url.get_untracked());
+                    set_local_store_value("src_url", &url.read_untracked());
                 }
             />
 

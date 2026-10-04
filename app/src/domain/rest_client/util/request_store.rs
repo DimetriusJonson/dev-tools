@@ -55,12 +55,12 @@ pub fn set_stored_requests_ids(project: ReadSignal<String>, requests: &[RwSignal
     if !requests.is_empty() {
         let value = requests
             .iter()
-            .map(|r| r.read_untracked().id.to_string())
+            .map(|r| r.read_untracked().id_str())
             .collect::<Vec<String>>()
             .join(",");
         set_local_store_value(
             &build_project_stored_key(project.read_untracked().as_str(), "requests_ids"),
-            value,
+            &value,
         );
     } else {
         delete_local_store_value(&build_project_stored_key(
@@ -90,7 +90,7 @@ pub fn copy_stored_request(
         let value = get_stored_value(field, "".to_owned(), src_project_id, src_request_id);
         set_local_store_value(
             &build_request_stored_key(dst_project_id, dst_request_id, &field.to_string()),
-            value,
+            &value,
         );
     }
 }
@@ -124,7 +124,7 @@ pub fn get_stored_projects() -> Vec<RestClientProject> {
 
 pub fn set_stored_projects(projects: &Vec<RestClientProject>) {
     if let Ok(json) = serde_json::to_string(projects) {
-        set_local_store_value("rc_projects", json)
+        set_local_store_value("rc_projects", &json)
     }
 }
 
@@ -134,7 +134,7 @@ pub fn get_stored_current_request() -> Option<i32> {
 }
 
 pub fn set_stored_current_request(value: Option<i32>) {
-    set_local_store_value("rc_current_request", value.map_or("".to_owned(), |v| v.to_string()))
+    set_local_store_value("rc_current_request", &value.map_or("".to_owned(), |v| v.to_string()))
 }
 
 pub fn get_stored_current_project() -> String {
@@ -142,7 +142,7 @@ pub fn get_stored_current_project() -> String {
 }
 
 pub fn set_stored_current_project(value: String) {
-    set_local_store_value("rc_current_project", value.to_owned())
+    set_local_store_value("rc_current_project", &value)
 }
 
 pub fn get_stored_value(
@@ -172,7 +172,7 @@ pub fn set_stored_value(
     project: ReadSignal<String>,
     request_id: i32,
     field: RequestFieldKind,
-    value: String,
+    value: &str,
 ) {
     if request_id == 0 {
         return;
@@ -195,7 +195,7 @@ pub fn delete_stored_value(
 ) {
     delete_local_store_value(&build_request_stored_key(
         project.read_untracked().as_str(),
-        request_info.read_untracked().id,
+        request_info.read_untracked().id(),
         &field.to_string(),
     ))
 }

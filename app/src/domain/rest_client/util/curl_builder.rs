@@ -46,8 +46,8 @@ fn build_curl_cmd(
     for header in request_params.headers.read_untracked().iter() {
         add_header_param(
             &mut result,
-            &header.name.read_untracked(),
-            &header.value.read_untracked(),
+            &header.name().read_untracked(),
+            &header.value().read_untracked(),
             quote,
             new_line,
         );

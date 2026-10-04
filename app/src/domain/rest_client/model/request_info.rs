@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, PartialEq)]
+use getset::{CopyGetters, Getters, Setters};
+
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub enum RequestCommand {
     None,
     Run,
@@ -6,14 +8,20 @@ pub enum RequestCommand {
     CopyCUrlWin,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Getters, CopyGetters, Setters)]
 pub struct RequestInfo {
-    pub id: i32,
-    pub project_id: i32,
-    pub url: String,
-    pub name: String,
-    pub method: String,
-    pub command: RequestCommand,
+    #[get_copy="pub"]
+    id: i32,
+    #[get_copy="pub"]
+    project_id: i32,
+    #[getset(get="pub", set="pub")]
+    url: String,
+    #[getset(get="pub", set="pub")]
+    name: String,
+    #[getset(get="pub", set="pub")]
+    method: String,
+    #[getset(get_copy="pub", set="pub")]
+    command: RequestCommand,
 }
 
 impl RequestInfo {
@@ -34,5 +42,9 @@ impl RequestInfo {
 
     pub fn display_name(&self) -> String {
         if !self.name.is_empty() { self.name.to_owned() } else { self.url.to_owned() }
+    }
+
+    pub fn id_str(&self) -> String {
+        self.id.to_string()
     }
 }

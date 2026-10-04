@@ -32,12 +32,12 @@ pub fn RequestPanel(node_ref: NodeRef<Div>) -> impl IntoView {
     view! {
         <div node_ref=node_ref class="flex-1 flex">
             <div class="flex-1 flex items-center justify-center"
-                class:hidden=move || { rc_context.request.read().id > 0 }>
+                class:hidden=move || { rc_context.request.read().id() > 0 }>
                 {t!(i18n, rest_client_request_not_selected_msg)}
             </div>
 
             <div class="flex-1 overflow-y-auto flex flex-col gap-2 px-2 py-4 text-xs md:text-base"
-                class:hidden=move || { rc_context.request.read().id == 0 }
+                class:hidden=move || { rc_context.request.read().id() == 0 }
                 >
                 <RequestParamsUrl params set_response=response.write_only() />
 
@@ -70,17 +70,17 @@ fn create_request_watcher(
         move || rc_context.request.get(),
         move |value, prev, _| {
             if prev.is_none_or(|prev| {
-                value.id != prev.id
+                value.id() != prev.id()
                     || rc_context.project.read_untracked().parse::<i32>().unwrap_or(0)
-                        != prev.project_id
+                        != prev.project_id()
             }) {
-                params.read_untracked().url.set(value.url.to_owned());
-                params.read_untracked().method.set(value.method.to_owned());
+                params.read_untracked().url.set(value.url().to_owned());
+                params.read_untracked().method.set(value.method().to_owned());
 
-                params.read_untracked().read_from_store(rc_context.clone(), value.id);
+                params.read_untracked().read_from_store(rc_context.clone(), value.id());
 
                 if params.read_untracked().save_response.get_untracked() {
-                    response.read_from_store(rc_context.clone(), value.id);
+                    response.read_from_store(rc_context.clone(), value.id());
                 } else {
                     response.clear();
                 }
@@ -95,7 +95,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move || params.read_untracked().url.get(),
         move |value, prev, _| {
             if prev.is_none_or(|prev| value != prev) {
-                rc_context.request.write().url = value.to_owned();
+                rc_context.request.write().set_url(value.to_owned());
             }
         },
         false,
@@ -105,7 +105,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move || params.read_untracked().method.get(),
         move |value, prev, _| {
             if prev.is_none_or(|prev| value != prev) {
-                rc_context.request.write().method = value.to_owned();
+                rc_context.request.write().set_method(value.to_owned());
             }
         },
         false,

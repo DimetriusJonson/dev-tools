@@ -153,7 +153,7 @@ pub fn JsonPage() -> impl IntoView {
                         value=json
                         set_value=set_json
                         on_change=move |_| {
-                            set_local_store_value("src_json", json.get_untracked());
+                            set_local_store_value("src_json", &json.read_untracked());
                         }
                     />
                     <div class="flex flex-row">
@@ -181,8 +181,8 @@ pub fn JsonPage() -> impl IntoView {
                                 (Some("3".to_owned()), t_string!(i18n, ident_option_label_3).to_owned()),
                                 (Some("4".to_owned()), t_string!(i18n, ident_option_label_4).to_owned())
                                 ]}
-                            on_change=move |value| {
-                                set_local_store_value("json_ident", value);
+                            on_change=move |value: String| {
+                                set_local_store_value("json_ident", &value);
                             }
                             value=ident
                             set_value=set_ident

@@ -13,9 +13,31 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct RequestHeader {
-    pub id: String,
-    pub name: RwSignal<String>,
-    pub value: RwSignal<String>,
+    id: String,
+    name: RwSignal<String>,
+    value: RwSignal<String>,
+}
+
+impl RequestHeader {
+    pub fn id(&self) -> &String {
+        &self.id
+    }
+
+    pub fn name(&self) -> ReadSignal<String> {
+        self.name.read_only()
+    }
+
+    pub fn set_name(&self) -> WriteSignal<String> {
+        self.name.write_only()
+    }
+
+    pub fn value(&self) -> ReadSignal<String> {
+        self.value.read_only()
+    }
+
+    pub fn set_value(&self) -> WriteSignal<String> {
+        self.value.write_only()
+    }
 }
 
 #[derive(Clone, Debug)]

@@ -71,10 +71,10 @@ pub fn RestClientExplorerRow(
 
     view! {
         <div class="flex h-8 sm:h-10 items-center cursor-pointer p-1 sm:p-2 text-xs md:text-base"
-            class=(["bg-sky-500/50"], move || request.read_untracked().id == rc_context.request.read().id)
-            class=(["hover:bg-gray-600/50"], move || request.read_untracked().id != rc_context.request.read().id)
+            class=(["bg-sky-500/50"], move || request.read_untracked().id() == rc_context.request.read().id())
+            class=(["hover:bg-gray-600/50"], move || request.read_untracked().id() != rc_context.request.read().id())
             on:click=move |_| {
-                if rc_context.request.read_untracked().id != request.read_untracked().id {
+                if rc_context.request.read_untracked().id() != request.read_untracked().id() {
                     rc_context.request.set(request.get());
                     set_edit_name_mode.set(false);
                 }
@@ -85,21 +85,21 @@ pub fn RestClientExplorerRow(
                 let screen_height = get_browser_height().unwrap_or(768.0);
                 set_popup_menu_bottom.set((screen_height - rect.y()) < 250.0);
 
-                if rc_context.request.read_untracked().id != request.read_untracked().id {
+                if rc_context.request.read_untracked().id() != request.read_untracked().id() {
                     rc_context.request.set(request.get());
                     set_edit_name_mode.set(false);
-                    set_timeout(move || set_popup_menu_show.set(request.read_untracked().id), Duration::from_millis(250));
+                    set_timeout(move || set_popup_menu_show.set(request.read_untracked().id()), Duration::from_millis(250));
                 } else {
-                    set_popup_menu_show.set(request.read_untracked().id);
+                    set_popup_menu_show.set(request.read_untracked().id());
                 }
             }
             >
-            <Show when=move || request.read().id == rc_context.request.read().id && edit_name_mode.get()
+            <Show when=move || request.read().id() == rc_context.request.read().id() && edit_name_mode.get()
                 fallback=move || view!{
-                        <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(&request.read().method))}>{request.read().method.to_owned()}</span>
+                        <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(&request.read().method()))}>{request.read().method().to_owned()}</span>
                         <span class="p-1 sm:p-2 w-full truncate">{request.read().display_name()}</span>
 
-                        <Show when=move || request.read().id == rc_context.request.read().id>
+                        <Show when=move || request.read().id() == rc_context.request.read().id()>
                             <div class="relative px-1 sm:px-2" node_ref=menu_ref>
                                 <Button
                                     title=move || "".to_owned()
@@ -115,17 +115,17 @@ pub fn RestClientExplorerRow(
                                         let rect = target.get_bounding_client_rect();
                                         let screen_height = get_browser_height().unwrap_or(768.0);
                                         set_popup_menu_bottom.set((screen_height - rect.y()) < 250.0);
-                                        if rc_context.request.read_untracked().id != request.read_untracked().id {
+                                        if rc_context.request.read_untracked().id() != request.read_untracked().id() {
                                             rc_context.request.set(request.get());
-                                            set_timeout(move || set_popup_menu_show.set(request.read_untracked().id), Duration::from_millis(250));
+                                            set_timeout(move || set_popup_menu_show.set(request.read_untracked().id()), Duration::from_millis(250));
                                         } else {
-                                            set_popup_menu_show.set(request.read_untracked().id);
+                                            set_popup_menu_show.set(request.read_untracked().id());
                                         }
                                     }
                                     disabled=move || false
                                 />
 
-                                <Show when=move || popup_menu_show.get() == request.read().id>
+                                <Show when=move || popup_menu_show.get() == request.read().id()>
                                     <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned() is_bottom=popup_menu_bottom
                                         items=move || {vec![
                                                 ("run", t_string!(i18n, rest_client_explorer_run_request), true),
@@ -138,11 +138,11 @@ pub fn RestClientExplorerRow(
                                         on_selected=move |val:(&'static str, &'static str)| {
                                             match val.0 {
                                                 "delete" => {
-                                                    set_requests.write().retain(|r|r.read_untracked().id != request.read_untracked().id);
+                                                    set_requests.write().retain(|r|r.read_untracked().id() != request.read_untracked().id());
 
                                                     rc_context.request.set(RequestInfo::new_empty());
                                                     set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
-                                                    delete_stored_request(rc_context.project.read_untracked().as_str(), request.read_untracked().id);
+                                                    delete_stored_request(rc_context.project.read_untracked().as_str(), request.read_untracked().id());
                                                     set_popup_menu_show.set(0);
                                                 },
                                                 "rename" => {
@@ -158,21 +158,21 @@ pub fn RestClientExplorerRow(
                                                     }, Duration::from_millis(250));
                                                 },
                                                 "dublicate" => {
-                                                    if let Some(orig_request) = requests.read_untracked().iter().find(|r|r.read_untracked().id == request.read_untracked().id) {
+                                                    if let Some(orig_request) = requests.read_untracked().iter().find(|r|r.read_untracked().id() == request.read_untracked().id()) {
                                                         let orig_request = orig_request.get_untracked();
                                                         let request = RequestInfo::new(
                                                             generate_request_id(rc_context.project.read_only()),
-                                                            orig_request.project_id,
-                                                            orig_request.url.to_owned(),
-                                                            orig_request.name.to_owned(),
-                                                            orig_request.method.to_owned(),
+                                                            orig_request.project_id(),
+                                                            orig_request.url().to_owned(),
+                                                            orig_request.name().to_owned(),
+                                                            orig_request.method().to_owned(),
                                                         );
-                                                        let orig_request_id = orig_request.id;
+                                                        let orig_request_id = orig_request.id();
 
                                                         set_timeout(move || {
                                                             set_requests.write().push(RwSignal::new(request.clone()));
 
-                                                            copy_stored_request(rc_context.project.read_untracked().as_str(), orig_request_id, rc_context.project.read_untracked().as_str(), request.id);
+                                                            copy_stored_request(rc_context.project.read_untracked().as_str(), orig_request_id, rc_context.project.read_untracked().as_str(), request.id());
                                                             set_stored_requests_ids(rc_context.project.read_only(), &requests.read_untracked());
 
                                                             rc_context.request.set(request.clone());
@@ -181,13 +181,13 @@ pub fn RestClientExplorerRow(
                                                     }
                                                 },
                                                 "run" => {
-                                                    rc_context.request.write().command = RequestCommand::Run;
+                                                    rc_context.request.write().set_command(RequestCommand::Run);
                                                 },
                                                 "copyCUrl" => {
-                                                    rc_context.request.write().command = RequestCommand::CopyCUrl;
+                                                    rc_context.request.write().set_command(RequestCommand::CopyCUrl);
                                                 },
                                                 "copyCUrlWin" => {
-                                                    rc_context.request.write().command = RequestCommand::CopyCUrlWin;
+                                                    rc_context.request.write().set_command(RequestCommand::CopyCUrlWin);
                                                 },
                                                 _ => ()
                                             }
@@ -214,21 +214,21 @@ pub fn RestClientExplorerRow(
                                 return;
                             }
 
-                            if requests.read_untracked().iter().filter(|r|r.read_untracked().id != request.read_untracked().id)
-                                .any(|r|r.read_untracked().name.to_lowercase() == val) {
+                            if requests.read_untracked().iter().filter(|r|r.read_untracked().id() != request.read_untracked().id())
+                                .any(|r|r.read_untracked().name().to_lowercase() == val) {
                                     show_error(t_string!(i18n, rest_client_already_exist_request).to_owned(), messages);
                                 return;
                             }
 
-                            requests.read_untracked().iter().filter(|r|r.read_untracked().id == request.read_untracked().id).for_each(|r|{
-                                r.write().name = value.trim().to_owned();
-                                set_stored_value(rc_context.project.read_only(), r.get_untracked().id, RequestFieldKind::Name, value.to_owned());
+                            requests.read_untracked().iter().filter(|r|r.read_untracked().id() == request.read_untracked().id()).for_each(|r|{
+                                r.write().set_name(value.trim().to_owned());
+                                set_stored_value(rc_context.project.read_only(), r.get_untracked().id(), RequestFieldKind::Name, &value);
                             });
-                            rc_context.request.write_untracked().name = value.to_owned();
+                            rc_context.request.write_untracked().set_name(value.to_owned());
                             set_edit_name_mode.set(false);
                         }
                         on_cancel_change=move |_| {
-                            *set_edit_name.write_untracked() = rc_context.request.read_untracked().name.to_owned();
+                            *set_edit_name.write_untracked() = rc_context.request.read_untracked().name().to_owned();
                             set_edit_name_mode.set(false);
                         }
                         />

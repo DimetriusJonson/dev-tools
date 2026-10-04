@@ -31,7 +31,7 @@ pub fn LanguageSelector() -> impl IntoView {
             on_change=move |value: String| {
                 let locale = Locale::from_str(&value.to_owned()).unwrap_or(Locale::en);
                 i18n.set_locale(locale);
-                set_local_store_value("lang", value);
+                set_local_store_value("lang", &value);
             }
             value=value
             set_value=set_value

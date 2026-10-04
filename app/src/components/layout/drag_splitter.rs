@@ -129,7 +129,7 @@ pub fn DragSplitter(
                         );
                         set_local_store_value(
                             &local_store_prop_name_memo.get(),
-                            size.get_untracked().to_string(),
+                            &size.get_untracked().to_string(),
                         );
                     }
                 } else if new_size <= max_ratio && new_size >= min_ratio {
@@ -146,14 +146,14 @@ pub fn DragSplitter(
                         set_size.set(new_size);
                         set_local_store_value(
                             &local_store_prop_name_memo.get(),
-                            new_size.to_string(),
+                            &new_size.to_string(),
                         );
                         return;
                     }
 
                     set_element_size(target_elem, second_target_elem, prop_name, new_size);
                     set_size.set(new_size);
-                    set_local_store_value(&local_store_prop_name_memo.get(), new_size.to_string());
+                    set_local_store_value(&local_store_prop_name_memo.get(), &new_size.to_string());
                 }
             }
     });

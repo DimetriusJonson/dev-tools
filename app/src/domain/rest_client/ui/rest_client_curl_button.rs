@@ -57,16 +57,16 @@ pub fn RestClientCUrlButton(
 
                         set_stored_value(
                             rc_context.project.read_only(),
-                            request.id,
+                            request.id(),
                             RequestFieldKind::Url,
-                            url,
+                            &url,
                         );
 
                         set_stored_value(
                             rc_context.project.read_only(),
-                            request.id,
+                            request.id(),
                             RequestFieldKind::Method,
-                            request.method,
+                            request.method(),
                         );
 
                         let content_type = parsed_request
@@ -86,40 +86,40 @@ pub fn RestClientCUrlButton(
                             ) {
                                 set_stored_value(
                                     rc_context.project.read_only(),
-                                    request.id,
+                                    request.id(),
                                     RequestFieldKind::BodyFormencoded,
-                                    json,
+                                    &json,
                                 );
                                 set_stored_value(
                                     rc_context.project.read_only(),
-                                    request.id,
+                                    request.id(),
                                     RequestFieldKind::BodyType,
-                                    "formencoded".to_owned(),
+                                    "formencoded",
                                 );
                             }
                         } else {
                             set_stored_value(
                                 rc_context.project.read_only(),
-                                request.id,
+                                request.id(),
                                 RequestFieldKind::Body,
-                                parsed_request.body().join("\n"),
+                                &parsed_request.body().join("\n"),
                             );
                             let body_type = RequestBodyKind::from_content_type(
                                 content_type.unwrap_or_default(),
                             );
                             set_stored_value(
                                 rc_context.project.read_only(),
-                                request.id,
+                                request.id(),
                                 RequestFieldKind::BodyType,
-                                body_type.to_string(),
+                                &body_type.to_string(),
                             );
                         }
 
                         set_stored_value(
                             rc_context.project.read_only(),
-                            request.id,
+                            request.id(),
                             RequestFieldKind::Headers,
-                            parsed_request
+                            &parsed_request
                                 .headers()
                                 .iter()
                                 .map(|h| format!("{}:{}", h.0, h.1.to_str().unwrap_or("")))

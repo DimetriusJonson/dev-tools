@@ -2,9 +2,9 @@ use leptos::{html::Div, leptos_dom::logging::console_log, prelude::*};
 
 #[derive(Clone, Debug)]
 pub struct TabItem {
-    pub name: String,
-    pub title: String,
-    pub node_ref: NodeRef<Div>,
+    name: String,
+    title: String,
+    node_ref: NodeRef<Div>,
 }
 
 #[component]

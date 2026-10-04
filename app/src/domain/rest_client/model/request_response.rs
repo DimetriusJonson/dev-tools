@@ -33,9 +33,9 @@ impl RequestResponse {
                     let json_string = serde_json::to_string(&response).unwrap_or("".to_owned());
                     set_stored_value(
                         rc_context.project.read_only(),
-                        rc_context.request.read_untracked().id,
+                        rc_context.request.read_untracked().id(),
                         RequestFieldKind::SaveResponseData,
-                        json_string,
+                        &json_string,
                     )
                 } else {
                     delete_stored_value(

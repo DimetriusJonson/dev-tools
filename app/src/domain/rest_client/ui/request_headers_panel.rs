@@ -25,7 +25,7 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
             value_options=MEDIA_TYPES_AUTOCOMPLETE
             on_add=move |v:(String, String)| {
                 let name_converted = v.0.to_lowercase();
-                if params.read_untracked().headers.read_untracked().iter().find(|h|h.name.read_untracked().to_lowercase() == name_converted).is_none() {
+                if params.read_untracked().headers.read_untracked().iter().find(|h|h.name().read_untracked().to_lowercase() == name_converted).is_none() {
                     if let Err(err) = HeaderName::from_str(&v.0) {
                         show_error(err.to_string(), messages);
                         return;
@@ -46,8 +46,8 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     show_error(err.to_string(), messages);
                 } else {
                     params.read_untracked().headers.write().iter_mut()
-                        .filter(|h|h.id == v.0)
-                        .for_each(|h| {h.name.set(v.1.to_owned())});
+                        .filter(|h|*h.id() == v.0)
+                        .for_each(|h| {h.set_name().set(v.1.to_owned())});
                 }
             }
             on_change_value=move |v: (String, String)| {
@@ -55,8 +55,8 @@ pub fn RequestHeadersPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
                     show_error(err.to_string(), messages);
                 } else {
                     params.read_untracked().headers.write().iter_mut()
-                        .filter(|h|h.id == v.0)
-                        .for_each(|h| {h.value.set(v.1.to_owned())});
+                        .filter(|h|*h.id() == v.0)
+                        .for_each(|h| {h.set_value().set(v.1.to_owned())});
                 }
             }
         />

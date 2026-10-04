@@ -66,7 +66,7 @@ impl RequestParams {
                 RequestFieldKind::ParamsTab,
                 "0".to_owned(),
                 &rc_context.project.read_untracked(),
-                rc_context.request.read_untracked().id,
+                rc_context.request.read_untracked().id(),
             )
             .parse()
             .unwrap_or(0),
@@ -97,7 +97,7 @@ impl RequestParams {
                 RequestFieldKind::SaveResponse,
                 "false".to_owned(),
                 rc_context.project.read_untracked().as_str(),
-                rc_context.request.read_untracked().id,
+                rc_context.request.read_untracked().id(),
             )
             .parse::<bool>()
             .unwrap_or_default(),
@@ -138,9 +138,9 @@ where
         move |value, _prev, _| {
             set_stored_value(
                 rc_context.project.read_only(),
-                rc_context.request.read_untracked().id,
+                rc_context.request.read_untracked().id(),
                 field,
-                value.to_string(),
+                &value.to_string(),
             )
         },
         false,
@@ -154,7 +154,7 @@ impl RequestParams {
         self.headers
             .read_untracked()
             .iter()
-            .find(|h| h.name.read_untracked().as_str().to_lowercase() == "content-type")
-            .map(|h| h.value.get_untracked())
+            .find(|h| h.name().read_untracked().as_str().to_lowercase() == "content-type")
+            .map(|h| h.value().get_untracked())
     }
 }
