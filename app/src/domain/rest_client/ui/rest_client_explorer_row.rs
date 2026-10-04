@@ -96,7 +96,7 @@ pub fn RestClientExplorerRow(
             >
             <Show when=move || request.read().id() == rc_context.request.read().id() && edit_name_mode.get()
                 fallback=move || view!{
-                        <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(&request.read().method()))}>{request.read().method().to_owned()}</span>
+                        <span class={format!("rounded-xl h-4 sm:h-5 px-1 sm:px-2 pb-1 sm:pb-4 font-medium text-xs sm:text-sm {}", get_method_color(request.read().method()))}>{request.read().method().to_owned()}</span>
                         <span class="p-1 sm:p-2 w-full truncate">{request.read().display_name()}</span>
 
                         <Show when=move || request.read().id() == rc_context.request.read().id()>

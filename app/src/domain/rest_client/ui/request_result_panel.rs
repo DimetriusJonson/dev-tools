@@ -31,7 +31,7 @@ pub fn RequestResultPanel(
     let on_copy_click = move |_| {
         if let Some(response) = response.get_untracked() {
             if let RestClientResponseBody::Text(body) = response.body() {
-                copy_to_clipboard(&body);
+                copy_to_clipboard(body);
             }
             show_info(
                 t_string!(i18n, rest_client_response_copied_to_clipboard_msg).to_owned(),

@@ -29,7 +29,7 @@ pub fn RequestQueryPanel(params: ReadSignal<RequestParams>) -> impl IntoView {
     Effect::watch(
         move || rc_context.request.get(),
         move |value, _prev, _| {
-            if let Ok(url) = Url::parse(&value.url()) {
+            if let Ok(url) = Url::parse(value.url()) {
                 safe_updating_ui_value(update_lock, move || {
                     let mut query_items = Vec::new();
                     for pair in url.query_pairs() {

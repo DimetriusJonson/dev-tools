@@ -160,11 +160,11 @@ pub fn RestClientCUrlButton(
 fn parse_curl_url(parsed_request: &ParsedRequest) -> Result<String, String> {
     if !parsed_request.body_urlencode().is_empty()
         && let Ok(map) =
-            serde_urlencoded::from_str::<HashMap<String, String>>(&parsed_request.body_urlencode())
+            serde_urlencoded::from_str::<HashMap<String, String>>(parsed_request.body_urlencode())
         && !map.is_empty()
     {
         match serde_urlencoded::to_string(&map) {
-            Ok(encoded_query) => match Url::parse(&parsed_request.url()) {
+            Ok(encoded_query) => match Url::parse(parsed_request.url()) {
                 Ok(mut url) => {
                     url.set_query(Some(&encoded_query));
                     return Ok(url.to_string());

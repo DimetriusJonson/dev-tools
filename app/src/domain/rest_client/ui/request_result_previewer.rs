@@ -63,7 +63,7 @@ pub fn RequestResultPreviewer(
             if *value {
                 if let Err(err) = init_html_previewer(
                     proxy_allow.get_untracked(),
-                    &rc_context.request.read_untracked().url(),
+                    rc_context.request.read_untracked().url(),
                 ) {
                     show_error(err, messages)
                 }
@@ -88,7 +88,7 @@ pub fn RequestResultPreviewer(
         if proxy_allow.get_untracked() {
             None
         } else {
-            add_head_base_tag(&mut html, &rc_context.request.read_untracked().url());
+            add_head_base_tag(&mut html, rc_context.request.read_untracked().url());
             Some(html)
         }
     };
@@ -96,7 +96,7 @@ pub fn RequestResultPreviewer(
     let get_preview_src = move || {
         set_preview_loading.set(true);
         if proxy_allow.get_untracked() {
-            if let Ok(mut url) = Url::parse(&rc_context.request.get_untracked().url())
+            if let Ok(mut url) = Url::parse(rc_context.request.get_untracked().url())
                 && let Ok(host_info) = get_browser_host_info()
             {
                 url.set_scheme(&host_info.0)
@@ -106,7 +106,7 @@ pub fn RequestResultPreviewer(
                 url.set_port(host_info.2)
                     .unwrap_or_else(|_| panic!("Cant set url port {:?}", host_info.2));
                 url.query_pairs_mut()
-                    .append_pair(RC_SRC_URL_PARAM_NAME, &rc_context.request.get_untracked().url());
+                    .append_pair(RC_SRC_URL_PARAM_NAME, rc_context.request.get_untracked().url());
 
                 match params.read_untracked().get_body() {
                     Ok(body) => {
@@ -177,7 +177,7 @@ pub fn RequestResultPreviewer(
                         let elem = event_target::<HtmlIFrameElement>(&event);
                         if let Some(cw) = elem.content_window() &&
                             let Ok(href) = cw.location().href() &&
-                            let Ok(base_url) = url::Url::parse(&rc_context.request.read_untracked().url()) &&
+                            let Ok(base_url) = url::Url::parse(rc_context.request.read_untracked().url()) &&
                             let Ok(mut href_url) = url::Url::parse(&href) &&
                             href_url.set_scheme(base_url.scheme()).is_ok() &&
                             href_url.set_host(base_url.host_str()).is_ok()
