@@ -95,7 +95,7 @@ fn create_params_watchers(params: ReadSignal<RequestParams>, rc_context: RestCli
         move || params.read_untracked().url().get(),
         move |value, prev, _| {
             if prev.is_none_or(|prev| value != prev) {
-                rc_context.request.write_untracked().set_url(value.to_owned());
+                rc_context.request.write().set_url(value.to_owned());
             }
         },
         false,
