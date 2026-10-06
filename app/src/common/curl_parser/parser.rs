@@ -170,6 +170,9 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 } else {
                     return Err("user-agent value must be present".into());
                 }
+            },
+            Rule::unknown_option => {
+                
             }
             Rule::EOI => break,
             _ => return Err(format!("Unexpected rule: {:?}", pair.as_rule()).into()),

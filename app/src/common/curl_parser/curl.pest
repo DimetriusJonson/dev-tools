@@ -2,6 +2,7 @@
 ws = _{ " " | "\t" }
 newline = _{ "\r" | "\n" }
 slash = _{ ("\\" | "^") ~ ws* ~ newline+ }
+word = { ASCII_ALPHA+ }
 
 comment = _{ "#" ~ (!newline ~ ANY)* ~ newline }
 
@@ -15,7 +16,7 @@ double_quoted_inner = { (("\\" ~ ANY) | (!"\"" ~ ANY))* }
 none_ws = { (!ws ~ ANY)+ }
 url_plain = @{ "http" ~ "s"? ~ "://" ~ none_ws }
 url = { single_quoted | double_quoted | url_plain}
-option = _{ method_option | header_option | cookie_option | data_raw_option | data_binary_option | data_urlencode_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option | verbose_option | output_option | silent_option | head_option | fail_option | show_headers_option | user_agent_option | writeout_option | maxtime_option | get_option }
+option = _{ method_option | header_option | cookie_option | data_raw_option | data_binary_option | data_urlencode_option | location_option | body_option | auth_option | ssl_verify_option | compressed_option | url_option | verbose_option | output_option | silent_option | head_option | fail_option | show_headers_option | user_agent_option | writeout_option | maxtime_option | get_option | unknown_option }
 
 method_option = _{ ("-X" | "--request") ~ ws+ ~ method }
 method = { single_quoted | double_quoted | none_ws }
@@ -56,15 +57,17 @@ maxtime = { single_quoted | double_quoted | none_ws }
 user_agent_option = _{ ("-A" | "--user-agent") ~ ws+ ~ user_agent }
 user_agent = { single_quoted | double_quoted | none_ws }
 
-ssl_verify_option = { ("-k" | "--insecure") }
+ssl_verify_option = { "--insecure" }
 compressed_option = { "--compressed" }
-verbose_option = { ("-v" | "--verbose") }
-silent_option = { ("-s" | "--silent") }
-head_option = { ("-I" | "--head") }
-fail_option = { ("-f" | "--fail") }
-show_headers_option = { ("-i" | "--show-headers") }
-get_option = { ("-G" | "--get") }
+verbose_option = { "--verbose" }
+silent_option = { "--silent" }
+head_option = { "--head" }
+fail_option = { "--fail"}
+show_headers_option = { "--show-headers" }
+get_option = { "--get" }
 url_option = { "--url" }
+
+unknown_option = { "-" ~ word }
 
 wss = _{ ws* ~ slash* ~ ws* }
 
