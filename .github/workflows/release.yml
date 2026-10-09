@@ -39,11 +39,11 @@ jobs:
 
       - name: Install leptos Linux and Mac
         if: ${{ matrix.platform == 'macos-latest' || matrix.platform == 'ubuntu-latest' }}
-        run: sudo curl --proto '=https' --tlsv1.2 -LsSf https://github.com/leptos-rs/cargo-leptos/releases/download/v0.3.6/cargo-leptos-installer.sh | sh
+        run: sudo curl --proto '=https' --tlsv1.2 -LsSf https://github.com/leptos-rs/cargo-leptos/releases/download/v0.3.11/cargo-leptos-installer.sh | sh
 
       - name: Install leptos Windows
         if: ${{ matrix.platform == 'windows-latest' }}
-        run: powershell -ExecutionPolicy Bypass -c "irm https://github.com/leptos-rs/cargo-leptos/releases/download/v0.3.7/cargo-leptos-installer.ps1 | iex"
+        run: powershell -ExecutionPolicy Bypass -c "irm https://github.com/leptos-rs/cargo-leptos/releases/download/v0.3.11/cargo-leptos-installer.ps1 | iex"
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
