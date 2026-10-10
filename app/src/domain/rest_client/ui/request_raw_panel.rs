@@ -57,7 +57,7 @@ pub fn RequestRawPanel(
     );
 
     view! {
-        <div class="flex flex-col text-xs md:text-base overflow-auto gap-4" node_ref=node_ref>
+        <div class="flex flex-col text-xs md:text-base overflow-auto gap-4 w-full" node_ref=node_ref>
             <div class="flex gap-4">
                 <Button
                     title=move || t_string!(i18n, rest_client_curl_build_btn_title).to_owned()
