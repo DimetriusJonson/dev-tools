@@ -81,7 +81,7 @@ where
 {
     match input_xml_reader.read_event_into_async(read_buffer).await? {
         Event::Text(ref e) => {
-            let text_content = input_xml_reader.decoder().decode(e)?;
+            let text_content = e.clone().into_inner();
             let filtered_lines: Vec<&str> =
                 text_content.lines().filter(|line| !line.trim().is_empty()).collect();
 

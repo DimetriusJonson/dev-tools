@@ -10,8 +10,8 @@ edition = "2024"
 
 anyhow = "1"
 axum = { version = "0.8", features = ["macros"] }
-axum-extra = { version = "0.9", features = ["cookie"] }
-axum-macros = "0.4"
+axum-extra = { version = "0.12", features = ["cookie"] }
+axum-macros = "0.5"
 console_error_panic_hook = "0.1"
 #leptos = { version = "0.8", features = ["nightly"] }
 leptos = { version = "0.8", default-features = false}
@@ -21,7 +21,7 @@ leptos_meta = "0.8"
 leptos_router = { version = "0.8"}
 tokio = { version = "1", features = ["rt-multi-thread"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["fs", "trace", "compression-gzip"] }
+tower-http = { version = "0.7", features = ["fs", "trace", "compression-gzip"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 wasm-bindgen = "0.2"
@@ -37,27 +37,27 @@ web-sys = { version = "0.3", features = ["Window", "Navigator", "Clipboard", "Ht
   "CssStyleDeclaration",
   "HtmlElement"
   ]}
-quick-xml = { version = "0.40", features = ["async-tokio"]}
+quick-xml = { version = "0.42", features = ["async-tokio"]}
 futures-util = "0.3"
 bytes = "1.12"
-gloo-net = { version="0.6", features=["http"] }
-gloo-storage = "0.3"
+gloo-net = { version="0.7", features=["http"] }
+gloo-storage = "0.4"
 async-stream = "0.3"
-gloo-utils = "0.2"
+gloo-utils = "0.3"
 js-sys = "0.3"
 html-escape = "0.2"
 urlencoding = "2.1"
-uuid = { version = "1.23", features = ["v4", "fast-rng", "js"] }
+uuid = { version = "1.28", features = ["v4", "fast-rng", "js"] }
 dotenvy = { version = "0.15" }
 tokio-util = "0.7"
 json-escape = "0.3"
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "time", "macros", "tls-rustls"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "postgres", "time", "macros", "tls-rustls"] }
 http = "1"
-nanoid = "0.4"
+nanoid = "0.5"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "webp"] }
-reqwest = { version = "0.12", default-features = false, features = ["stream", "rustls-tls", "json", "cookies", "gzip"] }
-flate2 = "1.0"
-getifs = "0.6"
+reqwest = { version = "0.13", default-features = false, features = ["stream", "rustls", "json", "cookies", "gzip"] }
+flate2 = "1.1"
+getifs = "0.7"
 difference = "2.0"
 leptos_i18n = { version = "0.6", default-features = false, features = ["csr"] }
 leptos_i18n_macro = { version = "0.2" }
