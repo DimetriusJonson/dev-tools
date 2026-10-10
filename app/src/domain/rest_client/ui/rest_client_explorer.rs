@@ -103,7 +103,7 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
     );
 
     view! {
-        <div node_ref=node_ref class="flex-1 max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
+        <div node_ref=node_ref class="flex-1 overflow-y-auto max-w-40 sm:max-w-none sm:flex-none flex flex-col gap-y-0 dark:text-white">
             <div class="flex flex-col p-2 md:p-4 gap-y-2">
                 <ProjectSelector on_delete=move |_| {
                     requests.read_untracked().iter().for_each(|r| {
