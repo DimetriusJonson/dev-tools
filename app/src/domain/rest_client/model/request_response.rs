@@ -22,13 +22,14 @@ impl RequestResponse {
         params: ReadSignal<RequestParams>,
         rc_context: RestClientContext,
     ) -> RwSignal<Option<RestClientResponse>> {
-        let signal = RwSignal::new(None);
+        let signal: RwSignal<Option<RestClientResponse>> = RwSignal::new(None);
 
         Effect::watch(
             move || signal.get(),
             move |value, _prev, _| {
                 if *params.read_untracked().save_response().read_untracked()
                     && let Some(response) = value
+                    && response.error().is_none()
                 {
                     let json_string = serde_json::to_string(&response).unwrap_or("".to_owned());
                     set_stored_value(
