@@ -128,11 +128,13 @@ pub fn RestClientExplorer(node_ref: NodeRef<Div>) -> impl IntoView {
 
             </div>
 
+            <div class="flex-1 flex flex-col overflow-y-auto">
             { move || { requests.get().into_iter()
                 .map(|request| {
                     view! {<RestClientExplorerRow request requests set_requests/>}
                 }).collect_view()
             }}
+            </div>
         </div>
     }
 }

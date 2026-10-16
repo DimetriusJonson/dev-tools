@@ -70,7 +70,7 @@ pub fn RestClientExplorerRow(
     });
 
     view! {
-        <div class="flex h-8 sm:h-10 items-center cursor-pointer p-1 sm:p-2 text-xs md:text-base"
+        <div class="relative flex h-8 sm:h-10 items-center cursor-pointer p-1 sm:p-2 text-xs md:text-base"
             class=(["bg-sky-500/50"], move || request.read_untracked().id() == rc_context.request.read().id())
             class=(["hover:bg-gray-600/50"], move || request.read_untracked().id() != rc_context.request.read().id())
             on:click=move |_| {
@@ -100,7 +100,7 @@ pub fn RestClientExplorerRow(
                         <span class="p-1 sm:p-2 w-full truncate">{request.read().display_name()}</span>
 
                         <Show when=move || request.read().id() == rc_context.request.read().id()>
-                            <div class="relative px-1 sm:px-2" node_ref=menu_ref>
+                            <div class="px-1 sm:px-2" node_ref=menu_ref>
                                 <Button
                                     title=move || "".to_owned()
                                     label=move || "...".to_owned()
@@ -126,7 +126,7 @@ pub fn RestClientExplorerRow(
                                 />
 
                                 <Show when=move || popup_menu_show.get() == request.read().id()>
-                                    <RequestPopupMenu class_name="absolute inset-0 z-50".to_owned() is_bottom=popup_menu_bottom
+                                    <RequestPopupMenu class_name="absolute right-0 z-50".to_owned() is_bottom=popup_menu_bottom
                                         items=move || {vec![
                                                 ("run", t_string!(i18n, rest_client_explorer_run_request), true),
                                                 ("copyCUrl", t_string!(i18n, rest_client_explorer_copy_curl), false),
