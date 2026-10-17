@@ -74,15 +74,15 @@
     "rest_client_explorer_rename_request":"Переименовать",
     "rest_client_explorer_dublicate_request":"Дублировать",
     "rest_client_explorer_delete_request":"Удалить",
-    "rest_client_explorer_copy_curl": "Копировать как cURL (Posix)",
-    "rest_client_explorer_copy_curlwin": "Копировать как cURL (Windows)",
+    "rest_client_explorer_copy_curl": "Копировать cURL",
+    "rest_client_explorer_copy_curlwin": "Копировать cURL.exe",
     
     "rest_client_param_name_placeholder": "Название параметра",
     "rest_client_param_value_placeholder": "Значение параметра",
     "rest_client_cookie_name_placeholder": "Название Cookie",
     "rest_client_cookie_value_placeholder": "Значение Cookie",
 
-    "rest_client_curl_import_title": "Импорт команды cUrl из буфера обмена.",
+    "rest_client_curl_import_title": "Импорт команды cURL из буфера обмена.",
 
     "rest_client_project_select_label": "Проект",
     "rest_client_project_not_selected": "Не выбран",

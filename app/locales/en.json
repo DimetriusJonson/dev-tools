@@ -75,14 +75,14 @@
     "rest_client_explorer_rename_request":"Rename",
     "rest_client_explorer_dublicate_request":"Dublicate",
     "rest_client_explorer_delete_request":"Delete",
-    "rest_client_explorer_copy_curl": "Copy as cURL (Posix)",
-    "rest_client_explorer_copy_curlwin": "Copy as cURL (Windows)",
+    "rest_client_explorer_copy_curl": "Copy cURL",
+    "rest_client_explorer_copy_curlwin": "Copy cURL.exe",
     
     "rest_client_param_name_placeholder": "Parameter name",
     "rest_client_param_value_placeholder": "Parameter value",
     "rest_client_cookie_name_placeholder": "Cookie name",
     "rest_client_cookie_value_placeholder": "Cookie value",
-    "rest_client_curl_import_title": "Import cUrl command from clipboard.",
+    "rest_client_curl_import_title": "Import cURL command from clipboard.",
     "rest_client_project_select_label": "Project",
     "rest_client_project_not_selected": "Not selected",
 
