@@ -126,7 +126,7 @@ pub fn RestClientExplorerRow(
                                 />
 
                                 <Show when=move || popup_menu_show.get() == request.read().id()>
-                                    <RequestPopupMenu class_name="absolute right-0 z-50".to_owned() is_bottom=popup_menu_bottom
+                                    <RequestPopupMenu class_name="absolute right-2 z-50".to_owned() is_bottom=popup_menu_bottom
                                         items=move || {vec![
                                                 ("run", t_string!(i18n, rest_client_explorer_run_request), true),
                                                 ("copyCUrl", t_string!(i18n, rest_client_explorer_copy_curl), false),
