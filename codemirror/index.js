@@ -4,7 +4,6 @@ import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import { xml } from "@codemirror/lang-xml";
 import { syntaxTree } from "@codemirror/language";
-import { markdown } from '@codemirror/lang-markdown'
 import { html } from "@codemirror/lang-html";
 import { vsCodeDark } from '@fsegurai/codemirror-theme-vscode-dark'
 import { vsCodeLight } from '@fsegurai/codemirror-theme-vscode-light'
@@ -38,7 +37,7 @@ function getBaseExtensions(onDocChange, readOnly) {
 function getExtensionsByLang(lang) {
     let extensions = [];
     if (lang == "xml") {
-        extensions.push(markdown(), xml(), xmlLinter);
+        extensions.push(xml(), xmlLinter);
     } else if (lang == "json") {
         extensions.push(json(), linter(jsonParseLinter()));
     } else if (lang == "html") {
