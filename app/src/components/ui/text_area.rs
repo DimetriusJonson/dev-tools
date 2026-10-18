@@ -1,5 +1,7 @@
 use leptos::prelude::*;
 
+pub const TEXTAREA_BORDER_CLASSES: &str = "rounded-md shadow-inner border border-gray-300 dark:border-gray-700 ";
+
 #[component]
 pub fn TextArea(
     name: String,
@@ -15,15 +17,13 @@ pub fn TextArea(
 
     view! {
         <textarea
-            class=format!("textblock px-1 md:px-4 py-2 rounded-md shadow-inner
+            class=format!("{} textblock px-1 md:px-4 py-2 
         focus:outline-4
-        border
         text-gray-700 
         placeholder-gray-400 
         hover:ring-gray-400
-        hover:border-gray-400
+        
         bg-white
-        border-gray-300
         focus:ring-indigo-400 
         focus:border-indigo-400
         active:ring-indigo-400 
@@ -38,7 +38,6 @@ pub fn TextArea(
         dark:hover:ring-gray-500
         dark:hover:border-gray-500
         dark:bg-dark-bg
-        dark:border-gray-700
         dark:active:border-indigo-400 
         dark:focus:ring-indigo-400 
         dark:focus:border-indigo-400
@@ -49,7 +48,7 @@ pub fn TextArea(
         disabled:dark:border-bg-dark-bg
         disabled:border-bg-white
         disabled:placeholder:text-gray-500/30
-        {}", class_name)
+        {}", TEXTAREA_BORDER_CLASSES, class_name)
             rows=rows
             cols=cols
             name=name

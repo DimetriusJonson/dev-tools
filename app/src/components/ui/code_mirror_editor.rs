@@ -14,9 +14,15 @@ pub fn CodeMirrorEditor(
     lang: ReadSignal<String>,
     #[prop(optional)] hidden: Option<Box<dyn Fn() -> bool + Send + Sync + 'static>>,
     #[prop(optional)] read_only: bool,
+    #[prop(optional)] placeholder: Option<Box<dyn Fn() -> String + Send + Sync + 'static>>,
 ) -> impl IntoView {
     let update_lock = RwSignal::new(false);
     let (editor_view, set_editor_view) = signal(JsValue::null());
+
+    let placeholder_memo = Memo::new(move |_| match &placeholder {
+        Some(placeholder) => placeholder(),
+        None => "".to_owned(),
+    });
 
     Effect::watch(
         move || value.get(),
@@ -35,6 +41,7 @@ pub fn CodeMirrorEditor(
                         &value.read_untracked(),
                         &lang.read_untracked(),
                         read_only,
+                        &placeholder_memo.get_untracked(),
                         on_change.as_ref(),
                     ));
 

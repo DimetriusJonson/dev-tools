@@ -1,4 +1,5 @@
 import { EditorView, basicSetup } from "codemirror";
+import { placeholder } from "@codemirror/view";
 import { EditorState, StateEffect, Compartment } from "@codemirror/state"
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
@@ -13,8 +14,9 @@ function getSystemTheme() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? vsCodeDark : vsCodeLight;
 }
 
-function getBaseExtensions(onDocChange, readOnly) {
+function getBaseExtensions(onDocChange, readOnly, placeholderText) {
     let extensions = [
+        placeholder(placeholderText),
         basicSetup,
         EditorView.lineWrapping,
         EditorState.readOnly.of(readOnly),
@@ -45,10 +47,10 @@ function getExtensionsByLang(lang) {
     return extensions;
 }
 
-window.initCodeEditor = (elementId, initialValue, lang, readOnly, onDocChange) => {
+window.initCodeEditor = (elementId, initialValue, lang, readOnly, placeholderText, onDocChange) => {
     const parentElement = document.getElementById(elementId);
 
-    let extensions = getBaseExtensions(onDocChange, readOnly);
+    let extensions = getBaseExtensions(onDocChange, readOnly, placeholderText);
     extensions.push(getExtensionsByLang(lang));
 
     let startState = EditorState.create({

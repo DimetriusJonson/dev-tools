@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use gloo_net::http::Request;
 use json_escape::unescape;
 use leptos::html::Div;
@@ -14,7 +16,7 @@ use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
-use crate::components::ui::text_area::TextArea;
+use crate::components::ui::text_area::TEXTAREA_BORDER_CLASSES;
 use crate::domain::share_file::ShareStorage;
 use crate::i18n::use_i18n;
 use crate::i18n::*;
@@ -51,6 +53,24 @@ pub fn JsonPage() -> impl IntoView {
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
     let left_panel_ref = NodeRef::<Div>::new();
     let right_panel_ref = NodeRef::<Div>::new();
+
+    Effect::new(move |_| {
+        let src_json = get_local_store_value("src_json", "".to_owned());
+        set_timeout(
+            move || {
+                set_json.set(src_json);
+            },
+            Duration::from_millis(50),
+        );
+    });
+
+    Effect::watch(
+        move || json.get(),
+        move |value, _prev, _| {
+            set_local_store_value("src_json", &value);
+        },
+        false,
+    );
 
     let on_format_click = move |_| {
         spawn_local(async move {
@@ -146,16 +166,20 @@ pub fn JsonPage() -> impl IntoView {
             // LEFT SIDE
             <div node_ref=left_panel_ref class="sm:flex-none flex flex-col md:flex-row h-[29dvh] md:h-[90dvh] gap-4">
                 <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full">
-                    <TextArea
-                        name="json".to_owned()
-                        class_name="md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
-                        placeholder=move || {t_string!(i18n, json_page_src_placeholder).to_owned()}
-                        value=json
-                        set_value=set_json
-                        on_change=move |_| {
-                            set_local_store_value("src_json", &json.read_untracked());
+                    { move || view! {
+                        <div class=format!("md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none {}", TEXTAREA_BORDER_CLASSES)>
+                            <CodeMirrorEditor
+                                element_id="json-src-code-editor".to_owned()
+                                placeholder=Box::new(move || {t_string!(i18n, json_page_src_placeholder).to_owned()})
+                                lang=code_lang.read_only()
+                                value=json
+                                set_value=set_json
+                                read_only=false
+                            />
+                        </div>
                         }
-                    />
+                    }
+
                     <div class="flex flex-row">
                         <FileInput node_ref=file_input_ref />
                         <Button
@@ -255,10 +279,10 @@ pub fn JsonPage() -> impl IntoView {
                         disabled=move || in_progress.get().is_active()
                     />
 
-                    <Button 
+                    <Button
                         title=move || "".to_owned()
-                        label=move || t_display!(i18n, share_file_btn_label).to_string() 
-                        button_width=ButtonWidth::Lg 
+                        label=move || t_display!(i18n, share_file_btn_label).to_string()
+                        button_width=ButtonWidth::Lg
                         loading=move || false
                         disabled=move || false
                         on_click=move |_| {

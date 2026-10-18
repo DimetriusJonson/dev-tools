@@ -9,6 +9,7 @@ extern "C" {
         initial_val: &str,
         _lang: &str,
         read_only: bool,
+        placeholder_text: &str,
         callback: &JsValue,
     ) -> JsValue;
 
