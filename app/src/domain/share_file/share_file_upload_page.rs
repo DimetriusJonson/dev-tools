@@ -223,15 +223,12 @@ pub fn ShareFileUploadPage() -> impl IntoView {
                                 value={custom_server}
                                 set_value={set_custom_server}
                                 label=move || "Server addr".to_owned()
+                                title=Box::new(move || t_string!(i18n, share_file_upload_page_server_addr_descr).to_owned())
                                 options=move || custom_servers.clone()
                                 not_selected_text={move || t_string!(i18n, share_file_upload_page_server_addr_not_selected).to_owned()}
                                 on_change=move |_| {}
                             />
                         </div>
-                        <p class="text-xs text-gray-600"
-                            class:hidden=hidden>
-                            {t!(i18n, share_file_upload_page_server_addr_descr, <br/> = || view! { <br/> })}
-                        </p>
                     }.into_view()
                 }
             )}

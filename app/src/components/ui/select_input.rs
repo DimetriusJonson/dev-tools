@@ -9,11 +9,16 @@ pub fn SelectInput(
     set_value: WriteSignal<String>,
     #[prop(optional)] class_name: String,
     label: impl Fn() -> String + Send + Sync + 'static,
+    #[prop(optional)] title: Option<Box<dyn Fn() -> String + Send + Sync + 'static>>,
     not_selected_text: impl Fn() -> String + Send + Sync + 'static,
     options: impl Fn() -> Vec<SelectOption> + Send + Sync + 'static,
     #[prop(into)] on_change: Callback<String>
 ) -> impl IntoView {
     let label_memo = Memo::new(move |_| label());
+    let title_memo = Memo::new(move |_| match &title {
+        Some(title) => title(),
+        None => "".to_owned(),
+    });
     
     let options_memo = Memo::new(move |_| {
         let mut final_options = Vec::new();
@@ -63,6 +68,7 @@ pub fn SelectInput(
 
         ", class_name)}
             name = {name}
+            title = title_memo
             bind:value=(value, set_value)
             on:change=move |ev| {
                 let val = event_target_value(&ev);
