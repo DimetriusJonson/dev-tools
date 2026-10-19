@@ -7,11 +7,12 @@ use leptos::{html, prelude::*};
 use leptos_router::hooks::use_navigate;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, safe_updating_ui_value, save_file_to_disk};
 use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::checkbox_with_label::CheckboxWithLabel;
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
 use crate::components::ui::select_input::SelectInput;
@@ -23,10 +24,8 @@ use crate::i18n::*;
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
     None,
-    Format,
+    Process,
     FormatFile,
-    Escape,
-    Unescape,
 }
 
 impl InProgressType {
@@ -40,6 +39,7 @@ pub fn XmlPage() -> impl IntoView {
     let i18n = use_i18n();
     let navigate = use_navigate();
 
+    let update_lock = RwSignal::new(false);
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let share_storage = use_context::<ShareStorage>().expect("Cant get share storage context!");
 
@@ -48,6 +48,21 @@ pub fn XmlPage() -> impl IntoView {
     let (dst_xml, set_dst_xml) = signal("".to_owned());
     let (ident, set_ident) = signal(get_local_store_value("xml_ident", "4".to_owned()));
     let (in_progress, set_in_progress) = signal(InProgressType::None);
+    let formatting = RwSignal::new(
+        get_local_store_value("xml_formatting", "true".to_owned())
+            .parse::<bool>()
+            .unwrap_or_default(),
+    );
+    let escaping = RwSignal::new(
+        get_local_store_value("xml_escaping", "false".to_owned())
+            .parse::<bool>()
+            .unwrap_or_default(),
+    );
+    let unescaping = RwSignal::new(
+        get_local_store_value("xml_unescaping", "false".to_owned())
+            .parse::<bool>()
+            .unwrap_or_default(),
+    );
 
     let file_input_ref: NodeRef<html::Input> = NodeRef::new();
     let left_panel_ref = NodeRef::<Div>::new();
@@ -71,17 +86,78 @@ pub fn XmlPage() -> impl IntoView {
         false,
     );
 
-    let on_format_click = move |_| {
-        spawn_local(async move {
-            set_in_progress.set(InProgressType::Format);
+    Effect::watch(
+        move || formatting.get(),
+        move |value, _prev, _| {
+            set_local_store_value("xml_formatting", &value.to_string());
+        },
+        false,
+    );
 
-            match format_xml(
-                xml.read_untracked().as_str(),
-                ident.get_untracked().parse().unwrap_or(4),
-            ) {
-                Ok(formatted_xml) => set_dst_xml.set(formatted_xml),
-                Err(err) => show_error(err.to_string(), messages),
+    Effect::watch(
+        move || escaping.get(),
+        move |value, _prev, _| {
+            set_local_store_value("xml_escaping", &value.to_string());
+            if *value {
+                safe_updating_ui_value(update_lock, move || {
+                    unescaping.set(false);
+                    formatting.set(false);
+                });
+            }
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || unescaping.get(),
+        move |value, _prev, _| {
+            set_local_store_value("xml_unescaping", &value.to_string());
+            if *value {
+                safe_updating_ui_value(update_lock, move || {
+                    escaping.set(false);
+                });
+            }
+        },
+        false,
+    );
+
+    let on_process_xml_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(InProgressType::Process);
+
+            let mut xml_result = xml.get_untracked();
+            if escaping.get_untracked() {
+                match escape_xml(&xml_result, true) {
+                    Ok(unescaped_xml) => xml_result = unescaped_xml,
+                    Err(err) => {
+                        show_error(err.to_string(), messages);
+                        set_in_progress.set(InProgressType::None);
+                        return;
+                    }
+                };
+            } else if unescaping.get_untracked() {
+                match escape_xml(&xml_result, false) {
+                    Ok(unescaped_xml) => xml_result = unescaped_xml,
+                    Err(err) => {
+                        show_error(err.to_string(), messages);
+                        set_in_progress.set(InProgressType::None);
+                        return;
+                    }
+                };
             };
+
+            if formatting.get_untracked() && !escaping.get_untracked() {
+                match format_xml(&xml_result, ident.get_untracked().parse().unwrap_or(4)) {
+                    Ok(formatted_xml) => xml_result = formatted_xml,
+                    Err(err) => {
+                        show_error(err.to_string(), messages);
+                        set_in_progress.set(InProgressType::None);
+                        return;
+                    }
+                };
+            }
+
+            set_dst_xml.set(xml_result);
 
             set_in_progress.set(InProgressType::None);
         });
@@ -128,166 +204,139 @@ pub fn XmlPage() -> impl IntoView {
         });
     };
 
-    let on_unescape_click = move |_| {
-        spawn_local(async move {
-            set_in_progress.set(InProgressType::Unescape);
-
-            match escape_xml(xml.read_untracked().as_str(), false) {
-                Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
-                Err(err) => show_error(err.to_string(), messages),
-            };
-
-            set_in_progress.set(InProgressType::None);
-        });
-    };
-
-    let on_escape_click = move |_| {
-        spawn_local(async move {
-            set_in_progress.set(InProgressType::Escape);
-
-            match escape_xml(xml.read_untracked().as_str(), true) {
-                Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
-                Err(err) => show_error(err.to_string(), messages),
-            };
-            set_in_progress.set(InProgressType::None);
-        });
-    };
-
     let on_copy_click = move |_| {
         copy_to_clipboard(&dst_xml.get());
         show_info(t_string!(i18n, xml_page_copied_to_clipboard_msg).to_owned(), messages);
     };
 
     view! {
-            <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
-                // LEFT SIDE
-                <div node_ref=left_panel_ref class="sm:flex-none flex flex-col md:flex-row h-[29dvh] md:h-[90dvh] gap-4">
-                    <div class="md:flex-1 overflow-y-auto flex flex-col gap-4 w-full ">
-                        { move || view! {
-                            <div class=format!("md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none {}", TEXTAREA_BORDER_CLASSES)>
-                                <CodeMirrorEditor
-                                    element_id="xml-src-code-editor".to_owned()
-                                    placeholder=Box::new(move || {t_string!(i18n, xml_page_src_placeholder).to_owned()})
-                                    lang=code_lang.read_only()
-                                    value=xml
-                                    set_value=set_xml
-                                    read_only=false
-                                />
-                            </div>
-                            }
-                        }
-
-                        <div class="flex flex-row">
-                            <FileInput node_ref=file_input_ref />
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || t_string!(i18n, xml_page_format_btn_label).to_owned()
-                                button_width=ButtonWidth::Lg
-                                loading=move || in_progress.get() == InProgressType::FormatFile
-                                on_click=on_format_file_click
-                                disabled=move || in_progress.get().is_active()
-                            />
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-4 items-center justify-center">
-                        <div class="flex flex-row md:flex-col gap-4">
-                            <SelectInput
-                                name="ident".to_owned()
-                                label=move || t_string!(i18n, ident_label).to_owned()
-                                not_selected_text=move || "".to_owned()
-                                options=move || {vec![
-                                    (Some("2".to_owned()), t_string!(i18n, ident_option_label_2).to_owned()),
-                                    (Some("3".to_owned()), t_string!(i18n, ident_option_label_3).to_owned()),
-                                    (Some("4".to_owned()), t_string!(i18n, ident_option_label_4).to_owned())
-                                    ]}
-                                on_change=move |value: String| {
-                                    set_local_store_value("xml_ident", &value);
-                                }
-                                value=ident
-                                set_value=set_ident
-                            />
-
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || t_string!(i18n, xml_page_format_btn_label).to_owned()
-                                button_width=ButtonWidth::Lg
-                                loading=move || in_progress.get() == InProgressType::Format
-                                on_click=on_format_click
-                                disabled=move || in_progress.get().is_active()
-                            />
-                        </div>
-
-                        <div class="flex flex-row md:flex-col gap-4 md:py-8">
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || t_string!(i18n, xml_page_unescape_btn_label).to_owned()
-                                button_width=ButtonWidth::Lg
-                                loading=move || in_progress.get() == InProgressType::Unescape
-                                on_click=on_unescape_click
-                                disabled=move || in_progress.get().is_active()
-                            />
-
-                            <Button
-                                title=move || "".to_owned()
-                                label=move || t_string!(i18n, xml_page_escape_btn_label).to_owned()
-                                button_width=ButtonWidth::Lg
-                                loading=move || in_progress.get() == InProgressType::Escape
-                                on_click=on_escape_click
-                                disabled=move || in_progress.get().is_active()
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <DragSplitter
-                    target_ref=left_panel_ref
-                    second_target_ref=right_panel_ref
-                    class_name="hidden md:block".to_owned()
-                    local_store_prop_name=move || "xml_left_panel_width".to_owned()
-                    min_ratio={25.0}
-                    max_ratio={75.0}
-                    default_ratio={50.0}/>
-
-                // RIGHT SIDE
-                <div node_ref=right_panel_ref class="overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
+        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
+            // LEFT SIDE
+            <div node_ref=left_panel_ref class="sm:flex-none flex flex-col md:flex-row h-[29dvh] md:h-[90dvh] gap-4">
+                <div class="md:flex-1 overflow-y-auto flex flex-col gap-4 w-full ">
                     { move || view! {
-                        <div class=format!("flex-1 overflow-y-auto text-black dark:text-white {}", TEXTAREA_BORDER_CLASSES)>
+                        <div class=format!("md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none {}", TEXTAREA_BORDER_CLASSES)>
                             <CodeMirrorEditor
-                                element_id="xml-code-editor".to_owned()
+                                element_id="xml-src-code-editor".to_owned()
+                                placeholder=Box::new(move || {t_string!(i18n, xml_page_src_placeholder).to_owned()})
                                 lang=code_lang.read_only()
-                                value=dst_xml
-                                set_value=set_dst_xml
-                                read_only=true
+                                value=xml
+                                set_value=set_xml
+                                read_only=false
                             />
                         </div>
                         }
                     }
 
-                    <div class="flex gap-4 justify-between" class:hidden=move || dst_xml.read().is_empty()>
+                    <div class="flex flex-row">
+                        <FileInput node_ref=file_input_ref />
                         <Button
                             title=move || "".to_owned()
-                            label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
-                            button_width=ButtonWidth::Auto
-                            loading=move || false
-                            on_click=on_copy_click
+                            label=move || t_string!(i18n, format_file_btn_label).to_owned()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::FormatFile
+                            on_click=on_format_file_click
                             disabled=move || in_progress.get().is_active()
                         />
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4 items-center justify-center">
+                    <div class="flex flex-row md:flex-col gap-4">
+                        <SelectInput
+                            name="ident".to_owned()
+                            label=move || t_string!(i18n, ident_label).to_owned()
+                            not_selected_text=move || "".to_owned()
+                            options=move || {vec![
+                                (Some("2".to_owned()), t_string!(i18n, ident_option_label_2).to_owned()),
+                                (Some("3".to_owned()), t_string!(i18n, ident_option_label_3).to_owned()),
+                                (Some("4".to_owned()), t_string!(i18n, ident_option_label_4).to_owned())
+                                ]}
+                            on_change=move |value: String| {
+                                set_local_store_value("xml_ident", &value);
+                            }
+                            value=ident
+                            set_value=set_ident
+                        />
+
+                        <CheckboxWithLabel
+                            name="Formatting".to_owned()
+                            value=formatting
+                            label=move || t_string!(i18n, formatting_label).to_owned()
+                        />
+
+                        <CheckboxWithLabel
+                            name="Escaping".to_owned()
+                            value=escaping
+                            label=move || t_string!(i18n, escaping_label).to_owned()
+                        />
+
+                        <CheckboxWithLabel
+                            name="Unescaping".to_owned()
+                            value=unescaping
+                            label=move || t_string!(i18n, unescaping_label).to_owned()
+                        />
 
                         <Button
                             title=move || "".to_owned()
-                            label=move || t_display!(i18n, share_file_btn_label).to_string()
+                            label=move || t_string!(i18n, process_btn_label).to_owned()
                             button_width=ButtonWidth::Lg
-                            loading=move || false
-                            disabled=move || false
-                            on_click=move |_| {
-                                share_storage.set_text(&dst_xml.read_untracked());
-                                navigate("/share_file?mode=xml", Default::default());
-                            }
+                            loading=move || in_progress.get() == InProgressType::Process
+                            on_click=on_process_xml_click
+                            disabled=move || in_progress.get().is_active()
                         />
                     </div>
-
                 </div>
             </div>
-        }
+
+            <DragSplitter
+                target_ref=left_panel_ref
+                second_target_ref=right_panel_ref
+                class_name="hidden md:block".to_owned()
+                local_store_prop_name=move || "xml_left_panel_width".to_owned()
+                min_ratio={25.0}
+                max_ratio={75.0}
+                default_ratio={50.0}/>
+
+            // RIGHT SIDE
+            <div node_ref=right_panel_ref class="overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
+                { move || view! {
+                    <div class=format!("flex-1 overflow-y-auto text-black dark:text-white {}", TEXTAREA_BORDER_CLASSES)>
+                        <CodeMirrorEditor
+                            element_id="xml-code-editor".to_owned()
+                            lang=code_lang.read_only()
+                            value=dst_xml
+                            set_value=set_dst_xml
+                            read_only=true
+                        />
+                    </div>
+                    }
+                }
+
+                <div class="flex gap-4 justify-between" class:hidden=move || dst_xml.read().is_empty()>
+                    <Button
+                        title=move || "".to_owned()
+                        label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
+                        button_width=ButtonWidth::Auto
+                        loading=move || false
+                        on_click=on_copy_click
+                        disabled=move || in_progress.get().is_active()
+                    />
+
+                    <Button
+                        title=move || "".to_owned()
+                        label=move || t_display!(i18n, share_file_btn_label).to_string()
+                        button_width=ButtonWidth::Lg
+                        loading=move || false
+                        disabled=move || false
+                        on_click=move |_| {
+                            share_storage.set_text(&dst_xml.read_untracked());
+                            navigate("/share_file?mode=xml", Default::default());
+                        }
+                    />
+                </div>
+
+            </div>
+        </div>
+    }
 }
