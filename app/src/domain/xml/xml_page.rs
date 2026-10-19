@@ -7,7 +7,7 @@ use leptos::{html, prelude::*};
 use leptos_router::hooks::use_navigate;
 
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::common::ui_utils::{copy_to_clipboard, safe_updating_ui_value, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
@@ -25,6 +25,7 @@ use crate::i18n::*;
 enum InProgressType {
     None,
     Process,
+    Escape,
     FormatFile,
 }
 
@@ -39,7 +40,6 @@ pub fn XmlPage() -> impl IntoView {
     let i18n = use_i18n();
     let navigate = use_navigate();
 
-    let update_lock = RwSignal::new(false);
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let share_storage = use_context::<ShareStorage>().expect("Cant get share storage context!");
 
@@ -49,17 +49,12 @@ pub fn XmlPage() -> impl IntoView {
     let (ident, set_ident) = signal(get_local_store_value("xml_ident", "4".to_owned()));
     let (in_progress, set_in_progress) = signal(InProgressType::None);
     let formatting = RwSignal::new(
-        get_local_store_value("xml_formatting", "true".to_owned())
-            .parse::<bool>()
-            .unwrap_or_default(),
-    );
-    let escaping = RwSignal::new(
-        get_local_store_value("xml_escaping", "false".to_owned())
+        get_local_store_value("xml_format", "true".to_owned())
             .parse::<bool>()
             .unwrap_or_default(),
     );
     let unescaping = RwSignal::new(
-        get_local_store_value("xml_unescaping", "false".to_owned())
+        get_local_store_value("xml_unescape", "false".to_owned())
             .parse::<bool>()
             .unwrap_or_default(),
     );
@@ -89,21 +84,7 @@ pub fn XmlPage() -> impl IntoView {
     Effect::watch(
         move || formatting.get(),
         move |value, _prev, _| {
-            set_local_store_value("xml_formatting", &value.to_string());
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || escaping.get(),
-        move |value, _prev, _| {
-            set_local_store_value("xml_escaping", &value.to_string());
-            if *value {
-                safe_updating_ui_value(update_lock, move || {
-                    unescaping.set(false);
-                    formatting.set(false);
-                });
-            }
+            set_local_store_value("xml_format", &value.to_string());
         },
         false,
     );
@@ -111,12 +92,7 @@ pub fn XmlPage() -> impl IntoView {
     Effect::watch(
         move || unescaping.get(),
         move |value, _prev, _| {
-            set_local_store_value("xml_unescaping", &value.to_string());
-            if *value {
-                safe_updating_ui_value(update_lock, move || {
-                    escaping.set(false);
-                });
-            }
+            set_local_store_value("xml_unescape", &value.to_string());
         },
         false,
     );
@@ -126,16 +102,7 @@ pub fn XmlPage() -> impl IntoView {
             set_in_progress.set(InProgressType::Process);
 
             let mut xml_result = xml.get_untracked();
-            if escaping.get_untracked() {
-                match escape_xml(&xml_result, true) {
-                    Ok(unescaped_xml) => xml_result = unescaped_xml,
-                    Err(err) => {
-                        show_error(err.to_string(), messages);
-                        set_in_progress.set(InProgressType::None);
-                        return;
-                    }
-                };
-            } else if unescaping.get_untracked() {
+            if unescaping.get_untracked() {
                 match escape_xml(&xml_result, false) {
                     Ok(unescaped_xml) => xml_result = unescaped_xml,
                     Err(err) => {
@@ -146,7 +113,7 @@ pub fn XmlPage() -> impl IntoView {
                 };
             };
 
-            if formatting.get_untracked() && !escaping.get_untracked() {
+            if formatting.get_untracked() {
                 match format_xml(&xml_result, ident.get_untracked().parse().unwrap_or(4)) {
                     Ok(formatted_xml) => xml_result = formatted_xml,
                     Err(err) => {
@@ -200,6 +167,18 @@ pub fn XmlPage() -> impl IntoView {
                 }
             }
 
+            set_in_progress.set(InProgressType::None);
+        });
+    };
+
+    let on_escape_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(InProgressType::Escape);
+
+            match escape_xml(xml.read_untracked().as_str(), true) {
+                Ok(unescaped_xml) => set_dst_xml.set(unescaped_xml),
+                Err(err) => show_error(err.to_string(), messages),
+            };
             set_in_progress.set(InProgressType::None);
         });
     };
@@ -260,21 +239,15 @@ pub fn XmlPage() -> impl IntoView {
                         />
 
                         <CheckboxWithLabel
-                            name="Formatting".to_owned()
+                            name="format".to_owned()
                             value=formatting
                             label=move || t_string!(i18n, formatting_label).to_owned()
                         />
 
                         <CheckboxWithLabel
-                            name="Escaping".to_owned()
-                            value=escaping
-                            label=move || t_string!(i18n, escaping_label).to_owned()
-                        />
-
-                        <CheckboxWithLabel
-                            name="Unescaping".to_owned()
+                            name="Unescape".to_owned()
                             value=unescaping
-                            label=move || t_string!(i18n, unescaping_label).to_owned()
+                            label=move || "Unescape".to_owned()
                         />
 
                         <Button
@@ -283,6 +256,17 @@ pub fn XmlPage() -> impl IntoView {
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Process
                             on_click=on_process_xml_click
+                            disabled=move || in_progress.get().is_active()
+                        />
+                    </div>
+
+                    <div class="flex flex-row md:flex-col gap-4 md:py-8">
+                        <Button
+                            title=move || "".to_owned()
+                            label=move || "Escape".to_owned()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::Escape
+                            on_click=on_escape_click
                             disabled=move || in_progress.get().is_active()
                         />
                     </div>

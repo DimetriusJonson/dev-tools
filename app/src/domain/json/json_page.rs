@@ -9,7 +9,7 @@ use leptos_router::hooks::use_navigate;
 
 use crate::common::json_processor::format_json;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
-use crate::common::ui_utils::{copy_to_clipboard, safe_updating_ui_value, save_file_to_disk};
+use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::ui::button::{Button, ButtonWidth};
@@ -28,6 +28,7 @@ enum InProgressType {
     None,
     Format,
     FormatFile,
+    Escape,
 }
 
 impl InProgressType {
@@ -42,7 +43,6 @@ pub fn JsonPage() -> impl IntoView {
     let navigate = use_navigate();
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let share_storage = use_context::<ShareStorage>().expect("Cant get share storage context!");
-    let update_lock = RwSignal::new(false);
 
     let code_lang = RwSignal::new("json".to_owned());
     let (json, set_json) = signal(get_local_store_value("src_json", "".to_owned()));
@@ -50,17 +50,12 @@ pub fn JsonPage() -> impl IntoView {
     let (ident, set_ident) = signal(get_local_store_value("json_ident", "4".to_owned()));
     let (in_progress, set_in_progress) = signal(InProgressType::None);
     let formatting = RwSignal::new(
-        get_local_store_value("json_formatting", "true".to_owned())
-            .parse::<bool>()
-            .unwrap_or_default(),
-    );
-    let escaping = RwSignal::new(
-        get_local_store_value("json_escaping", "false".to_owned())
+        get_local_store_value("json_format", "true".to_owned())
             .parse::<bool>()
             .unwrap_or_default(),
     );
     let unescaping = RwSignal::new(
-        get_local_store_value("json_unescaping", "false".to_owned())
+        get_local_store_value("json_unescape", "false".to_owned())
             .parse::<bool>()
             .unwrap_or_default(),
     );
@@ -90,21 +85,7 @@ pub fn JsonPage() -> impl IntoView {
     Effect::watch(
         move || formatting.get(),
         move |value, _prev, _| {
-            set_local_store_value("json_formatting", &value.to_string());
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || escaping.get(),
-        move |value, _prev, _| {
-            set_local_store_value("json_escaping", &value.to_string());
-            if *value {
-                safe_updating_ui_value(update_lock, move || {
-                    unescaping.set(false);
-                    formatting.set(false);
-                });
-            }
+            set_local_store_value("json_format", &value.to_string());
         },
         false,
     );
@@ -112,12 +93,7 @@ pub fn JsonPage() -> impl IntoView {
     Effect::watch(
         move || unescaping.get(),
         move |value, _prev, _| {
-            set_local_store_value("json_unescaping", &value.to_string());
-            if *value {
-                safe_updating_ui_value(update_lock, move || {
-                    escaping.set(false);
-                });
-            }
+            set_local_store_value("json_unescape", &value.to_string());
         },
         false,
     );
@@ -128,14 +104,7 @@ pub fn JsonPage() -> impl IntoView {
 
             let mut json_result = json.get_untracked();
 
-            if escaping.get_untracked() {
-                let escaped_parts = escape_str(&json_result);
-                let mut escaped_str = String::new();
-                for part in escaped_parts {
-                    escaped_str.push_str(part);
-                }
-                json_result = escaped_str;
-            } else if unescaping.get_untracked() {
+            if unescaping.get_untracked() {
                 match unescape(&json_result).decode_utf8() {
                     Ok(unescaped_json) => json_result = unescaped_json.to_string(),
                     Err(err) => {
@@ -146,10 +115,26 @@ pub fn JsonPage() -> impl IntoView {
                 }
             }
 
-            if formatting.get_untracked() && !escaping.get_untracked() {
+            if formatting.get_untracked() {
                 json_result = format_json(&json_result, ident.get_untracked().parse().unwrap_or(4));
             }
             set_dst_json.set(json_result);
+
+            set_in_progress.set(InProgressType::None);
+        });
+    };
+
+    let on_escape_click = move |_| {
+        spawn_local(async move {
+            set_in_progress.set(InProgressType::Escape);
+
+            let json_str = json.read_untracked();
+            let escaped_parts = escape_str(json_str.as_str());
+            let mut escaped_str = String::new();
+            for part in escaped_parts {
+                escaped_str.push_str(part);
+            }
+            set_dst_json.set(escaped_str);
 
             set_in_progress.set(InProgressType::None);
         });
@@ -253,21 +238,15 @@ pub fn JsonPage() -> impl IntoView {
                         />
 
                         <CheckboxWithLabel
-                            name="Formatting".to_owned()
+                            name="format".to_owned()
                             value=formatting
                             label=move || t_string!(i18n, formatting_label).to_owned()
                         />
 
                         <CheckboxWithLabel
-                            name="Escaping".to_owned()
-                            value=escaping
-                            label=move || t_string!(i18n, escaping_label).to_owned()
-                        />
-
-                        <CheckboxWithLabel
-                            name="Unescaping".to_owned()
+                            name="unescape".to_owned()
                             value=unescaping
-                            label=move || t_string!(i18n, unescaping_label).to_owned()
+                            label=move || "Unescape".to_owned()
                         />
 
                         <Button
@@ -280,6 +259,16 @@ pub fn JsonPage() -> impl IntoView {
                         />
                     </div>
 
+                    <div class="flex flex-row md:flex-col gap-4 md:py-8">
+                        <Button
+                            title=move || "".to_owned()
+                            label=move || "Escape".to_owned()
+                            button_width=ButtonWidth::Lg
+                            loading=move || in_progress.get() == InProgressType::Escape
+                            on_click=on_escape_click
+                            disabled=move || in_progress.get().is_active()
+                        />
+                    </div>
                 </div>
             </div>
 
