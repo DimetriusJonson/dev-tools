@@ -10,6 +10,13 @@ pub enum ButtonColor {
     Custom,
 }
 
+#[derive(Default, Copy, Clone)]
+pub enum ButtonLabel {
+    #[default]
+    Text,
+    RightArrow,
+}
+
 #[derive(Default)]
 pub enum ButtonTextSize {
     Sm,
@@ -24,7 +31,7 @@ pub enum ButtonWidth {
     OneSymbol,
     Md,
     Lg,
-    Custom
+    Custom,
 }
 
 #[derive(Default)]
@@ -41,13 +48,14 @@ pub fn Button(
     title: impl Fn() -> String + Send + Sync + 'static,
     #[prop(optional)] class_name: String,
     #[prop(optional)] color: ButtonColor,
+    #[prop(optional)] label_type: ButtonLabel,
     #[prop(optional)] button_width: ButtonWidth,
     #[prop(optional)] button_height: ButtonHeight,
     #[prop(optional)] text_size: ButtonTextSize,
     loading: impl Fn() -> bool + Send + Sync + 'static,
     disabled: impl Fn() -> bool + Send + Sync + 'static,
     on_click: impl FnMut(MouseEvent) + 'static,
-    #[prop(optional)] node_ref: Option<NodeRef::<leptos::html::Button>>,
+    #[prop(optional)] node_ref: Option<NodeRef<leptos::html::Button>>,
 ) -> impl IntoView {
     let label_memo = Memo::new(move |_| label());
     let title_memo = Memo::new(move |_| title());
@@ -59,7 +67,7 @@ pub fn Button(
         None => NodeRef::new(),
     };
 
-    let base_classes = "rounded-3xl font-medium justify-center items-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "flex rounded-3xl font-medium justify-center items-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -99,7 +107,7 @@ pub fn Button(
                 match loading_memo.get() {
                     true => "inline-flex leading-6 transition ease-in-out duration-150".to_owned(),
                     _ => "".to_owned()
-                }, 
+                },
                 match loading_memo.get() || disabled_memo.get() {
                     true => "cursor-not-allowed".to_owned(),
                     false => "cursor-pointer".to_owned(),
@@ -111,7 +119,7 @@ pub fn Button(
 
            <Show
                 when=move || loading_memo.get()
-                fallback=move || view! { {label_memo} }
+                fallback=move || view! { <ButtonLabel label_memo label_type /> }
             >
                 <svg class="animate-spin [animation-duration:500ms] h-5 w-5 text-black" xmlns="http://w3.org" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -121,5 +129,24 @@ pub fn Button(
             </Show>
 
         </button>
+    }
+}
+
+#[component]
+fn ButtonLabel(label_memo: Memo<String>, label_type: ButtonLabel) -> impl IntoView {
+    match label_type {
+        ButtonLabel::Text => view! {{label_memo}}.into_any(),
+        ButtonLabel::RightArrow => view! {<svg class="w-10 h-4"
+            xmlns="http://w3.org"
+            viewBox="0 0 40 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        >
+            <path d="M0 12h40"></path>
+            <path d="m38 5 7 7-7 7"></path>
+        </svg>}.into_any(),
     }
 }

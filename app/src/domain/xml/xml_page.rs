@@ -11,7 +11,7 @@ use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
-use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::button::{Button, ButtonLabel, ButtonWidth};
 use crate::components::ui::checkbox_with_label::CheckboxWithLabel;
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
@@ -252,7 +252,8 @@ pub fn XmlPage() -> impl IntoView {
 
                         <Button
                             title=move || "".to_owned()
-                            label=move || t_string!(i18n, process_btn_label).to_owned()
+                            label=move || "".to_owned()
+                            label_type=ButtonLabel::RightArrow
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Process
                             on_click=on_process_xml_click
