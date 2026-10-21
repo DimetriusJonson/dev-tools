@@ -18,6 +18,8 @@
     "copy_to_clipboard_btn_label": "Скопировать в буфер обмена",
     "format_file_btn_label": "Форматировать",
     "formatting_label": "Форматировать",
+    "escape_label": "Экранировать",
+    "unescape_label": "Деэкранировать",
     "ident_option_label_2": "2 отступа",
     "ident_option_label_3": "3 отступа",
     "ident_option_label_4": "4 отступа",

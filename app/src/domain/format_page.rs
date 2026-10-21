@@ -259,7 +259,7 @@ pub fn FormatPage(
                         <CheckboxWithLabel
                             name="Unescape".to_owned()
                             value=unescaping
-                            label=move || "Unescape".to_owned()
+                            label=move || t_string!(i18n, unescape_label).to_owned()
                         />
 
                         <Button
@@ -276,7 +276,7 @@ pub fn FormatPage(
                     <div class="flex flex-row md:flex-col gap-4 md:py-8">
                         <Button
                             title=move || "".to_owned()
-                            label=move || "Escape".to_owned()
+                            label=move || t_string!(i18n, escape_label).to_owned()
                             button_width=ButtonWidth::Lg
                             loading=move || in_progress.get() == InProgressType::Escape
                             on_click=on_escape_click

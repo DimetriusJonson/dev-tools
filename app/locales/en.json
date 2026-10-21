@@ -18,6 +18,8 @@
     "copy_to_clipboard_btn_label": "Copy to clipboard",
     "format_file_btn_label": "Format",
     "formatting_label": "Format",
+    "escape_label": "Escape",
+    "unescape_label": "Unescape",
     "ident_option_label_2": "2 indents",
     "ident_option_label_3": "3 indents",
     "ident_option_label_4": "4 indents",
