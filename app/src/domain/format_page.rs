@@ -34,6 +34,8 @@ impl InProgressType {
     }
 }
 
+type FormatFuncResult = Result<String, Box<dyn std::error::Error>>;
+
 #[component]
 pub fn FormatPage(
     name: &'static str,
@@ -41,9 +43,9 @@ pub fn FormatPage(
     mime_type: &'static str,
     format_file_service: &'static str,
     src_placeholder: impl Fn() -> String + Send + Sync + 'static,
-    format_func: impl Fn(String, usize) -> Result<String, Box<dyn std::error::Error>> + 'static + Clone,
-    escape_func: impl Fn(String) -> Result<String, Box<dyn std::error::Error>> + 'static + Clone,
-    unescape_func: impl Fn(String) -> Result<String, Box<dyn std::error::Error>> + 'static + Clone,
+    format_func: impl Fn(String, usize) -> FormatFuncResult + 'static + Clone,
+    escape_func: impl Fn(String) -> FormatFuncResult + 'static + Clone,
+    unescape_func: impl Fn(String) -> FormatFuncResult + 'static + Clone,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let navigate = use_navigate();
