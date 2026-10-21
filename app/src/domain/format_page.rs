@@ -41,21 +41,9 @@ pub fn FormatPage(
     mime_type: &'static str,
     format_file_service: &'static str,
     src_placeholder: impl Fn() -> String + Send + Sync + 'static,
-    format_func: impl Fn(String, usize) -> Result<String, Box<dyn std::error::Error>>
-    + Send
-    + Sync
-    + 'static
-    + Clone,
-    escape_func: impl Fn(String) -> Result<String, Box<dyn std::error::Error>>
-    + Send
-    + Sync
-    + 'static
-    + Clone,
-    unescape_func: impl Fn(String) -> Result<String, Box<dyn std::error::Error>>
-    + Send
-    + Sync
-    + 'static
-    + Clone,
+    format_func: impl Fn(String, usize) -> Result<String, Box<dyn std::error::Error>> + 'static + Clone,
+    escape_func: impl Fn(String) -> Result<String, Box<dyn std::error::Error>> + 'static + Clone,
+    unescape_func: impl Fn(String) -> Result<String, Box<dyn std::error::Error>> + 'static + Clone,
 ) -> impl IntoView {
     let i18n = use_i18n();
     let navigate = use_navigate();
@@ -64,7 +52,7 @@ pub fn FormatPage(
     let share_storage = use_context::<ShareStorage>().expect("Cant get share storage context!");
 
     let src_placeholder_memo = Memo::new(move |_| src_placeholder());
- 
+
     let code_lang = RwSignal::new(lang.to_owned());
     let (src, set_src) = signal("".to_owned());
     let (dst, set_dst) = signal("".to_owned());
@@ -171,11 +159,7 @@ pub fn FormatPage(
                         Ok(response) => match response.binary().await {
                             Ok(bytes) => {
                                 let file_name = format!("formatted_{}", file.name());
-                                match save_file_to_disk(
-                                    bytes.to_vec(),
-                                    &file_name,
-                                    mime_type,
-                                ) {
+                                match save_file_to_disk(bytes.to_vec(), &file_name, mime_type) {
                                     Ok(_) => show_info(
                                         t_display!(i18n, file_saved_file_msg, file_name)
                                             .to_string(),
