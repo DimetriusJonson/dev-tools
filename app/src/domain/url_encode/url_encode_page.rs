@@ -4,7 +4,7 @@ use leptos::task::spawn_local;
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::copy_to_clipboard;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
-use crate::components::ui::button::{Button, ButtonWidth};
+use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
 use crate::components::ui::text_area::TextArea;
 use crate::i18n::use_i18n;
 use crate::i18n::*;
@@ -12,9 +12,9 @@ use urlencoding::{decode, encode};
 
 #[derive(PartialEq, Copy, Clone)]
 enum InProgressType {
-    None, 
+    None,
     Encode,
-    Decode
+    Decode,
 }
 
 impl InProgressType {
@@ -58,10 +58,10 @@ pub fn UrlEncoderPage() -> impl IntoView {
     };
 
     view! {
-        <div class="flex-1 flex flex-col md:flex-row gap-4 px-2 py-4 text-xs md:text-base">
+        <div class="flex-1 flex flex-col gap-4 px-2 py-4 text-xs md:text-base">
             <TextArea
                 name="url".to_owned()
-                class_name="md:flex-1 h-[27dvh] md:h-auto overflow-y-auto w-full resize-none".to_owned()
+                class_name="flex-1 h-[27dvh] h-auto overflow-y-auto w-full resize-none".to_owned()
                 placeholder=move || t_string!(i18n, url_page_src_placeholder).to_owned()
                 value=url
                 set_value=set_url
@@ -70,7 +70,7 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 }
             />
 
-            <div class="flex flex-col gap-4 items-center justify-center">
+            <div class="flex gap-4 items-center justify-center">
                 <Button
                     title=move || "".to_owned()
                     label=move || t_string!(i18n, url_page_encode_btn_label).to_owned()
@@ -89,22 +89,26 @@ pub fn UrlEncoderPage() -> impl IntoView {
                 />
             </div>
 
-            <div class="md:flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full h-[38dvh] md:h-[90dvh]">
+            <div class="relative flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 w-full">
                 { move || view! {
                     <div class="flex-1 min-h-0 overflow-y-auto text-black dark:text-white px-3 py-2 rounded-md shadow-inner border bg-white dark:bg-dark-bg border-gray-300 dark:border-gray-700">
                         <pre class="whitespace-pre-wrap wrap-break-word break-all"><code>{dst_url}</code></pre>
+
+                        <Button
+                            label=move || "⧉".to_owned()
+                            title=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
+                            class_name="absolute right-1 top-4 text-bold w-8 text-gray-500 hover:text-green-500 z-1000".to_owned()
+                            button_width=ButtonWidth::Custom
+                            button_height=ButtonHeight::Custom
+                            color=ButtonColor::Custom
+                            loading=move || false
+                            disabled=move || in_progress.get().is_active()
+                            on_click=on_copy_click
+                        />
+
                     </div>
                     }
                 }
-
-                <Button
-                    title=move || "".to_owned()
-                    label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
-                    button_width=ButtonWidth::Auto
-                    loading=move || false
-                    on_click=on_copy_click
-                    disabled=move || in_progress.get().is_active()
-                />
 
             </div>
         </div>
