@@ -297,50 +297,47 @@ pub fn FormatPage(
 
             // RIGHT SIDE
             <div node_ref=right_panel_ref class="overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
+                    <div class=format!("relative flex-1 overflow-y-auto text-black dark:text-white {}", TEXTAREA_BORDER_CLASSES)>
+                        { move || view! {
+                            <CodeMirrorEditor
+                                element_id=format!("{}-code-editor", name)
+                                lang=code_lang.read_only()
+                                value=dst
+                                set_value=set_dst
+                                read_only=true
+                            />
+                        }}
 
-                { move || view! {
-                    <div class=format!("flex-1 overflow-y-auto text-black dark:text-white {}", TEXTAREA_BORDER_CLASSES)>
-                        <CodeMirrorEditor
-                            element_id=format!("{}-code-editor", name)
-                            lang=code_lang.read_only()
-                            value=dst
-                            set_value=set_dst
-                            read_only=true
-                        />
+                        <div class="absolute right-1 top-[2px] flex" class:hidden=move || dst.read().is_empty()>
+                            <Button
+                                label=move || "⧉".to_owned()
+                                title=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
+                                class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                                button_width=ButtonWidth::Custom
+                                button_height=ButtonHeight::Custom
+                                color=ButtonColor::Custom
+                                loading=move || false
+                                on_click=on_copy_click
+                                disabled=move || in_progress.get().is_active()
+                            />
+
+                            <Button
+                                label=move || "".to_owned()
+                                title=move || t_string!(i18n, share_file_btn_label).to_owned()
+                                class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                                label_type=ButtonLabel::Share
+                                button_width=ButtonWidth::Custom
+                                button_height=ButtonHeight::Custom
+                                color=ButtonColor::Custom
+                                loading=move || false
+                                disabled=move || false
+                                on_click=move |_| {
+                                    share_storage.set_text(&dst.read_untracked());
+                                    navigate(&format!("/share_file?mode={}", name), Default::default());
+                                }
+                            />
+                        </div>
                     </div>
-                    }
-                }
-
-                <div class="flex gap-4 justify-end" class:hidden=move || dst.read().is_empty()>
-                    <Button
-                        label=move || "⧉".to_owned()
-                        title=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
-                        class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
-                        button_width=ButtonWidth::Custom
-                        button_height=ButtonHeight::Custom
-                        color=ButtonColor::Custom
-                        loading=move || false
-                        on_click=on_copy_click
-                        disabled=move || in_progress.get().is_active()
-                    />
-
-                    <Button
-                        label=move || "".to_owned()
-                        title=move || t_string!(i18n, share_file_btn_label).to_owned()
-                        class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
-                        label_type=ButtonLabel::Share
-                        button_width=ButtonWidth::Custom
-                        button_height=ButtonHeight::Custom
-                        color=ButtonColor::Custom
-                        loading=move || false
-                        disabled=move || false
-                        on_click=move |_| {
-                            share_storage.set_text(&dst.read_untracked());
-                            navigate(&format!("/share_file?mode={}", name), Default::default());
-                        }
-                    />
-                </div>
-
             </div>
         </div>
     }
