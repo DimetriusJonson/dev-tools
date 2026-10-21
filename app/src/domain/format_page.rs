@@ -10,7 +10,7 @@ use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::drag_splitter::DragSplitter;
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
-use crate::components::ui::button::{Button, ButtonLabel, ButtonWidth};
+use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonLabel, ButtonWidth};
 use crate::components::ui::checkbox_with_label::CheckboxWithLabel;
 use crate::components::ui::code_mirror_editor::CodeMirrorEditor;
 use crate::components::ui::file_input::FileInput;
@@ -297,6 +297,7 @@ pub fn FormatPage(
 
             // RIGHT SIDE
             <div node_ref=right_panel_ref class="overflow-y-auto flex flex-col gap-4 h-[35dvh] md:h-[90dvh]">
+
                 { move || view! {
                     <div class=format!("flex-1 overflow-y-auto text-black dark:text-white {}", TEXTAREA_BORDER_CLASSES)>
                         <CodeMirrorEditor
@@ -310,20 +311,27 @@ pub fn FormatPage(
                     }
                 }
 
-                <div class="flex gap-4 justify-between" class:hidden=move || dst.read().is_empty()>
+                <div class="flex gap-4 justify-end" class:hidden=move || dst.read().is_empty()>
                     <Button
-                        title=move || "".to_owned()
-                        label=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
-                        button_width=ButtonWidth::Auto
+                        label=move || "⧉".to_owned()
+                        title=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
+                        class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                        button_width=ButtonWidth::Custom
+                        button_height=ButtonHeight::Custom
+                        color=ButtonColor::Custom
                         loading=move || false
                         on_click=on_copy_click
                         disabled=move || in_progress.get().is_active()
                     />
 
                     <Button
-                        title=move || "".to_owned()
-                        label=move || t_display!(i18n, share_file_btn_label).to_string()
-                        button_width=ButtonWidth::Lg
+                        label=move || "".to_owned()
+                        title=move || t_string!(i18n, share_file_btn_label).to_owned()
+                        class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                        label_type=ButtonLabel::Share
+                        button_width=ButtonWidth::Custom
+                        button_height=ButtonHeight::Custom
+                        color=ButtonColor::Custom
                         loading=move || false
                         disabled=move || false
                         on_click=move |_| {
