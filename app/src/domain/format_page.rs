@@ -206,7 +206,7 @@ pub fn FormatPage(
             <div node_ref=left_panel_ref class="sm:flex-none flex flex-col md:flex-row h-[29dvh] md:h-[90dvh] gap-4">
                 <div class="md:flex-1 overflow-y-auto flex flex-col gap-4 w-full ">
                     { move || view! {
-                        <div class=format!("md:flex-1 h-[30dvh] md:h-auto overflow-y-auto w-full resize-none {}", TEXTAREA_BORDER_CLASSES)>
+                        <div class=format!("md:flex-1 md:h-auto overflow-y-auto w-full resize-none {}", TEXTAREA_BORDER_CLASSES)>
                             <CodeMirrorEditor
                                 element_id=format!("{}-src-code-editor", name)
                                 placeholder=Box::new(move || src_placeholder_memo.get())
@@ -262,6 +262,9 @@ pub fn FormatPage(
                             label=move || t_string!(i18n, unescape_label).to_owned()
                         />
 
+                    </div>
+
+                    <div class="flex flex-row md:flex-col gap-4 md:gap-y-8">
                         <Button
                             title=move || "".to_owned()
                             label=move || "".to_owned()
@@ -271,9 +274,6 @@ pub fn FormatPage(
                             on_click=on_process_click
                             disabled=move || in_progress.get().is_active()
                         />
-                    </div>
-
-                    <div class="flex flex-row md:flex-col gap-4 md:py-8">
                         <Button
                             title=move || "".to_owned()
                             label=move || t_string!(i18n, escape_label).to_owned()

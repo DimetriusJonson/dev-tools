@@ -1,5 +1,5 @@
-import { EditorView, basicSetup } from "codemirror";
-import { placeholder } from "@codemirror/view";
+import { basicSetup } from "codemirror";
+import { EditorView, placeholder } from "@codemirror/view";
 import { EditorState, StateEffect, Compartment } from "@codemirror/state"
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";

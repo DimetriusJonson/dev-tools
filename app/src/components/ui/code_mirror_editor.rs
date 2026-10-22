@@ -78,7 +78,7 @@ pub fn CodeMirrorEditor(
     );
 
     view! {
-        <div id={element_id.to_owned()} class={format!("w-full h-0 bg-white dark:bg-dark-bg {}", class_name)}
+        <div id={element_id.to_owned()} class={format!("w-full bg-white dark:bg-dark-bg {}", class_name)}
             class:hidden={ move || hidden.as_ref().map(|v| v()).unwrap_or_default()}
         >
         </div>

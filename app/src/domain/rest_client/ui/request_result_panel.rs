@@ -193,7 +193,7 @@ pub fn RequestResultPanel(
 
                         </div>
                     </div>
-                    <div class="flex-1 relative flex overflow-auto w-full min-w-0">
+                    <div class="flex-1 relative overflow-auto w-full min-w-0">
                         <CodeMirrorEditor
                             element_id="response-body-code-editor".to_owned()
                             lang=request_result.read_untracked().lang()

@@ -148,7 +148,7 @@ pub fn RequestParamsPanel(
                             TabItem::new("Form-encode", RequestBodyKind::Formencoded.content_type(), tab_body_form_encoded_ref),
                         ] />
 
-                    <div id="code_editor" node_ref=tab_body_text_ref class="group relative flex-1 flex overflow-y-auto pt-4">
+                    <div id="code_editor" node_ref=tab_body_text_ref class="group relative flex-1 overflow-y-auto pt-4">
                         <CodeMirrorEditor
                             element_id="request-body-code-editor".to_owned()
                             lang=body_lang
