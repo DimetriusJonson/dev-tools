@@ -68,7 +68,7 @@ pub fn Button(
         None => NodeRef::new(),
     };
 
-    let base_classes = "flex rounded-3xl font-medium justify-center items-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
+    let base_classes = "rounded-3xl font-medium justify-center items-center transition-[background-color,border-color,box-shadow,color] duration-294".to_owned();
 
     let variant_classes = match color {
         ButtonColor::Primary => "bg-primary hover:bg-primary/80 text-black".to_owned(),
@@ -138,7 +138,7 @@ fn ButtonLabel(label_memo: Memo<String>, label_type: ButtonLabel) -> impl IntoVi
     match label_type {
         ButtonLabel::Text => view! {{label_memo}}.into_any(),
         ButtonLabel::RightArrow => view! {
-            <svg class="w-10 h-4"
+            <svg class="w-full h-4"
                 xmlns="http://w3.org"
                 viewBox="0 0 40 24"
                 fill="none"
