@@ -165,7 +165,7 @@ pub fn RequestResultPreviewer(
 
     view! {
         <Show when=move || { show_preview_html.get() }>
-            <div class="flex-1 flex flex-col">
+            <div class="flex flex-col h-full">
                 <div class="progress-container pt-0 mt-0">
                     <RoutingProgress is_routing=preview_loading max_time=Duration::from_millis(250) />
                 </div>
