@@ -152,7 +152,15 @@ fn ButtonLabel(label_memo: Memo<String>, label_type: ButtonLabel) -> impl IntoVi
             </svg>
         }.into_any(),
         ButtonLabel::Share => view! {
-            <svg xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-full h-4"
+                xmlns="http://w3.org" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"
+            >
                 <circle cx="18" cy="5" r="3"></circle>
                 <circle cx="6" cy="12" r="3"></circle>
                 <circle cx="18" cy="19" r="3"></circle>
