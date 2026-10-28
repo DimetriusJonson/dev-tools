@@ -29,18 +29,6 @@ pub fn RequestResultPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
 
-    let on_copy_click = move |_| {
-        if let Some(response) = response.get_untracked() {
-            if let RestClientResponseBody::Text(body) = response.body() {
-                copy_to_clipboard(body);
-            }
-            show_info(
-                t_string!(i18n, rest_client_response_copied_to_clipboard_msg).to_owned(),
-                messages,
-            );
-        }
-    };
-
     let show_preview_html = RwSignal::new(false);
     let (proxy_allow, set_proxy_allow) = signal(true);
 
@@ -109,6 +97,14 @@ pub fn RequestResultPanel(
         },
         false,
     );
+
+    let on_copy_click = move |_| {
+        copy_to_clipboard(&request_result.read_untracked().body().read_untracked());
+        show_info(
+            t_string!(i18n, rest_client_response_copied_to_clipboard_msg).to_owned(),
+            messages,
+        );
+    };
 
     let on_format_click = move |_| {
         if request_result.read_untracked().lang().get_untracked() == "xml" {
