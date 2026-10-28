@@ -40,7 +40,6 @@ pub struct RequestParams {
     body_formencoded: RwSignal<RequestBodyFormValues>,
     headers: RwSignal<RequestHeaders>,
     save_response: RwSignal<bool>,
-    formatting: RwSignal<bool>,
 }
 
 impl RequestParams {
@@ -56,7 +55,6 @@ impl RequestParams {
                 rc_context.clone(),
             ),
             save_response: create_signal(false, RequestFieldKind::SaveResponse, rc_context.clone()),
-            formatting: create_signal(false, RequestFieldKind::Formatting, rc_context.clone()),
             body_formencoded: create_signal(
                 RequestBodyFormValues::new(),
                 RequestFieldKind::BodyFormencoded,
@@ -118,16 +116,6 @@ impl RequestParams {
     #[inline]
     pub fn set_save_response(&self) -> WriteSignal<bool> {
         self.save_response.write_only()
-    } 
-
-    #[inline]
-    pub fn formatting(&self) -> ReadSignal<bool> {
-        self.formatting.read_only()
-    } 
-
-    #[inline]
-    pub fn set_formatting(&self) -> WriteSignal<bool> {
-        self.formatting.write_only()
     } 
 
     #[inline]
@@ -204,17 +192,6 @@ impl RequestParams {
             )
             .parse::<bool>()
             .unwrap_or_default(),
-        );
-
-        self.formatting.set(
-            get_stored_value(
-                RequestFieldKind::Formatting,
-                "true".to_owned(),
-                rc_context.project.read_untracked().as_str(),
-                request_id,
-            )
-            .parse::<bool>()
-            .unwrap_or(false),
         );
     }
 

@@ -110,5 +110,6 @@
 
     "rc_attachment_download_btn_label": "Download {{ file_name }}",
 
-    "rest_client_request_cancelled": "Request cancelled"
+    "rest_client_request_cancelled": "Request cancelled",
+    "rest_client_result_unescape_title": "Unescape"
 }

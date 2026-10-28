@@ -1,7 +1,7 @@
 use crate::common::constants::MEDIA_TYPES;
 use crate::common::json_processor::format_json;
 use crate::common::ui_utils::copy_to_clipboard;
-use crate::common::xml_processor::format_xml;
+use crate::common::xml_processor::{escape_xml, format_xml};
 use crate::components::layout::message_banner::{Messages, show_error, show_info};
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::components::ui::button::{Button, ButtonColor, ButtonHeight, ButtonWidth};
@@ -13,6 +13,7 @@ use crate::domain::rest_client::ui::request_result_attachment::RequestResultAtta
 use crate::domain::rest_client::ui::request_result_previewer::RequestResultPreviewer;
 use crate::i18n::*;
 use gloo_net::http::Request;
+use json_escape::unescape;
 use leptos::html::Div;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -105,29 +106,54 @@ pub fn RequestResultPanel(
                     .set_request_raw()
                     .set(response.request_raw().to_owned());
             };
-
-            if params.read_untracked().formatting().get_untracked() {
-                if request_result.read_untracked().lang().get_untracked() == "xml" {
-                    let formatted_xml = match format_xml(
-                        &request_result.read_untracked().body().read_untracked(),
-                        4,
-                    ) {
-                        Ok(formatted_text) => formatted_text,
-                        Err(err) => {
-                            show_error(format!("Cant format xml: {}", err), messages);
-                            return;
-                        }
-                    };
-                    request_result.read_untracked().set_body().set(formatted_xml);
-                } else if request_result.read_untracked().lang().get_untracked() == "json" {
-                    let formatted_json =
-                        format_json(&request_result.read_untracked().body().read_untracked(), 4);
-                    request_result.read_untracked().set_body().set(formatted_json);
-                }
-            }
         },
         false,
     );
+
+    let on_format_click = move |_| {
+        if request_result.read_untracked().lang().get_untracked() == "xml" {
+            let formatted_xml =
+                match format_xml(&request_result.read_untracked().body().read_untracked(), 4) {
+                    Ok(formatted_text) => formatted_text,
+                    Err(err) => {
+                        show_error(format!("Cant format xml: {}", err), messages);
+                        return;
+                    }
+                };
+            request_result.read_untracked().set_body().set(formatted_xml);
+        } else if request_result.read_untracked().lang().get_untracked() == "json" {
+            let formatted_json =
+                format_json(&request_result.read_untracked().body().read_untracked(), 4);
+            request_result.read_untracked().set_body().set(formatted_json);
+        }
+    };
+
+    let on_unescape_click = move |_| {
+        if request_result.read_untracked().lang().get_untracked() == "xml" {
+            let unescaped_xml =
+                match escape_xml(&request_result.read_untracked().body().read_untracked(), false) {
+                    Ok(unescaped_value) => unescaped_value,
+                    Err(err) => {
+                        show_error(err.to_string(), messages);
+                        return;
+                    }
+                };
+
+            request_result.read_untracked().set_body().set(unescaped_xml);
+        } else if request_result.read_untracked().lang().get_untracked() == "json" {
+            let unescaped_json =
+                match unescape(&request_result.read_untracked().body().get_untracked())
+                    .decode_utf8()
+                {
+                    Ok(unescaped_value) => unescaped_value.to_string(),
+                    Err(err) => {
+                        show_error(err.to_string(), messages);
+                        return;
+                    }
+                };
+            request_result.read_untracked().set_body().set(unescaped_json);
+        }
+    };
 
     view! {
         <div node_ref=node_ref class="overflow-y-auto flex flex-col gap-4">
@@ -148,13 +174,6 @@ pub fn RequestResultPanel(
                         </Show>
                         <span class="dark:text-white">{move || format_request_time(request_result.read_untracked().request_time().get())}</span>
                         <div class="flex">
-                            <div class="px-4 flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="formatting" class="h-4 w-4"
-                                    bind:value=(params.read_untracked().formatting(), params.read_untracked().set_formatting())
-                                    prop:checked=params.read_untracked().formatting()
-                                    />
-                                <label for="formatting" class="dark:text-white">Format</label>
-                            </div>
                             <div class="px-4 flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="save-response" class="h-4 w-4"
                                     bind:value=(params.read_untracked().save_response(), params.read_untracked().set_save_response())
@@ -180,6 +199,32 @@ pub fn RequestResultPanel(
                             />
 
                             <Button
+                                label=move || "¶".to_owned()
+                                title=move || t_string!(i18n, rest_client_req_body_format_title).to_owned()
+                                class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                                class:hidden=move || request_result.read_untracked().lang().read().as_str() != "xml" && request_result.read_untracked().lang().read().as_str() != "json"
+                                button_width=ButtonWidth::Custom
+                                button_height=ButtonHeight::Custom
+                                color=ButtonColor::Custom
+                                loading=move || false
+                                on_click=on_format_click
+                                disabled=move || false
+                            />
+
+                            <Button
+                                label=move || "#".to_owned()
+                                title=move || t_string!(i18n, rest_client_result_unescape_title).to_owned()
+                                class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
+                                class:hidden=move || request_result.read_untracked().lang().read().as_str() != "xml" && request_result.read_untracked().lang().read().as_str() != "json"
+                                button_width=ButtonWidth::Custom
+                                button_height=ButtonHeight::Custom
+                                color=ButtonColor::Custom
+                                loading=move || false
+                                on_click=on_unescape_click
+                                disabled=move || false
+                            />
+
+                            <Button
                                 label=move || "⧉".to_owned()
                                 title=move || t_string!(i18n, copy_to_clipboard_btn_label).to_owned()
                                 class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
@@ -189,7 +234,7 @@ pub fn RequestResultPanel(
                                 loading=move || false
                                 on_click=on_copy_click
                                 disabled=move || false
-                        />
+                            />
 
                         </div>
                     </div>

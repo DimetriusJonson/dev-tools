@@ -109,6 +109,7 @@
     "standalone_download_title": "Перейти на страницу скачивания автономного приложения для Windows/Linux/MacOS.",
 
     "rc_attachment_download_btn_label": "Скачать {{ file_name }}",
-    "rest_client_request_cancelled": "Запрос отменен"
+    "rest_client_request_cancelled": "Запрос отменен",
+    "rest_client_result_unescape_title": "Деэкранировать"
 
 }
