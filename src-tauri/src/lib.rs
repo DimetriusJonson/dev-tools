@@ -110,7 +110,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 .build()?;
 
             let open_item = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
-            let sep_item = PredefinedMenuItem::separator(app)?;                
+            let sep_item = PredefinedMenuItem::separator(app)?;
             let quit_item = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open_item, &sep_item, &quit_item])?;
 
@@ -184,11 +184,6 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
-                if let Some(task) = window.try_state::<ServerTask>() {
-                    task.0.abort();
-                    println!("Backend server terminated successfully.");
-                }
-                //let _ = window.minimize();
                 let _ = window.hide();
             }
         });
