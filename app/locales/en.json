@@ -111,5 +111,6 @@
     "rc_attachment_download_btn_label": "Download {{ file_name }}",
 
     "rest_client_request_cancelled": "Request cancelled",
-    "rest_client_result_unescape_title": "Unescape"
+    "rest_client_result_format_title": "Format (Ctrl+click inverse mime type)",
+    "rest_client_result_unescape_title": "Unescape (Ctrl+click inverse mime type)"
 }

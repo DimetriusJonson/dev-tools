@@ -110,6 +110,7 @@
 
     "rc_attachment_download_btn_label": "Скачать {{ file_name }}",
     "rest_client_request_cancelled": "Запрос отменен",
-    "rest_client_result_unescape_title": "Деэкранировать"
+    "rest_client_result_format_title": "Форматировать (Ctrl+click инвертировать тип данных)",
+    "rest_client_result_unescape_title": "Деэкранировать (Ctrl+click инвертировать тип данных)"
 
 }

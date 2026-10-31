@@ -19,6 +19,7 @@ use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use model::restclient::rest_client_response::{RestClientResponse, RestClientResponseBody};
+use web_sys::MouseEvent;
 
 #[component]
 pub fn RequestResultPanel(
@@ -106,8 +107,10 @@ pub fn RequestResultPanel(
         );
     };
 
-    let on_format_click = move |_| {
-        if request_result.read_untracked().lang().get_untracked() == "xml" {
+    let on_format_click = move |e: MouseEvent| {
+        let (xml_lang, json_lang) = get_format_lang_by_event(e);
+
+        if request_result.read_untracked().lang().get_untracked() == xml_lang {
             let formatted_xml =
                 match format_xml(&request_result.read_untracked().body().read_untracked(), 4) {
                     Ok(formatted_text) => formatted_text,
@@ -117,15 +120,17 @@ pub fn RequestResultPanel(
                     }
                 };
             request_result.read_untracked().set_body().set(formatted_xml);
-        } else if request_result.read_untracked().lang().get_untracked() == "json" {
+        } else if request_result.read_untracked().lang().get_untracked() == json_lang {
             let formatted_json =
                 format_json(&request_result.read_untracked().body().read_untracked(), 4);
             request_result.read_untracked().set_body().set(formatted_json);
         }
     };
 
-    let on_unescape_click = move |_| {
-        if request_result.read_untracked().lang().get_untracked() == "xml" {
+    let on_unescape_click = move |e: MouseEvent| {
+        let (xml_lang, json_lang) = get_format_lang_by_event(e);
+
+        if request_result.read_untracked().lang().get_untracked() == xml_lang {
             let unescaped_xml =
                 match escape_xml(&request_result.read_untracked().body().read_untracked(), false) {
                     Ok(unescaped_value) => unescaped_value,
@@ -136,7 +141,7 @@ pub fn RequestResultPanel(
                 };
 
             request_result.read_untracked().set_body().set(unescaped_xml);
-        } else if request_result.read_untracked().lang().get_untracked() == "json" {
+        } else if request_result.read_untracked().lang().get_untracked() == json_lang {
             let unescaped_json =
                 match unescape(&request_result.read_untracked().body().get_untracked())
                     .decode_utf8()
@@ -196,7 +201,7 @@ pub fn RequestResultPanel(
 
                             <Button
                                 label=move || "¶".to_owned()
-                                title=move || t_string!(i18n, rest_client_req_body_format_title).to_owned()
+                                title=move || t_string!(i18n, rest_client_result_format_title).to_owned()
                                 class_name="text-bold w-8 px-2 text-gray-500 hover:text-green-500".to_owned()
                                 class:hidden=move || request_result.read_untracked().lang().read().as_str() != "xml" && request_result.read_untracked().lang().read().as_str() != "json"
                                 button_width=ButtonWidth::Custom
@@ -312,4 +317,8 @@ fn format_request_time(value: u64) -> String {
     } else {
         format!("Time: {} ms", value)
     }
+}
+
+fn get_format_lang_by_event(e: MouseEvent) -> (&'static str, &'static str) {
+    if e.ctrl_key() { ("json", "xml") } else { ("xml", "json") }
 }
