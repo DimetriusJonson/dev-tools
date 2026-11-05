@@ -248,6 +248,9 @@ async fn build_response_body(
         headers.remove(header::CONTENT_LENGTH);
         headers.remove(header::CONTENT_ENCODING);
         headers.remove(header::TRANSFER_ENCODING);
+        headers.remove(header::CONTENT_SECURITY_POLICY_REPORT_ONLY);
+        headers.remove(header::CONTENT_SECURITY_POLICY);
+        headers.remove(header::HeaderName::from_static("cross-origin-opener-policy"));
         Ok(body)
     } else {
         Ok(Body::from_stream(response.bytes_stream()))
