@@ -24,7 +24,13 @@ impl RequestBodyKind {
             "text/plain" => RequestBodyKind::Text,
             "application/xml" => RequestBodyKind::Xml,
             "application/x-www-form-urlencoded" => RequestBodyKind::Formencoded,
-            _ => RequestBodyKind::Json,
+            _ => { 
+                if content_type.to_lowercase().starts_with("multipart/form-data") {
+                    RequestBodyKind::Text
+                } else {
+                    RequestBodyKind::Json 
+                }
+            },
         }
     }
 }

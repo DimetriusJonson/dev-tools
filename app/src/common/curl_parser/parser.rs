@@ -3,6 +3,7 @@ use http::{
     HeaderValue, Method,
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, HeaderName, USER_AGENT},
 };
+use json_escape::DecodeUtf8Error;
 use pest::Parser as _;
 use pest_derive::Parser;
 use std::{error::Error, str::FromStr};
@@ -19,7 +20,7 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
     let input = match win_cmd {
         true => win_cmd_unescape(input.trim()),
         false => input.trim().to_owned(),
-    }; 
+    };
 
     let pairs = CurlParser::parse(Rule::input, &input)?;
     let mut parsed = ParsedRequest::default();
@@ -134,24 +135,14 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::maxtime => {}
             Rule::data_raw => {
                 if let Some(pair) = pair.into_inner().next() {
-                    let body_str = pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n");
-                    let body_str = match win_cmd {
-                        true => win_cmd_unescape_body(&body_str),
-                        false => body_str,
-                    };
-                    parsed.body_mut().push(unescape_string(&body_str).to_owned());
+                    parsed.body_mut().push(process_data(pair.as_str(), win_cmd)?);
                 } else {
                     return Err("data-raw value must be present".into());
                 }
             }
             Rule::data_binary => {
                 if let Some(pair) = pair.into_inner().next() {
-                    let body_str = pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n");
-                    let body_str = match win_cmd {
-                        true => win_cmd_unescape_body(&body_str),
-                        false => body_str,
-                    };
-                    parsed.body_mut().push(unescape_string(&body_str).to_owned());
+                    parsed.body_mut().push(process_data(pair.as_str(), win_cmd)?);
                 } else {
                     return Err("data-binary value must be present".into());
                 }
@@ -161,7 +152,9 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                     if !parsed.body_urlencode().is_empty() {
                         parsed.body_urlencode_mut().push('&');
                     }
-                    parsed.body_urlencode_mut().push_str(&pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                    parsed
+                        .body_urlencode_mut()
+                        .push_str(&pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
                 } else {
                     return Err("data-urlencode value must be present".into());
                 }
@@ -185,10 +178,8 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
                 } else {
                     return Err("user-agent value must be present".into());
                 }
-            },
-            Rule::unknown_option => {
-                
             }
+            Rule::unknown_option => {}
             Rule::EOI => break,
             _ => return Err(format!("Unexpected rule: {:?}", pair.as_rule()).into()),
         }
@@ -294,4 +285,16 @@ fn win_cmd_unescape_body(s: &str) -> String {
     }
 
     result
+}
+
+fn process_data(str: &str, win_cmd: bool) -> Result<String, DecodeUtf8Error> {
+    let mut result = str.replace("\\r\\n", "\r\n").replace("\\n", "\n");
+    result = match win_cmd {
+        true => win_cmd_unescape_body(&result),
+        false => result,
+    };
+    result = unescape_string(&result);
+    result = json_escape::unescape(&result).decode_utf8()?.to_string();
+
+    Ok(result)
 }
