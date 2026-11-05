@@ -14,7 +14,12 @@ use crate::common::curl_parser::parsed_request::ParsedRequest;
 pub struct CurlParser;
 
 pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
-    let input = win_cmd_unescape(input.trim()); // win cmd double quote unescape 
+    let win_cmd = input.trim().to_lowercase().starts_with("curl.exe");
+
+    let input = match win_cmd {
+        true => win_cmd_unescape(input.trim()),
+        false => input.trim().to_owned(),
+    }; 
 
     let pairs = CurlParser::parse(Rule::input, &input)?;
     let mut parsed = ParsedRequest::default();
@@ -130,14 +135,23 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::data_raw => {
                 if let Some(pair) = pair.into_inner().next() {
                     let body_str = pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n");
-                    parsed.body_mut().push(unescape_string(&win_cmd_unescape_new_line(&body_str)).to_owned());
+                    let body_str = match win_cmd {
+                        true => win_cmd_unescape_body(&body_str),
+                        false => body_str,
+                    };
+                    parsed.body_mut().push(unescape_string(&body_str).to_owned());
                 } else {
                     return Err("data-raw value must be present".into());
                 }
             }
             Rule::data_binary => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.body_mut().push(pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n"));
+                    let body_str = pair.as_str().replace("\\r\\n", "\r\n").replace("\\n", "\n");
+                    let body_str = match win_cmd {
+                        true => win_cmd_unescape_body(&body_str),
+                        false => body_str,
+                    };
+                    parsed.body_mut().push(unescape_string(&body_str).to_owned());
                 } else {
                     return Err("data-binary value must be present".into());
                 }
@@ -248,7 +262,6 @@ fn win_cmd_unescape(s: &str) -> String {
                 match next_ch {
                     '&' | '|' | '<' | '>' | '^' | '\\' | '"' | '(' | ')' => result.push(next_ch),
                     _ => {
-                        // If it's not a recognized escape sequence, keep both characters
                         result.push(ch);
                         result.push(next_ch);
                     }
@@ -264,21 +277,14 @@ fn win_cmd_unescape(s: &str) -> String {
     result.replace("^%^", "%")
 }
 
-fn win_cmd_unescape_new_line(s: &str) -> String {
+fn win_cmd_unescape_body(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     let mut chars = s.chars();
 
     while let Some(ch) = chars.next() {
         if ch == '^' {
-            if let Some(next_ch) = chars.next() && let Some(next_next_ch) = chars.next() {
-                if next_ch == '\r' && next_next_ch == '\n' {
-                    result.push(next_ch);
-                    result.push(next_next_ch);
-                } else {
-                    result.push(ch);
-                    result.push(next_ch);
-                    result.push(next_next_ch);
-                }
+            if let Some(next_ch) = chars.next() {
+                result.push(next_ch);
             } else {
                 result.push(ch);
             }
