@@ -15,7 +15,12 @@ use crate::common::curl_parser::parsed_request::ParsedRequest;
 pub struct CurlParser;
 
 pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
-    let input = win_cmd_unescape(input.trim());
+    let win_cmd = is_win_cmd(input);
+
+    let input = match win_cmd {
+        true => win_cmd_unescape(input.trim()),
+        false => input.trim().to_owned(),
+    };
 
     let pairs = CurlParser::parse(Rule::input, &input)?;
     let mut parsed = ParsedRequest::default();
@@ -130,14 +135,14 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
             Rule::maxtime => {}
             Rule::data_raw => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.body_mut().push(process_data(pair.as_str())?);
+                    parsed.body_mut().push(process_data(pair.as_str(), win_cmd)?);
                 } else {
                     return Err("data-raw value must be present".into());
                 }
             }
             Rule::data_binary => {
                 if let Some(pair) = pair.into_inner().next() {
-                    parsed.body_mut().push(process_data(pair.as_str())?);
+                    parsed.body_mut().push(process_data(pair.as_str(), win_cmd)?);
                 } else {
                     return Err("data-binary value must be present".into());
                 }
@@ -192,6 +197,10 @@ pub fn parse_curl_cmd(input: &str) -> Result<ParsedRequest, Box<dyn Error>> {
         parsed.set_method(Some(Method::POST));
     }
     Ok(parsed)
+}
+
+fn is_win_cmd(input: &str) -> bool {
+    input.trim().to_lowercase().starts_with("curl.exe") || (input.matches("^\"").count() > 1 )
 }
 
 fn remove_quote(s: &str) -> &str {
@@ -282,9 +291,12 @@ fn win_cmd_unescape_body(s: &str) -> String {
     result
 }
 
-fn process_data(str: &str) -> Result<String, DecodeUtf8Error> {
+fn process_data(str: &str, win_cmd: bool) -> Result<String, DecodeUtf8Error> {
     let mut result = str.replace("\\r\\n", "\r\n").replace("\\n", "\n");
-    result = win_cmd_unescape_body(&result);
+    result = match win_cmd {
+        true => win_cmd_unescape_body(&result),
+        false => result,
+    };
     result = unescape_string(&result);
     result = json_escape::unescape(&result).decode_utf8()?.to_string();
 
