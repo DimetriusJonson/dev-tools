@@ -107,6 +107,7 @@ pub fn run(port: Option<u16>, remote_server_url: Option<String>, no_start_server
                 .inner_size(1500.0, 1000.0)
                 .enable_clipboard_access()
                 .disable_drag_drop_handler()
+                .additional_browser_args("--disable-gpu")
                 .build()?;
 
             let open_item = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;

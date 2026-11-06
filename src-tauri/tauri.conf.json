@@ -47,8 +47,7 @@
         ]
       }
     },
-    "licenseFile": "LICENSE",
-    "additionalBrowserArgs": "--disable-gpu"
+    "licenseFile": "LICENSE"
   },
   "plugins": {
     "updater": {
