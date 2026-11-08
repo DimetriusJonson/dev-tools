@@ -19,10 +19,17 @@ use crate::{
     },
 };
 
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum ShowPreviewHtml {
+    None,
+    Proxy,
+    Normal,
+}
+
 #[component]
 pub fn RequestResultPreviewer(
     params: ReadSignal<RequestParams>,
-    show_preview_html: RwSignal<bool>,
+    show_preview_html: RwSignal<ShowPreviewHtml>,
     proxy_allow: ReadSignal<bool>,
     body: ReadSignal<String>,
 ) -> impl IntoView {
@@ -46,28 +53,26 @@ pub fn RequestResultPreviewer(
     });
 
     Effect::watch(
-        move || proxy_allow.get(),
-        move |value, _prev, _| {
-            if *value {
-                set_preview_sandbox.set("allow-scripts allow-popups allow-same-origin");
-            } else {
-                set_preview_sandbox.set("allow-scripts allow-popups");
-            }
-        },
-        false,
-    );
-
-    Effect::watch(
         move || show_preview_html.get(),
-        move |value, _prev, _| {
-            if *value {
+        move |value, _prev, _| match *value {
+            ShowPreviewHtml::Proxy => {
+                set_preview_sandbox.set("allow-scripts allow-popups allow-same-origin");
                 if let Err(err) = init_html_previewer(
                     proxy_allow.get_untracked(),
                     rc_context.request.read_untracked().url(),
                 ) {
                     show_error(err, messages)
                 }
-            } else {
+            }
+            ShowPreviewHtml::Normal => {
+                set_preview_sandbox.set("allow-scripts allow-popups allow-same-origin");
+                if let Err(err) =
+                    init_html_previewer(false, rc_context.request.read_untracked().url())
+                {
+                    show_error(err, messages)
+                }
+            }
+            ShowPreviewHtml::None => {
                 clear_html_previewer();
             }
         },
@@ -77,7 +82,7 @@ pub fn RequestResultPreviewer(
     Effect::watch(
         move || rc_context.request.get(),
         move |_value, _prev, _| {
-            show_preview_html.set(false);
+            show_preview_html.set(ShowPreviewHtml::None);
         },
         false,
     );
@@ -85,7 +90,7 @@ pub fn RequestResultPreviewer(
     let get_preview_src_doc = move || {
         set_preview_loading.set(true);
         let mut html = body.get();
-        if proxy_allow.get_untracked() {
+        if proxy_allow.get_untracked() && show_preview_html.get_untracked() == ShowPreviewHtml::Proxy {
             None
         } else {
             add_head_base_tag(&mut html, rc_context.request.read_untracked().url());
@@ -95,7 +100,7 @@ pub fn RequestResultPreviewer(
 
     let get_preview_src = move || {
         set_preview_loading.set(true);
-        if proxy_allow.get_untracked() {
+        if proxy_allow.get_untracked() && show_preview_html.get_untracked() == ShowPreviewHtml::Proxy {
             if let Ok(mut url) = Url::parse(rc_context.request.get_untracked().url())
                 && let Ok(host_info) = get_browser_host_info()
             {
@@ -164,7 +169,7 @@ pub fn RequestResultPreviewer(
     };
 
     view! {
-        <Show when=move || { show_preview_html.get() }>
+        <Show when=move || { show_preview_html.get() != ShowPreviewHtml::None }>
             <div class="flex flex-col h-full">
                 <div class="progress-container pt-0 mt-0">
                     <RoutingProgress is_routing=preview_loading max_time=Duration::from_millis(250) />

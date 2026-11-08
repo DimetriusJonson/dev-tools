@@ -104,6 +104,7 @@
     "rest_client_curl_build_btn_title": "Copy the cURL command to the clipboard.",
     "rest_client_req_body_format_title": "Format",
     "rest_client_response_html_preview": "Preview",
+    "rest_client_response_html_preview_with_proxy": "Preview (Ctrl key - full load)",
 
     "standalone_download_label": "Download app",
     "standalone_download_title": "Go to the download page for the standalone application for Windows/Linux/MacOS.",
@@ -111,6 +112,6 @@
     "rc_attachment_download_btn_label": "Download {{ file_name }}",
 
     "rest_client_request_cancelled": "Request cancelled",
-    "rest_client_result_format_title": "Format (Ctrl+click inverse mime type)",
-    "rest_client_result_unescape_title": "Unescape (Ctrl+click inverse mime type)"
+    "rest_client_result_format_title": "Format (Ctrl key - inverse mime type)",
+    "rest_client_result_unescape_title": "Unescape (Ctrl key - inverse mime type)"
 }

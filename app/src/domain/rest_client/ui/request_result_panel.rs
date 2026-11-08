@@ -10,7 +10,7 @@ use crate::domain::rest_client::model::request_params::RequestParams;
 use crate::domain::rest_client::model::request_result::RequestResult;
 use crate::domain::rest_client::ui::request_raw_panel::RequestRawPanel;
 use crate::domain::rest_client::ui::request_result_attachment::RequestResultAttachment;
-use crate::domain::rest_client::ui::request_result_previewer::RequestResultPreviewer;
+use crate::domain::rest_client::ui::request_result_previewer::{RequestResultPreviewer, ShowPreviewHtml};
 use crate::i18n::*;
 use gloo_net::http::Request;
 use json_escape::unescape;
@@ -30,7 +30,7 @@ pub fn RequestResultPanel(
     let messages = use_context::<Messages>().expect("Cant get messages context!");
     let i18n = use_i18n();
 
-    let show_preview_html = RwSignal::new(false);
+    let show_preview_html = RwSignal::new(ShowPreviewHtml::None);
     let (proxy_allow, set_proxy_allow) = signal(true);
 
     let (tab_selected, set_tab_selected) = signal(0);
@@ -49,7 +49,7 @@ pub fn RequestResultPanel(
     Effect::watch(
         move || response.get(),
         move |value, _prev, _| {
-            show_preview_html.set(false);
+            show_preview_html.set(ShowPreviewHtml::None);
             request_result.read_untracked().clear();
             if let Some(response) = value {
                 if let Some(error) = &response.error() {
@@ -185,17 +185,25 @@ pub fn RequestResultPanel(
 
                             <Button
                                 label=move || "👁".to_owned()
-                                title=move || t_string!(i18n, rest_client_response_html_preview).to_owned()
+                                title=move || if proxy_allow.get() { t_string!(i18n, rest_client_response_html_preview_with_proxy).to_owned() } else { t_string!(i18n, rest_client_response_html_preview).to_owned() }
                                 class_name="w-6 dark:text-white text-black".to_owned()
                                 class:hidden=move || request_result.read_untracked().lang().read().as_str() != "html"
-                                class:border=show_preview_html
+                                class:border=move || show_preview_html.get() != ShowPreviewHtml::None
                                 button_width=ButtonWidth::Custom
                                 button_height=ButtonHeight::Custom
                                 color=ButtonColor::Custom
                                 loading=move || false
                                 disabled=move || false
-                                on_click=move |_| {
-                                    show_preview_html.set(!show_preview_html.get_untracked())
+                                on_click=move |e| {
+                                    if show_preview_html.get_untracked() == ShowPreviewHtml::None {
+                                        if e.ctrl_key() {
+                                            show_preview_html.set(ShowPreviewHtml::Proxy);
+                                        } else {
+                                            show_preview_html.set(ShowPreviewHtml::Normal);
+                                        }
+                                    } else {
+                                        show_preview_html.set(ShowPreviewHtml::None);
+                                    }
                                 }
                             />
 
@@ -246,7 +254,7 @@ pub fn RequestResultPanel(
                             value=request_result.read_untracked().body()
                             set_value=request_result.read_untracked().set_body()
                             read_only=true
-                            hidden=Box::new(move || request_result.read_untracked().body().read().is_empty() || show_preview_html.get())
+                            hidden=Box::new(move || request_result.read_untracked().body().read().is_empty() || show_preview_html.get() != ShowPreviewHtml::None)
                         />
 
                         <RequestResultPreviewer params show_preview_html proxy_allow body={request_result.read_untracked().body()} />

@@ -104,13 +104,14 @@
     "rest_client_curl_build_btn_title": "Скопировать в буфер обмена cURL команду.",
     "rest_client_req_body_format_title": "Форматировать",
     "rest_client_response_html_preview": "Предпросмотр",
+    "rest_client_response_html_preview_with_proxy": "Предпросмотр (Ctrl - полная загрузка)",
 
     "standalone_download_label": "Скачать приложение",
     "standalone_download_title": "Перейти на страницу скачивания автономного приложения для Windows/Linux/MacOS.",
 
     "rc_attachment_download_btn_label": "Скачать {{ file_name }}",
     "rest_client_request_cancelled": "Запрос отменен",
-    "rest_client_result_format_title": "Форматировать (Ctrl+click инвертировать тип данных)",
-    "rest_client_result_unescape_title": "Деэкранировать (Ctrl+click инвертировать тип данных)"
+    "rest_client_result_format_title": "Форматировать (Ctrl - инвертировать тип данных)",
+    "rest_client_result_unescape_title": "Деэкранировать (Ctrl - инвертировать тип данных)"
 
 }
