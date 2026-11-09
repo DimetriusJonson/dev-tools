@@ -65,7 +65,7 @@ pub fn RequestResultPreviewer(
                 }
             }
             ShowPreviewHtml::Normal => {
-                set_preview_sandbox.set("allow-scripts allow-popups allow-same-origin");
+                set_preview_sandbox.set("");
                 if let Err(err) =
                     init_html_previewer(false, rc_context.request.read_untracked().url())
                 {
