@@ -89,6 +89,8 @@ impl RequestResponse {
                 let r =
                     Some(serde_json::from_str::<RestClientResponse>(&data_str).unwrap_or_default());
                 inner.set(r);
+            } else {
+                inner.set(None);
             }
         });
     }
