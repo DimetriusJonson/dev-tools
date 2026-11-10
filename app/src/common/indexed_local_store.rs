@@ -76,7 +76,6 @@ async fn save_prop_value(
         }
     } else {
         let data = serde_json::json!({
-            "id": 1,
             prop_name: prop_value,
         });
 
