@@ -104,7 +104,7 @@
     "rest_client_curl_build_btn_title": "Скопировать в буфер обмена cURL команду.",
     "rest_client_req_body_format_title": "Форматировать",
     "rest_client_response_html_preview": "Предпросмотр",
-    "rest_client_response_html_preview_with_proxy": "Предпросмотр (Ctrl - полная загрузка)",
+    "rest_client_response_html_preview_with_proxy": "Предпросмотр (Ctrl - небезопасная полная загрузка)",
 
     "standalone_download_label": "Скачать приложение",
     "standalone_download_title": "Перейти на страницу скачивания автономного приложения для Windows/Linux/MacOS.",
