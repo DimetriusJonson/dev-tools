@@ -39,7 +39,7 @@ pub async fn indexed_db_delete_key(store_name: &str, id: &str) -> Result<()> {
 }
 
 async fn init_db() -> Result<Rexie> {
-    let rexie = Rexie::builder("app_db")
+    let rexie = Rexie::builder("webdev_useful_tools_db")
         .version(1)
         .add_object_store(ObjectStore::new("xml"))
         .add_object_store(ObjectStore::new("json"))
