@@ -5,8 +5,11 @@ use leptos::html::Div;
 use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 use leptos_router::hooks::use_navigate;
+use leptos_use_fn_debounce_throttle::use_debounce_fn_with_arg;
 
-use crate::common::indexed_local_store::{indexed_db_save_prop_value, get_prop_value_from_indexed_db};
+use crate::common::indexed_local_store::{
+    get_prop_value_from_indexed_db, indexed_db_save_prop_value,
+};
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::drag_splitter::DragSplitter;
@@ -110,16 +113,23 @@ pub fn FormatPage(
         });
     });
 
-    Effect::watch(
-        move || src.get(),
-        move |value, _prev, _| {
-            let val = value.to_owned();
+    let save_src_fn = use_debounce_fn_with_arg(
+        move |value: String| {
+            let name = name.to_owned();
+            let value = value.to_owned();
             spawn_local(async move {
-                //db_save_prop_value(name, "src", &val).await.unwrap();
-                if let Err(err) = indexed_db_save_prop_value(name, "1", "src", &val).await {
+                if let Err(err) = indexed_db_save_prop_value(&name, "1", "src", &value).await {
                     show_error(err.to_string(), messages);
                 }
             });
+        },
+        3000.0,
+    );
+
+    Effect::watch(
+        move || src.get(),
+        move |value, _prev, _| {
+            save_src_fn(value.to_owned());
         },
         false,
     );

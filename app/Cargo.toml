@@ -39,6 +39,7 @@ fast_qr.workspace = true
 getset.workspace=true
 rexie.workspace=true
 serde-wasm-bindgen.workspace=true
+leptos-use-fn-debounce-throttle.workspace=true
 
 tracing = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
