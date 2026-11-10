@@ -54,32 +54,6 @@ pub fn CompareTextPage() -> impl IntoView {
         });
     });
 
-    Effect::watch(
-        move || text1.get(),
-        move |value, _prev, _| {
-            let val = value.to_owned();
-            spawn_local(async move {
-                if let Err(err) = indexed_db_save_prop_value("compare", "1", "text1", &val).await {
-                    show_error(err.to_string(), messages);
-                }
-            });
-        },
-        false,
-    );
-
-    Effect::watch(
-        move || text2.get(),
-        move |value, _prev, _| {
-            let val = value.to_owned();
-            spawn_local(async move {
-                if let Err(err) = indexed_db_save_prop_value("compare", "1", "text2", &val).await {
-                    show_error(err.to_string(), messages);
-                }
-            });
-        },
-        false,
-    );
-
     let on_compare_click = move |_| {
         spawn_local(async move {
             set_in_progress.set(true);
@@ -114,7 +88,14 @@ pub fn CompareTextPage() -> impl IntoView {
                                 placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
                                 value=text1
                                 set_value=set_text1
-                                on_change=move |_| {}
+                                on_change=move |value: String| {
+                                    let value = value.to_owned();
+                                    spawn_local(async move {
+                                        if let Err(err) = indexed_db_save_prop_value("compare", "1", "text1", &value).await {
+                                            show_error(err.to_string(), messages);
+                                        }
+                                    });
+                                }
                             />
                         </div>
 
@@ -134,7 +115,14 @@ pub fn CompareTextPage() -> impl IntoView {
                                 placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
                                 value=text2
                                 set_value=set_text2
-                                on_change=move |_| {}
+                                on_change=move |value: String| {
+                                    let value = value.to_owned();
+                                    spawn_local(async move {
+                                        if let Err(err) = indexed_db_save_prop_value("compare", "1", "text2", &value).await {
+                                            show_error(err.to_string(), messages);
+                                        }
+                                    });
+                                }
                             />
                         </div>
                     </div>
