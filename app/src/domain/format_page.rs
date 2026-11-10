@@ -79,7 +79,7 @@ pub fn FormatPage(
 
     Effect::new(move |_| {
         spawn_local(async move {
-            match get_prop_value_from_indexed_db(name, 1, "src").await {
+            match get_prop_value_from_indexed_db(name, "1", "src").await {
                 Ok(src_value) => {
                     if let Some(src_value) = src_value {
                         set_timeout(
@@ -116,7 +116,7 @@ pub fn FormatPage(
             let val = value.to_owned();
             spawn_local(async move {
                 //db_save_prop_value(name, "src", &val).await.unwrap();
-                if let Err(err) = indexed_db_save_prop_value(name, 1, "src", &val).await {
+                if let Err(err) = indexed_db_save_prop_value(name, "1", "src", &val).await {
                     show_error(err.to_string(), messages);
                 }
             });

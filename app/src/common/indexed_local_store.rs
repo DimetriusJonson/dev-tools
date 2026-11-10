@@ -1,7 +1,7 @@
 use rexie::*;
 use serde_json::Value;
 
-pub async fn indexed_db_save_prop_value(store_name: &str, id: u32, prop_name: &str, prop_value: &str) -> Result<()> {
+pub async fn indexed_db_save_prop_value(store_name: &str, id: &str, prop_name: &str, prop_value: &str) -> Result<()> {
     let database = init_db().await?;
 
     save_prop_value(&database, store_name, id, prop_name, prop_value).await?;
@@ -9,7 +9,7 @@ pub async fn indexed_db_save_prop_value(store_name: &str, id: u32, prop_name: &s
     Ok(())
 }
 
-pub async fn get_prop_value_from_indexed_db(store_name: &str, id: u32, prop_name: &str) -> Result<Option<String>> {
+pub async fn get_prop_value_from_indexed_db(store_name: &str, id: &str, prop_name: &str) -> Result<Option<String>> {
     let database = init_db().await?;
 
     if let Some(value) = get_store_object(&database, store_name, id).await?
@@ -36,10 +36,10 @@ async fn init_db() -> Result<Rexie> {
 async fn save_prop_value(
     database: &Rexie,
     store_name: &str,
-    id: u32,
+    id: &str,
     prop_name: &str,
     prop_value: &str,
-) -> Result<u32> {
+) -> Result<Option<String>> {
     let transaction = database.transaction(&[store_name], TransactionMode::ReadWrite)?;
 
     let store = transaction.store(store_name)?;
@@ -54,7 +54,7 @@ async fn save_prop_value(
                 let id = store.put(&data_js, Some(&id.into())).await?;
                 transaction.done().await?;
 
-                return Ok(num_traits::cast(id.as_f64().unwrap()).unwrap());
+                return Ok(id.as_string());
             }
         }
     } else {
@@ -67,13 +67,13 @@ async fn save_prop_value(
         let id = store.add(&data_js, Some(&id.into())).await?;
         transaction.done().await?;
 
-        return Ok(num_traits::cast(id.as_f64().unwrap()).unwrap());
+        return Ok(id.as_string());
     }
 
-    return Ok(0);
+    return Ok(None);
 }
 
-async fn get_store_object(database: &Rexie, store_name: &str, id: u32) -> Result<Option<Value>> {
+async fn get_store_object(database: &Rexie, store_name: &str, id: &str) -> Result<Option<Value>> {
     let transaction = database.transaction(&[store_name], TransactionMode::ReadOnly)?;
 
     let store = transaction.store(store_name)?;
