@@ -1,9 +1,15 @@
-use leptos::prelude::{ReadSignal, ReadUntracked, RwSignal};
+use leptos::{
+    prelude::{ReadSignal, ReadUntracked, RwSignal},
+    task::spawn_local,
+};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{
-    common::local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+    common::{
+        indexed_local_store::indexed_db_delete_key,
+        local_store::{delete_local_store_value, get_local_store_value, set_local_store_value},
+    },
     domain::rest_client::model::{request_info::RequestInfo, request_params::RestClientProject},
 };
 
@@ -27,8 +33,6 @@ pub enum RequestFieldKind {
     ParamsTab,
     #[strum(serialize = "body_formencoded")]
     BodyFormencoded,
-    #[strum(serialize = "save_response_data")]
-    SaveResponseData,
     #[strum(serialize = "headers_height")]
     HeadersHeight,
     #[strum(serialize = "formatting")]
@@ -53,11 +57,8 @@ pub fn build_project_stored_key(project_id: &str, name: &str) -> String {
 
 pub fn set_stored_requests_ids(project: ReadSignal<String>, requests: &[RwSignal<RequestInfo>]) {
     if !requests.is_empty() {
-        let value = requests
-            .iter()
-            .map(|r| r.read_untracked().id_str())
-            .collect::<Vec<String>>()
-            .join(",");
+        let value =
+            requests.iter().map(|r| r.read_untracked().id_str()).collect::<Vec<String>>().join(",");
         set_local_store_value(
             &build_project_stored_key(project.read_untracked().as_str(), "requests_ids"),
             &value,
@@ -78,6 +79,13 @@ pub fn delete_stored_request(project_id: &str, request_id: i32) {
             &field.to_string(),
         ));
     }
+
+    let project_id = project_id.to_owned();
+    spawn_local(async move {
+        indexed_db_delete_key("rc_request_response", &format!("{}{}", project_id, request_id))
+            .await
+            .unwrap();
+    });
 }
 
 pub fn copy_stored_request(
@@ -186,16 +194,4 @@ pub fn set_stored_value(
         ),
         value,
     )
-}
-
-pub fn delete_stored_value(
-    project: ReadSignal<String>,
-    request_info: ReadSignal<RequestInfo>,
-    field: RequestFieldKind,
-) {
-    delete_local_store_value(&build_request_stored_key(
-        project.read_untracked().as_str(),
-        request_info.read_untracked().id(),
-        &field.to_string(),
-    ))
 }

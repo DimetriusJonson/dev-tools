@@ -160,7 +160,6 @@ dependencies = [
  "leptos_meta",
  "leptos_router",
  "model",
- "num-traits",
  "pest",
  "pest_derive",
  "quick-xml",

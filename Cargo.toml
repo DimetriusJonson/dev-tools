@@ -79,7 +79,6 @@ fast_qr = { version = "0.14", features = ["svg"] }
 getset = "0.1"
 rexie = "0.6"
 serde-wasm-bindgen = "0.6"
-num-traits = "0.2.19"
 
 [[workspace.metadata.leptos]]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name

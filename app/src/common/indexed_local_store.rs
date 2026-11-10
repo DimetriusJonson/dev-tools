@@ -1,7 +1,12 @@
 use rexie::*;
 use serde_json::Value;
 
-pub async fn indexed_db_save_prop_value(store_name: &str, id: &str, prop_name: &str, prop_value: &str) -> Result<()> {
+pub async fn indexed_db_save_prop_value(
+    store_name: &str,
+    id: &str,
+    prop_name: &str,
+    prop_value: &str,
+) -> Result<()> {
     let database = init_db().await?;
 
     save_prop_value(&database, store_name, id, prop_name, prop_value).await?;
@@ -9,24 +14,36 @@ pub async fn indexed_db_save_prop_value(store_name: &str, id: &str, prop_name: &
     Ok(())
 }
 
-pub async fn get_prop_value_from_indexed_db(store_name: &str, id: &str, prop_name: &str) -> Result<Option<String>> {
+pub async fn get_prop_value_from_indexed_db(
+    store_name: &str,
+    id: &str,
+    prop_name: &str,
+) -> Result<Option<String>> {
     let database = init_db().await?;
 
     if let Some(value) = get_store_object(&database, store_name, id).await?
-        && let Some(value) = value.as_object() &&
-        let Some(value) = value.get(prop_name) &&
-        let Some(value) = value.as_str()
+        && let Some(value) = value.as_object()
+        && let Some(value) = value.get(prop_name)
+        && let Some(value) = value.as_str()
     {
-        return Ok(Some(value.to_owned()))
+        return Ok(Some(value.to_owned()));
     }
 
     Ok(None)
+}
+
+pub async fn indexed_db_delete_key(store_name: &str, id: &str) -> Result<()> {
+    let database = init_db().await?;
+
+    Ok(delete_key(&database, store_name, id).await?)
 }
 
 async fn init_db() -> Result<Rexie> {
     let rexie = Rexie::builder("app_db")
         .version(1)
         .add_object_store(ObjectStore::new("xml"))
+        .add_object_store(ObjectStore::new("json"))
+        .add_object_store(ObjectStore::new("rc_request_response"))
         .build()
         .await?;
 
@@ -83,4 +100,12 @@ async fn get_store_object(database: &Rexie, store_name: &str, id: &str) -> Resul
     } else {
         return Ok(None);
     }
+}
+
+async fn delete_key(database: &Rexie, store_name: &str, id: &str) -> Result<()> {
+    let transaction = database.transaction(&[store_name], TransactionMode::ReadWrite)?;
+
+    let store = transaction.store(store_name)?;
+
+    store.delete(id.into()).await
 }
