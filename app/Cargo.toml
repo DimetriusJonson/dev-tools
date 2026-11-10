@@ -37,6 +37,7 @@ size.workspace = true
 cookie.workspace = true
 fast_qr.workspace = true
 getset.workspace=true
+idb.workspace=true
 
 tracing = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
