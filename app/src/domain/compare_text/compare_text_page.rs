@@ -1,31 +1,84 @@
+use crate::common::indexed_local_store::{get_object_from_indexed_db, indexed_db_save_prop_value};
 use crate::common::text_comparator::compare_text;
 use crate::components::layout::drag_splitter::DragSplitter;
+use crate::components::layout::message_banner::{Messages, show_error};
 use crate::components::layout::tabs::{TabItem, Tabs};
 use crate::i18n::*;
 use leptos::html::Div;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
-use crate::common::local_store::{get_local_store_value, set_local_store_value};
+use crate::common::local_store::set_local_store_value;
 use crate::components::ui::button::{Button, ButtonWidth};
 use crate::components::ui::text_area::TextArea;
 
 #[component]
 pub fn CompareTextPage() -> impl IntoView {
     let i18n = use_i18n();
+    let messages = use_context::<Messages>().expect("Cant get messages context!");
 
     let (tab_selected, set_tab_selected) = signal(0);
     let tab_source_ref = NodeRef::<Div>::new();
     let tab_result_ref = NodeRef::<Div>::new();
 
-    let (text1, set_text1) = signal(get_local_store_value("compare_text1", "".to_owned()));
-    let (text2, set_text2) = signal(get_local_store_value("compare_text2", "".to_owned()));
+    let (text1, set_text1) = signal("".to_owned());
+    let (text2, set_text2) = signal("".to_owned());
     let (dst_left, set_dst_left) = signal("".to_owned());
     let (dst_right, set_dst_right) = signal("".to_owned());
     let (in_progress, set_in_progress) = signal(false);
 
     let text1_ref = NodeRef::<Div>::new();
     let right_panel_ref = NodeRef::<Div>::new();
+
+    Effect::new(move |_| {
+        spawn_local(async move {
+            match get_object_from_indexed_db("compare", "1").await {
+                Ok(obj) => {
+                    if let Some(obj) = obj {
+                        if let Some(text1_value) = obj.get("text1")
+                            && let Some(text1_value) = text1_value.as_str()
+                        {
+                            set_text1.set(text1_value.to_owned());
+                        }
+                        if let Some(text2_value) = obj.get("text2")
+                            && let Some(text2_value) = text2_value.as_str()
+                        {
+                            set_text2.set(text2_value.to_owned());
+                        }
+                    }
+                }
+                Err(err) => {
+                    show_error(err.to_string(), messages);
+                }
+            }
+        });
+    });
+
+    Effect::watch(
+        move || text1.get(),
+        move |value, _prev, _| {
+            let val = value.to_owned();
+            spawn_local(async move {
+                if let Err(err) = indexed_db_save_prop_value("compare", "1", "text1", &val).await {
+                    show_error(err.to_string(), messages);
+                }
+            });
+        },
+        false,
+    );
+
+    Effect::watch(
+        move || text2.get(),
+        move |value, _prev, _| {
+            let val = value.to_owned();
+            spawn_local(async move {
+                if let Err(err) = indexed_db_save_prop_value("compare", "1", "text2", &val).await {
+                    show_error(err.to_string(), messages);
+                }
+            });
+        },
+        false,
+    );
 
     let on_compare_click = move |_| {
         spawn_local(async move {
@@ -61,9 +114,7 @@ pub fn CompareTextPage() -> impl IntoView {
                                 placeholder=move || t_display!(i18n, compare_page_text1_placeholder).to_string()
                                 value=text1
                                 set_value=set_text1
-                                on_change=move |_| {
-                                    set_local_store_value("compare_text1", &text1.read_untracked());
-                                }
+                                on_change=move |_| {}
                             />
                         </div>
 
@@ -83,9 +134,7 @@ pub fn CompareTextPage() -> impl IntoView {
                                 placeholder=move || t_display!(i18n, compare_page_text2_placeholder).to_string()
                                 value=text2
                                 set_value=set_text2
-                                on_change=move |_| {
-                                    set_local_store_value("compare_text2", &text2.read_untracked());
-                                }
+                                on_change=move |_| {}
                             />
                         </div>
                     </div>
@@ -115,7 +164,7 @@ pub fn CompareTextPage() -> impl IntoView {
                             disabled=move || in_progress.get()
                         />
                     </div>
-                    
+
                 </div>
 
                 <div node_ref=tab_result_ref class="flex flex-col md:flex-row gap-4 py-4 text-xs md:text-base min-h-0 overflow-y-auto h-[76dvh] md:h-[87dvh]">
