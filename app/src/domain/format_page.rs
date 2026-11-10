@@ -6,6 +6,7 @@ use leptos::task::spawn_local;
 use leptos::{html, prelude::*};
 use leptos_router::hooks::use_navigate;
 
+use crate::common::indexed_local_store::{indexed_db_save_prop_value, get_prop_value_from_indexed_db};
 use crate::common::local_store::{get_local_store_value, set_local_store_value};
 use crate::common::ui_utils::{copy_to_clipboard, save_file_to_disk};
 use crate::components::layout::drag_splitter::DragSplitter;
@@ -77,19 +78,48 @@ pub fn FormatPage(
     let right_panel_ref = NodeRef::<Div>::new();
 
     Effect::new(move |_| {
-        let src_value = get_local_store_value(&build_store_key(name, "src"), "".to_owned());
-        set_timeout(
-            move || {
-                set_src.set(src_value);
-            },
-            Duration::from_millis(50),
-        );
+        spawn_local(async move {
+            match get_prop_value_from_indexed_db(name, 1, "src").await {
+                Ok(src_value) => {
+                    if let Some(src_value) = src_value {
+                        set_timeout(
+                            move || {
+                                set_src.set(src_value);
+                            },
+                            Duration::from_millis(50),
+                        );
+                    } else {
+                        set_timeout(
+                            move || {
+                                set_src.set("".to_owned());
+                            },
+                            Duration::from_millis(50),
+                        )
+                    }
+                }
+                Err(err) => {
+                    set_timeout(
+                        move || {
+                            set_src.set("".to_owned());
+                        },
+                        Duration::from_millis(50),
+                    );
+                    show_error(err.to_string(), messages);
+                }
+            }
+        });
     });
 
     Effect::watch(
         move || src.get(),
         move |value, _prev, _| {
-            set_local_store_value(&build_store_key(name, "src"), &value);
+            let val = value.to_owned();
+            spawn_local(async move {
+                //db_save_prop_value(name, "src", &val).await.unwrap();
+                if let Err(err) = indexed_db_save_prop_value(name, 1, "src", &val).await {
+                    show_error(err.to_string(), messages);
+                }
+            });
         },
         false,
     );

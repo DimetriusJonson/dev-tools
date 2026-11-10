@@ -150,7 +150,6 @@ dependencies = [
  "gloo-utils 0.3.0",
  "html-escape",
  "http",
- "idb",
  "js-sys",
  "json-escape",
  "leptos",
@@ -161,11 +160,14 @@ dependencies = [
  "leptos_meta",
  "leptos_router",
  "model",
+ "num-traits",
  "pest",
  "pest_derive",
  "quick-xml",
  "reqwest",
+ "rexie",
  "serde",
+ "serde-wasm-bindgen",
  "serde_json",
  "serde_urlencoded",
  "size",
@@ -5741,6 +5743,17 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
+]
+
+[[package]]
+name = "rexie"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "887466cfa8a12c08ee4b174998135cea8ff0fd84858627cd793e56535a045bc9"
+dependencies = [
+ "idb",
+ "thiserror 1.0.69",
+ "wasm-bindgen",
 ]
 
 [[package]]
