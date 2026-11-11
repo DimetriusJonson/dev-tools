@@ -328,5 +328,5 @@ fn format_request_time(value: u64) -> String {
 }
 
 fn get_format_lang_by_event(e: MouseEvent) -> (&'static str, &'static str) {
-    if e.ctrl_key() { ("json", "xml") } else { ("xml", "json") }
+    if e.alt_key() { ("json", "xml") } else { ("xml", "json") }
 }
